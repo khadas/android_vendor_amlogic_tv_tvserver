@@ -62,6 +62,8 @@ extern "C" {
 
 using namespace android;
 
+static const int WALL_EFFECT_VALUE[CC_BAND_ITEM_CNT] = { 0, 0, 1, 2, 2, 0 };
+
 // Called each time a message is logged.
 static void sqliteLogCallback(void *data, int iErrCode, const char *zMsg)
 {
@@ -196,14 +198,11 @@ CTv::CTv() :
         mCurEQGainBuf[i] = 0;
         mCurEQGainChBuf[i] = 0;
     }
-    static const int WALL_EFFECT_VALUE[CC_BAND_ITEM_CNT] = { 0, 0, 1, 2, 2, 0 };
-    for (int i = 0; i < CC_BAND_ITEM_CNT; i++) {
-        mWallEffectValueBuf[i] = WALL_EFFECT_VALUE[i];
-    }
+
     mTvAction &= TV_ACTION_NULL;
     mTvStatus = TV_INIT_ED;
     print_version_info();
-};
+}
 
 CTv::~CTv()
 {
@@ -6695,7 +6694,7 @@ int CTv::handleEQGainBeforeSet(int src_buf[], int dst_buf[])
 
     if (GetAudioWallEffect() == CC_SWITCH_ON && GetAudioWallEffectTypeCfg() == 0) {
         for (i = 0; i < GetAudioEQBandCount(); i++) {
-            dst_buf[i] = mWallEffectValueBuf[i] + src_buf[i];
+            dst_buf[i] = WALL_EFFECT_VALUE[i] + src_buf[i];
 
             if (dst_buf[i] < nMinGain) {
                 dst_buf[i] = nMinGain;
@@ -6718,7 +6717,7 @@ int CTv::RealSetEQGain(int gain_buf[])
 {
     if (GetAudioWallEffect() == CC_SWITCH_ON && GetAudioWallEffectTypeCfg() == 0) {
         for (int i = 0; i < GetAudioEQBandCount(); i++) {
-            gain_buf[i] = mWallEffectValueBuf[i] + gain_buf[i];
+            gain_buf[i] = WALL_EFFECT_VALUE[i] + gain_buf[i];
 
             if (gain_buf[i] < CC_MIN_EQ_GAIN_VAL) {
                 gain_buf[i] = CC_MIN_EQ_GAIN_VAL;
@@ -7250,5 +7249,27 @@ int CTv::GetHdmiAvHotplugDetectOnoff()
     }
 
     return 0;
+}
+
+void CTv::dump(String8 &result)
+{
+    result.appendFormat("\naction = %x\n", mTvAction);
+    result.appendFormat("status = %d\n", mTvStatus);
+    result.appendFormat("current source input = %d\n", m_source_input);
+    result.appendFormat("last source input = %d\n", m_last_source_input);
+    result.appendFormat("hdmi out with fbc = %d\n\n", mHdmiOutFbc);
+
+    result.appendFormat("tvserver git branch:%s\n", tvservice_get_git_branch_info());
+    result.appendFormat("tvserver git version:%s\n", tvservice_get_git_version_info());
+    result.appendFormat("tvserver Last Changed:%s\n", tvservice_get_last_chaned_time_info());
+    result.appendFormat("tvserver Last Build:%s\n", tvservice_get_build_time_info());
+    result.appendFormat("tvserver Builer Name:%s\n", tvservice_get_build_name_info());
+    result.appendFormat("tvserver board version:%s\n\n", tvservice_get_board_version_info());
+
+    result.appendFormat("libdvb git branch:%s\n", dvb_get_git_branch_info());
+    result.appendFormat("libdvb git version:%s\n", dvb_get_git_version_info());
+    result.appendFormat("libdvb Last Changed:%s\n", dvb_get_last_chaned_time_info());
+    result.appendFormat("libdvb Last Build:%s\n", dvb_get_build_time_info());
+    result.appendFormat("libdvb Builer Name:%s\n\n", dvb_get_build_name_info());
 }
 

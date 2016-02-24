@@ -576,6 +576,8 @@ public:
     int SetCustomEQGain();
     int SetAtvInGain(int gain_val);
     int GetHdmiAvHotplugDetectOnoff();
+
+    void dump(String8 &result);
 private:
     int SendCmdToOffBoardFBCExternalDac(int, int);
     int LoadCurAudioSPDIFMode();
@@ -652,7 +654,6 @@ private:
     int mCustomEQGainBuf[CC_BAND_ITEM_CNT];
     int mCurEQGainBuf[CC_BAND_ITEM_CNT] ;
     int8_t mCurEQGainChBuf[CC_BAND_ITEM_CNT];
-    int mWallEffectValueBuf[CC_BAND_ITEM_CNT];
     int mVolumeCompensationVal;
     int mMainVolumeBalanceVal;
     //end audio
@@ -764,7 +765,7 @@ protected:
     CFrontEnd mFrontDev;
     CTvDimension mTvVchip;
     CTvSubtitle mTvSub;
-    CAv  mAv;
+    CAv mAv;
     CTvDmx mTvDmx;
     CTvMsgQueue mTvMsgQueue;
     AutoBackLight mAutoBackLight;
@@ -778,11 +779,10 @@ protected:
     /* for tvin window mode and pos*/
     tvin_window_pos_t m_win_pos;
     tv_window_mode_t m_win_mode;
-    int m_blackout_enable;//1 enable 0 disable
+    int m_blackout_enable;// 1 enable 0 disable
     int m_cur_playing_prog_id;
     bool mHdmiOutFbc;
     CFbcCommunication *fbcIns;
-
 
     bool mlastlockstatus;
     String8 mlastdm;
@@ -794,7 +794,7 @@ protected:
     int mCurAnalyzeTsChannelID;
     TvIObserver *mpObserver;
     tv_dtv_scan_running_status_t mDtvScanRunningStatus;
-    volatile  tv_config_t gTvinConfig;
+    volatile tv_config_t gTvinConfig;
     int dtv_auto_3d_flag;
     bool mAutoSetDisplayFreq;
     int m_sig_stable_nums;

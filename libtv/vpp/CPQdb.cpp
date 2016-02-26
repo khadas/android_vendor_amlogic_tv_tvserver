@@ -1937,9 +1937,8 @@ void CPqData::initialTable(int type)
  }
  */
 
-int CPqData::replacePqDb(const char *newFilePath)
+int CPqData::replacePQDb(const char *newFilePath)
 {
-
     CFile::delFile( PQ_DB_PATH);
     if (newFilePath == NULL) {
         return 0;

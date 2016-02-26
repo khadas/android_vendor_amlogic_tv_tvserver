@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <tvconfig/tvconfig.h>
 #include <tvsetting/CTvSetting.h>
+#include <tv/CTvFactory.h>
 #include <audio/CTvAudio.h>
 #include <tvutils/tvutils.h>
 #include <version/version.h>
@@ -577,7 +578,7 @@ status_t TvService::Client::createVideoFrame(const sp<IMemory> &shareMem __unuse
 status_t TvService::Client::createSubtitle(const sp<IMemory> &shareMem)
 {
     LOGD("createSubtitle pid = %d, mem=%d size=%d", getCallingPid(), shareMem->pointer() == NULL, shareMem->size());
-    mpTv->setSubtitleBuffer((char *)shareMem->pointer());
+    mpTv->mSubtitle.setBuffer((char *)shareMem->pointer());
     mTvService->mpSubClient = this;
     //pSub = new CTvSubtitle(share_mem, this);
     //pSub->run();
@@ -1040,14 +1041,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int pq_mode = p.readInt32();
         int brightness = p.readInt32();
-        int ret = mpTv->Tv_FactorySetPQMode_Brightness(source_type, pq_mode, brightness);
+        int ret = mpTv->mFactoryMode.setPQModeBrightness(source_type, pq_mode, brightness);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_GETPQMODE_BRIGHTNESS: {
         int source_type = p.readInt32();
         int pq_mode = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetPQMode_Brightness(source_type, pq_mode);
+        int ret = mpTv->mFactoryMode.getPQModeBrightness(source_type, pq_mode);
         r->writeInt32(ret);
         break;
     }
@@ -1055,14 +1056,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int pq_mode = p.readInt32();
         int contrast = p.readInt32();
-        int ret = mpTv->Tv_FactorySetPQMode_Contrast(source_type, pq_mode, contrast);
+        int ret = mpTv->mFactoryMode.setPQModeContrast(source_type, pq_mode, contrast);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_GETPQMODE_CONTRAST: {
         int source_type = p.readInt32();
         int pq_mode = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetPQMode_Contrast(source_type, pq_mode);
+        int ret = mpTv->mFactoryMode.getPQModeContrast(source_type, pq_mode);
         r->writeInt32(ret);
         break;
     }
@@ -1070,14 +1071,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int pq_mode = p.readInt32();
         int saturation = p.readInt32();
-        int ret = mpTv->Tv_FactorySetPQMode_Saturation(source_type, pq_mode, saturation);
+        int ret = mpTv->mFactoryMode.setPQModeSaturation(source_type, pq_mode, saturation);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_GETPQMODE_SATURATION: {
         int source_type = p.readInt32();
         int pq_mode = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetPQMode_Saturation(source_type, pq_mode);
+        int ret = mpTv->mFactoryMode.getPQModeSaturation(source_type, pq_mode);
         r->writeInt32(ret);
         break;
     }
@@ -1085,14 +1086,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int pq_mode = p.readInt32();
         int hue = p.readInt32();
-        int ret = mpTv->Tv_FactorySetPQMode_Hue(source_type, pq_mode, hue);
+        int ret = mpTv->mFactoryMode.setPQModeHue(source_type, pq_mode, hue);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_GETPQMODE_HUE: {
         int source_type = p.readInt32();
         int pq_mode = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetPQMode_Hue(source_type, pq_mode);
+        int ret = mpTv->mFactoryMode.getPQModeHue(source_type, pq_mode);
         r->writeInt32(ret);
         break;
     }
@@ -1100,25 +1101,25 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int pq_mode = p.readInt32();
         int sharpness = p.readInt32();
-        int ret = mpTv->Tv_FactorySetPQMode_Sharpness(source_type, pq_mode, sharpness);
+        int ret = mpTv->mFactoryMode.setPQModeSharpness(source_type, pq_mode, sharpness);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_GETPQMODE_SHARPNESS: {
         int source_type = p.readInt32();
         int pq_mode = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetPQMode_Sharpness(source_type, pq_mode);
+        int ret = mpTv->mFactoryMode.getPQModeSharpness(source_type, pq_mode);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_SETTESTPATTERN: {
         int pattern = p.readInt32();
-        int ret = mpTv->Tv_FactorySetTestPattern(pattern);
+        int ret = mpTv->mFactoryMode.setTestPattern(pattern);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_GETTESTPATTERN: {
-        int ret = mpTv->Tv_FactoryGetTestPattern();
+        int ret = mpTv->mFactoryMode.getTestPattern();
         r->writeInt32(ret);
         break;
     }
@@ -1127,44 +1128,44 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int y = p.readInt32();
         int u = p.readInt32();
         int v = p.readInt32();
-        int ret = mpTv->Tv_FactorySetScreenColor(blend, y, u, v);
+        int ret = mpTv->mFactoryMode.setScreenColor(blend, y, u, v);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_RESETPQMODE: {
-        int ret = mpTv->Tv_FactoryResetPQMode();
+        int ret = mpTv->mFactoryMode.resetPQMode();
         r->writeInt32(ret);
         break;
     }
     case FACTORY_RESETCOLORTEMP: {
-        int ret = mpTv->Tv_FactoryResetColorTemp();
+        int ret = mpTv->mFactoryMode.resetColorTemp();
         r->writeInt32(ret);
         break;
     }
     case FACTORY_RESETPAMAMSDEFAULT: {
-        int ret = mpTv->Tv_FactorySetParamsDefault();
+        int ret = mpTv->mFactoryMode.setParamsDefault();
         r->writeInt32(ret);
         break;
     }
     case FACTORY_SETDDRSSC: {
         int setp = p.readInt32();
-        int ret = mpTv->Tv_FactorySetDDRSSC(setp);
+        int ret = mpTv->mFactoryMode.setDDRSSC(setp);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_GETDDRSSC: {
-        int ret = mpTv->Tv_FactoryGetDDRSSC();
+        int ret = mpTv->mFactoryMode.getDDRSSC();
         r->writeInt32(ret);
         break;
     }
     case FACTORY_SETLVDSSSC: {
         int setp = p.readInt32();
-        int ret = mpTv->Tv_FactorySetLVDSSSC(setp);
+        int ret = mpTv->mFactoryMode.setLVDSSSC(setp);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_GETLVDSSSC: {
-        int ret = mpTv->Tv_FactoryGetLVDSSSC();
+        int ret = mpTv->mFactoryMode.getLVDSSSC();
         r->writeInt32(ret);
         break;
     }
@@ -1177,14 +1178,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         params.osd50 = p.readInt32();
         params.osd75 = p.readInt32();
         params.osd100 = p.readInt32();
-        int ret = mpTv->Tv_FactorySetNolineParams(noline_params_type, source_type, params);
+        int ret = mpTv->mFactoryMode.setNolineParams(noline_params_type, source_type, params);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_GETNOLINEPARAMS: {
         int noline_params_type = p.readInt32();
         int source_type = p.readInt32();
-        noline_params_t params = mpTv->Tv_FactoryGetNolineParams(noline_params_type, source_type);
+        noline_params_t params = mpTv->mFactoryMode.getNolineParams(noline_params_type, source_type);
         r->writeInt32(params.osd0);
         r->writeInt32(params.osd25);
         r->writeInt32(params.osd50);
@@ -1202,7 +1203,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         cutwin_t.he = p.readInt32();
         cutwin_t.vs = p.readInt32();
         cutwin_t.ve = p.readInt32();
-        int ret = mpTv->Tv_FactorySetOverscan(source_type, fmt, status_3d, trans_fmt, cutwin_t);
+        int ret = mpTv->mFactoryMode.setOverscan(source_type, fmt, status_3d, trans_fmt, cutwin_t);
         r->writeInt32(ret);
         break;
     }
@@ -1211,7 +1212,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int fmt = p.readInt32();
         int status_3d = p.readInt32();
         int trans_fmt = p.readInt32();
-        tvin_cutwin_t cutwin_t = mpTv->Tv_FactoryGetOverscan(source_type, fmt, status_3d, trans_fmt);
+        tvin_cutwin_t cutwin_t = mpTv->mFactoryMode.getOverscan(source_type, fmt, status_3d, trans_fmt);
         r->writeInt32(cutwin_t.hs);
         r->writeInt32(cutwin_t.he);
         r->writeInt32(cutwin_t.vs);
@@ -1219,12 +1220,12 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         break;
     }
     case DELETE_PARAM_PQ_DB: {
-        int tmpRet = mpTv->Tv_ReplacePqDb();
+        int tmpRet = mpTv->mFactoryMode.replacePQDb();
         r->writeInt32(tmpRet);
     }
     case REPLACE_PARAM_PQ_DB: {
         String8 valueStr(p.readString16());
-        int tmpRet = mpTv->Tv_ReplacePqDb(valueStr.string());
+        int tmpRet = mpTv->mFactoryMode.replacePQDb(valueStr.string());
         r->writeInt32(tmpRet);
         break;
     }
@@ -1774,14 +1775,9 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-    case HANDLE_AUDIO_HEADSET_PLUG_IN: {
-        int ret = mpTv->AudioHandleHeadsetPlugIn();
-        r->writeInt32(ret);
-        break;
-    }
+    case HANDLE_AUDIO_HEADSET_PLUG_IN:
     case HANDLE_AUDIO_HEADSET_PULL_OUT: {
-        int ret = mpTv->AudioHandleHeadsetPullOut();
-        r->writeInt32(ret);
+        r->writeInt32(0);
         break;
     }
     case SET_AUDIO_VOL_COMP: {
@@ -1838,13 +1834,11 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
 
     case SET_DRC_ONOFF: {
         int val = p.readInt32();
-        int ret = mpTv->Tv_SetDRC_OnOff(val);
-        r->writeInt32(ret);
+        r->writeInt32(0);
         break;
     }
     case GET_DRC_ONOFF: {
-        int ret = mpTv->Tv_GetDRC_OnOff();
-        r->writeInt32(ret);
+        r->writeInt32(0);
         break;
     }
     // AUDIO END
@@ -2548,19 +2542,19 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     case DTV_SUBTITLE_INIT: {
         int bitmapWidth = p.readInt32();
         int bitmapHeight = p.readInt32();
-        r->writeInt32(mpTv->initSubtitle(bitmapWidth, bitmapHeight));
+        r->writeInt32(mpTv->mSubtitle.sub_init(bitmapWidth, bitmapHeight));
         break;
     }
     case DTV_SUBTITLE_LOCK: {
-        r->writeInt32(mpTv->lockSubtitle());
+        r->writeInt32(mpTv->mSubtitle.sub_lock());
         break;
     }
     case DTV_SUBTITLE_UNLOCK: {
-        r->writeInt32(mpTv->unlockSubtitle());
+        r->writeInt32(mpTv->mSubtitle.sub_unlock());
         break;
     }
     case DTV_GET_SUBTITLE_SWITCH: {
-        r->writeInt32(mpTv->getSubSwitchStatus());
+        r->writeInt32(mpTv->mSubtitle.sub_switch_status());
         break;
     }
     case DTV_START_SUBTITLE: {
@@ -2568,11 +2562,11 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int pid = p.readInt32();
         int page_id = p.readInt32();
         int anc_page_id = p.readInt32();
-        r->writeInt32(mpTv->startSubtitle(dmx_id, pid, page_id, anc_page_id));
+        r->writeInt32(mpTv->mSubtitle.sub_start_dvb_sub(dmx_id, pid, page_id, anc_page_id));
         break;
     }
     case DTV_STOP_SUBTITLE: {
-        r->writeInt32(mpTv->stopSubtitle());
+        r->writeInt32(mpTv->mSubtitle.sub_stop_dvb_sub());
         break;
     }
     case DTV_GET_SUBTITLE_INDEX: {
@@ -2835,113 +2829,113 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
 
     case FACTORY_FBC_SET_BRIGHTNESS: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Brightness(value);
+        int ret = mpTv->mFactoryMode.fbcSetBrightness(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_BRIGHTNESS: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Brightness();
+        int ret = mpTv->mFactoryMode.fbcGetBrightness();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_CONTRAST: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Contrast(value);
+        int ret = mpTv->mFactoryMode.fbcSetContrast(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_CONTRAST: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Contrast();
+        int ret = mpTv->mFactoryMode.fbcGetContrast();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_SATURATION: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Saturation(value);
+        int ret = mpTv->mFactoryMode.fbcSetSaturation(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_SATURATION: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Saturation();
+        int ret = mpTv->mFactoryMode.fbcGetSaturation();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_HUE: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_HueColorTint(value);
+        int ret = mpTv->mFactoryMode.fbcSetHueColorTint(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_HUE: {
-        int ret = mpTv->Tv_FactoryGet_FBC_HueColorTint();
+        int ret = mpTv->mFactoryMode.fbcGetHueColorTint();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_BACKLIGHT: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Backlight(value);
+        int ret = mpTv->mFactoryMode.fbcSetBacklight(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_BACKLIGHT: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Backlight();
+        int ret = mpTv->mFactoryMode.fbcGetBacklight();
         r->writeInt32(ret);
         break;
     }
     case FACTROY_FBC_SET_LIGHT_SENSOR_STATUS_N310: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_LightSensor_Status_N310(value);
+        int ret = mpTv->mFactoryMode.fbcLightSensorStatusN310Set(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTROY_FBC_GET_LIGHT_SENSOR_STATUS_N310: {
-        int ret = mpTv->Tv_FactoryGet_FBC_LightSensor_Status_N310();
+        int ret = mpTv->mFactoryMode.fbcLightSensorStatusN310Get();
         r->writeInt32(ret);
         break;
     }
     case FACTROY_FBC_SET_DREAM_PANEL_STATUS_N310: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Dream_Panel_Status_N310(value);
+        int ret = mpTv->mFactoryMode.fbcDreamPanelStatusN310Set(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTROY_FBC_GET_DREAM_PANEL_STATUS_N310: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Dream_Panel_Status_N310();
+        int ret = mpTv->mFactoryMode.fbcDreamPanelStatusN310Get();
         r->writeInt32(ret);
         break;
     }
     case FACTROY_FBC_SET_MULT_PQ_STATUS_N310: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_MULT_PQ_Status_N310(value);
+        int ret = mpTv->mFactoryMode.fbcMultPQStatusN310Set(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTROY_FBC_GET_MULT_PQ_STATUS_N310: {
-        int ret = mpTv->Tv_FactoryGet_FBC_MULT_PQ_Status_N310();
+        int ret = mpTv->mFactoryMode.fbcMultPQStatusN310Get();
         r->writeInt32(ret);
         break;
     }
     case FACTROY_FBC_SET_MEMC_STATUS_N310: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_MEMC_Status_N310(value);
+        int ret = mpTv->mFactoryMode.fbcMemcStatusN310Set(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTROY_FBC_GET_MEMC_STATUS_N310: {
-        int ret = mpTv->Tv_FactoryGet_FBC_MEMC_Status_N310();
+        int ret = mpTv->mFactoryMode.fbcMemcStatusN310Get();
         r->writeInt32(ret);
         break;
     }
@@ -2960,195 +2954,194 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     case FACTORY_FBC_SET_BACKLIGHT_EN : {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_backlight_onoff(value);
+        int ret = mpTv->mFactoryMode.fbcBacklightOnOffSet(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_BACKLIGHT_EN: {
-        int ret = mpTv->Tv_FactoryGet_FBC_backlight_onoff();
+        int ret = mpTv->mFactoryMode.fbcBacklightOnOffGet();
         r->writeInt32(ret);
         break;
     }
     case FACTORY_FBC_TEST_PATTERN: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_SetTestPattern(value);
+        int ret = mpTv->mFactoryMode.fbcSelectTestPattern(value);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_FBC_SET_LVDS_SSG: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_LVDS_SSG_Set(value);
+        int ret = mpTv->mFactoryMode.fbcLvdsSsgSet(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_ELEC_MODE: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_ELEC_MODE(value);
+        int ret = mpTv->mFactoryMode.fbcSetElecMode(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_ELEC_MODE: {
-        int ret = mpTv->Tv_FactoryGet_FBC_ELEC_MODE();
+        int ret = mpTv->mFactoryMode.fbcGetElecMode();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_BACKLIGHT_N360: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_BACKLIGHT_N360(value);
+        int ret = mpTv->mFactoryMode.fbcSetBacklightN360(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_BACKLIGHT_N360: {
-        int ret = mpTv->Tv_FactoryGet_FBC_BACKLIGHT_N360();
+        int ret = mpTv->mFactoryMode.fbcGetBacklightN360();
         r->writeInt32(ret);
         break;
     }
 
-
     case FACTORY_FBC_SET_PIC_MODE: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Picture_Mode(value);
+        int ret = mpTv->mFactoryMode.fbcSetPictureMode(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_PIC_MODE: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Picture_Mode();
+        int ret = mpTv->mFactoryMode.fbcGetPictureMode();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_TEST_PATTERN: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Set_Test_Pattern(value);
+        int ret = mpTv->mFactoryMode.fbcSetTestPattern(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_TEST_PATTERN: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Get_Test_Pattern();
+        int ret = mpTv->mFactoryMode.fbcGetTestPattern();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_GAIN_RED: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Gain_Red(value);
+        int ret = mpTv->mFactoryMode.fbcSetGainRed(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_GAIN_RED: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Gain_Red();
+        int ret = mpTv->mFactoryMode.fbcGetGainRed();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_GAIN_GREEN: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Gain_Green(value);
+        int ret = mpTv->mFactoryMode.fbcSetGainGreen(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_GAIN_GREEN: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Gain_Green();
+        int ret = mpTv->mFactoryMode.fbcGetGainGreen();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_GAIN_BLUE: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Gain_Blue(value);
+        int ret = mpTv->mFactoryMode.fbcSetGainBlue(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_GAIN_BLUE: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Gain_Blue();
+        int ret = mpTv->mFactoryMode.fbcGetGainBlue();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_OFFSET_RED: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Offset_Red(value);
+        int ret = mpTv->mFactoryMode.fbcSetOffsetRed(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_OFFSET_RED: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Offset_Red();
+        int ret = mpTv->mFactoryMode.fbcGetOffsetRed();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_OFFSET_GREEN: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Offset_Green(value);
+        int ret = mpTv->mFactoryMode.fbcSetOffsetGreen(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_OFFSET_GREEN: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Offset_Green();
+        int ret = mpTv->mFactoryMode.fbcGetOffsetGreen();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_OFFSET_BLUE: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_Offset_Blue(value);
+        int ret = mpTv->mFactoryMode.fbcSetOffsetBlue(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_OFFSET_BLUE: {
-        int ret = mpTv->Tv_FactoryGet_FBC_Offset_Blue();
+        int ret = mpTv->mFactoryMode.fbcGetOffsetBlue();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_COLORTEMP_MODE: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_ColorTemp_Mode(value);
+        int ret = mpTv->mFactoryMode.fbcColorTempModeSet(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_COLORTEMP_MODE: {
-        int ret = mpTv->Tv_FactoryGet_FBC_ColorTemp_Mode();
+        int ret = mpTv->mFactoryMode.fbcColorTempModeGet();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_COLORTEMP_MODE_N360: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_ColorTemp_Mode_N360(value);
+        int ret = mpTv->mFactoryMode.fbcColorTempModeN360Set(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_COLORTEMP_MODE_N360: {
-        int ret = mpTv->Tv_FactoryGet_FBC_ColorTemp_Mode_N360();
+        int ret = mpTv->mFactoryMode.fbcColorTempModeN360Get();
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_SET_WB_INIT: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySet_FBC_WB_Initial(value);
+        int ret = mpTv->mFactoryMode.fbcWBInitialSet(value);
         r->writeInt32(ret);
         break;
     }
 
     case FACTORY_FBC_GET_WB_INIT: {
-        int ret = mpTv->Tv_FactoryGet_FBC_WB_Initial();
+        int ret = mpTv->mFactoryMode.fbcWBInitialGet();
         r->writeInt32(ret);
         break;
     }
@@ -3283,14 +3276,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySetWhiteBalanceRedGain(source_type, colortemp_mode, value);
+        int ret = mpTv->mFactoryMode.whiteBalanceGainRedSet(source_type, colortemp_mode, value);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_GET_GAIN_RED: {
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetWhiteBalanceRedGain(source_type, colortemp_mode);
+        int ret = mpTv->mFactoryMode.whiteBalanceGainRedGet(source_type, colortemp_mode);
         r->writeInt32(ret);
         break;
     }
@@ -3298,14 +3291,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySetWhiteBalanceGreenGain(source_type, colortemp_mode, value);
+        int ret = mpTv->mFactoryMode.whiteBalanceGainGreenSet(source_type, colortemp_mode, value);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_GET_GAIN_GREEN: {
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetWhiteBalanceGreenGain(source_type, colortemp_mode);
+        int ret = mpTv->mFactoryMode.whiteBalanceGainGreenGet(source_type, colortemp_mode);
         r->writeInt32(ret);
         break;
     }
@@ -3313,14 +3306,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySetWhiteBalanceBlueGain(source_type, colortemp_mode, value);
+        int ret = mpTv->mFactoryMode.whiteBalanceGainBlueSet(source_type, colortemp_mode, value);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_GET_GAIN_BLUE: {
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetWhiteBalanceBlueGain(source_type, colortemp_mode);
+        int ret = mpTv->mFactoryMode.whiteBalanceGainBlueGet(source_type, colortemp_mode);
         r->writeInt32(ret);
         break;
     }
@@ -3328,14 +3321,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySetWhiteBalanceRedOffset(source_type, colortemp_mode, value);
+        int ret = mpTv->mFactoryMode.whiteBalanceOffsetRedSet(source_type, colortemp_mode, value);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_GET_OFFSET_RED: {
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetWhiteBalanceRedOffset(source_type, colortemp_mode);
+        int ret = mpTv->mFactoryMode.whiteBalanceOffsetRedGet(source_type, colortemp_mode);
         r->writeInt32(ret);
         break;
     }
@@ -3343,14 +3336,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySetWhiteBalanceGreenOffset(source_type, colortemp_mode, value);
+        int ret = mpTv->mFactoryMode.whiteBalanceOffsetGreenSet(source_type, colortemp_mode, value);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_GET_OFFSET_GREEN: {
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetWhiteBalanceGreenOffset(source_type, colortemp_mode);
+        int ret = mpTv->mFactoryMode.whiteBalanceOffsetGreenGet(source_type, colortemp_mode);
         r->writeInt32(ret);
         break;
     }
@@ -3358,20 +3351,20 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySetWhiteBalanceBlueOffset(source_type, colortemp_mode, value);
+        int ret = mpTv->mFactoryMode.whiteBalanceOffsetBlueSet(source_type, colortemp_mode, value);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_GET_OFFSET_BLUE: {
         int source_type = p.readInt32();
         int colortemp_mode = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetWhiteBalanceBlueOffset(source_type, colortemp_mode);
+        int ret = mpTv->mFactoryMode.whiteBalanceOffsetBlueGet(source_type, colortemp_mode);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_GET_COLOR_TMP: {
         int source_type = p.readInt32();
-        int ret = mpTv->Tv_FactoryGetWhiteBalanceColorTempMode(source_type);
+        int ret = mpTv->mFactoryMode.whiteBalanceColorTempModeGet(source_type);
         r->writeInt32(ret);
         break;
     }
@@ -3379,7 +3372,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source_type = p.readInt32();
         int Tempmode = p.readInt32();
         int is_save = p.readInt32();
-        int ret = mpTv->Tv_FactorySetWhiteBalanceColorTempMode(source_type, Tempmode, is_save);
+        int ret = mpTv->mFactoryMode.whiteBalanceColorTempModeSet(source_type, Tempmode, is_save);
         r->writeInt32(ret);
         break;
     }
@@ -3392,35 +3385,35 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int r_offset = p.readInt32();
         int g_offset = p.readInt32();
         int b_offset = p.readInt32();
-        int ret = mpTv->Tv_FactorySaveWhiteBalancePramas(source_type, mode, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset);
+        int ret = mpTv->mFactoryMode.whiteBalancePramSave(source_type, mode, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_OPEN_GRAY_PATTERN: {
-        int ret = mpTv->Tv_FactoryOpenWhiteBalanceGrayPattern();
+        int ret = mpTv->mFactoryMode.whiteBalanceGrayPatternOpen();
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_CLOSE_GRAY_PATTERN: {
-        int ret = mpTv->Tv_FactoryCloseWhiteBalanceGrayPattern();
+        int ret = mpTv->mFactoryMode.whiteBalanceGrayPatternClose();
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_SET_GRAY_PATTERN: {
         int value = p.readInt32();
-        int ret = mpTv->Tv_FactorySetWhiteBalanceGrayPattern(value);
+        int ret = mpTv->mFactoryMode.whiteBalanceGrayPatternSet(value);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_GET_GRAY_PATTERN: {
-        int ret = mpTv->Tv_FactoryGetWhiteBalanceGrayPattern();
+        int ret = mpTv->mFactoryMode.whiteBalanceGrayPatternGet();
         r->writeInt32(ret);
         break;
     }
     case FACTORY_WHITE_BALANCE_GET_ALL_PRAMAS: {
         int mode = p.readInt32();
         tcon_rgb_ogo_t params;
-        int ret = mpTv->GetColorTemperatureParams((vpp_color_temperature_mode_t)mode, &params);
+        int ret = mpTv->mFactoryMode.getColorTemperatureParams((vpp_color_temperature_mode_t)mode, &params);
         r->writeInt32(ret);
         r->writeInt32(params.r_gain);
         r->writeInt32(params.g_gain);

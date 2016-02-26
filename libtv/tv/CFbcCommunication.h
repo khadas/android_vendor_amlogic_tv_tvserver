@@ -242,7 +242,7 @@ public:
     static const unsigned char CEC_CMD_SET_SW_VERSION = 0x57;
     static const unsigned char CEC_CMD_3D = 0xd0;
 
-    friend class CTvMsgQueue;
+    //friend class CTvMsgQueue;
     class CFbcMsgQueue: public CMsgQueueThread {
     public:
         static const int TV_MSG_COMMON = 0;

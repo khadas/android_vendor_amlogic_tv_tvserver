@@ -273,7 +273,6 @@ public:
     int SetPQMode ( vpp_picture_mode_t pq_mode, tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
     vpp_picture_mode_t GetPQMode ( tv_source_input_type_t source_type );
     int SavePQMode ( vpp_picture_mode_t pq_mode, tv_source_input_type_t source_type );
-    int SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt, int is_save );
     vpp_display_mode_t GetDisplayMode ( tv_source_input_type_t source_type );
     int SaveNoiseReductionMode ( vpp_noise_reduction_mode_t nr_mode, tv_source_input_type_t source_type );
     int SetNoiseReductionMode ( vpp_noise_reduction_mode_t nr_mode, tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt, int is_save );

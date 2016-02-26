@@ -3754,8 +3754,6 @@ int CVpp::VPP_SetCMDebug(const unsigned long long *pLData)
 int CVpp::VPP_SetAVSyncEnable(const unsigned int enable)
 {
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_SYNCENABLE, enable);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetAVSyncEnable##AMSTREAM_IOC_SYNCENABLE##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetAVSyncEnable, error(%s)!\n", strerror(errno));
     }

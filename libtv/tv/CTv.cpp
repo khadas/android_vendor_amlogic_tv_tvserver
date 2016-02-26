@@ -114,7 +114,6 @@ CTv::CTv() :
     //mTvEpg.setObserver ( &mTvMsgQueue );
     mpObserver = NULL;
     fbcIns = NULL;
-    dtv_auto_3d_flag = 0;
     mAutoSetDisplayFreq = false;
 
     tv_config_load ( TV_CONFIG_FILE_PATH );
@@ -131,6 +130,7 @@ CTv::CTv() :
 
     CTvSettingLoad();
 
+    mFactoryMode.init();
     mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
     if (hdmiOutWithFbc()) {
         mHdmiOutFbc = true;
@@ -483,7 +483,7 @@ void CTv::CTvMsgQueue::onEvent(const CAv::AVEvent &ev)
     this->sendMsg ( msg );
 }
 
-void CTv::onHdmiSrChanged(int   sr, bool bInit)
+void CTv::onHdmiSrChanged(int sr, bool bInit)
 {
     if (bInit) {
         LOGD ( "%s, Init HDMI audio, sampling rate:%d", __FUNCTION__,  sr );
@@ -1170,8 +1170,8 @@ int CTv::startPlayTv ( int source, int vid, int aid, int vfat, int afat )
 int CTv::stopPlayingLock()
 {
     AutoMutex lock ( mLock );
-    if (getSubSwitchStatus() == 1)
-        stopSubtitle();
+    if (mSubtitle.sub_switch_status() == 1)
+        mSubtitle.sub_stop_dvb_sub();
     return stopPlaying();
 }
 
@@ -2086,6 +2086,13 @@ void CTv::Tv_SetAVOutPut_Input_gain(tv_source_input_t source_input)
     SetDAC_Digital_PlayBack_Volume(tmpAvoutBufPtr[nDdcValueIndex]);
 }
 
+void CTv::Tv_Spread_Spectrum()
+{
+    int value = 0;
+    value = CVpp::getInstance()->FactoryGetLVDSSSC();
+    CVpp::getInstance()->FactorySetLVDSSSC(value);
+}
+
 void CTv::onSigStableToUnstable()
 {
     LOGD ( "%s, stable to unstable\n", __FUNCTION__);
@@ -2432,6 +2439,7 @@ int CTv::Tv_Set3DMode ( VIDEO_3D_MODE_T mode )
         CTvin::getInstance()->VDIN_SetDI3DDetc (0);
     }
 
+    mFactoryMode.set3DMode(mode);
     mAv.set3DMode(mode, 0, 0);
     m_mode_3d = mode;
     SSMSave3DMode ( ( unsigned char ) mode );
@@ -2750,7 +2758,7 @@ int CTv::getSaveBlackoutEnable()
 void CTv::startAutoBackLight()
 {
     if (mHdmiOutFbc) {
-        Tv_FactorySet_FBC_Auto_Backlight_OnOff(1);
+        mFactoryMode.fbcSetAutoBacklightOnOff(1);
     } else {
         mAutoBackLight.startAutoBacklight(CTvin::Tvin_SourceInputToSourceInputType(m_source_input));
     }
@@ -2759,7 +2767,7 @@ void CTv::startAutoBackLight()
 void CTv::stopAutoBackLight()
 {
     if (mHdmiOutFbc) {
-        Tv_FactorySet_FBC_Auto_Backlight_OnOff(0);
+        mFactoryMode.fbcSetAutoBacklightOnOff(0);
     } else {
         mAutoBackLight.stopAutoBacklight();
     }
@@ -2768,7 +2776,7 @@ void CTv::stopAutoBackLight()
 int CTv::getAutoBackLight_on_off()
 {
     if (mHdmiOutFbc) {
-        return Tv_FactoryGet_FBC_Auto_Backlight_OnOff();
+        return mFactoryMode.fbcGetAutoBacklightOnOff();
     } else {
         return mAutoBackLight.isAutoBacklightOn() ? 1 : 0;
     }
@@ -2883,23 +2891,6 @@ void CTv::setSourceSwitchAndPlay()
         progID = getDTVProgramID();
     }
     playProgramLock(progID);
-}
-
-int CTv::startCC(int country, int src, int channel, int service)
-{
-    //turn_on_cc = true;
-    return mSubtitle.sub_start_atsc_cc((enum cc_param_country)country, (enum cc_param_source_type)src, channel, (enum cc_param_caption_type)service);
-}
-
-int CTv::stopCC()
-{
-    //because cc,vchip data both come from vbi thread , here judge cc, vchip is whether  both turn off
-    /*turn_on_cc = false;
-    if (config_get_int(CFG_SECTION_TV,"tv.vchip.enable", 0))
-    {
-        return 0;  //at ATV if vchip is on, turn off CC, just set flag not display CC, but vchip still running
-    }*/
-    return mSubtitle.sub_stop_atsc_cc();
 }
 
 void CTv::printDebugInfo()
@@ -3105,7 +3096,7 @@ void CTv::onThermalDetect(int state)
         if (preValue != val) {
             LOGD ( "%s, pre value :0x%x, new value :0x%x, bypass\n", __FUNCTION__, preValue, val);
             preValue = val;
-            Tv_FactorySet_FBC_Thermal_State(val);
+            mFactoryMode.fbcSetThermalState(val);
         }
     } else {
         LOGD ( "%s, tvin thermal threshold disable\n", __FUNCTION__);
@@ -3407,7 +3398,12 @@ int CTv::Tv_SavePQMode ( vpp_picture_mode_t mode, tv_source_input_type_t source_
 
 int CTv::Tv_SetSharpness ( int value, tv_source_input_type_t source_type, int en, int is_save )
 {
-    return CVpp::getInstance()->SetSharpness(value, (tv_source_input_type_t)source_type, en, Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ), mSigDetectThread.getCurSigInfo().fmt, mSigDetectThread.getCurSigInfo().trans_fmt, is_save);
+    return CVpp::getInstance()->SetSharpness(value,
+            (tv_source_input_type_t)source_type, en,
+            Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ),
+            mSigDetectThread.getCurSigInfo().fmt,
+            mSigDetectThread.getCurSigInfo().trans_fmt,
+            is_save);
 }
 
 int CTv::Tv_GetSharpness ( tv_source_input_type_t source_type )
@@ -3423,7 +3419,7 @@ int CTv::Tv_SaveSharpness ( int value, tv_source_input_type_t source_type )
 int CTv::Tv_SetBacklight ( int value, tv_source_input_type_t source_type, int is_save )
 {
     if (mHdmiOutFbc) {
-        return Tv_FactorySet_FBC_Backlight(value);
+        return mFactoryMode.fbcSetBacklight(value);
     } else {
         return CVpp::getInstance()->SetBacklight(value, (tv_source_input_type_t)source_type, is_save);
     }
@@ -3432,7 +3428,7 @@ int CTv::Tv_SetBacklight ( int value, tv_source_input_type_t source_type, int is
 int CTv::Tv_GetBacklight ( tv_source_input_type_t source_type )
 {
     if (mHdmiOutFbc) {
-        return Tv_FactoryGet_FBC_Backlight();
+        return mFactoryMode.fbcGetBacklight();
     } else {
         return CVpp::getInstance()->GetBacklight((tv_source_input_type_t)source_type);
     }
@@ -3446,7 +3442,7 @@ int CTv::Tv_SaveBacklight ( int value, tv_source_input_type_t source_type )
 int CTv::Tv_SetBacklight_Switch ( int value )
 {
     if (mHdmiOutFbc) {
-        return Tv_FactorySet_FBC_backlight_onoff(value);
+        return mFactoryMode.fbcBacklightOnOffSet(value);
     } else {
         return CVpp::getInstance()->VPP_SetBackLight_Switch(value);
     }
@@ -3455,7 +3451,7 @@ int CTv::Tv_SetBacklight_Switch ( int value )
 int CTv::Tv_GetBacklight_Switch ( void )
 {
     if (mHdmiOutFbc) {
-        return Tv_FactoryGet_FBC_backlight_onoff();
+        return mFactoryMode.fbcBacklightOnOffGet();
     } else {
         return CVpp::getInstance()->VPP_GetBackLight_Switch();
     }
@@ -3464,7 +3460,7 @@ int CTv::Tv_GetBacklight_Switch ( void )
 int CTv::Tv_SetColorTemperature ( vpp_color_temperature_mode_t mode, tv_source_input_type_t source_type, int is_save )
 {
     if (mHdmiOutFbc) {
-        return Tv_FactorySet_FBC_ColorTemp_Mode(mode);
+        return mFactoryMode.fbcColorTempModeSet(mode);
     } else {
         return CVpp::getInstance()->SetColorTemperature((vpp_color_temperature_mode_t)mode, (tv_source_input_type_t)source_type, is_save);
     }
@@ -3473,7 +3469,7 @@ int CTv::Tv_SetColorTemperature ( vpp_color_temperature_mode_t mode, tv_source_i
 vpp_color_temperature_mode_t CTv::Tv_GetColorTemperature ( tv_source_input_type_t source_type )
 {
     if (mHdmiOutFbc) {
-        return (vpp_color_temperature_mode_t)Tv_FactoryGet_FBC_ColorTemp_Mode();
+        return (vpp_color_temperature_mode_t)mFactoryMode.fbcColorTempModeGet();
     } else {
         return CVpp::getInstance()->GetColorTemperature((tv_source_input_type_t)source_type);
     }
@@ -3713,31 +3709,6 @@ int CTv::Tv_Get2k4k_ScalerUp_Mode ( void )
     return ret;
 }
 
-int CTv::Tv_SetSplitScreenDemoStatus(tv_source_input_type_t source_type, int onoff_status)
-{
-    int ret = 0;
-    LOGD("%s, split screen demo status source[%d],onoff_stauts[%d]\n", __FUNCTION__ , source_type, onoff_status);
-    if (1 == onoff_status) {
-        ret = Tv_Utils_SetFileAttrStr(SYS_DROILOGIC_DEBUG, (char *)"w 0x503c0 v 0x31d6");//sharpness screen left
-        ret |= Tv_Utils_SetFileAttrStr(SYS_DROILOGIC_DEBUG, (char *)"w 0x07 v 0x174d");//nr screen left
-    } else if (0 == onoff_status) {
-        ret = Tv_Utils_SetFileAttrStr(SYS_DROILOGIC_DEBUG, (char *)"w 0x503c0 v 0x31d6");//sharpness screen left
-        ret |= Tv_Utils_SetFileAttrStr(SYS_DROILOGIC_DEBUG, (char *)"w 0x07 v 0x174d");//nr screen left
-    }
-
-    if (fbcIns != NULL && 0 == ret) {
-        ret |= fbcIns->cfbc_SET_SPLIT_SCREEN_DEMO(COMM_DEV_SERIAL, onoff_status);
-    }
-
-    return ret;
-}
-
-int CTv::Tv_GetSplitScreenDemoStatus(tv_source_input_type_t source_type)
-{
-    source_type = source_type;
-    return 0;
-}
-
 vpp_noise_reduction_mode_t CTv::Tv_GetNoiseReductionMode ( tv_source_input_type_t source_type )
 {
     return CVpp::getInstance()->GetNoiseReductionMode((tv_source_input_type_t)source_type);
@@ -3789,1624 +3760,6 @@ int CTv::Tv_SplitScreenEffect(int mode, int width, int reverse)
     return ret;
 }
 
-int CTv::Tv_FactorySetPQMode_Brightness ( int source_type, int pq_mode, int brightness )
-{
-    return CVpp::getInstance()->FactorySetPQMode_Brightness(source_type, pq_mode, brightness);
-}
-
-int CTv::Tv_FactoryGetPQMode_Brightness ( int source_type, int pq_mode )
-{
-    return CVpp::getInstance()->FactoryGetPQMode_Brightness(source_type, pq_mode);
-}
-
-int CTv::Tv_FactorySetPQMode_Contrast ( int source_type, int pq_mode, int contrast )
-{
-    return CVpp::getInstance()->FactorySetPQMode_Contrast(source_type, pq_mode, contrast);
-}
-
-int CTv::Tv_FactoryGetPQMode_Contrast ( int source_type, int pq_mode )
-{
-    return CVpp::getInstance()->FactoryGetPQMode_Contrast(source_type, pq_mode);
-}
-
-int CTv::Tv_FactorySetPQMode_Saturation ( int source_type, int pq_mode, int saturation )
-{
-    return CVpp::getInstance()->FactorySetPQMode_Saturation(source_type, pq_mode, saturation);
-}
-
-int CTv::Tv_FactoryGetPQMode_Saturation ( int source_type, int pq_mode )
-{
-    return CVpp::getInstance()->FactoryGetPQMode_Saturation(source_type, pq_mode);
-}
-
-int CTv::Tv_FactorySetPQMode_Hue ( int source_type, int pq_mode, int hue )
-{
-    return CVpp::getInstance()->FactorySetPQMode_Hue(source_type, pq_mode, hue);
-}
-
-int CTv::Tv_FactoryGetPQMode_Hue ( int source_type, int pq_mode )
-{
-    return CVpp::getInstance()->FactoryGetPQMode_Hue(source_type, pq_mode);
-}
-
-int CTv::Tv_FactorySetPQMode_Sharpness ( int source_type, int pq_mode, int sharpness )
-{
-    return CVpp::getInstance()->FactorySetPQMode_Sharpness(source_type, pq_mode, sharpness);
-}
-
-int CTv::Tv_FactoryGetPQMode_Sharpness ( int source_type, int pq_mode )
-{
-    return CVpp::getInstance()->FactoryGetPQMode_Sharpness(source_type, pq_mode);
-}
-
-int CTv::GetColorTemperatureParams ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params )
-{
-    if (mHdmiOutFbc) {
-        int ret = Tv_FactoryGet_FBC_ColorTemp_Batch((vpp_color_temperature_mode_t)Tempmode, params);
-        params->r_gain = Tv_FactoryWhiteBalanceFormatOutputFbcGainParams(params->r_gain);
-        params->g_gain = Tv_FactoryWhiteBalanceFormatOutputFbcGainParams(params->g_gain);
-        params->b_gain = Tv_FactoryWhiteBalanceFormatOutputFbcGainParams(params->b_gain);
-        params->r_post_offset = Tv_FactoryWhiteBalanceFormatOutputFbcOffsetParams(params->r_post_offset);
-        params->g_post_offset = Tv_FactoryWhiteBalanceFormatOutputFbcOffsetParams(params->g_post_offset);
-        params->b_post_offset = Tv_FactoryWhiteBalanceFormatOutputFbcOffsetParams(params->b_post_offset);
-        return ret;
-    } else {
-        return CVpp::getInstance()->GetColorTemperatureParams(Tempmode, params);
-    }
-}
-
-int CTv::Tv_FactorySetTestPattern ( int pattern )
-{
-    switch ( pattern ) {
-    case VPP_TEST_PATTERN_NONE:
-        mAv.SetVideoScreenColor ( 3, 16, 128, 128 );
-        break;
-
-    case VPP_TEST_PATTERN_RED:
-        mAv.SetVideoScreenColor ( 0, 81, 90, 240 );
-        break;
-
-    case VPP_TEST_PATTERN_GREEN:
-        mAv.SetVideoScreenColor ( 0, 145, 54, 34 );
-        break;
-
-    case VPP_TEST_PATTERN_BLUE:
-        mAv.SetVideoScreenColor ( 0, 41, 240, 110 );
-        break;
-
-    case VPP_TEST_PATTERN_WHITE:
-        mAv.SetVideoScreenColor ( 0, 235, 128, 128 );
-        break;
-
-    case VPP_TEST_PATTERN_BLACK:
-        mAv.SetVideoScreenColor ( 0, 16, 128, 128 );
-        break;
-
-    default:
-        return -1;
-    }
-    return SSMSaveTestPattern ( pattern );
-}
-
-int CTv::Tv_FactoryGetTestPattern ( void )
-{
-    return CVpp::getInstance()->FactoryGetTestPattern();
-}
-
-int CTv::Tv_FactorySetScreenColor ( int vdin_blending_mask, int y, int u, int v )
-{
-    return mAv.SetVideoScreenColor ( vdin_blending_mask, y, u, v );
-}
-
-int CTv::Tv_FactoryResetPQMode ( void )
-{
-    return CVpp::getInstance()->FactoryResetPQMode();
-}
-
-int CTv::Tv_FactoryResetColorTemp ( void )
-{
-    return CVpp::getInstance()->FactoryResetColorTemp();
-}
-
-int CTv::Tv_FactorySetParamsDefault ( void )
-{
-    return CVpp::getInstance()->FactorySetParamsDefault();
-}
-
-int CTv::Tv_FactorySetDDRSSC ( int step )
-{
-    return CVpp::getInstance()->FactorySetDDRSSC(step);
-}
-
-int CTv::Tv_FactoryGetDDRSSC ( void )
-{
-    return CVpp::getInstance()->FactoryGetDDRSSC();
-}
-
-int CTv::Tv_FactorySetLVDSSSC ( int step )
-{
-    return CVpp::getInstance()->FactorySetLVDSSSC(step);
-}
-
-int CTv::Tv_FactoryGetLVDSSSC ( void )
-{
-    return CVpp::getInstance()->FactoryGetLVDSSSC();
-}
-
-void CTv::Tv_Spread_Spectrum()
-{
-    int value = 0;
-    value = CVpp::getInstance()->FactoryGetLVDSSSC();
-    CVpp::getInstance()->FactorySetLVDSSSC(value);
-}
-
-int CTv::Tv_FactorySetNolineParams ( int noline_params_type, int source_type, noline_params_t noline_params )
-{
-    return CVpp::getInstance()->FactorySetNolineParams(noline_params_type, source_type, noline_params);
-}
-
-noline_params_t CTv::Tv_FactoryGetNolineParams ( int noline_params_type, int source_type )
-{
-    return CVpp::getInstance()->FactoryGetNolineParams(noline_params_type, source_type);
-}
-
-int CTv::Tv_FactorySetOverscan ( int source_type, int fmt, int status_3d, int trans_fmt, tvin_cutwin_t cutwin_t )
-{
-    //tvin_cutwin_t cutwin_t = CVpp::getInstance()->Tv_FactoryGetOverscan(source_type, fmt, status_3d, trans_fmt);
-    CVpp::getInstance()->FactorySetOverscan(source_type, fmt, status_3d, trans_fmt, cutwin_t);
-    //} else {
-#if 0
-    char val_buf[256];
-    memset(val_buf, '\0', 256);
-    LOGD("%s,%d: %d,%d,%d,%d", __FUNCTION__, __LINE__, ( int ) cutwin_t.vs, ( int ) cutwin_t.hs, ( int ) cutwin_t.ve, ( int ) cutwin_t.he);
-    sprintf(val_buf, "%d,%d,%d,%d", ( int ) cutwin_t.vs, ( int ) cutwin_t.hs, ( int ) cutwin_t.ve, ( int ) cutwin_t.he );
-    config_set_str(CFG_SECTION_TV, "vpp.overscan.dtv", val_buf);
-    //}
-#endif
-    return CVpp::getInstance()->VPP_SetVideoCrop ( ( int ) cutwin_t.vs, ( int ) cutwin_t.hs, ( int ) cutwin_t.ve, ( int ) cutwin_t.he );
-}
-
-tvin_cutwin_t CTv::Tv_FactoryGetOverscan ( int source_type, int fmt, int status_3d, int trans_fmt )
-{
-    status_3d = status_3d;
-    return CVpp::getInstance()->FactoryGetOverscan(source_type, fmt, Check2Dor3D(m_mode_3d, (tvin_trans_fmt_t)trans_fmt), trans_fmt);
-#if 0
-    else {
-        tvin_cutwin_t  cutwin;
-        int ret = 0;
-        char tmp_buf[16];
-        tmp_buf[0] = 0;
-
-        if ((ret |= cfg_get_one_item("vpp.overscan.dtv", ",", 0, tmp_buf)) == 0) {
-            cutwin.vs = strtol(tmp_buf, NULL, 10);
-        }
-        if ((ret |= cfg_get_one_item("vpp.overscan.dtv", ",", 1, tmp_buf)) == 0) {
-            cutwin.hs = strtol(tmp_buf, NULL, 10);
-        }
-        if ((ret |= cfg_get_one_item("vpp.overscan.dtv", ",", 2, tmp_buf)) == 0) {
-            cutwin.ve = strtol(tmp_buf, NULL, 10);
-        }
-        if ((ret |= cfg_get_one_item("vpp.overscan.dtv", ",", 3, tmp_buf)) == 0) {
-            cutwin.he = strtol(tmp_buf, NULL, 10);
-        }
-        LOGD("%s,%d: %d,%d,%d,%d", __FUNCTION__, __LINE__, ( int ) cutwin.vs, ( int ) cutwin.hs, ( int ) cutwin.ve, ( int ) cutwin.he);
-        return cutwin;
-    }
-#endif
-}
-
-int CTv::Tv_ReplacePqDb(const char *newFilePath)
-{
-    return CVpp::getInstance()->getPqData()->replacePqDb(newFilePath);
-}
-
-int CTv::Tv_FactorySet_FBC_Brightness ( int value )
-{
-    //int temp_value = (255*value)/100;
-    int temp_value = value;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Brightness(COMM_DEV_SERIAL, temp_value);
-        return 0;
-    }
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Brightness  ( void )
-{
-    int temp_value = 0;
-    int data = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Brightness(COMM_DEV_SERIAL, &temp_value);
-        //data = (temp_value*100)/255;
-        data = temp_value;
-        return data;
-    }
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Contrast ( int value )
-{
-    //int temp_value = (255*value)/100;
-    int temp_value = value;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Contrast(COMM_DEV_SERIAL, temp_value);
-        return 0;
-    }
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Contrast  ( void )
-{
-    int temp_value = 0;
-    int data = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Contrast(COMM_DEV_SERIAL, &temp_value);
-        //data = (temp_value*100)/255;
-        data = temp_value;
-        return data;
-    }
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Saturation ( int value )
-{
-    //int temp_value = (255*value)/100;
-    int temp_value = value;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Saturation(COMM_DEV_SERIAL, temp_value);
-        return 0;
-    }
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Saturation  ( void )
-{
-    int temp_value = 0;
-    int data = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Saturation(COMM_DEV_SERIAL, &temp_value);
-        //data = (temp_value*100)/255;
-        data = temp_value;
-        return data;
-    }
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_HueColorTint ( int value )
-{
-    //int temp_value = (255*value)/100;
-    int temp_value = value;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_HueColorTint(COMM_DEV_SERIAL, temp_value);
-        return 0;
-    }
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_HueColorTint ( void )
-{
-    int temp_value = 0;
-    int data = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_HueColorTint(COMM_DEV_SERIAL, &temp_value);
-        //data = (temp_value*100)/255;
-        data = temp_value;
-        return data;
-    }
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Backlight ( int value )
-{
-    int temp_value = value;
-    if (fbcIns != NULL) {
-        temp_value = temp_value * 255 / 100;
-        fbcIns->cfbc_Set_Backlight(COMM_DEV_SERIAL, temp_value);
-        return 0;
-    }
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Backlight ( void )
-{
-    int temp_value = 0;
-    int data = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Backlight(COMM_DEV_SERIAL, &temp_value);
-        if (temp_value * 100 % 255 == 0)
-            temp_value = temp_value * 100 / 255;
-        else
-            temp_value = temp_value * 100 / 255 + 1;
-        data = temp_value;
-        return data;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Auto_Backlight_OnOff( unsigned char status)
-{
-    if (fbcIns != NULL) {
-        return fbcIns->cfbc_Set_Auto_Backlight_OnOff(COMM_DEV_SERIAL, status);
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Auto_Backlight_OnOff( void )
-{
-    int temp_status = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Auto_Backlight_OnOff(COMM_DEV_SERIAL, &temp_status);
-        return temp_status;
-    }
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_ELEC_MODE( int value )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_AUTO_ELEC_MODE(COMM_DEV_SERIAL, value);
-        SSMSaveFBCELECmodeVal(value);
-        return 0;
-    }
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_ELEC_MODE( void )
-{
-    int val = 0;
-    SSMReadFBCELECmodeVal(&val);
-    return val;
-}
-
-int CTv::Tv_FactorySet_FBC_BACKLIGHT_N360( int value )
-{
-    SSMSaveFBCELECmodeVal(value);
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_BACKLIGHT_N360( void )
-{
-    int val = 0;
-    SSMReadFBCELECmodeVal(&val);
-    return val;
-}
-
-int CTv::Tv_FactorySet_FBC_Thermal_State( int value )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Thermal_state(COMM_DEV_SERIAL, value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactorySet_FBC_Picture_Mode ( int mode )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Picture_Mode(COMM_DEV_SERIAL, mode);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Picture_Mode ( void )
-{
-    int mode = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Picture_Mode(COMM_DEV_SERIAL, &mode);
-        return mode;
-    }
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Set_Test_Pattern ( int mode )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Test_Pattern(COMM_DEV_SERIAL, mode);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Get_Test_Pattern ( void )
-{
-    int mode = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Test_Pattern(COMM_DEV_SERIAL, &mode);
-        return mode;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Gain_Red( int value )
-{
-    int temp_value = 0;
-
-    //temp_value = (value*255)/2047;
-    //value 0 ~ 2047
-    temp_value = value;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Gain_Red(COMM_DEV_SERIAL, temp_value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Gain_Red ( void )
-{
-    int temp_value = 0, value = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Gain_Red(COMM_DEV_SERIAL, &temp_value);
-        //value 0 ~ 2047
-        //value = (temp_value*2047)/255;
-        value = temp_value;
-
-        return value;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Gain_Green( int value )
-{
-    int temp_value = 0;
-
-    //temp_value = (value*255)/2047;
-    //value 0 ~ 2047
-    temp_value = value;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Gain_Green(COMM_DEV_SERIAL, temp_value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Gain_Green ( void )
-{
-    int temp_value = 0, value = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Gain_Green(COMM_DEV_SERIAL, &temp_value);
-        //value 0 ~ 2047
-        //value = (temp_value*2047)/255;
-        value = temp_value;
-
-        return value;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactoryGet_FBC_VIDEO_MUTE ( void )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_VMute(COMM_DEV_SERIAL, 1);
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Gain_Blue( int value )
-{
-    int temp_value = 0;
-
-    //temp_value = (value*255)/2047;
-    //value 0 ~ 2047
-    temp_value = value;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Gain_Blue(COMM_DEV_SERIAL, temp_value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Gain_Blue ( void )
-{
-    int temp_value = 0, value = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Gain_Blue(COMM_DEV_SERIAL, &temp_value);
-        //value 0 ~ 2047
-        //value = (temp_value*2047)/255;
-        value = temp_value;
-
-        return value;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Offset_Red( int value )
-{
-    //value -1024~+1023
-    int temp_value = 0;
-
-    //temp_value = (value+1024)*255/2047;
-    temp_value = value;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Offset_Red(COMM_DEV_SERIAL, temp_value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Offset_Red ( void )
-{
-    int temp_value = 0, value = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Offset_Red(COMM_DEV_SERIAL, &temp_value);
-        //value -1024~+1023
-        //value = (temp_value*2047)/255 - 1024;
-        value = temp_value;
-
-        return value;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Offset_Green( int value )
-{
-    //value -1024~+1023
-    int temp_value = 0;
-
-    //temp_value = (value+1024)*255/2047;
-    temp_value = value;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Offset_Green(COMM_DEV_SERIAL, temp_value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Offset_Green ( void )
-{
-    int temp_value = 0, value = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Offset_Green(COMM_DEV_SERIAL, &temp_value);
-        //value -1024~+1023
-        //value = (temp_value*2047)/255 - 1024;
-        value = temp_value;
-
-        return value;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Offset_Blue( int value )
-{
-    //value -1024~+1023
-    int temp_value = 0;
-
-    //temp_value = (value+1024)*255/2047;
-    temp_value = value;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Offset_Blue(COMM_DEV_SERIAL, value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Offset_Blue ( void )
-{
-    int temp_value = 0, value = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Offset_Blue(COMM_DEV_SERIAL, &temp_value);
-        //value -1024~+1023
-        //value = (temp_value*2047)/255 - 1024;
-        value = temp_value;
-
-        return value;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactoryGetWhiteBalanceRedGain(int source_type, int colortemp_mode)
-{
-    int ret = -1;
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        LOGD("--------- call none fbc method ---------");
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Rgain(source_type, colortemp_mode);
-    } else { //use fbc store the white balance params
-        LOGD("--------- call fbc method ---------");
-        ret = Tv_FactoryGetItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 0);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactoryGetWhiteBalanceGreenGain(int source_type, int colortemp_mode)
-{
-    int ret = -1;
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Ggain(source_type, colortemp_mode);
-    } else { //use fbc store the white balance params
-        ret = Tv_FactoryGetItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 1);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactoryGetWhiteBalanceBlueGain(int source_type, int colortemp_mode)
-{
-    int ret = -1;
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Bgain(source_type, colortemp_mode);
-    } else { //use fbc store the white balance params
-        ret = Tv_FactoryGetItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 2);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactoryGetWhiteBalanceRedOffset(int source_type, int colortemp_mode)
-{
-    int ret = -1;
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Roffset(source_type, colortemp_mode);
-    } else { //use fbc store the white balance params
-        ret = Tv_FactoryGetItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 3);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactoryGetWhiteBalanceGreenOffset(int source_type, int colortemp_mode)
-{
-    int ret = -1;
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Goffset(source_type, colortemp_mode);
-    } else { //use fbc store the white balance params
-        ret = Tv_FactoryGetItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 4);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactoryGetWhiteBalanceBlueOffset(int source_type, int colortemp_mode)
-{
-    int ret = -1;
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Boffset(source_type, colortemp_mode);
-    } else { //use fbc store the white balance params
-        ret = Tv_FactoryGetItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 5);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactorySetWhiteBalanceRedGain(int source_type, int colortemp_mode, int value)
-{
-    int ret = -1;
-    if (value < 0) {
-        value = 0;
-    } else if (value > 2047) {
-        value = 2047;
-    }
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Rgain(source_type, colortemp_mode, value);
-        if (ret != -1) {
-            LOGD("save the red gain to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Rgain(source_type, colortemp_mode, value);
-        }
-    } else { //use fbc store the white balance params
-        value = Tv_FactoryWhiteBalanceFormatInputFbcGainParams(value);
-        ret = Tv_FactorySet_FBC_Gain_Red(value);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactorySetWhiteBalanceGreenGain(int source_type, int colortemp_mode, int value)
-{
-    int ret = -1;
-    if (value < 0) {
-        value = 0;
-    } else if (value > 2047) {
-        value = 2047;
-    }
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Ggain(source_type, colortemp_mode, value);
-        if (ret != -1) {
-            LOGD("save the green gain to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Ggain(source_type, colortemp_mode, value);
-        }
-    } else { //use fbc store the white balance params
-        value = Tv_FactoryWhiteBalanceFormatInputFbcGainParams(value);
-        ret = Tv_FactorySet_FBC_Gain_Green(value);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactorySetWhiteBalanceBlueGain(int source_type, int colortemp_mode, int value)
-{
-    int ret = -1;
-    if (value < 0) {
-        value = 0;
-    } else if (value > 2047) {
-        value = 2047;
-    }
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Bgain(source_type, colortemp_mode, value);
-        if (ret != -1) {
-            LOGD("save the blue gain to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Bgain(source_type, colortemp_mode, value);
-        }
-    } else { //use fbc store the white balance params
-        value = Tv_FactoryWhiteBalanceFormatInputFbcGainParams(value);
-        ret = Tv_FactorySet_FBC_Gain_Blue(value);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactorySetWhiteBalanceRedOffset(int source_type, int colortemp_mode, int value)
-{
-    int ret = -1;
-    if (value < -1024) {
-        value = -1024;
-    } else if (value > 1023) {
-        value = 1023;
-    }
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Roffset(source_type, colortemp_mode, value);
-        if (ret != -1) {
-            LOGD("save the red offset to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Roffset(source_type, colortemp_mode, value);
-        }
-    } else { //use fbc store the white balance params
-        value = Tv_FactoryWhiteBalanceFormatInputFbcOffsetParams(value);
-        ret = Tv_FactorySet_FBC_Offset_Red(value);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactorySetWhiteBalanceGreenOffset(int source_type, int colortemp_mode, int value)
-{
-    int ret = -1;
-    if (value < -1024) {
-        value = -1024;
-    } else if (value > 1023) {
-        value = 1023;
-    }
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Goffset(source_type, colortemp_mode, value);
-        if (ret != -1) {
-            LOGD("save the green offset to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Goffset(source_type, colortemp_mode, value);
-        }
-    } else { //use fbc store the white balance params
-        value = Tv_FactoryWhiteBalanceFormatInputFbcOffsetParams(value);
-        ret = Tv_FactorySet_FBC_Offset_Green(value);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactorySetWhiteBalanceBlueOffset(int source_type, int colortemp_mode, int value)
-{
-    int ret = -1;
-    if (value < -1024) {
-        value = -1024;
-    } else if (value > 1023) {
-        value = 1023;
-    }
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Boffset(source_type, colortemp_mode, value);
-        if (ret != -1) {
-            LOGD("save the blue offset to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Boffset(source_type, colortemp_mode, value);
-        }
-    } else { //use fbc store the white balance params
-        value = Tv_FactoryWhiteBalanceFormatInputFbcOffsetParams(value);
-        ret = Tv_FactorySet_FBC_Offset_Blue(value);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactorySetWhiteBalanceColorTempMode(int source_type, int colortemp_mode, int is_save)
-{
-    int ret = -1;
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->SetColorTemperature((vpp_color_temperature_mode_t)colortemp_mode, (tv_source_input_type_t)source_type, is_save);
-    } else { //use fbc store the white balance params
-        ret = Tv_FactorySet_FBC_ColorTemp_Mode(colortemp_mode);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactoryGetWhiteBalanceColorTempMode(int source_type )
-{
-    int ret = -1;
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->GetColorTemperature((tv_source_input_type_t)source_type);
-    } else { //use fbc store the white balance params
-        ret = Tv_FactoryGet_FBC_ColorTemp_Mode();
-    }
-    return ret;
-}
-
-int CTv::Tv_FactoryWhiteBalanceFormatInputFbcGainParams(int value)
-{
-    int ret = 1024;
-    if (value < 0) {
-        ret = 0;
-    } else if (value > 2047) {
-        ret = 2047;
-    } else {
-        ret = value;
-    }
-    ret = ret >> 3;
-    return ret;
-}
-
-int CTv::Tv_FactoryWhiteBalanceFormatInputFbcOffsetParams(int value)
-{
-    int ret = 0;
-    if (value < -1024) {
-        ret = -1024;
-    } else if (value > 1023) {
-        ret = 1023;
-    } else {
-        ret = value;
-    }
-    ret += 1024;
-    ret = ret >> 3;
-    return ret;
-}
-
-int CTv::Tv_FactoryWhiteBalanceFormatOutputFbcOffsetParams(int value)
-{
-    if (value == 255) {
-        value = 1023;
-    } else {
-        value = value << 3;
-        value -= 1024;
-    }
-    return value;
-}
-
-int CTv::Tv_FactoryWhiteBalanceFormatOutputFbcGainParams(int value)
-{
-    value = value << 3;
-    if (value < 0) {
-        value = 0;
-    } else if (value > 2047) {
-        value = 2047;
-    }
-    return value;
-}
-
-int CTv::Tv_FactorySaveWhiteBalancePramas(int source_type, int tempmode, int r_gain, int g_gain, int b_gain, int r_offset, int g_offset, int b_offset)
-{
-    int ret = 0;
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        CVpp::getInstance()->SaveColorTemp((vpp_color_temperature_mode_t) tempmode, (tv_source_input_type_t) source_type);
-        CVpp::getInstance()->FactorySaveColorTemp_Rgain(source_type, tempmode, r_gain);
-        CVpp::getInstance()->FactorySaveColorTemp_Ggain(source_type, tempmode, g_gain);
-        CVpp::getInstance()->FactorySaveColorTemp_Bgain(source_type, tempmode, b_gain);
-        CVpp::getInstance()->FactorySaveColorTemp_Roffset(source_type, tempmode, r_offset);
-        CVpp::getInstance()->FactorySaveColorTemp_Goffset(source_type, tempmode, g_offset);
-        CVpp::getInstance()->FactorySaveColorTemp_Boffset(source_type, tempmode, b_offset);
-    } else { //use fbc store the white balance params
-        tcon_rgb_ogo_t params;
-
-        params.r_gain = Tv_FactoryWhiteBalanceFormatInputFbcGainParams(r_gain);
-        params.g_gain = Tv_FactoryWhiteBalanceFormatInputFbcGainParams(g_gain);
-        params.b_gain = Tv_FactoryWhiteBalanceFormatInputFbcGainParams(b_gain);
-        params.r_post_offset = Tv_FactoryWhiteBalanceFormatInputFbcOffsetParams(r_offset);
-        params.g_post_offset = Tv_FactoryWhiteBalanceFormatInputFbcOffsetParams(g_offset);
-        params.b_post_offset = Tv_FactoryWhiteBalanceFormatInputFbcOffsetParams(b_offset);
-        ret = Tv_FactorySet_FBC_ColorTemp_Batch((vpp_color_temperature_mode_t)tempmode, params);
-    }
-    return ret;
-}
-
-/**
-* The color temperature enum order is diffrent bettewn G9 and Fbc, so we have to make a mapping
-**/
-int CTv::Tv_FactoryWhiteBalanceColorTempMappingG92Fbc(int Tempmode)
-{
-    int ret = Tempmode;
-    switch (Tempmode) {
-    case 0:     //standard
-        ret = 1;
-        break;
-    case 1:     //warm
-        ret = 2;
-        break;
-    case 2:    //cold
-        ret = 0;
-        break;
-    default:
-        break;
-    }
-    return ret;
-}
-
-/**
-* The color temperature enum order is diffrent bettewn G9 and Fbc, so we have to make a mapping
-**/
-int CTv::Tv_FactoryWhiteBalanceColorTempMappingFbc2G9(int Tempmode)
-{
-    int ret = Tempmode;
-    switch (Tempmode) {
-    case 0:     //cold
-        ret = 2;
-        break;
-    case 1:     //standard
-        ret = 0;
-        break;
-    case 2:    //warm
-        ret = 1;
-        break;
-    default:
-        break;
-    }
-    return ret;
-}
-
-int CTv::Tv_SetTestPattern(int value)
-{
-    int ret = -1;
-    if (fbcIns != NULL) {
-        LOGD("%s, value is %d\n", __FUNCTION__, value);
-        ret = fbcIns->cfbc_TestPattern_Select(COMM_DEV_SERIAL, value);
-    }
-
-    return ret;
-}
-
-int CTv::Tv_FactoryCloseWhiteBalanceGrayPattern()
-{
-    int useFbc = 0;
-    int ret = -1;
-    if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->VPP_SetGrayPattern(0);
-    } else { //use fbc store the white balance params
-        ret = Tv_FactoryClose_FBC_GrayPattern();
-    }
-    return ret;
-}
-
-int CTv::Tv_FactoryOpenWhiteBalanceGrayPattern()
-{
-    int ret = 0;
-    if (mHdmiOutFbc) { //use fbc store the white balance params
-        ret = Tv_FactoryOpen_FBC_GrayPattern();
-    }
-    return ret;
-}
-
-int CTv::Tv_FactorySetWhiteBalanceGrayPattern(int value)
-{
-    int ret = -1;
-    if (!mHdmiOutFbc) {
-        ret = CVpp::getInstance()->VPP_SetGrayPattern(value);
-    } else {
-        ret = Tv_FactorySet_FBC_GrayPattern(value);
-    }
-    return ret;
-}
-
-int CTv:: Tv_FactoryGetWhiteBalanceGrayPattern()
-{
-    int ret = -1;
-    if (!mHdmiOutFbc) {
-        ret = CVpp::getInstance()->VPP_GetGrayPattern();
-    }
-    return ret;
-}
-
-int CTv::Tv_FactorySet_FBC_GrayPattern(int value)
-{
-    int ret = -1;
-    unsigned char grayValue = 0;
-    if (value > 255) {
-        grayValue = 255;
-    } else if (value < 0) {
-        grayValue = 0;
-    } else {
-        grayValue = (unsigned char)(0xFF & value);
-    }
-    if (fbcIns != NULL) {
-        ret = fbcIns->cfbc_WhiteBalance_SetGrayPattern(COMM_DEV_SERIAL, grayValue);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactoryOpen_FBC_GrayPattern()
-{
-    int ret = -1;
-    if (fbcIns != NULL) {
-        ret = fbcIns->cfbc_WhiteBalance_GrayPattern_OnOff(COMM_DEV_SERIAL, 0);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactoryClose_FBC_GrayPattern()
-{
-    int ret = -1;
-    if (fbcIns != NULL) {
-        ret = fbcIns->cfbc_WhiteBalance_GrayPattern_OnOff(COMM_DEV_SERIAL, 1);
-    }
-    return ret;
-}
-
-int CTv::Tv_FactorySet_FBC_ColorTemp_Mode( int mode )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_ColorTemp_Mode(COMM_DEV_SERIAL, mode);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_ColorTemp_Mode ( void )
-{
-    int temp_mode = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_ColorTemp_Mode(COMM_DEV_SERIAL, &temp_mode);
-        return temp_mode;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactorySet_FBC_ColorTemp_Mode_N360( int mode )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_ColorTemp_Mode(COMM_DEV_SERIAL, mode);
-        SSMSaveFBCN360ColorTempVal(mode);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_ColorTemp_Mode_N360 ( void )
-{
-    int temp_mode = 0;
-    SSMReadFBCN360ColorTempVal(&temp_mode);
-    return temp_mode;
-}
-
-int CTv::Tv_FactorySet_FBC_LockN_state(int value)
-{
-    LOGE ("Tv_FactorySet_FBC_LockN_state %d!!!\n", value);
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_LockN_state(COMM_DEV_SERIAL, value);
-        return 0;
-    }
-    return -1;
-}
-
-int CTv::Tv_FactorySet_FBC_WB_Initial( int status )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_WB_Initial(COMM_DEV_SERIAL, status);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_WB_Initial ( void )
-{
-    int temp_status = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_WB_Initial(COMM_DEV_SERIAL, &temp_status);
-        return temp_status;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_ColorTemp_Batch(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params)
-{
-    unsigned char mode = 0, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset;
-    switch (Tempmode) {
-    case VPP_COLOR_TEMPERATURE_MODE_STANDARD:
-        mode = 1;   //COLOR_TEMP_STD
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_WARM:
-        mode = 2;   //COLOR_TEMP_WARM
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_COLD:
-        mode = 0;  //COLOR_TEMP_COLD
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_USER:
-        mode = 3;   //COLOR_TEMP_USER
-        break;
-    default:
-        break;
-    }
-    r_gain = (params.r_gain * 255) / 2047; // u1.10, range 0~2047, default is 1024 (1.0x)
-    g_gain = (params.g_gain * 255) / 2047;
-    b_gain = (params.b_gain * 255) / 2047;
-    r_offset = (params.r_post_offset + 1024) * 255 / 2047; // s11.0, range -1024~+1023, default is 0
-    g_offset = (params.g_post_offset + 1024) * 255 / 2047;
-    b_offset = (params.b_post_offset + 1024) * 255 / 2047;
-    LOGD ( "~Tv_FactorySet_FBC_ColorTemp_Batch##%d,%d,%d,%d,%d,%d,##", r_gain, g_gain, b_gain, r_offset, g_offset, b_offset );
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_WB_Batch(COMM_DEV_SERIAL, mode, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_ColorTemp_Batch ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params )
-{
-    unsigned char mode = 0, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset;
-    switch (Tempmode) {
-    case VPP_COLOR_TEMPERATURE_MODE_STANDARD:
-        mode = 1;   //COLOR_TEMP_STD
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_WARM:
-        mode = 2;   //COLOR_TEMP_WARM
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_COLD:
-        mode = 0;  //COLOR_TEMP_COLD
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_USER:
-        mode = 3;   //COLOR_TEMP_USER
-        break;
-    default:
-        break;
-    }
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_WB_Batch(COMM_DEV_SERIAL, mode, &r_gain, &g_gain, &b_gain, &r_offset, &g_offset, &b_offset);
-        LOGD ( "~Tv_FactoryGet_FBC_ColorTemp_Batch##%d,%d,%d,%d,%d,%d,##", r_gain, g_gain, b_gain, r_offset, g_offset, b_offset );
-
-        params->r_gain = (r_gain * 2047) / 255;
-        params->g_gain = (g_gain * 2047) / 255;
-        params->b_gain = (b_gain * 2047) / 255;
-        params->r_post_offset = (r_offset * 2047) / 255 - 1024;
-        params->g_post_offset = (g_offset * 2047) / 255 - 1024;
-        params->b_post_offset = (b_offset * 2047) / 255 - 1024;
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactorySet_WB_G9_To_FBC( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params )
-{
-    Tv_FactorySet_FBC_ColorTemp_Batch(Tempmode, params);
-    return 0;
-}
-
-int CTv::Tv_FactoryGet_WB_G9_To_FBC ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params )
-{
-    int temp_status = 0;
-    Tv_FactoryGet_FBC_ColorTemp_Batch(Tempmode, params);
-    return temp_status;
-}
-
-int CTv::Tv_FactoryGetItemFromBatch(vpp_color_temperature_mode_t colortemp_mode, int item)
-{
-    tcon_rgb_ogo_t params;
-    int ret = 0;
-
-    Tv_FactoryGet_FBC_ColorTemp_Batch((vpp_color_temperature_mode_t)colortemp_mode, &params);
-    switch (item) {
-    case 0:
-        ret = Tv_FactoryWhiteBalanceFormatOutputFbcGainParams(params.r_gain);
-        break;
-    case 1:
-        ret = Tv_FactoryWhiteBalanceFormatOutputFbcGainParams(params.g_gain);
-        break;
-    case 2:
-        ret = Tv_FactoryWhiteBalanceFormatOutputFbcGainParams(params.b_gain);
-        break;
-    case 3:
-        ret = Tv_FactoryWhiteBalanceFormatOutputFbcOffsetParams(params.r_post_offset);
-        break;
-    case 4:
-        ret = Tv_FactoryWhiteBalanceFormatOutputFbcOffsetParams(params.g_post_offset);
-        break;
-    case 5:
-        ret = Tv_FactoryWhiteBalanceFormatOutputFbcOffsetParams(params.b_post_offset);
-        break;
-    default:
-        ret = 0;
-    }
-    return ret;
-}
-
-int CTv::Tv_FactorySet_FBC_CM_OnOff( unsigned char status )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_CM(COMM_DEV_SERIAL, status);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_CM_OnOff (void)
-{
-    int temp_status = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_CM(COMM_DEV_SERIAL, &temp_status);
-        return temp_status;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_DNLP_OnOff( unsigned char status )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_DNLP(COMM_DEV_SERIAL, status);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_DNLP_OnOff (void)
-{
-    int temp_status = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_DNLP(COMM_DEV_SERIAL, &temp_status);
-        return temp_status;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Gamma_OnOff( unsigned char status )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Gamma(COMM_DEV_SERIAL, status);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Gamma_OnOff (void)
-{
-    int temp_status = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Gamma(COMM_DEV_SERIAL, &temp_status);
-        return temp_status;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_WhiteBalance_OnOff( unsigned char status )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_WhiteBalance_OnOff(COMM_DEV_SERIAL, status);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_WhiteBalance_OnOff (void)
-{
-    int temp_status = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_WhiteBalance_OnOff(COMM_DEV_SERIAL, &temp_status);
-        return temp_status;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_backlight_onoff ( int value )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_backlight_onoff(COMM_DEV_SERIAL, value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_backlight_onoff ( void )
-{
-    int temp_value = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_backlight_onoff(COMM_DEV_SERIAL, &temp_value);
-        return temp_value;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_LVDS_SSG_Set( int value )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_LVDS_SSG_Set(COMM_DEV_SERIAL, value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactorySet_FBC_LightSensor_Status_N310 ( int value )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_LightSensor_N310(COMM_DEV_SERIAL, value);
-        SSMSaveFBCN310LightsensorVal(value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_LightSensor_Status_N310 ( void )
-{
-    int data = 0;
-    if (fbcIns != NULL) {
-        SSMReadFBCN310LightsensorVal(&data);
-        return data;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Dream_Panel_Status_N310 ( int value )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Dream_Panel_N310(COMM_DEV_SERIAL, value);
-        SSMSaveFBCN310Dream_PanelVal(value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Dream_Panel_Status_N310 ( void )
-{
-    int data = 0;
-    if (fbcIns != NULL) {
-        SSMReadFBCN310Dream_PanelVal(&data);
-        return data;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_MULT_PQ_Status_N310 ( int value )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_MULT_PQ_N310(COMM_DEV_SERIAL, value);
-        SSMSaveFBCN310MULT_PQVal(value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_MULT_PQ_Status_N310 ( void )
-{
-    int data = 0;
-
-    if (fbcIns != NULL) {
-        SSMReadFBCN310MULT_PQVal(&data);
-        return data;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_MEMC_Status_N310 ( int value )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_MEMC_N310(COMM_DEV_SERIAL, value);
-        SSMSaveFBCN310MEMCVal(value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_MEMC_Status_N310 ( void )
-{
-    int data = 0;
-    if (fbcIns != NULL) {
-        SSMReadFBCN310MEMCVal(&data);
-        return data;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactorySet_FBC_ColorTemp_Mode_N310( int mode )
-{
-    //int colorTemp = 0;
-    if (fbcIns != NULL) {
-        //colorTemp = Tv_FactoryWhiteBalanceColorTempMappingG92Fbc(mode);
-        fbcIns->cfbc_Set_ColorTemp_Mode(COMM_DEV_SERIAL, mode);
-        SSMSaveFBCN310ColorTempVal(mode);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_ColorTemp_Mode_N310 ( void )
-{
-    int mode = 0;
-    if (fbcIns != NULL) {
-        SSMReadFBCN310ColorTempVal(&mode);
-        //mode = Tv_FactoryWhiteBalanceColorTempMappingFbc2G9(temp_mode);
-
-        return mode;
-    }
-    return -1;
-}
-
-int CTv::Tv_FactorySet_FBC_Backlight_N310 ( int value )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Backlight(COMM_DEV_SERIAL, value);
-        SSMSaveFBCN310BackLightVal(value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Backlight_N310 ( void )
-{
-    int val = 0;
-
-    if (fbcIns != NULL) {
-        SSMReadFBCN310BackLightVal(&val);
-        return val;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactorySet_FBC_Bluetooth_IIS_N310 ( int value )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Bluetooth_IIS_onoff(COMM_DEV_SERIAL, value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_Bluetooth_IIS_N310 ( void )
-{
-    int temp_value = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_Bluetooth_IIS_onoff(COMM_DEV_SERIAL, &temp_value);
-        return temp_value;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_FBC_Led_N310 ( int val_1, int val_2, int val_3 )
-{
-    int val = 0;
-
-    if (fbcIns != NULL) {
-        val = fbcIns->cfbc_Set_Led_onoff(COMM_DEV_SERIAL, val_1, val_2, val_3);
-        return val;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactorySet_VbyOne_Spread_Spectrum_N311 ( int value )
-{
-    if (fbcIns != NULL) {
-        return -1;
-    } else {
-        LOGD("%s, Set spectrum for T868 V-by-one....%d....\n", __FUNCTION__ , value);
-        SSMSaveN311_VbyOne_Spread_Spectrum_Val(value);
-
-        switch (value) {
-        case 0:
-            //SetFileAttrValue ( SYS_DROILOGIC_DEBUG ,"w 0x135c5091 c 0x10ca");
-            //SetFileAttrValue ( SYS_DROILOGIC_DEBUG ,"w 0x801da72c c 0x10cb");
-            break;
-        case 1:
-            SetFileAttrValue ( SYS_DROILOGIC_DEBUG, "w 0x1ba05091 c 0x10ca");
-            SetFileAttrValue ( SYS_DROILOGIC_DEBUG, "w 0x80bda72c c 0x10cb");
-            break;
-        default:
-            LOGD("%s, Set spectrum for T868 V-by-one....%d....\n", __FUNCTION__ , value);
-            break;
-        }
-
-        return 0;
-    }
-}
-
-int CTv::Tv_FactoryGet_VbyOne_Spread_Spectrum_N311 ( void )
-{
-    int val = 0;
-    if (fbcIns != NULL) {
-        return -1;
-    } else  {
-        SSMReadN311_VbyOne_Spread_Spectrum_Val(&val);
-        return val;
-    }
-}
-
-int CTv::Tv_FactorySet_FBC_AP_STANDBY_N310 ( int value )
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_AP_STANDBY_N310(COMM_DEV_SERIAL, value);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CTv::Tv_FactoryGet_FBC_AP_STANDBY_N310( void )
-{
-    int temp_value = 0;
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_AP_STANDBY_N310(COMM_DEV_SERIAL, &temp_value);
-        return temp_value;
-    }
-
-    return 0;
-}
-
-int CTv::Tv_FactorySet_Uboot_Stage(int value)
-{
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_Fbc_Uboot_Stage(COMM_DEV_SERIAL, value);
-        return 0;
-    }
-
-    return -1;
-}
-
 //audio
 void CTv::TvAudioOpen()
 {
@@ -5421,9 +3774,7 @@ void CTv::TvAudioOpen()
 
 void CTv::AudioCtlUninit()
 {
-    int oldMuteStatus;
-
-    oldMuteStatus = GetAudioMuteForTv();
+    int oldMuteStatus = mAudioMuteStatusForTv;
     SetAudioMuteForTv(CC_AUDIO_MUTE);
 
     //AudioCtlUninit();
@@ -5469,11 +3820,6 @@ int CTv::SetAudioMuteForTv(int muteOrUnmute)
     return ret;
 }
 
-int CTv::GetAudioMuteForTv()
-{
-    return mAudioMuteStatusForTv;
-}
-
 int CTv::GetDbxTvMode(int *mode, int *son_value, int *vol_value, int *sur_value)
 {
     *mode = 0;
@@ -5496,27 +3842,6 @@ int CTv::SetAudioSPDIFSwitch(int tmp_val)
     return 0;
 }
 
-int CTv::AudioHandleHeadsetPlugIn()
-{
-    return 0;
-}
-
-int CTv::AudioHandleHeadsetPullOut()
-{
-    return 0;
-}
-
-int CTv::Tv_SetDRC_OnOff(int on_off)
-{
-    on_off = on_off;
-    return 0;
-}
-
-int CTv::Tv_GetDRC_OnOff(void)
-{
-    return 0;
-}
-
 void CTv::updateSubtitle(int pic_width, int pic_height)
 {
     TvEvent::SubtitleEvent ev;
@@ -5524,43 +3849,6 @@ void CTv::updateSubtitle(int pic_width, int pic_height)
     ev.pic_height = pic_height;
     sendTvEvent(ev);
 }
-
-int CTv::setSubtitleBuffer(char *share_mem)
-{
-    mSubtitle.setBuffer(share_mem);
-    return 0;
-}
-
-int CTv::initSubtitle(int bitmapWidth, int bitmapHeight)
-{
-    return mSubtitle.sub_init(bitmapWidth, bitmapHeight);
-}
-
-int CTv::lockSubtitle()
-{
-    return mSubtitle.sub_lock();
-}
-
-int CTv::unlockSubtitle()
-{
-    return mSubtitle.sub_unlock();
-}
-
-int CTv::getSubSwitchStatus()
-{
-    return mSubtitle.sub_switch_status();
-}
-
-int CTv::startSubtitle(int dmx_id, int pid, int page_id, int anc_page_id)
-{
-    return mSubtitle.sub_start_dvb_sub(dmx_id, pid, page_id, anc_page_id);
-}
-
-int CTv::stopSubtitle()
-{
-    return mSubtitle.sub_stop_dvb_sub();
-}
-
 //--------------------------------------------------
 
 

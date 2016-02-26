@@ -38,6 +38,9 @@
 #include "AutoBackLight.h"
 #include "CAutoPQparam.h"
 #include "tvin/CSourceConnectDetect.h"
+
+#include <CTvFactory.h>
+
 using namespace android;
 
 static const char *TV_CONFIG_FILE_PATH = "/param/tvconfig.conf";
@@ -51,24 +54,6 @@ static const char *TV_SSM_DATA_PARAM_PATH = "/param/ssm_data";
 
 #define DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN "/sys/class/tsync/av_threshold_min"
 #define AV_THRESHOLD_MIN_MS "540000" //6S = 6*90000
-
-
-
-
-typedef enum tv_fmt_ratio_e {
-    RATIO_43,
-    RATIO_169,
-    RATIO_MAX,
-} tv_fmt_ratio_t;
-
-typedef enum tv_color_fmt_e {
-    COLOR_RGB444,
-    COLOR_YUV422,
-    COLOR_YUV444,
-    COLOR_MAX,
-} tv_color_fmt_t;
-
-
 
 typedef enum tv_window_mode_e {
     NORMAL_WONDOW,
@@ -148,8 +133,6 @@ public:
     virtual  void StartToRecord();
     virtual void StopRecording();
     virtual void SetRecCurTsOrCurProgram ( int sel );
-    virtual int startCC(int country, int src, int channel, int service);
-    virtual int stopCC();
     virtual void printDebugInfo();
     virtual int playProgramLock ( int progId );
     virtual int playDvbcProgram ( int progId );
@@ -183,7 +166,6 @@ public:
     {
         return mTvTime.getTime();
     };
-    void getFrontendStatus();
     int getFrontendSignalStrength();
     int getFrontendSNR();
     int getFrontendBER();
@@ -195,7 +177,6 @@ public:
     int getATVProgramID ( void );
     int saveDTVProgramID ( int dbID );
     int getDTVProgramID ( void );
-    int getCurPlayProgId();
     int getATVMinMaxFreq ( int *scanMinFreq, int *scanMaxFreq );
     int getAverageLuma();
     int setAutobacklightData(const char *value);
@@ -203,12 +184,12 @@ public:
 
     virtual int Tv_SSMRestoreDefaultSetting();
 
-    //
+
     int GetSourceConnectStatus(tv_source_input_t source_input);
     int IsDVISignal();
     int isVgaFmtInHdmi();
     int isSDFmtInHdmi ( void );
-    //
+
     int getHDMIFrameRate ( void );
     void RefreshAudioMasterVolume ( tv_source_input_t source_input );
 
@@ -224,13 +205,13 @@ public:
     int Tvin_SetPLLValues ();
     int SetCVD2Values ();
     unsigned int Vpp_GetDisplayResolutionInfo(tvin_window_pos_t *win_pos);
-    int get_hdmi_sampling_rate();
     //SSM
     virtual int Tv_SSMFacRestoreDefaultSetting();
     int Tv_GetHistgram(int *histgram_buf);
     int StartHeadSetDetect();
     virtual void onHeadSetDetect(int state, int para);
 
+    CTvFactory mFactoryMode;
     CTvin::CTvinSigDetect mSigDetectThread;
     CSourceConnectDetect mSourceConnectDetectThread;
     CHDMIRxCEC mHDMIRxCEC;
@@ -296,164 +277,12 @@ public:
     virtual int Tv_SetNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_type_t source_type, int is_save );
     virtual vpp_noise_reduction_mode_t Tv_GetNoiseReductionMode ( tv_source_input_type_t source_type );
     virtual int Tv_SaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_type_t source_type );
-    int Tv_SetSplitScreenDemoStatus(tv_source_input_type_t source_type, int onoff_status);
-    int Tv_GetSplitScreenDemoStatus(tv_source_input_type_t source_type);
     int Tv_SplitScreenEffect(int mode, int width, int reverse = 0);
-    //
-    int Tv_FactorySetPQMode_Brightness ( int source_type, int pq_mode, int brightness );
-    int Tv_FactoryGetPQMode_Brightness ( int source_type, int pq_mode );
-    int Tv_FactorySetPQMode_Contrast ( int source_type, int pq_mode, int contrast );
-    int Tv_FactoryGetPQMode_Contrast ( int source_type, int pq_mode );
-    int Tv_FactorySetPQMode_Saturation ( int source_type, int pq_mode, int saturation );
-    int Tv_FactoryGetPQMode_Saturation ( int source_type, int pq_mode );
-    int Tv_FactorySetPQMode_Hue ( int source_type, int pq_mode, int hue );
-    int Tv_FactoryGetPQMode_Hue ( int source_type, int pq_mode );
-    int Tv_FactorySetPQMode_Sharpness ( int source_type, int pq_mode, int sharpness );
-    int Tv_FactoryGetPQMode_Sharpness ( int source_type, int pq_mode );
 
-    int GetColorTemperatureParams ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params );
-    int Tv_FactorySetTestPattern ( int pattern );
-    int Tv_FactoryGetTestPattern ( void );
-    int Tv_FactorySetScreenColor ( int vdin_blending_mask, int y, int u, int v );
-    int Tv_FactoryResetPQMode ( void );
-    int Tv_FactoryResetColorTemp ( void );
-    int Tv_FactorySetParamsDefault ( void );
-    int Tv_FactorySetDDRSSC ( int step );
-    int Tv_FactoryGetDDRSSC ( void );
-    int Tv_FactorySetLVDSSSC ( int step );
-    int Tv_FactoryGetLVDSSSC ( void );
-    void Tv_Spread_Spectrum(void);
-    int Tv_FactorySetNolineParams ( int noline_params_type, int source_type, noline_params_t noline_params );
-    noline_params_t Tv_FactoryGetNolineParams ( int noline_params_type, int source_type );
-    int Tv_FactorySetOverscan ( int source_type, int fmt, int status_3d, int trans_fmt, tvin_cutwin_t cutwin_t );
-    tvin_cutwin_t Tv_FactoryGetOverscan ( int source_type, int fmt, int status_3d, int trans_fmt );
-    int Tv_ReplacePqDb(const char *newFilePath = NULL);
-    //end PQ
-
-    //TV TO FBC
-    int Tv_FactorySet_FBC_Brightness ( int value );
-    int Tv_FactoryGet_FBC_Brightness ( void );
-    int Tv_FactorySet_FBC_Contrast( int value );
-    int Tv_FactoryGet_FBC_Contrast ( void );
-    int Tv_FactorySet_FBC_Saturation( int value );
-    int Tv_FactoryGet_FBC_Saturation ( void );
-    int Tv_FactorySet_FBC_HueColorTint( int value );
-    int Tv_FactoryGet_FBC_HueColorTint ( void );
-    virtual int Tv_FactorySet_FBC_Backlight ( int value );
-    virtual int Tv_FactoryGet_FBC_Backlight ( void );
-    int Tv_FactorySet_FBC_Backlight_N360 ( int value );
-    int Tv_FactoryGet_FBC_Backlight_N360 ( void );
-    int Tv_FactorySet_FBC_ELEC_MODE( int value );
-    int Tv_FactoryGet_FBC_ELEC_MODE( void );
-    int Tv_FactorySet_FBC_BACKLIGHT_N360( int value );
-    int Tv_FactoryGet_FBC_BACKLIGHT_N360( void );
-    int Tv_FactorySet_FBC_Picture_Mode ( int mode );
-    int Tv_FactoryGet_FBC_Picture_Mode ( void );
-    int Tv_FactorySet_FBC_Set_Test_Pattern ( int mode );
-    int Tv_FactoryGet_FBC_Get_Test_Pattern ( void );
-    int Tv_FactorySet_FBC_Gain_Red( int value );
-    int Tv_FactoryGet_FBC_Gain_Red ( void );
-    int Tv_FactorySet_FBC_Gain_Green( int value );
-    int Tv_FactoryGet_FBC_Gain_Green( void );
-    int Tv_FactorySet_FBC_Gain_Blue( int value );
-    int Tv_FactoryGet_FBC_Gain_Blue ( void );
-    int Tv_FactorySet_FBC_Offset_Red( int value );
-    int Tv_FactoryGet_FBC_Offset_Red ( void );
-    int Tv_FactorySet_FBC_Offset_Green( int value );
-    int Tv_FactoryGet_FBC_Offset_Green( void );
-    int Tv_FactorySet_FBC_Offset_Blue( int value );
-    int Tv_FactoryGet_FBC_Offset_Blue ( void );
-    int Tv_FactoryGetWhiteBalanceRedGain(int source_type, int colortemp_mode);
-    int Tv_FactoryGetWhiteBalanceGreenGain(int source_type, int colortemp_mode);
-    int Tv_FactoryGetWhiteBalanceBlueGain(int source_type, int colortemp_mode);
-    int Tv_FactoryGetWhiteBalanceRedOffset(int source_type, int colortemp_mode);
-    int Tv_FactoryGetWhiteBalanceGreenOffset(int source_type, int colortemp_mode);
-    int Tv_FactoryGetWhiteBalanceBlueOffset(int source_type, int colortemp_mode);
-    int Tv_FactorySetWhiteBalanceRedGain(int source_type, int colortemp_mode, int value);
-    int Tv_FactorySetWhiteBalanceGreenGain(int source_type, int colortemp_mode, int value);
-    int Tv_FactorySetWhiteBalanceBlueGain(int source_type, int colortemp_mode, int value);
-    int Tv_FactorySetWhiteBalanceRedOffset(int source_type, int colortemp_mode, int value);
-    int Tv_FactorySetWhiteBalanceGreenOffset(int source_type, int colortemp_mode, int value);
-    int Tv_FactorySetWhiteBalanceBlueOffset(int source_type, int colortemp_mode, int value);
-    int Tv_FactorySetWhiteBalanceColorTempMode(int source_type, int colortemp_mode, int is_save);
-    int Tv_FactoryGetWhiteBalanceColorTempMode(int source_type );
-    int Tv_FactoryWhiteBalanceFormatInputFbcGainParams(int value);
-    int Tv_FactoryWhiteBalanceFormatInputFbcOffsetParams(int value);
-    int Tv_FactoryWhiteBalanceFormatOutputFbcOffsetParams(int value);
-    int Tv_FactoryWhiteBalanceFormatOutputFbcGainParams(int value);
-    int Tv_FactorySaveWhiteBalancePramas(int source_type, int tempmode, int r_gain, int g_gain, int b_gain, int r_offset, int g_offset, int b_offset);
-    int Tv_FactoryCloseWhiteBalanceGrayPattern();
-    int Tv_FactoryOpenWhiteBalanceGrayPattern();
-    int Tv_FactorySetWhiteBalanceGrayPattern(int value);
-    int  Tv_FactoryGetWhiteBalanceGrayPattern();
-    int Tv_FactoryWhiteBalanceColorTempMappingG92Fbc(int Tempmode);
-    int Tv_FactoryWhiteBalanceColorTempMappingFbc2G9(int Tempmode);
-    int Tv_FactorySet_FBC_GrayPattern(int value);
-    int Tv_FactoryOpen_FBC_GrayPattern();
-    int Tv_FactoryClose_FBC_GrayPattern();
-    int Tv_FactorySet_FBC_ColorTemp_Mode( int mode );
-    int Tv_FactoryGet_FBC_ColorTemp_Mode ( void );
-    int Tv_FactorySet_FBC_ColorTemp_Mode_N360( int mode );
-    int Tv_FactoryGet_FBC_ColorTemp_Mode_N360 ( void );
-    int Tv_FactorySet_FBC_LockN_state(int value);
-    int Tv_FactorySet_FBC_WB_Initial( int status );
-    int Tv_FactoryGet_FBC_WB_Initial ( void );
-    virtual int Tv_FactorySet_FBC_ColorTemp_Batch(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params);
-    virtual int Tv_FactoryGet_FBC_ColorTemp_Batch ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params );
-    int Tv_FactorySet_WB_G9_To_FBC( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params );
-    int Tv_FactoryGet_WB_G9_To_FBC ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params );
-    int Tv_FactoryGetItemFromBatch(vpp_color_temperature_mode_t colortemp_mode, int item);
-    int Tv_FactorySet_FBC_CM_OnOff( unsigned char status );
-    int Tv_FactoryGet_FBC_CM_OnOff (void);
-    int Tv_FactorySet_FBC_DNLP_OnOff( unsigned char status );
-    int Tv_FactoryGet_FBC_DNLP_OnOff (void);
-    int Tv_FactorySet_FBC_Gamma_OnOff( unsigned char status );
-    int Tv_FactoryGet_FBC_Gamma_OnOff (void);
-    int Tv_FactorySet_FBC_WhiteBalance_OnOff( unsigned char status );
-    int Tv_FactoryGet_FBC_WhiteBalance_OnOff (void);
-    int Tv_FactorySet_FBC_Thermal_State( int value );
-    int Tv_FactorySet_FBC_backlight_onoff(int value);
-    int Tv_FactoryGet_FBC_backlight_onoff ( void );
-    int Tv_FactorySet_FBC_Auto_Backlight_OnOff(unsigned char status);
-    int Tv_FactoryGet_FBC_Auto_Backlight_OnOff ( void );
-    int Tv_FactoryGet_FBC_VIDEO_MUTE ( void );
-    int Tv_FactorySet_FBC_LVDS_SSG_Set( int value );
-    int Tv_FactorySet_FBC_LightSensor_Status_N310 ( int value );
-    int Tv_FactoryGet_FBC_LightSensor_Status_N310 ( void );
-    int Tv_FactorySet_FBC_Dream_Panel_Status_N310 ( int value );
-    int Tv_FactoryGet_FBC_Dream_Panel_Status_N310 ( void );
-    int Tv_FactorySet_FBC_MULT_PQ_Status_N310 ( int value );
-    int Tv_FactoryGet_FBC_MULT_PQ_Status_N310 ( void );
-    int Tv_FactorySet_FBC_MEMC_Status_N310 ( int value );
-    int Tv_FactoryGet_FBC_MEMC_Status_N310 ( void );
-    int Tv_FactorySet_FBC_ColorTemp_Mode_N310( int mode );
-    int Tv_FactoryGet_FBC_ColorTemp_Mode_N310 ( void );
-    virtual int Tv_FactorySet_FBC_Backlight_N310 ( int value );
-    virtual int Tv_FactoryGet_FBC_Backlight_N310 ( void );
-    int Tv_FactorySet_FBC_Bluetooth_IIS_N310 ( int value );
-    int Tv_FactoryGet_FBC_Bluetooth_IIS_N310 ( void );
-    int Tv_FactorySet_FBC_Led_N310 ( int val_1, int val_2, int val_3 );
-    int Tv_FactorySet_VbyOne_Spread_Spectrum_N311 ( int value );
-    int Tv_FactoryGet_VbyOne_Spread_Spectrum_N311 ( void );
-    int Tv_FactorySet_FBC_AP_STANDBY_N310 ( int value );
-    int Tv_FactoryGet_FBC_AP_STANDBY_N310( void );
-    int Tv_FactorySet_Uboot_Stage(int value);
-    //end TV TO FBC
-
-    int Tv_SetTestPattern(int value);
     int Tv_Set2k4k_ScalerUp_Mode ( int value );
     int Tv_Get2k4k_ScalerUp_Mode ( void );
     //audio
-    virtual int Tv_SetDRC_OnOff(int on_off);
-    virtual int Tv_GetDRC_OnOff(void);
     virtual void updateSubtitle(int, int);
-    int setSubtitleBuffer(char *);
-    int initSubtitle(int, int) ;
-    int lockSubtitle();
-    int unlockSubtitle();
-    int getSubSwitchStatus();
-    int startSubtitle(int dmx_id, int pid, int page_id, int anc_page_id) ;
-    int stopSubtitle() ;
 
     //audio
     virtual void TvAudioOpen();
@@ -461,12 +290,9 @@ public:
     virtual int SetAudioMuteForSystem(int muteOrUnmute);
     virtual int GetAudioMuteForSystem();
     virtual int SetAudioMuteForTv(int muteOrUnmute);
-    virtual int GetAudioMuteForTv();
     virtual char *GetMainVolLutTableExtraName();
     virtual int SetDbxTvMode(int mode, int son_value, int vol_value, int sur_value);
     virtual int GetDbxTvMode(int *mode, int *son_value, int *vol_value, int *sur_value);
-    int AudioHandleHeadsetPlugIn();
-    int AudioHandleHeadsetPullOut();
     int SetAudioAVOutMute(int muteStatus);
     int GetAudioAVOutMute();
     int SetAudioSPDIFMute(int muteStatus);
@@ -731,6 +557,7 @@ protected:
     void Tv_SetAVOutPut_Input_gain(tv_source_input_t source_input);
     /*********************** Audio end **********************/
 
+    void Tv_Spread_Spectrum();
     //
     virtual void onSigToStable();
     virtual void onSigStableToUnstable();
@@ -784,18 +611,11 @@ protected:
     bool mHdmiOutFbc;
     CFbcCommunication *fbcIns;
 
-    bool mlastlockstatus;
-    String8 mlastdm;
-    String8 mlastabbrev;
-    String8 mlastabbtext;
-    pthread_t vchipthread;
-    int mvchip_running;
-    friend class CTvMsgQueue;
+    //friend class CTvMsgQueue;
     int mCurAnalyzeTsChannelID;
     TvIObserver *mpObserver;
     tv_dtv_scan_running_status_t mDtvScanRunningStatus;
     volatile tv_config_t gTvinConfig;
-    int dtv_auto_3d_flag;
     bool mAutoSetDisplayFreq;
     int m_sig_stable_nums;
     bool mSetHdmiEdid;
@@ -806,7 +626,6 @@ protected:
     int  m_hdmi_sampling_rate;
     int	m_hdmi_audio_data;
     /** for display mode to bottom **/
-    int screen_mode;
 
     //audio mute
     int mAudioMuteStatusForTv;

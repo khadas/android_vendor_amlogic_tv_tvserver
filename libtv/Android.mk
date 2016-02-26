@@ -42,12 +42,14 @@ LOCAL_SRC_FILES := \
   tv/CUpgradeFBC.cpp \
   tv/CAv.cpp \
   tv/CTvDmx.cpp \
+  tv/CTvFactory.cpp \
   tvin/CTvin.cpp \
   tvin/CSourceConnectDetect.cpp \
   tvin/CHDMIRxCEC.cpp \
   tvdb/CTvDimension.cpp \
   vpp/CVpp.cpp \
   vpp/pqdata.cpp \
+  vpp/CPQdb.cpp \
   tvutils/tvutils.cpp \
   tvutils/CFile.cpp \
   tvutils/CThread.cpp \
@@ -60,14 +62,13 @@ LOCAL_SRC_FILES := \
   tvutils/CHdmiCecCmd.cpp \
   tvutils/CTvInput.cpp \
   tvutils/CSqlite.cpp \
-  vpp/CPQdb.cpp \
   tvconfig/tvconfig.cpp \
   tvconfig/CIniFile.cpp \
   audio/CTvAudio.cpp \
-  tvsetting/audio_cfg.cpp \
   audio/audio_effect.cpp \
   audio/audio_alsa.cpp \
   audio/CAudioCustomerCtrl.cpp \
+  tvsetting/audio_cfg.cpp \
   tvsetting/CBlobDevice.cpp \
   tvsetting/CBlobDeviceE2prom.cpp \
   tvsetting/CBlobDeviceFile.cpp \

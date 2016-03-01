@@ -11,6 +11,16 @@ typedef enum COMM_DEV_TYPE_NO {
     COMM_DEV_CEC = 0,
     COMM_DEV_SERIAL = 1,
 } COMM_DEV_TYPE_E;
+
+typedef enum OUTPUT_MODE {
+    T_1080P50HZ = 0,
+    T_2160P50HZ420,
+    T_1080P50HZ44410BIT,
+    T_2160P50HZ42010BIT,
+    T_2160P50HZ42210BIT,
+    T_2160P50HZ444,
+} OUTPUT_MODE_E;
+
 typedef enum vpu_modules_e {
     VPU_MODULE_NULL = 0,
     VPU_MODULE_VPU,        //vpu uint

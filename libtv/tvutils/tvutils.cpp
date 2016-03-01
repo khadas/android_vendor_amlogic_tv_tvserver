@@ -1429,8 +1429,8 @@ int reboot_sys_by_fbc_edid_info()
     LOGD("get edid info from fbc!");
     memset(outputmode_prop_value, '\0', 256);
     memset(lcd_reverse_prop_value, '\0', 256);
-    property_get(UBOOTENV_OUTPUTMODE, outputmode_prop_value, "null" );
-    property_get("ubootenv.var.lcd_reverse", lcd_reverse_prop_value, "null" );
+    getBootEnv(UBOOTENV_OUTPUTMODE, outputmode_prop_value, "null" );
+    getBootEnv(UBOOTENV_LCD_REVERSE, lcd_reverse_prop_value, "null" );
 
     fd = open("/sys/class/amhdmitx/amhdmitx0/edid_info", O_RDWR);
     if (fd < 0) {
@@ -1455,7 +1455,7 @@ int reboot_sys_by_fbc_edid_info()
                 if (0 == env_different_as_cur) {
                     env_different_as_cur = 1;
                 }
-                property_set(UBOOTENV_OUTPUTMODE, "1080p");
+                setBootEnv(UBOOTENV_OUTPUTMODE, "1080p");
             }
             break;
         case 0x1:
@@ -1465,7 +1465,7 @@ int reboot_sys_by_fbc_edid_info()
                 if (0 == env_different_as_cur) {
                     env_different_as_cur = 1;
                 }
-                property_set(UBOOTENV_OUTPUTMODE, "4k2k60hz420");
+                setBootEnv(UBOOTENV_OUTPUTMODE, "4k2k60hz420");
             }
             break;
         case 0x2:
@@ -1473,7 +1473,7 @@ int reboot_sys_by_fbc_edid_info()
                 if (0 == env_different_as_cur) {
                     env_different_as_cur = 1;
                 }
-                property_set(UBOOTENV_OUTPUTMODE, "1366*768");
+                setBootEnv(UBOOTENV_OUTPUTMODE, "1366*768");
             }
             break;
         default:
@@ -1490,7 +1490,7 @@ int reboot_sys_by_fbc_edid_info()
                 if (0 == env_different_as_cur) {
                     env_different_as_cur = 1;
                 }
-                property_set("ubootenv.var.lcd_reverse", "0");
+                setBootEnv(UBOOTENV_LCD_REVERSE, "0");
             }
             break;
         case 0x1:
@@ -1498,7 +1498,7 @@ int reboot_sys_by_fbc_edid_info()
                 if (0 == env_different_as_cur) {
                     env_different_as_cur = 1;
                 }
-                property_set("ubootenv.var.lcd_reverse", "1");
+                setBootEnv(UBOOTENV_LCD_REVERSE, "1");
             }
             break;
         default:
@@ -1518,8 +1518,8 @@ int reboot_sys_by_fbc_edid_info()
 int reboot_sys_by_fbc_uart_panel_info(CFbcCommunication *fbc)
 {
     int ret = -1;
-    char outputmode_prop_value[256];
-    char lcd_reverse_prop_value[256];
+    char outputmode_prop_value[256] = {0};
+    char lcd_reverse_prop_value[256] = {0};
     int env_different_as_cur = 0;
     int panel_reverse = -1;
     int panel_outputmode = -1;
@@ -1538,43 +1538,66 @@ int reboot_sys_by_fbc_uart_panel_info(CFbcCommunication *fbc)
         return -1;
     }
     LOGD("device is fbc, get panel info from fbc!\n");
-    memset(outputmode_prop_value, '\0', 256);
-    memset(lcd_reverse_prop_value, '\0', 256);
-    property_get(UBOOTENV_OUTPUTMODE, outputmode_prop_value, "null" );
-    property_get("ubootenv.var.lcd_reverse", lcd_reverse_prop_value, "null" );
+    getBootEnv(UBOOTENV_OUTPUTMODE, outputmode_prop_value, "null" );
+    getBootEnv(UBOOTENV_LCD_REVERSE, lcd_reverse_prop_value, "null" );
 
     fbc->cfbc_Get_FBC_PANEL_REVERSE(COMM_DEV_SERIAL, &panel_reverse);
     fbc->cfbc_Get_FBC_PANEL_OUTPUT(COMM_DEV_SERIAL, &panel_outputmode);
     LOGD("panel_reverse = %d, panel_outputmode = %d\n", panel_reverse, panel_outputmode);
     LOGD("panel_output prop = %s, panel reverse prop = %s\n", outputmode_prop_value, lcd_reverse_prop_value);
     switch (panel_outputmode) {
-    case 0x0:
-        if (0 != strcmp(outputmode_prop_value, "1080p") &&
-                0 != strcmp(outputmode_prop_value, "1080p50hz")
-           ) {
-            LOGD("panel_output changed to 1080p\n");
+    case T_1080P50HZ:
+        if (0 != strcmp(outputmode_prop_value, "1080p50hz")) {
+            LOGD("panel_output changed to 1080p50hz\n");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
-            property_set(UBOOTENV_OUTPUTMODE, "1080p");
+            setBootEnv(UBOOTENV_OUTPUTMODE, "1080p50hz");
         }
         break;
-    case 0x1:
-        if (0 != strcmp(outputmode_prop_value, "4k2k60hz420") &&
-                0 != strcmp(outputmode_prop_value, "4k2k50hz420")
-           ) {
+    case T_2160P50HZ420:
+        if (0 != strcmp(outputmode_prop_value, "2160p50hz420")) {
+            LOGD("panel_output changed to 2160p50hz420\n");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
-            property_set(UBOOTENV_OUTPUTMODE, "4k2k60hz420");
+            setBootEnv(UBOOTENV_OUTPUTMODE, "2160p50hz420");
         }
         break;
-    case 0x2:
-        if (0 != strcmp(outputmode_prop_value, "1366*768")) {
+    case T_1080P50HZ44410BIT:
+        if (0 != strcmp(outputmode_prop_value, "1080p50hz44410bit")) {
+            LOGD("panel_output changed to 1080p50hz44410bit\n");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
-            property_set(UBOOTENV_OUTPUTMODE, "1366*768");
+            setBootEnv(UBOOTENV_OUTPUTMODE, "1080p50hz44410bit");
+        }
+        break;
+    case T_2160P50HZ42010BIT:
+        if (0 != strcmp(outputmode_prop_value, "2160p50hz42010bit")) {
+            LOGD("panel_output changed to 2160p50hz42010bit\n");
+            if (0 == env_different_as_cur) {
+                env_different_as_cur = 1;
+            }
+            setBootEnv(UBOOTENV_OUTPUTMODE, "2160p50hz42010bit");
+        }
+        break;
+    case T_2160P50HZ42210BIT:
+        if (0 != strcmp(outputmode_prop_value, "2160p50hz42210bit")) {
+            LOGD("panel_output changed to 2160p50hz42210bit\n");
+            if (0 == env_different_as_cur) {
+                env_different_as_cur = 1;
+            }
+            setBootEnv(UBOOTENV_OUTPUTMODE, "2160p50hz42210bit");
+        }
+        break;
+    case T_2160P50HZ444:
+        if (0 != strcmp(outputmode_prop_value, "2160p50hz444")) {
+            LOGD("panel_output changed to 2160p50hz444\n");
+            if (0 == env_different_as_cur) {
+                env_different_as_cur = 1;
+            }
+            setBootEnv(UBOOTENV_OUTPUTMODE, "2160p50hz444");
         }
         break;
     default:
@@ -1592,7 +1615,7 @@ int reboot_sys_by_fbc_uart_panel_info(CFbcCommunication *fbc)
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
-            property_set("ubootenv.var.lcd_reverse", "0");
+            setBootEnv(UBOOTENV_LCD_REVERSE, "0");
         }
         break;
     case 0x1:
@@ -1600,7 +1623,7 @@ int reboot_sys_by_fbc_uart_panel_info(CFbcCommunication *fbc)
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
-            property_set("ubootenv.var.lcd_reverse", "1");
+            setBootEnv(UBOOTENV_LCD_REVERSE, "1");
         }
         break;
     default:
@@ -1777,7 +1800,7 @@ static int GetProjectInfoOriData(char data_str[], CFbcCommunication *fbcIns)
 
     if (src_type == 0) {
         //memset(data_str, '\0', sizeof(data_str));//sizeof pointer has issue
-        getBootEnv("ubootenv.var.project_info", data_str, (char *)"null");
+        getBootEnv(UBOOTENV_PROJECT_INFO, data_str, (char *)"null");
         if (strcmp(data_str, "null") == 0) {
             LOGE("%s, get project info data error!!!\n", __FUNCTION__);
             return -1;
@@ -1942,7 +1965,7 @@ int GetProjectInfo(project_info_t *proj_info_ptr, CFbcCommunication *fbcIns)
 }
 
 #if ANDROID_PLATFORM_SDK_VERSION == 19
-int getBootEnv(const char *key, char *value, char *def_val)
+int getBootEnv(const char *key, char *value, const char *def_val)
 {
     return property_get(key, value, def_val);
 }
@@ -2000,7 +2023,7 @@ static const sp<ISystemControlService> &getSystemControlService()
     return amSystemControlService;
 }
 
-int getBootEnv(const char *key, char *value, char *def_val)
+int getBootEnv(const char *key, char *value, const char *def_val)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
     if (sws != 0) {

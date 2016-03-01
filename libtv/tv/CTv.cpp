@@ -255,7 +255,7 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
             }
 
             if ( mAutoSetDisplayFreq) {
-                CTvin::getInstance()->VDIN_SetDisplayVFreq (50, mAv.getVideoDisplayResolution() , mHdmiOutFbc);
+                CTvin::getInstance()->VDIN_SetDisplayVFreq (50, mHdmiOutFbc);
             }
             TvEvent::SignalInfoEvent ev;
             ev.mStatus = TVIN_SIG_STATUS_STABLE;
@@ -1947,7 +1947,7 @@ void CTv::onSigToStable()
             freq = 50;
         }
 
-        CTvin::getInstance()->VDIN_SetDisplayVFreq ( freq, mAv.getVideoDisplayResolution(), mHdmiOutFbc );
+        CTvin::getInstance()->VDIN_SetDisplayVFreq ( freq, mHdmiOutFbc );
         LOGD ( "%s, SetDisplayVFreq %dHZ.", __FUNCTION__, freq);
     }
     //showbo mark  hdmi auto 3d, tran fmt  is 3d, so switch to 3d
@@ -2213,7 +2213,7 @@ void CTv::onStableSigFmtChange()
             freq = 50;
         }
 
-        CTvin::getInstance()->VDIN_SetDisplayVFreq ( freq, mAv.getVideoDisplayResolution(), mHdmiOutFbc );
+        CTvin::getInstance()->VDIN_SetDisplayVFreq ( freq, mHdmiOutFbc );
         LOGD ( "%s, SetDisplayVFreq %dHZ.", __FUNCTION__, freq);
     }
     //showbo mark  hdmi auto 3d, tran fmt  is 3d, so switch to 3d
@@ -3043,9 +3043,9 @@ void CTv::onThermalDetect(int state)
 int CTv::SetDebugSerialOnOff(int on_off)
 {
     if (on_off) {
-        property_set(UBOOTENV_CONSOLE, "ttyS0,115200n8");
+        setBootEnv(UBOOTENV_CONSOLE, "ttyS0,115200n8");
     } else {
-        property_set(UBOOTENV_CONSOLE, "off");
+        setBootEnv(UBOOTENV_CONSOLE, "off");
     }
     return 0;
 }
@@ -3053,7 +3053,7 @@ int CTv::SetDebugSerialOnOff(int on_off)
 int CTv::GetDebugSerialOnOff()
 {
     char prop[256] = {0};
-    property_get(UBOOTENV_CONSOLE, prop, "null" );
+    getBootEnv(UBOOTENV_CONSOLE, prop, "null" );
     if (!strcmp(prop, "ttyS0,115200n8")) {
         return 1;
     } else {
@@ -3196,7 +3196,7 @@ int CTv::Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t ve
     char edid_path_cfg[100] = {0};
     char propValue[256] = {0};
 
-    property_get(UBOOTENV_OUTPUTMODE, propValue, "null");
+    getBootEnv(UBOOTENV_OUTPUTMODE, propValue, "null");
     if (strcmp(propValue, "null") == 0) {
         config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
     } else {

@@ -67,7 +67,7 @@ typedef struct project_info_s {
 
 extern unsigned int CalCRC32(unsigned int crc, const unsigned char *ptr, unsigned int buf_len);
 extern int GetProjectInfo(project_info_t *proj_info_ptr, CFbcCommunication *fbcIns = NULL);
-extern int getBootEnv(const char *key, char *value, char *def_val);
+extern int getBootEnv(const char *key, char *value, const char *def_val);
 extern void setBootEnv(const char *key, const char *value);
 extern int readSysfs(const char *path, char *value);
 extern void writeSysfs(const char *path, const char *value);

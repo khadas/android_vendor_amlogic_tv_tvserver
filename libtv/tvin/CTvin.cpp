@@ -466,58 +466,62 @@ int CTvin::VDIN_OnoffVScaler ( int isOn )
     return 0;
 }
 
-int CTvin::VDIN_GetDisplayVFreq (void)
+void CTvin::VDIN_GetDisplayVFreq (int need_freq, int *last_freq, int *iSswitch, char * display_mode)
 {
     int fd = -1;
-    char buf[32];
+    char buf[32] = {0};
+    char *p = NULL;
 
     fd = open("/sys/class/display/mode", O_RDWR);
     if (fd < 0) {
         LOGW("Open /sys/class/display/mode error(%s)!\n", strerror(errno));
-        return -1;
+        return;
     }
-    memset(buf, 0, sizeof(buf));
     read(fd, buf, sizeof(buf));
     close(fd);
     LOGD( "%s, VDIN_GetDisplayVFreq is %s\n", __FUNCTION__, buf);
-    if (strstr(buf, "50hz") != NULL) {
-        return 50;
-    } else if (strstr(buf, "60hz") != 0) {
-        return 60;
+    if ((p = strstr(buf, "50hz")) != NULL) {
+        *last_freq = 50;
+    } else if ((p = strstr(buf, "60hz")) != NULL) {
+        *last_freq = 60;
     } else {
-        return 50;
+        *last_freq = 50;
+    }
+
+    if (need_freq != *last_freq) {
+        if (p) {
+            switch (need_freq) {
+                case 50:
+                    strncpy( p, "50hz", 4);
+                    break;
+                case 60:
+                    strncpy( p, "60hz", 4);
+                    break;
+                default:
+                    break;
+            }
+            strcpy(display_mode, buf);
+            *last_freq = need_freq;
+            *iSswitch = 1;
+        }
     }
 }
 
-int CTvin::VDIN_SetDisplayVFreq ( int freq, int display_resolution , bool isFbc)
+int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
 {
     const char *config_value = NULL;
-    static int display_mode_type = -1;
     CFbcCommunication *pFBC = NULL;
     static int last_freq = 50;
+    int iSswitch = 0;
+    char display_mode[32] = {0};
 
-    last_freq = VDIN_GetDisplayVFreq();
-    if (last_freq == freq) {
-        LOGD ( "%s, same freq, last_freq = %d, freq = %d.", __FUNCTION__, last_freq, freq);
+    VDIN_GetDisplayVFreq(freq, &last_freq, &iSswitch, display_mode);
+    if (0 == iSswitch) {
+        LOGD ( "%s, same freq, last_freq = %d, need_freq = %d.", __FUNCTION__, last_freq, freq);
         return 0;
     } else {
-        LOGD ( "%s, from last_freq[%d[ to new_freq[%d].", __FUNCTION__, last_freq, freq);
-        last_freq = freq;
+        LOGD ( "%s, set display mode to %s", __FUNCTION__, display_mode);
     }
-
-    if (display_mode_type == -1) {
-        config_value = config_get_str ( CFG_SECTION_TV, "tvin.display.mode.type", "null" );
-        if (strcasecmp(config_value, "null") == 0 || strcasecmp(config_value, "hdmi_out") == 0) {
-            display_mode_type = 0;
-        } else if (strcasecmp(config_value, "lvds_out") == 0) {
-            display_mode_type = 1;
-        } else {
-            display_mode_type = 0;
-        }
-    }
-
-    char cur_mode[20] = {0};
-    readSysfs("/sys/class/display/mode", cur_mode);
 
     if ( isFbc ) {
         pFBC = GetSingletonFBC();
@@ -527,44 +531,7 @@ int CTvin::VDIN_SetDisplayVFreq ( int freq, int display_resolution , bool isFbc)
         }
     }
 
-    switch ( display_resolution ) {
-        case VPP_DISPLAY_RESOLUTION_1366X768:
-            if (strstr(cur_mode, "768") != NULL) {
-                if ( freq == 50 ) {
-                    writeSysfs("/sys/class/display/mode", "768p50hz" );
-                } else {
-                    writeSysfs("/sys/class/display/mode", "768p60hz" );
-                }
-            }
-            break;
-        case VPP_DISPLAY_RESOLUTION_3840X2160:
-            if (strstr(cur_mode, "2160") != NULL) {
-                if ( freq == 50 ) {
-                    if (isFbc) {
-                        writeSysfs("/sys/class/display/mode", "2160p50hz420" );
-                    } else {
-                        writeSysfs("/sys/class/display/mode", "2160p50hz" );
-                    }
-                } else {
-                    if (isFbc) {
-                        writeSysfs("/sys/class/display/mode", "2160p60hz420" );
-                    } else {
-                        writeSysfs("/sys/class/display/mode", "2160p60hz" );
-                    }
-                }
-            }
-            break;
-        case VPP_DISPLAY_RESOLUTION_1920X1080:
-        default:
-            if (strstr(cur_mode, "1080p") != NULL) {
-                if ( freq == 50 ) {
-                    writeSysfs("/sys/class/display/mode", "1080p50hz" );
-                } else {
-                    writeSysfs("/sys/class/display/mode", "1080p60hz" );
-                }
-            }
-            break;
-    }
+    writeSysfs("/sys/class/display/mode", display_mode );
 
     return 0;
 }

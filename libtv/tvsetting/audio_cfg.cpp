@@ -336,7 +336,7 @@ int GetAudioMainVolLutBufNameModifyUbootenvCFG()
     char config_value[PROPERTY_VALUE_MAX];
 
     memset(config_value, '\0', 32);
-    property_get("ubootenv.var.ampindex", config_value, "null");
+    getBootEnv(UBOOTENV_AMPINDEX, config_value, "null");
 
     if (strcasecmp(config_value, "null") == 0) {
         return 0;

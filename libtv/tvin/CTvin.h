@@ -1053,8 +1053,8 @@ public:
     int VDIN_SetVdinParam ( const struct tvin_parm_s *vdinParam );
     int VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam );
     int VDIN_OnoffVScaler ( int isOn );
-    int VDIN_GetDisplayVFreq ( void );
-    int VDIN_SetDisplayVFreq ( int freq, int display_resolution , bool isFbc);
+    void VDIN_GetDisplayVFreq (int need_freq, int *last_freq, int *iSswitch, char * display_mode);
+    int VDIN_SetDisplayVFreq ( int freq, bool isFbc);
 
     int VDIN_Set2D3DDepth ( int count );
 

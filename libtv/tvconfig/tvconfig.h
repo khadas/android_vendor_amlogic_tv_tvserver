@@ -65,7 +65,11 @@
 #define PROP_AUDIO_CARD_NUM                     "snd.card.totle.num"
 
 #define UBOOTENV_OUTPUTMODE                     "ubootenv.var.outputmode"
+#define UBOOTENV_LCD_REVERSE                    "ubootenv.var.lcd_reverse"
 #define UBOOTENV_CONSOLE                        "ubootenv.var.console"
+#define UBOOTENV_PROJECT_INFO                   "ubootenv.var.project_info"
+#define UBOOTENV_AMPINDEX                       "ubootenv.var.ampindex"
+
 
 //for tv sysfs
 #define SYS_SPDIF_MODE_DEV_PATH                 "/sys/class/audiodsp/digital_raw"

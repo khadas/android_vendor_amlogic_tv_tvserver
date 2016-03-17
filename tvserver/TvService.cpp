@@ -138,6 +138,9 @@ void TvService::onTvEvent(const CTvEv &ev)
                     p.writeInt32(pScannerEv->mSid2[i]);
                 for (int i = 0; i < pScannerEv->mScnt; i++)
                     p.writeString16(String16(pScannerEv->mSlang[i]));
+                p.writeInt32(pScannerEv->mFree_ca);
+                p.writeInt32(pScannerEv->mScrambled);
+                p.writeInt32(pScannerEv->mScanMode);
                 ScannerClient->notifyCallback(SCAN_EVENT_CALLBACK, p);
             }
         }
@@ -2659,7 +2662,8 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int videoStd = p.readInt32();
         int audioStd = p.readInt32();
         int searchType = p.readInt32();
-        int tmpRet = mpTv->atvAutoScan(videoStd, audioStd, searchType);
+        int procMode = p.readInt32();
+        int tmpRet = mpTv->atvAutoScan(videoStd, audioStd, searchType, procMode);
         mTvService->mpScannerClient = this;
         r->writeInt32(tmpRet);
         break;
@@ -2708,6 +2712,16 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     case DTV_TEST_1:
     case DTV_TEST_2: {
+        break;
+    }
+    case ATV_DTV_SCAN_PAUSE: {
+        int tmpRet = mpTv->pauseScan();
+        r->writeInt32(tmpRet);
+        break;
+    }
+    case ATV_DTV_SCAN_RESUME: {
+        int tmpRet = mpTv->resumeScan();
+        r->writeInt32(tmpRet);
         break;
     }
 

@@ -613,7 +613,7 @@ int CTv::dtvAutoScanAtscLock(int attenna, int videoStd, int audioStd)
 }
 
 //searchType 0:not 256 1:is 256 Program
-int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchType)
+int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchType, int procMode)
 {
     int minScanFreq, maxScanFreq, vStd, aStd;
     AutoMutex lock ( mLock );
@@ -656,8 +656,13 @@ int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchTyp
     mFrontDev.Open(FE_ANALOG);
     mSigDetectThread.initSigState();
     mSigDetectThread.resumeDetect();
-    mTvScanner.autoAtvScan ( minScanFreq, maxScanFreq, stdAndColor, searchType);
+    mTvScanner.autoAtvScan ( minScanFreq, maxScanFreq, stdAndColor, searchType, procMode);
     return 0;
+}
+
+int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchType)
+{
+    return atvAutoScan(videoStd, audioStd, searchType, 0);
 }
 
 int CTv::clearAllProgram(int arg0 __unused)
@@ -763,6 +768,24 @@ int CTv::stopScan()
     mFrontDev.Close();
     mTvAction &= ~TV_ACTION_SCANNING;
     return 0;
+}
+
+int CTv::pauseScan()
+{
+    if (!(mTvAction & TV_ACTION_SCANNING)) {
+        LOGD("%s, tv not scanning ,return\n", __FUNCTION__);
+        return 0;
+    }
+    return mTvScanner.pauseScan();
+}
+
+int CTv::resumeScan()
+{
+    if (!(mTvAction & TV_ACTION_SCANNING)) {
+        LOGD("%s, tv not scanning ,return\n", __FUNCTION__);
+        return 0;
+    }
+    return mTvScanner.resumeScan();
 }
 
 int CTv::playProgramLock ( int progId )

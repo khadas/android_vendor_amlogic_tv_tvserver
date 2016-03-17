@@ -33,6 +33,7 @@ public:
     int stopScan();
     int ATVManualScan(int min_freq, int max_freq, int std, int store_Type = 0, int channel_num = 0);
     int autoAtvScan(int min_freq, int max_freq, int std, int search_type);
+    int autoAtvScan(int min_freq, int max_freq, int std, int search_type, int proc_mode);
     int autoDtmbScan();
     int manualDtmbScan(int beginFreq, int endFreq, int modulation = -1);
     int autoAtscScan(int attennaType, int std);
@@ -40,6 +41,8 @@ public:
     int manualAtscScan(int freq, int attennaType, int std);
     int autoTvScan();
     int unsubscribeEvent();
+    int pauseScan();
+    int resumeScan();
 
     class ScannerEvent: public CTvEv {
     public:
@@ -53,6 +56,7 @@ public:
         static const int EVENT_ATV_PROG_DATA = 7;
         static const int EVENT_DTV_PROG_DATA = 8;
         static const int EVENT_SCAN_EXIT     = 9;
+        static const int EVENT_SCAN_BEGIN    = 10;
 
         ScannerEvent(): CTvEv(CTvEv::TV_EVENT_SCANNER)
         {
@@ -121,6 +125,10 @@ public:
         int mSid2[32];
         char mSlang[32][10];
 
+        int mFree_ca;
+        int mScrambled;
+
+        int mScanMode;
         //      ScannerEvent(int type){
         //          this->mType = type;
         //      }

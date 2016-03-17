@@ -191,7 +191,7 @@ void CTvScanner::setGlobalScanerObject(CTvScanner *s)
     m_s_Scanner =  s;
 }
 
-int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type)
+int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type, int proc_mode)
 {
     stopScan();
     if (min_freq <= 0 || max_freq <= 0 || min_freq > max_freq)
@@ -242,6 +242,8 @@ int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type
         para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
         para.store_cb = am_scan_atv_store;
 
+        para.proc_mode = proc_mode;
+
         memset(&dmx_para, 0, sizeof(dmx_para));
         AM_DMX_Open(para.dtv_para.dmx_dev_id, &dmx_para);
 
@@ -287,6 +289,11 @@ int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type
 
     return 0;
 }
+int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type)
+{
+    return autoAtvScan(min_freq, max_freq, std, search_type, 0);
+}
+
 
 /*
 int CTvScanner::manualAtscScan(int channelID, int attennaType, int std)
@@ -703,6 +710,8 @@ void CTvScanner::scan_store_dvb_ts_evt_service(SCAN_ServiceInfo_t *srv)
         }
     }
     m_s_Scanner->mCurEv.mScnt = scnt;
+    m_s_Scanner->mCurEv.mFree_ca = srv->free_ca;
+    m_s_Scanner->mCurEv.mScrambled = srv->scrambled_flag;
 
     m_s_Scanner->mCurEv.mMSG[0] = '\0';
 
@@ -1351,8 +1360,13 @@ void CTvScanner::tv_scan_evt_callback(long dev_no, int event_type, void *param, 
         AM_SCAN_Progress_t *evt = (AM_SCAN_Progress_t *)param;
         LOGD("progress evt:%d", evt->evt);
         switch (evt->evt) {
-        case AM_SCAN_PROGRESS_SCAN_BEGIN:
+        case AM_SCAN_PROGRESS_SCAN_BEGIN: {
+            AM_SCAN_CreatePara_t *cp = (AM_SCAN_CreatePara_t *)evt->data;
             pT->mCurEv.mPercent = 0;
+            pT->mCurEv.mScanMode = (cp->mode<<24)|((cp->atv_para.mode&0xFF)<<16)|(cp->dtv_para.mode&0xFFFF);
+            pT->mCurEv.mType = ScannerEvent::EVENT_SCAN_BEGIN;
+            pT->sendEvent(pT->mCurEv);
+            }
             break;
         case AM_SCAN_PROGRESS_NIT_BEGIN:
 
@@ -1636,5 +1650,33 @@ void CTvScanner::sendEvent(ScannerEvent &evt)
         }
         mpObserver->onEvent(evt);
     }
+}
+
+int CTvScanner::pauseScan()
+{
+    LOGD("pauseScan");
+    if (mbScanStart) { //if start ok and not stop
+        int ret = AM_SCAN_Pause(mScanHandle);
+        LOGD("pauseScan , ret=%d", ret);
+        return ret;
+    }
+
+    LOGD("not start scan or scan stoped");
+
+    return 0;
+}
+
+int CTvScanner::resumeScan()
+{
+    LOGD("resumeScan");
+    if (mbScanStart) { //if start ok and not stop
+        int ret = AM_SCAN_Resume(mScanHandle);
+        LOGD("resumeScan , ret=%d", ret);
+        return ret;
+    }
+
+    LOGD("not start scan or scan stoped");
+
+    return 0;
 }
 

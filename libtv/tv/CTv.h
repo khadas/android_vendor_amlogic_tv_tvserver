@@ -121,6 +121,9 @@ public:
     virtual int dtvAutoScan();
     virtual int dtvManualScan (int beginFreq, int endFreq, int modulation = -1);
     virtual int atvAutoScan(int videoStd, int audioStd, int searchType);
+    virtual int atvAutoScan(int videoStd, int audioStd, int searchType, int procMode);
+    virtual int pauseScan();
+    virtual int resumeScan();
     virtual int clearAllProgram(int arg0);
     virtual int clearDbAllProgramInfoTable();
     virtual void setSourceSwitchAndPlay();

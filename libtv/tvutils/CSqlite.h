@@ -24,6 +24,9 @@ public:
     public:
         void Init(char **data, int cow, int col)
         {
+            if (mData != NULL)
+                sqlite3_free_table(mData);
+
             mData = data;
             mCurRowIndex = 0;
             mRowNums = cow;

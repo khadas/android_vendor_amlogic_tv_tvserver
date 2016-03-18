@@ -1096,6 +1096,10 @@ int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __u
 
 int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 {
+    if (mTvAction & TV_ACTION_SCANNING) {
+        return -1;
+    }
+
     if ( feParms.mode == FE_ANALOG ) {
         int progID = -1;
         int tmpFreq = feParms.freq;
@@ -1117,6 +1121,7 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 
         //set TUNER
         usleep(400 * 1000);
+        mFrontDev.Open(FE_ANALOG);
         mFrontDev.setPara ( FE_ANALOG, tmpFreq, stdAndColor, 1 );
         usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
@@ -1126,6 +1131,7 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
         mSigDetectThread.initSigState();
         mSigDetectThread.resumeDetect();
     } else if ( feParms.mode == FE_DTMB ) {
+        mFrontDev.Open(FE_ANALOG);
         mFrontDev.setPara ( FE_DTMB, feParms.freq, feParms.para1, feParms.para2 );
     }
 

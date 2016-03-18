@@ -129,6 +129,8 @@ public:
         int mScrambled;
 
         int mScanMode;
+
+        int mSdtVer;
         //      ScannerEvent(int type){
         //          this->mType = type;
         //      }

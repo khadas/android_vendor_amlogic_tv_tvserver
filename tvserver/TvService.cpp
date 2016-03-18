@@ -141,6 +141,7 @@ void TvService::onTvEvent(const CTvEv &ev)
                 p.writeInt32(pScannerEv->mFree_ca);
                 p.writeInt32(pScannerEv->mScrambled);
                 p.writeInt32(pScannerEv->mScanMode);
+                p.writeInt32(pScannerEv->mSdtVer);
                 ScannerClient->notifyCallback(SCAN_EVENT_CALLBACK, p);
             }
         }

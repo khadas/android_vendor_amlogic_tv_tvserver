@@ -713,6 +713,8 @@ void CTvScanner::scan_store_dvb_ts_evt_service(SCAN_ServiceInfo_t *srv)
     m_s_Scanner->mCurEv.mFree_ca = srv->free_ca;
     m_s_Scanner->mCurEv.mScrambled = srv->scrambled_flag;
 
+    m_s_Scanner->mCurEv.mSdtVer = srv->sdt_version;
+
     m_s_Scanner->mCurEv.mMSG[0] = '\0';
 
     m_s_Scanner->mCurEv.mType = ScannerEvent::EVENT_DTV_PROG_DATA;

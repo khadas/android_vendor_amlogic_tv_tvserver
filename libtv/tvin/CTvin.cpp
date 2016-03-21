@@ -599,7 +599,7 @@ int CTvin::VDIN_SetDisplayVFreq ( int freq, int display_resolution , bool isFbc)
         }
         break;
     case VPP_DISPLAY_RESOLUTION_1920X1080:
-    default:
+    //default:
         if ( freq == 50 ) {
             fprintf ( fp, "%s", "1080p50hz" );
         } else {

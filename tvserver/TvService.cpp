@@ -357,6 +357,22 @@ void TvService::onTvEvent(const CTvEv &ev)
         break;
     }
 
+    case CTvEv::TV_EVENT_SCANNING_FRAME_STABLE: {
+        TvEvent::ScanningFrameStableEvent *pEv = (TvEvent::ScanningFrameStableEvent *)(&ev);
+        LOGD("Scanning Frame is stable!");
+        for (int i = 0; i < (int)mClients.size(); i++) {
+            wp<Client> client = mClients[i];
+            if (client != 0) {
+                sp<Client> c = client.promote();
+                if (c != 0) {
+                    Parcel p;
+                    p.writeInt32(pEv->CurScanningFreq);
+                    c->getTvClient()->notifyCallback(SCANNING_FRAME_STABLE_CALLBACK, p);
+                }
+            }
+        }
+        break;
+    }
     default:
         break;
     }

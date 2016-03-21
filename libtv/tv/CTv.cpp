@@ -2398,6 +2398,11 @@ void CTv::CTvDetectObserverForScanner::onSigStillStable()
     if ( m_sig_stable_nums == 10 ) {
         mpTv->mAv.EnableVideoWhenVideoPlaying();
     }
+    if (m_sig_stable_nums == 20) {
+        TvEvent::ScanningFrameStableEvent ev;
+        ev.CurScanningFreq = 0 ;
+        mpTv->sendTvEvent ( ev );
+    }
     m_sig_stable_nums++;
 }
 

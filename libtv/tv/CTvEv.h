@@ -34,6 +34,7 @@ public:
     static const int TV_EVENT_2d4G_HEADSET = 17;
     static const int TV_EVENT_AV = 18;
     static const int TV_EVENT_SUBTITLE = 19;
+    static const int TV_EVENT_SCANNING_FRAME_STABLE = 20;
 
     CTvEv(int type);
     virtual ~CTvEv() {};
@@ -144,6 +145,13 @@ namespace  TvEvent {
         ~SubtitleEvent() {}
         int pic_width;
         int pic_height;
+    };
+
+    class ScanningFrameStableEvent: public CTvEv {
+    public:
+        ScanningFrameStableEvent(): CTvEv(CTvEv::TV_EVENT_SCANNING_FRAME_STABLE) {}
+        ~ScanningFrameStableEvent() {}
+        int CurScanningFreq;
     };
 };
 #endif

@@ -500,6 +500,7 @@ protected:
         static const int TV_MSG_EPG_EVENT = 7;
         static const int TV_MSG_HDMI_SR_CHANGED = 8;
         static const int TV_MSG_ENABLE_VIDEO_LATER = 9;
+        static const int TV_MSG_SCANNING_FRAME_STABLE = 10;
         CTvMsgQueue(CTv *tv);
         ~CTvMsgQueue();
         //scan observer

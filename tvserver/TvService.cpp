@@ -761,6 +761,23 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         break;
     // VGA END
 
+    // HDMI
+    case SET_HDMI_EDID_VER: {
+        int hdmi_port_id = p.readInt32();
+        int edid_ver = p.readInt32();
+        int tmpRet = mpTv->SetHdmiEdidVersion((tv_hdmi_port_id_t)hdmi_port_id, (tv_hdmi_edid_version_t)edid_ver);
+        r->writeInt32(tmpRet);
+        break;
+    }
+    case SET_HDCP_KEY_ENABLE: {
+        int enable = p.readInt32();
+        int tmpRet = mpTv->SetHdmiHDCPSwitcher((tv_hdmi_hdcpkey_enable_t)enable);
+        r->writeInt32(tmpRet);
+        break;
+    }
+
+    // HDMI END
+
     // 3D
     case SET_3D_MODE: {
         int mode = p.readInt32();
@@ -2380,6 +2397,34 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case SSM_SAVE_HDMI_EDID_VER: {
+        int ret = -1;
+        int port_id = p.readInt32();
+        int ver = p.readInt32();
+        ret = SSMSaveHDMIEdidMode((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
+        r->writeInt32(ret);
+        break;
+    }
+    case SSM_READ_HDMI_EDID_VER: {
+        int ret = -1;
+        int port_id = p.readInt32();
+        ret = SSMReadHDMIEdidMode((tv_hdmi_port_id_t)port_id);
+        r->writeInt32(ret);
+        break;
+    }
+    case SSM_SAVE_HDCP_KEY_ENABLE: {
+        int ret = -1;
+        int enable = p.readInt32();
+        ret = SSMSaveHDMIHdcpSwitcher(enable);
+        r->writeInt32(ret);
+        break;
+    }
+    case SSM_READ_HDCP_KEY_ENABLE: {
+        int ret = -1;
+        ret = SSMReadHDMIHdcpSwitcher();
+        r->writeInt32(ret);
+        break;
+    }
     // SSM END
 
     //MISC
@@ -2763,80 +2808,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         break;
     }
 
-    case HDMIRX_CEC_SEND_CUSTOM_MESSAGE: {
-        int size = p.readInt32();
-        for (int i = 0; i < size; i++) {
-            dataBuf[i] = p.readInt32();
-        }
-
-        int tmpRet = mpTv->SendHDMIRxCECCustomMessage(dataBuf);
-        r->writeInt32(tmpRet);
-        break;
-    }
-
-    case HDMIRX_CEC_SEND_CUSTOM_WAIT_REPLY_MESSAGE: {
-        unsigned char replayBuf[512] = {0};
-        int bufSize = p.readInt32();
-        for (int i = 0; i < bufSize; i++) {
-            dataBuf[i] = p.readInt32();
-        }
-
-        int waitCmd = p.readInt32();
-        int timeout = p.readInt32();
-
-        int len = mpTv->SendHDMIRxCECCustomMessageAndWaitReply(dataBuf, replayBuf, waitCmd, timeout);
-        r->writeInt32(len);
-        for (int i = 0; i < len; i++) {
-            r->writeInt32(replayBuf[i]);
-        }
-
-        r->writeInt32(len);
-        break;
-    }
-
-    case HDMIRX_CEC_SEND_BROADCAST_STANDBY_MESSAGE: {
-        int tmpRet = mpTv->SendHDMIRxCECBoradcastStandbyMessage();
-        r->writeInt32(tmpRet);
-        break;
-    }
-
-    case HDMIRX_CEC_SEND_GIVE_CEC_VERSION_MESSAGE: {
-        int sourceinput = p.readInt32();
-        LOGD("HDMIRX_CEC_SEND_GIVE_CEC_VERSION_MESSAGE: sourceinput = %x", sourceinput);
-        int size = mpTv->SendHDMIRxCECGiveCECVersionMessage((tv_source_input_t)sourceinput, dataBuf);
-        r->writeInt32(size);
-        for (int i = 0; i < size; i++) {
-            r->writeInt32(dataBuf[i]);
-        }
-        r->writeInt32(size);
-        break;
-    }
-
-    case HDMIRX_CEC_SEND_GIVE_DEV_VENDOR_ID_MESSAGE: {
-        int sourceinput = p.readInt32();
-        LOGD("HDMIRX_CEC_SEND_GIVE_DEV_VENDOR_ID_MESSAGE: sourceinput = %x", sourceinput);
-        int size = mpTv->SendHDMIRxCECGiveDeviceVendorIDMessage((tv_source_input_t)sourceinput, dataBuf);
-        r->writeInt32(size);
-        for (int i = 0; i < size; i++) {
-            r->writeInt32(dataBuf[i]);
-        }
-        r->writeInt32(size);
-        break;
-    }
-
-    case HDMIRX_CEC_SEND_GIVE_OSD_NAME_MESSAGE: {
-        int sourceinput = p.readInt32();
-        LOGD("HDMIRX_CEC_SEND_GIVE_OSD_NAME_MESSAGE: sourceinput = %x", sourceinput);
-        int size = mpTv->SendHDMIRxCECGiveOSDNameMessage((tv_source_input_t)sourceinput, dataBuf);
-        r->writeInt32(size);
-        for (int i = 0; i < size; i++) {
-            r->writeInt32(dataBuf[i]);
-        }
-        r->writeInt32(size);
-        break;
-    }
-
-    case GET_HDMI_KSV_INFO: {
+    case HDMIRX_GET_KSV_INFO: {
         int data[2] = {0, 0};
         int tmpRet = mpTv->GetHdmiHdcpKeyKsvInfo(data);
         r->writeInt32(tmpRet);

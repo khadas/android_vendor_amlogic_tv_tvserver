@@ -20,7 +20,6 @@
 #include <cm.h>
 #include <ve.h>
 #include "../tvutils/CThread.h"
-#include <hdmirx_cec.h>
 #include "../tv/CFrontEnd.h"
 
 #define DEPTH_LEVEL_2DTO3D 33
@@ -825,11 +824,6 @@ typedef struct tvafe_pin_mux_s {
 #define TVIN_IOC_FREEZE_VF          _IO(TVIN_IOC_MAGIC, 0x45)
 #define TVIN_IOC_UNFREEZE_VF        _IO(TVIN_IOC_MAGIC, 0x46)
 
-//HDMI
-#define HDMI_IOC_HDCP_KSV      _IOR(HDMI_IOC_MAGIC, 0x09, struct _hdcp_ksv)
-
-
-
 //TVAFE
 #define TVIN_IOC_S_AFE_ADC_CAL      _IOW(TVIN_IOC_MAGIC, 0x11, struct tvafe_adc_cal_s)
 #define TVIN_IOC_G_AFE_ADC_CAL      _IOR(TVIN_IOC_MAGIC, 0x12, struct tvafe_adc_cal_s)
@@ -920,6 +914,25 @@ typedef enum signal_range_e {
     RANGE75,
 } signal_range_t;
 
+typedef enum tv_hdmi_port_id_e {
+    HDMI_PORT_1 = 1,
+    HDMI_PORT_2,
+    HDMI_PORT_3,
+} tv_hdmi_port_id_t;
+
+typedef enum tv_hdmi_edid_version_e {
+    HDMI_EDID_VER_14 = 0,
+    HDMI_EDID_VER_20 ,
+} tv_hdmi_edid_version_t;
+
+typedef enum tv_hdmi_hdcpkey_enable_e {
+    hdcpkey_enable = 0,
+    hdcpkey_disable ,
+} tv_hdmi_hdcpkey_enable_t;
+
+
+
+
 typedef struct adc_cal_s {
     unsigned int rcr_max;
     unsigned int rcr_min;
@@ -987,23 +1000,6 @@ typedef enum tv_source_connect_detect_status_e {
     CC_SOURCE_PLUG_IN = 1,
 } tv_source_connect_detect_status_t;
 
-//HDMI rx cec
-typedef struct tagHDMIRxRequestReplyItem {
-    CCondition WaitReplyCondition;
-    int WaitCmd;
-    int WaitLogicAddr;
-    int WaitTimeOut;
-    int WaitFlag;
-    int DataFlag;
-    struct _cec_msg msg;
-} HDMIRxRequestReplyItem;
-
-typedef struct _hdcp_ksv {
-    int bksv0;
-    int bksv1;
-} _hdcp_ksv;
-
-
 typedef struct am_phase_s {
     unsigned int   length; // Length of total
     unsigned int phase[TVIN_SIG_FMT_COMP_MAX - TVIN_SIG_FMT_VGA_THRESHOLD];
@@ -1011,7 +1007,6 @@ typedef struct am_phase_s {
 
 
 #define CC_REQUEST_LIST_SIZE            (32)
-#define CC_CEC_STREAM_SIZE              (sizeof(struct _cec_msg))
 #define CC_SOURCE_DEV_REFRESH_CNT       (E_LA_MAX)
 
 class CTvin {
@@ -1042,7 +1037,6 @@ public:
     int Tvin_StartDecoder ( tvin_info_t &info );
     int Tvin_StopDecoder();
     int get_hdmi_sampling_rate();
-    int get_hdmi_ksv_info(int source_input, int data_buf[]);
     int SwitchPort (tvin_port_t source_port );
     //
     void Tvin_SetDepthOf2Dto3D ( int value );
@@ -1104,7 +1098,6 @@ public:
     int VDIN_SetDIInput2Pre ( int value );
     int VDIN_SetVdinFlag ( int flag );
     int VDIN_EnableRDMA ( int enable );
-    int VDIN_GetHdmiHdcpKeyKsvInfo(struct _hdcp_ksv *msg);
     int AFE_OpenModule ( void );
     void AFE_CloseModule ( void );
     int AFE_GetDeviceFileHandle();

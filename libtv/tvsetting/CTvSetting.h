@@ -270,6 +270,10 @@ int SSMSave_DRC_ONOFF_Val(int rw_val);
 int SSMRead_DRC_ONOFF_Val(void);
 int SSMSave_PANEL_ID_Val(int rw_val);
 int SSMRead_PANEL_ID_Val(void);
+int SSMSaveHDMIEdidMode(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t rw_val);
+tv_hdmi_edid_version_t SSMReadHDMIEdidMode(tv_hdmi_port_id_t port);
+int SSMSaveHDMIHdcpSwitcher(int rw_val);
+int SSMReadHDMIHdcpSwitcher(void);
 #ifdef __cplusplus
 }
 #endif

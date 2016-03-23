@@ -2446,3 +2446,70 @@ int SSMRead_PANEL_ID_Val(void)
     }
     return tmp_val;
 }
+
+int SSMSaveHDMIEdidMode(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t rw_val)
+{
+    int ret = -1;
+    switch (port) {
+        case HDMI_PORT_1 :
+            ret = SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, 1, &rw_val);
+            break;
+        case HDMI_PORT_2 :
+            ret = SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI2_EDID_START, 1, &rw_val);
+            break;
+        case HDMI_PORT_3 :
+            ret = SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI3_EDID_START, 1, &rw_val);
+            break;
+        default:
+            break;
+    }
+    return ret;
+}
+
+tv_hdmi_edid_version_t SSMReadHDMIEdidMode(tv_hdmi_port_id_t port)
+{
+    unsigned char tmp_val = 0;
+    int tmp_ret = 0;
+    switch (port) {
+        case HDMI_PORT_1:
+            tmp_ret = SSMReadNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, 1, &tmp_val);
+            if (tmp_ret < 0) {
+                tmp_val = 0;
+            }
+            break;
+        case HDMI_PORT_2 :
+            tmp_ret = SSMReadNTypes(CUSTOMER_DATA_POS_HDMI2_EDID_START, 1, &tmp_val);
+            if (tmp_ret < 0) {
+                tmp_val = 0;
+            }
+            break;
+        case HDMI_PORT_3 :
+            tmp_ret = SSMReadNTypes(CUSTOMER_DATA_POS_HDMI3_EDID_START, 1, &tmp_val);
+            if (tmp_ret < 0) {
+                tmp_val = 0;
+            }
+            break;
+        default:
+            tmp_val = 0;
+            break;
+    }
+
+    return (tv_hdmi_edid_version_t)tmp_val;
+}
+
+
+int SSMSaveHDMIHdcpSwitcher(int rw_val)
+{
+    return SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START, 1, &rw_val);
+}
+int SSMReadHDMIHdcpSwitcher(void)
+{
+    unsigned char tmp_val = 0;
+    int tmp_ret = 0;
+    tmp_ret = SSMReadNTypes(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START, 1, &tmp_val);
+    if (tmp_ret < 0) {
+        return 0;
+    }
+    return tmp_val;
+}
+

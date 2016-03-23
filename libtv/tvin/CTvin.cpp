@@ -2193,49 +2193,6 @@ int CTvin::VDIN_OpenHDMIPinMuxOn ( bool flag )
     return 1;
 }
 
-int CTvin::VDIN_GetHdmiHdcpKeyKsvInfo(struct _hdcp_ksv *msg)
-{
-    int m_ksv_dev_fd = -1;
-
-    if (msg == NULL) {
-        LOGE("%s, msg is NULL\n", __FUNCTION__);
-    }
-
-    //PrintMessage(__FUNCTION__, 0, msg);
-
-    m_ksv_dev_fd = open(HDMIRX_KSV_PATH, O_RDWR);
-    if (m_ksv_dev_fd < 0) {
-        LOGE("%s, Open file %s error: (%s)!\n", __FUNCTION__, HDMIRX_KSV_PATH, strerror ( errno ));
-        return -1;
-    }
-    LOGD("# call ioctl with HDMI_IOC_HDCP_SENT_KSV #");
-    ioctl(m_ksv_dev_fd, HDMI_IOC_HDCP_KSV, msg);
-
-    close(m_ksv_dev_fd);
-    m_ksv_dev_fd = -1;
-
-    LOGD("msg->bksv0 is %x, msg->bksv1 is %x", msg->bksv0, msg->bksv1);
-
-    return 0;
-}
-
-
-int CTvin::get_hdmi_ksv_info(int source_input, int data_buf[])
-{
-    if (source_input != SOURCE_HDMI1 && source_input != SOURCE_HDMI2 && source_input != SOURCE_HDMI3) {
-        return -1;
-    }
-
-    struct _hdcp_ksv msg;
-    int ret = -1;
-    ret = VDIN_GetHdmiHdcpKeyKsvInfo(&msg);
-    memset((void *)data_buf, 0, 2);
-    data_buf[0] = msg.bksv0;
-    data_buf[1] = msg.bksv1;
-    return ret;
-}
-
-
 int CTvin::TVAFE_EnablePlugInDetect ( bool flag )
 {
     FILE *fp = NULL;

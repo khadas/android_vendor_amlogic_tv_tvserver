@@ -145,7 +145,6 @@ CTv::CTv() :
     m_hdmi_audio_data = 0;
     mSigDetectThread.setObserver ( this );
     mSourceConnectDetectThread.setObserver ( this );
-    mHDMIRxCEC.setObserver(this);
     mFrontDev.setObserver ( &mTvMsgQueue );
     mpUpgradeFBC = NULL;
     if (mHdmiOutFbc) {
@@ -1562,32 +1561,6 @@ int CTv::OpenTv ( void )
 
     Tv_HandeHDMIEDIDFilePathConfig();
 
-    value = config_get_str ( CFG_SECTION_TV, CFG_SSM_HDMI_EDID_EN, "null" );
-    if ( strtoul(value, NULL, 10) == 1 ) {
-        LOGD( "%s, get config \"%s\" is \"%s\".\n", __FUNCTION__, CFG_SSM_HDMI_EDID_EN, value );
-        //get hdmi edid use mode
-        char prop_value[256] = {0};
-        char *pEdid = NULL;
-        property_get( UBOOTENV_OUTPUTMODE, prop_value, "null" );
-        LOGD( "%s, get property [%s]:[%s]\n", __FUNCTION__, UBOOTENV_OUTPUTMODE, prop_value );
-
-        if ( strcmp ( prop_value, "null" ) != 0 )
-            pEdid = prop_value;
-        else
-            pEdid = (char *)"hdmi_edid";//set default hdmi edid
-
-        config_set_str ( CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, pEdid );
-        //set file's path for hdmi edid of each port
-        for ( int i = 1; i <= SSM_HDMI_PORT_MAX; i++ ) {
-            char edid_path[256] = {0};
-            char edid_path_cfg[256] = {0};
-            sprintf ( edid_path, "/system/etc/%s_port%d.bin", pEdid, i );
-            sprintf ( edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", i );
-            config_set_str ( CFG_SECTION_TV, edid_path_cfg, edid_path );
-        }
-
-        mSetHdmiEdid = true;
-    }
 
     Tvin_GetTvinConfig();
     m_last_source_input = SOURCE_INVALID;
@@ -1620,7 +1593,6 @@ int CTv::OpenTv ( void )
 
     mTvStatus = TV_OPEN_ED;
 
-    mHDMIRxCEC.start();
     mAutoPQparam.startAutoPQ(CTvin::Tvin_SourceInputToSourceInputType(SOURCE_MPEG));
     return 0;
 }
@@ -2986,51 +2958,19 @@ void CTv::onHDMIRxCECMessage(int msg_len, unsigned char msg_buf[])
     sendTvEvent(ev);
 }
 
-int CTv::SendHDMIRxCECCustomMessage(unsigned char data_buf[])
-{
-    return mHDMIRxCEC.SendCustomMessage(m_source_input, data_buf);
-}
-
-int CTv::SendHDMIRxCECCustomMessageAndWaitReply(unsigned char data_buf[], unsigned char reply_buf[], int WaitCmd, int timeout)
-{
-    return mHDMIRxCEC.SendCustomMessageAndWaitReply(m_source_input, data_buf, reply_buf, WaitCmd, timeout);
-}
-
-int CTv::SendHDMIRxCECBoradcastStandbyMessage(void)
-{
-    return mHDMIRxCEC.SendBoradcastStandbyMessage(m_source_input);
-}
-
-int CTv::SendHDMIRxCECGiveCECVersionMessage(tv_source_input_t source_input, unsigned char data_buf[])
-{
-    if (mHDMIRxCEC.processRefreshSrcDevice(source_input) == 0) {
-        return mHDMIRxCEC.SendGiveCECVersionMessage(source_input, data_buf);
-    }
-
-    return -1;
-}
-
-int CTv::SendHDMIRxCECGiveDeviceVendorIDMessage(tv_source_input_t source_input, unsigned char data_buf[])
-{
-    if (mHDMIRxCEC.processRefreshSrcDevice(source_input) == 0) {
-        return mHDMIRxCEC.SendGiveDeviceVendorIDMessage(source_input, data_buf);
-    }
-
-    return -1;
-}
-
-int CTv::SendHDMIRxCECGiveOSDNameMessage(tv_source_input_t source_input, unsigned char data_buf[])
-{
-    if (mHDMIRxCEC.processRefreshSrcDevice(source_input) == 0) {
-        return mHDMIRxCEC.SendGiveOSDNameMessage(source_input, data_buf);
-    }
-
-    return -1;
-}
-
 int CTv::GetHdmiHdcpKeyKsvInfo(int data_buf[])
 {
-    return CTvin::getInstance()->get_hdmi_ksv_info(m_source_input, data_buf);
+    int ret = -1;
+    if (m_source_input != SOURCE_HDMI1 && m_source_input != SOURCE_HDMI2 && m_source_input != SOURCE_HDMI3) {
+        return -1;
+    }
+
+    struct _hdcp_ksv msg;
+    ret = mHDMIRxManager.GetHdmiHdcpKeyKsvInfo(&msg);
+    memset((void *)data_buf, 0, 2);
+    data_buf[0] = msg.bksv0;
+    data_buf[1] = msg.bksv1;
+    return ret;
 }
 
 bool CTv::hdmiOutWithFbc()
@@ -3287,56 +3227,83 @@ int CTv::Tv_GetPlatformType()
     return mHdmiOutFbc ? 1 : 0;
 }
 
+int CTv::Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version)
+{
+    char edid_path[100] = {0};
+    char edid_path_cfg[100] = {0};
+    char propValue[256] = {0};
+
+    property_get(UBOOTENV_OUTPUTMODE, propValue, "null");
+    if (strcmp(propValue, "null") == 0) {
+        config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
+    } else {
+        config_set_str ( CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, propValue);
+    }
+
+    switch (port) {
+        case HDMI_PORT_1:
+            if (HDMI_EDID_VER_14== version) {
+                sprintf(edid_path, "/system/etc/%s_port%d.bin", propValue, port);
+                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
+                if (access(edid_path, 0) < 0) {
+                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
+                }
+            } else {
+                sprintf(edid_path, "/system/etc/%s_port%d_%d.bin", propValue, port,20);
+                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
+                if (access(edid_path, 0) < 0) {
+                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
+                }
+            }
+            break;
+        case HDMI_PORT_2:
+            if (HDMI_EDID_VER_14 == version) {
+                sprintf(edid_path, "/system/etc/%s_port%d.bin", propValue, port);
+                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
+                if (access(edid_path, 0) < 0) {
+                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
+                }
+            } else {
+                sprintf(edid_path, "/system/etc/%s_port%d_%d.bin", propValue, port,20);
+                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
+                if (access(edid_path, 0) < 0) {
+                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
+                }
+            }
+            break;
+        case HDMI_PORT_3:
+            if (HDMI_EDID_VER_14 == version) {
+                sprintf(edid_path, "/system/etc/%s_port%d.bin", propValue, port);
+                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
+                if (access(edid_path, 0) < 0) {
+                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
+                }
+            } else {
+                sprintf(edid_path, "/system/etc/%s_port%d_%d.bin", propValue, port,20);
+                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
+                if (access(edid_path, 0) < 0) {
+                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
+                }
+            }
+            break;
+        default:
+            config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
+            break;
+    }
+
+    config_set_str(CFG_SECTION_TV, edid_path_cfg, edid_path);
+    return 0;
+}
+
 int CTv::Tv_HandeHDMIEDIDFilePathConfig()
 {
-    char edid_path[256];
-    char edid_path_cfg[256];
-    bool fileExist = false;
-
-    const char *value = config_get_str(CFG_SECTION_TV, CFG_SSM_HDMI_EDID_EN, "null");
-    if (strtoul(value, NULL, 10) == 1) {
-        LOGD( "%s, get config [%s]:[%s]\n", __FUNCTION__, CFG_SSM_HDMI_EDID_EN, value);
-        //get hdmi edid use mode
-        char propValue[256] = {0};
-        property_get(UBOOTENV_OUTPUTMODE, propValue, "null");
-        LOGD( "%s, get property [%s]:[%s]\n", __FUNCTION__, UBOOTENV_OUTPUTMODE, propValue);
-        if (strcmp(propValue, "null") != 0) {
-            fileExist = true;
-
-            config_set_str ( CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, propValue);
-            //set file's path for hdmi edid of each port
-            for (int i = 1; i <= SSM_HDMI_PORT_MAX; i++) {
-                memset( edid_path, '\0', 256);
-                memset( edid_path_cfg, '\0', 256);
-                sprintf(edid_path, "/system/etc/%s_port%d.bin", propValue, i);
-                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", i);
-                if (access(edid_path, 0) < 0) {
-                    fileExist = false;
-                    break;
-                }
-                config_set_str(CFG_SECTION_TV, edid_path_cfg, edid_path);
-            }
+    if (1 == GetSSMHandleHDMIEdidByCustomerEnableCFG()) {
+        //set file's path for hdmi edid of each port
+        for (int i = 1; i <= SSM_HDMI_PORT_MAX; i++) {
+            Tv_HDMIEDIDFileSelect((tv_hdmi_port_id_t)i, SSMReadHDMIEdidMode((tv_hdmi_port_id_t)i));
         }
-
-        if (!fileExist) {
-            //set default hdmi edid
-            config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
-            //set file's path for hdmi edid of each port
-            for (int i = 1; i <= SSM_HDMI_PORT_MAX; i++) {
-                memset(edid_path, '\0', 256);
-                memset(edid_path_cfg, '\0', 256);
-                sprintf(edid_path, "/system/etc/%s_port%d.bin", "hdmi_edid", i);
-                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", i);
-
-                value = config_get_str(CFG_SECTION_TV, edid_path_cfg, "null");
-                if (strcmp(value, edid_path) != 0) {
-                    config_set_str(CFG_SECTION_TV, edid_path_cfg, edid_path);
-                }
-            }
-        }
-
-        mSetHdmiEdid = true;
     }
+    mSetHdmiEdid = true;
     return 0;
 }
 
@@ -5572,6 +5539,21 @@ int CTv::GetHdmiAvHotplugDetectOnoff()
 
     return 0;
 }
+
+int CTv::SetHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version)
+{
+    Tv_HDMIEDIDFileSelect(port, version);
+    SSMSetHDMIEdid(port);
+    mHDMIRxManager.HdmiRxEdidUpdate();
+    return 0;
+}
+
+int CTv::SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable)
+{
+    mHDMIRxManager.HdmiRxHdcpOnOff(enable);
+    return 0;
+}
+
 
 void CTv::dump(String8 &result)
 {

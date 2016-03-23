@@ -25,7 +25,7 @@
 #include "../vpp/CVpp.h"
 #include "../vpp/CPQdb.h"
 #include "../tvin/CTvin.h"
-#include "../tvin/CHDMIRxCEC.h"
+#include "../tvin/CHDMIRxManager.h"
 #include "../tvutils/CMsgQueue.h"
 #include "../tvutils/CSerialCommunication.h"
 #include "../tvutils/serial_operate.h"
@@ -84,7 +84,7 @@ typedef enum TvRunStatus_s {
     TV_CLOSE_ED,
 } TvRunStatus_t;
 
-class CTv : public CTvin::CTvinSigDetect::ISigDetectObserver, public CSourceConnectDetect::ISourceConnectObserver, public CHDMIRxCEC::IHDMIRxCECObserver, public CUpgradeFBC::IUpgradeFBCObserver, public CSerialCommunication::ISerialCommunicationObserver, public CTvSubtitle::IObserver, public  CTv2d4GHeadSetDetect::IHeadSetObserver {
+class CTv : public CTvin::CTvinSigDetect::ISigDetectObserver, public CSourceConnectDetect::ISourceConnectObserver, public CUpgradeFBC::IUpgradeFBCObserver, public CSerialCommunication::ISerialCommunicationObserver, public CTvSubtitle::IObserver, public  CTv2d4GHeadSetDetect::IHeadSetObserver {
 public:
     static const int TV_ACTION_NULL = 0x0000;
     static const int TV_ACTION_STARTING = 0x0001;
@@ -217,7 +217,7 @@ public:
     CTvFactory mFactoryMode;
     CTvin::CTvinSigDetect mSigDetectThread;
     CSourceConnectDetect mSourceConnectDetectThread;
-    CHDMIRxCEC mHDMIRxCEC;
+    CHDMIRxManager mHDMIRxManager;
     CUpgradeFBC *mpUpgradeFBC;
     CSerialCommunication mSerialA;
     CSerialCommunication mSerialB;
@@ -243,6 +243,7 @@ public:
     int ChannelImport(const char *srcPath);
     int Tv_GetProjectInfo(project_info_t *ptrInfo);
     int Tv_GetPlatformType();
+    int Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);
     int Tv_HandeHDMIEDIDFilePathConfig();
     int Tv_SetDDDRCMode(tv_source_input_t source_input);
     int Tv_SetAudioSourceType (tv_source_input_t source_input);
@@ -405,6 +406,8 @@ public:
     int SetCustomEQGain();
     int SetAtvInGain(int gain_val);
     int GetHdmiAvHotplugDetectOnoff();
+    int SetHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);
+    int SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable);
 
     void dump(String8 &result);
 private:

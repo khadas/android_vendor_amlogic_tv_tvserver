@@ -49,7 +49,7 @@ LOCAL_SRC_FILES := \
   tv/CTvFactory.cpp \
   tvin/CTvin.cpp \
   tvin/CSourceConnectDetect.cpp \
-  tvin/CHDMIRxCEC.cpp \
+  tvin/CHDMIRxManager.cpp \
   tvdb/CTvDimension.cpp \
   vpp/CVpp.cpp \
   vpp/pqdata.cpp \

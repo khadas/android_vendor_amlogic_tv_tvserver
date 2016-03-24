@@ -2022,4 +2022,24 @@ void setBootEnv(const char *key, const char *value)
         sws->setBootEnv(String16(key), String16(value));
     }
 }
+
+int readSysfs(const char *path, char *value) {
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        String16 v;
+        if (sws->readSysfs(String16(path), v)) {
+            strcpy(value, String8(v).string());
+            return 0;
+        }
+    }
+    return -1;
+}
+
+void writeSysfs(const char *path, const char *value) {
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        sws->writeSysfs(String16(path), String16(value));
+    }
+}
+
 #endif

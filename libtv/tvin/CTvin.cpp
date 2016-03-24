@@ -534,7 +534,6 @@ int CTvin::VDIN_GetDisplayVFreq (void)
 
 int CTvin::VDIN_SetDisplayVFreq ( int freq, int display_resolution , bool isFbc)
 {
-    FILE *fp = NULL;
     const char *config_value = NULL;
     static int display_mode_type = -1;
     CFbcCommunication *pFBC = NULL;
@@ -560,12 +559,8 @@ int CTvin::VDIN_SetDisplayVFreq ( int freq, int display_resolution , bool isFbc)
         }
     }
 
-    fp = fopen ( "/sys/class/display/mode", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/class/display/mode error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
+    char cur_mode[20] = {0};
+    readSysfs("/sys/class/display/mode", cur_mode);
 
     if ( isFbc ) {
         pFBC = GetSingletonFBC();
@@ -576,40 +571,43 @@ int CTvin::VDIN_SetDisplayVFreq ( int freq, int display_resolution , bool isFbc)
     }
 
     switch ( display_resolution ) {
-    case VPP_DISPLAY_RESOLUTION_1366X768:
-        if ( freq == 50 ) {
-            fprintf ( fp, "%s", "768p50hz" );
-        } else {
-            fprintf ( fp, "%s", "768p60hz" );
-        }
-        break;
-    case VPP_DISPLAY_RESOLUTION_3840X2160:
-        if ( freq == 50 ) {
-            if (isFbc) {
-                fprintf ( fp, "%s", "2160p50hz420" );
-            } else {
-                fprintf ( fp, "%s", "2160p50hz" );
+        case VPP_DISPLAY_RESOLUTION_1366X768:
+            if (strstr(cur_mode, "768") != NULL) {
+                if ( freq == 50 ) {
+                    writeSysfs("/sys/class/display/mode", "768p50hz" );
+                } else {
+                    writeSysfs("/sys/class/display/mode", "768p60hz" );
+                }
             }
-        } else {
-            if (isFbc) {
-                fprintf ( fp, "%s", "2160p60hz420" );
-            } else {
-                fprintf ( fp, "%s", "2160p60hz" );
+            break;
+        case VPP_DISPLAY_RESOLUTION_3840X2160:
+            if (strstr(cur_mode, "2160") != NULL) {
+                if ( freq == 50 ) {
+                    if (isFbc) {
+                        writeSysfs("/sys/class/display/mode", "2160p50hz420" );
+                    } else {
+                        writeSysfs("/sys/class/display/mode", "2160p50hz" );
+                    }
+                } else {
+                    if (isFbc) {
+                        writeSysfs("/sys/class/display/mode", "2160p60hz420" );
+                    } else {
+                        writeSysfs("/sys/class/display/mode", "2160p60hz" );
+                    }
+                }
             }
-        }
-        break;
-    case VPP_DISPLAY_RESOLUTION_1920X1080:
-    //default:
-        if ( freq == 50 ) {
-            fprintf ( fp, "%s", "1080p50hz" );
-        } else {
-            fprintf ( fp, "%s", "1080p60hz" );
-        }
-        break;
+            break;
+        case VPP_DISPLAY_RESOLUTION_1920X1080:
+        default:
+            if (strstr(cur_mode, "1080p") != NULL) {
+                if ( freq == 50 ) {
+                    writeSysfs("/sys/class/display/mode", "1080p50hz" );
+                } else {
+                    writeSysfs("/sys/class/display/mode", "1080p60hz" );
+                }
+            }
+            break;
     }
-
-    fclose ( fp );
-    fp = NULL;
 
     return 0;
 }

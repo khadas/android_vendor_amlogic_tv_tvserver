@@ -1746,7 +1746,7 @@ int CTv::StopTvLock ( void )
 
 const char *CTv::getPqDbPath()
 {
-    return config_get_str(CFG_SECTION_TV, CFG_PQ_DB_PATH, DEF_VALUE_PQ_DB_PATH);
+    return config_get_str(CFG_SECTION_TV, CFG_PQ_DB_PATH, DEF_DES_PQ_DB_PATH);
 }
 
 int CTv::Tv_MiscSetBySource ( tv_source_input_t source_input )

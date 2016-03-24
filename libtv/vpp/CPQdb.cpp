@@ -49,9 +49,6 @@ using namespace std;
 
 #define CC_LINE_MAX_LEN             (1024)
 
-#define LOG_TAG "CPQdb"
-//#define CPQDB_DEBUG
-
 
 /*int get_pq_from_file(const char *file_name, const char *screen_size, char *key_str_buf[]) {
  FILE *fp = NULL;
@@ -105,6 +102,7 @@ CPqData::CPqData()
 {
     int i = 0, j = 0;
 
+    initDB();
     for (i = 0; i < 15; i++) {
         pq_bri_data[i].TotalNode = 0;
         pq_bri_data[i].NodeValue = 0;
@@ -159,6 +157,16 @@ CPqData::~CPqData()
 {
 }
 
+void CPqData::initDB()
+{
+    if (access(DEF_DES_PQ_DB_PATH, F_OK) && (access(DEF_SRC_PQ_DB_PATH, F_OK) == F_OK)) {
+        CFile file(DEF_SRC_PQ_DB_PATH);
+        if (file.copyTo(DEF_DES_PQ_DB_PATH) != 0) {
+            LOGE("%s, copy file \"%s\" to \"%s\" error", __FUNCTION__, DEF_SRC_PQ_DB_PATH, DEF_DES_PQ_DB_PATH);
+        }
+    }
+}
+
 int CPqData::openPqDB(const char *db_path)
 {
     int rval;
@@ -167,7 +175,7 @@ int CPqData::openPqDB(const char *db_path)
     char tmp_buf[128] = { 0 };
 
     strcpy(PQ_DB_PATH, db_path);
-    strcpy(SYSTEM_PQ, "/system/etc/pq.db");
+    strcpy(SYSTEM_PQ, DEF_SRC_PQ_DB_PATH);
 
     if (GetProjectInfo(&tmp_info) == 0) {
         strcpy(tmp_buf, "/system/etc/");

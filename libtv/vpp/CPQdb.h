@@ -151,6 +151,7 @@ public:
     int getSharpnessFlag();
 
 private:
+    void initDB();
     int CaculateLevelParam(tvpq_data_t *pq_data, int nodes, int level);
     am_regs_t CaculateLevelRegsParam(tvpq_sharpness_regs_t *pq_regs, int level, int flag);
     int GetNonlinearMapping(tvpq_data_type_t data_type, tvin_port_t source_port, int level, int *params);

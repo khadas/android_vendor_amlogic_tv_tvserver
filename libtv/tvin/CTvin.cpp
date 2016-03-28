@@ -25,6 +25,7 @@
 
 #define AFE_DEV_PATH        "/dev/tvafe0"
 #define HDMIRX_KSV_PATH     "/dev/hdmirx0"
+#define AMLVIDEO2_DEV_PATH  "/dev/video11"
 
 
 #define CC_SEL_VDIN_DEV   (0)
@@ -70,9 +71,7 @@ CTvin::CTvin()
 
     m_tvin_param.index = 0;
     m_is_decoder_start = false;
-    gExistD2D3 = -1;
     gVideoPath[0] = '\0';
-    m_pathid = TV_PATH_DECODER_3D_AMVIDEO;
 
     for (i = 0; i < SOURCE_MAX; i++) {
         mSourceInputToPortMap[i] = TVIN_PORT_NULL;
@@ -161,33 +160,10 @@ int CTvin::setMpeg2Vdin(int enable)
     return 0;
 }
 
-char *CTvin::VDIN_CheckVideoPath ( const char *videopath )
-{
-    strncpy ( gVideoPath, videopath, sizeof ( gVideoPath ) );
-
-    if ( strstr ( videopath, "d2d3 " ) != NULL ) {
-        if ( gExistD2D3 == -1 ) {
-            gExistD2D3 = IsFileExist ( "/sys/class/d2d3/d2d3" );
-        }
-
-        if ( gExistD2D3 == 0 ) {
-            DelSub ( gVideoPath, (char *)"d2d3 " );
-        }
-    }
-
-    LOGW ( "%s, video path before check [%s]\n", CFG_SECTION_TV, videopath );
-    LOGW ( "%s, video path after check [%s]\n", CFG_SECTION_TV, gVideoPath );
-
-    return gVideoPath;
-}
-
 int CTvin::VDIN_AddPath ( const char *videopath )
 {
     FILE *fp = NULL;
     int ret = -1;
-    char *tmp_video_path = NULL;
-
-    tmp_video_path = VDIN_CheckVideoPath ( videopath );
 
     fp = fopen ( "/sys/class/vfm/map", "w" );
 
@@ -196,7 +172,7 @@ int CTvin::VDIN_AddPath ( const char *videopath )
         return -1;
     }
 
-    ret = fprintf ( fp, "%s", tmp_video_path );
+    ret = fprintf ( fp, "%s", videopath );
 
     if ( ret < 0 ) {
         LOGW ( "Add VideoPath error(%s)!\n", strerror ( errno ) );
@@ -260,46 +236,27 @@ int CTvin::VDIN_RmTvPath ( void )
 int CTvin::VDIN_AddVideoPath ( int selPath )
 {
     int ret = -1;
+    int Existamlvideo2 = IsFileExist ( AMLVIDEO2_DEV_PATH );
 
     switch ( selPath ) {
-    case TV_PATH_VDIN_AMVIDEO:
-        ret = VDIN_AddPath ( "add tvpath vdin0 amvideo" );
+    case TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:
+        if (Existamlvideo2) {
+            ret = VDIN_AddPath ( "add tvpath vdin0 amlvideo2 ppmgr deinterlace amvideo" );
+            }
+        else {
+            ret = VDIN_AddPath ( "add tvpath vdin0 ppmgr deinterlace amvideo" );
+            }
         break;
 
-    case TV_PATH_VDIN_DEINTERLACE_AMVIDEO:
-        ret = VDIN_AddPath ( "add tvpath vdin0 deinterlace amvideo" );
+    case TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:
+        if (Existamlvideo2) {
+            ret = VDIN_AddPath ( "add default decoder amlvideo2 ppmgr deinterlace amvideo" );
+        }
+        else {
+            ret = VDIN_AddPath ( "add default decoder ppmgr deinterlace amvideo" );
+        }
         break;
-
-    case TV_PATH_VDIN_3D_AMVIDEO:
-        ret = VDIN_AddPath ( "add tvpath vdin0 ppmgr amvideo" );
-        break;
-
-    case TV_PATH_VDIN_NEW3D_AMVIDEO:
-        ret = VDIN_AddPath ( "add tvpath vdin0 deinterlace ppmgr d2d3 amvideo" );
-        break;
-
-    case TV_PATH_VDIN_NEW3D_WITHOUTPPMGR_AMVIDEO:
-        ret = VDIN_AddPath ( "add tvpath vdin0 deinterlace d2d3 amvideo" );
-        break;
-
-    case TV_PATH_DECODER_3D_AMVIDEO:
-        ret = VDIN_AddPath ( "add default decoder ppmgr deinterlace amvideo" );
-        break;
-
-    case TV_PATH_DECODER_AMVIDEO:
-        ret = VDIN_AddPath ( "add default decoder deinterlace amvideo" );
-        break;
-
-    case TV_PATH_VDIN_FREESCALE_AMVIDEO:
-        ret = VDIN_AddPath ( "add previewpath vdin0 freescale amvideo" );
-        break;
-
-    case TV_PATH_DECODER_NEW3D_AMVIDEO:
-        ret = VDIN_AddPath ( "add default decoder deinterlace ppmgr d2d3 amvideo" );
-        break;
-
-    case TV_PATH_DECODER_NEW3D_WITHOUTPPMGR_AMVIDEO:
-        ret = VDIN_AddPath ( "add default decoder deinterlace d2d3 amvideo" );
+    default:
         break;
     }
 
@@ -2716,101 +2673,20 @@ int CTvin::uninit_vdin ( void )
     return 0;
 }
 
-int CTvin::Tvin_AddPath ( tvin_path_id_t pathid )
-{
-    int ret = -1;
-    int i = 0, dly = 10;
-    tv_path_type_t pathtype;
-
-    if ( pathid >= TV_PATH_VDIN_AMVIDEO && pathid < TV_PATH_DECODER_3D_AMVIDEO ) {
-        pathtype = TV_PATH_TYPE_TVIN;
-    } else {
-        pathtype = TV_PATH_TYPE_DEFAULT;
-    }
-
-    if ( pathid >= TV_PATH_VDIN_AMVIDEO && pathid < TV_PATH_DECODER_3D_AMVIDEO ) {
-        if ( m_pathid == pathid ) {
-            LOGW ( "%s, no need to add the same tvin path.\n", CFG_SECTION_TV );
-            return 0;
-        }
-
-        for ( i = 0; i < 50; i++ ) {
-            ret = VDIN_RmTvPath();
-
-            if ( ret > 0 ) {
-                LOGD ( "%s, remove tvin path ok, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
-                break;
-            } else {
-                LOGW ( "%s, remove tvin path faild, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
-                usleep ( dly * 1000 );
-            }
-        }
-    } else {
-        for ( i = 0; i < 50; i++ ) {
-            ret = VDIN_RmDefPath();
-
-            if ( ret > 0 ) {
-                LOGD ( "%s, remove default path ok, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
-                break;
-            } else {
-                LOGW ( "%s, remove default path faild, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
-                usleep ( dly * 1000 );
-            }
-        }
-    }
-
-    for ( i = 0; i < 50; i++ ) {
-        if ( pathid >= TV_PATH_VDIN_AMVIDEO && pathid < TV_PATH_DECODER_3D_AMVIDEO ) {
-            if ( strcmp ( config_tv_path, "null" ) == 0 ) {
-                ret = VDIN_AddVideoPath ( pathid );
-            } else {
-                ret = VDIN_AddPath ( config_tv_path );
-            }
-        } else {
-            if ( strcmp ( config_default_path, "null" ) == 0 ) {
-                ret = VDIN_AddVideoPath ( pathid );
-            } else {
-                ret = VDIN_AddPath ( config_default_path );
-            }
-        }
-
-        if ( ret >= 0 ) {
-            LOGD ( "%s, add pathid[%d] ok, %d ms gone.\n", CFG_SECTION_TV, pathid, i );
-            break;
-        } else {
-            LOGW ( "%s, add pathid[%d] faild, %d ms gone.\n", CFG_SECTION_TV, pathid, i );
-            usleep ( dly * 1000 );
-        }
-    }
-
-    if ( pathid >= TV_PATH_VDIN_AMVIDEO && pathid < TV_PATH_MAX ) {
-        m_pathid = pathid;
-    }
-
-    return ret;
-}
-
-
 int CTvin::Tvin_RemovePath ( tv_path_type_t pathtype )
 {
     int ret = -1;
     int i = 0, dly = 10;
 
-    for ( i = 0; i < 500; i++ ) {
-        ret = Tvin_CheckPathActive ( pathtype, 0 );
+    while (true) {
+        ret = Tvin_CheckPathActive ( pathtype );
 
         if ( ret == TV_PATH_STATUS_INACTIVE ) {
             LOGD ( "%s, check path is inactive, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
             break;
-        } else if ( ret == TV_PATH_STATUS_INACTIVE || ret == TV_PATH_STATUS_ERROR ) {
+        } else if ( ret == TV_PATH_STATUS_ACTIVE ) {
             usleep ( dly * 1000 );
-        } else {
-            break;
         }
-    }
-
-    if ( i == 500 ) {
-        LOGE ( "%s, check path active faild, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
     }
 
     if ( pathtype == TV_PATH_TYPE_DEFAULT ) {
@@ -2838,21 +2714,6 @@ int CTvin::Tvin_RemovePath ( tv_path_type_t pathtype )
             }
         }
 
-        m_pathid = TV_PATH_DECODER_3D_AMVIDEO;
-    } else if ( pathtype == TV_PATH_TYPE_TVIN_PREVIEW ) {
-        for ( i = 0; i < 50; i++ ) {
-            ret = VDIN_RmPreviewPath();
-
-            if ( ret > 0 ) {
-                LOGD ( "%s, remove preview path ok, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
-                break;
-            } else {
-                LOGW ( "%s, remove preview path faild, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
-                usleep ( dly * 1000 );
-            }
-        }
-
-        m_pathid = TV_PATH_DECODER_NEW3D_WITHOUTPPMGR_AMVIDEO;
     } else {
         ret = -1;
     }
@@ -2861,29 +2722,18 @@ int CTvin::Tvin_RemovePath ( tv_path_type_t pathtype )
 }
 
 
-int CTvin::Tvin_CheckPathActive ( tv_path_type_t path_type, int isCheckD2D3 )
+int CTvin::Tvin_CheckPathActive ( tv_path_type_t path_type)
 {
-    FILE *f;
-    char path[256];
+    FILE *f = NULL;
+    char path[100] = {0};
     char decoder_str[20] = "default {";
     char tvin_str[20] = "tvpath {";
-    char decoder_active_str[20] = "decoder(1)";
-    char tvin_active_str[20] = "vdin0(1)";
-    char di_active_str[20] = "deinterlace(1)";
-    char d2d3_active_str[20] = "d2d3(1)";
-    char decoder_inactive_str[20] = "decoder(0)";
-    char tvin_inactive_str[20] = "vdin0(0)";
-    char di_inactive_str[20] = "deinterlace(0)";
-    char d2d3_inactive_str[20] = "d2d3(0)";
 
     char *str_find = NULL;
-    char *active_str = NULL;
-    char *inactive_str = NULL;
+    char active_str[4] = "(1)";
     int mount_freq;
     int match;
     int is_active = TV_PATH_STATUS_INACTIVE;
-
-    memset ( path, 0, 255 );
 
     f = fopen ( "/sys/class/vfm/map", "r" );
     if ( !f ) {
@@ -2891,57 +2741,27 @@ int CTvin::Tvin_CheckPathActive ( tv_path_type_t path_type, int isCheckD2D3 )
         return TV_PATH_STATUS_NO_DEV;
     }
 
-    while ( fgets ( path, 254, f ) ) {
+    while ( fgets ( path, sizeof(path)-1, f ) ) {
         if ( path_type == TV_PATH_TYPE_DEFAULT ) {
             str_find = strstr ( path, decoder_str );
-            active_str = decoder_active_str;
-            inactive_str = decoder_inactive_str;
-        } else if ( path_type == TV_PATH_TYPE_TVIN || path_type == TV_PATH_TYPE_TVIN_PREVIEW ) {
+        } else if ( path_type == TV_PATH_TYPE_TVIN) {
             str_find = strstr ( path, tvin_str );
-            active_str = tvin_active_str;
-            inactive_str = tvin_inactive_str;
         } else {
-            LOGW ( "%s, there is no %d path_type.\n", CFG_SECTION_TV, path_type );
             break;
         }
 
         if ( str_find ) {
-            if ( isCheckD2D3 == 0 ) {
-                if ( strstr ( str_find, active_str ) && strstr ( str_find, di_active_str ) ) {
-                    is_active = TV_PATH_STATUS_ACTIVE;
-                    //LOGD("%s, %s is active.\n", CFG_SECTION_TV, path);
-                } else if ( strstr ( str_find, inactive_str )
-                            && ( strstr ( str_find, di_inactive_str ) || ( !strstr ( str_find, di_inactive_str ) ) )
-                          ) {
-                    is_active = TV_PATH_STATUS_INACTIVE;
-                    //LOGD("%s, %s is inactive.\n", CFG_SECTION_TV, path);
-                } else {
-                    is_active = TV_PATH_STATUS_ERROR;
-                    LOGE ( "%s, %s is error!\n", CFG_SECTION_TV, path );
-                }
-
-                break;
+            if ( strstr ( str_find, active_str) ) {
+                is_active = TV_PATH_STATUS_ACTIVE;
             } else {
-                if ( strstr ( str_find, active_str ) && strstr ( str_find, di_active_str ) && strstr ( str_find, d2d3_active_str ) ) {
-                    is_active = TV_PATH_STATUS_ACTIVE;
-                    //LOGD("%s, %s is active.\n", CFG_SECTION_TV, path);
-                } else if ( strstr ( str_find, inactive_str )
-                            && ( strstr ( str_find, di_inactive_str ) || ( !strstr ( str_find, di_inactive_str ) ) )
-                            && ( strstr ( str_find, d2d3_inactive_str ) || ( !strstr ( str_find, d2d3_inactive_str ) ) )
-                          ) {
-                    is_active = TV_PATH_STATUS_INACTIVE;
-                    //LOGD("%s, %s is inactive.\n", CFG_SECTION_TV, path);
-                } else {
-                    is_active = TV_PATH_STATUS_ERROR;
-                    LOGE ( "%s, %s is error!\n", CFG_SECTION_TV, path );
-                }
-
-                break;
+                is_active = TV_PATH_STATUS_INACTIVE;
             }
+            break;
         }
     }
 
     fclose ( f );
+    f = NULL;
 
     return is_active;
 }

@@ -704,12 +704,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-    case GET_VIDEO_PATH_STATUS: {
-        int path_type = p.readInt32();
-        int ret = 0;//(int)mpTv->Tvin_CheckPathActive((tv_path_type_t)path_type);
-        r->writeInt32(ret);
-        break;
-    }
 
     case GET_VIDEO_STREAM_STATUS:
     case GET_FIRST_START_SWITCH_TYPE:

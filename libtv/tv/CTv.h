@@ -603,7 +603,6 @@ protected:
     CTvDmx mTvDmx;
     CTvMsgQueue mTvMsgQueue;
     AutoBackLight mAutoBackLight;
-    CAutoPQparam mAutoPQparam;
     CTvDetectObserverForScanner mTvScannerDetectObserver;
     //
     volatile int mTvAction;

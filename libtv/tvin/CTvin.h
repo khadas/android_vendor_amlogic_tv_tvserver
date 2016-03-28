@@ -848,17 +848,8 @@ typedef struct tvafe_pin_mux_s {
 // ***************************************************************************
 
 typedef enum tvin_path_id_e {
-    TV_PATH_VDIN_AMVIDEO,
-    TV_PATH_VDIN_DEINTERLACE_AMVIDEO,
-    TV_PATH_VDIN_3D_AMVIDEO,
-    TV_PATH_VDIN_NEW3D_AMVIDEO,
-    TV_PATH_VDIN_NEW3D_WITHOUTPPMGR_AMVIDEO,
-    TV_PATH_VDIN_FREESCALE_AMVIDEO,
-    TV_PATH_DECODER_3D_AMVIDEO,
-    TV_PATH_DECODER_AMVIDEO,
-    TV_PATH_DECODER_NEW3D_AMVIDEO,
-    TV_PATH_DECODER_NEW3D_WITHOUTPPMGR_AMVIDEO,
-    TV_PATH_MAX,
+    TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO,
+    TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO,
 } tvin_path_id_t;
 
 #define CAMERA_IOC_MAGIC 'C'
@@ -957,7 +948,6 @@ typedef struct tvin_window_pos_s {
 typedef enum tv_path_type_e {
     TV_PATH_TYPE_DEFAULT,
     TV_PATH_TYPE_TVIN,
-    TV_PATH_TYPE_TVIN_PREVIEW,
     TV_PATH_TYPE_MAX,
 } tv_path_type_t;
 
@@ -1018,9 +1008,8 @@ public:
     int uninit_vdin ( void );
     int Tv_init_afe ( void );
     int Tv_uninit_afe ( void );
-    int Tvin_AddPath ( tvin_path_id_t pathid );
     int Tvin_RemovePath ( tv_path_type_t pathtype );
-    int Tvin_CheckPathActive ( tv_path_type_t path_type, int isCheckD2D3 );
+    int Tvin_CheckPathActive ( tv_path_type_t path_type );
     int setMpeg2Vdin(int enable);
     //pre apis
     int AFE_DeviceIOCtl ( int request, ... );
@@ -1045,7 +1034,6 @@ public:
     //
     int IsFileExist ( const char *file_name );
     char *DelSub ( char *str, char *sub );
-    char *VDIN_CheckVideoPath ( const char *videopath );
     int VDIN_AddPath ( const char *videopath );
     int VDIN_RmDefPath ( void );
     int VDIN_RmTvPath ( void );
@@ -1230,11 +1218,9 @@ private:
     tvin_parm_t gTvinAFEParam;
     tvin_info_t gTvinAFESignalInfo;
     static int mSourceInputToPortMap[SOURCE_MAX];
-    int gExistD2D3;
     char gVideoPath[256];
     int m_is_decoder_start;
 
-    enum tvin_path_id_e m_pathid;
     char config_tv_path[64];
     char config_default_path[64];
 };

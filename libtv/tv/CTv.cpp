@@ -116,7 +116,7 @@ CTv::CTv() :
     fbcIns = NULL;
     mAutoSetDisplayFreq = false;
 
-    tv_config_load ( TV_CONFIG_FILE_PATH );
+    tv_config_load (TV_CONFIG_FILE_PATH);
     sqlite3_config (SQLITE_CONFIG_SERIALIZED);
     //sqlite3_config(SQLITE_CONFIG_LOG, &sqliteLogCallback, (void*)1);
     sqlite3_soft_heap_limit(8 * 1024 * 1024);
@@ -1108,7 +1108,7 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
         //get tunerStd from videoStd and audioStd
         v4l2_std_id stdAndColor = mFrontDev.enumToStdAndColor (feParms.videoStd, feParms.audioStd);
 
-        LOGD("%s, resetFrontEndPara-　vstd=%d astd=%d stdandcolor=%lld", __FUNCTION__, feParms.videoStd, feParms.audioStd, stdAndColor);
+        LOGD("%s, resetFrontEndPara- vstd=%d astd=%d stdandcolor=%lld", __FUNCTION__, feParms.videoStd, feParms.audioStd, stdAndColor);
 
         //set frontend parameters to tuner dev
         mSigDetectThread.requestAndWaitPauseDetect();

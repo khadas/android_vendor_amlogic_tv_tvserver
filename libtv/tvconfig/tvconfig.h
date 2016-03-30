@@ -13,6 +13,7 @@
 
 #define CFG_BLUE_SCREEN_COLOR                   "tvin.bluescreen.color"
 
+#define CGF_DEFAULT_INPUT_IDS                   "tv.source.input.ids.default"
 
 #define CFG_SSM_HDMI_AV_DETECT                  "ssm.hdmi_av.hotplug.detect.en"
 #define CFG_SSM_HDMI_EDID_EN                    "ssm.handle.hdmi.edid.en"

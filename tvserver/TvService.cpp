@@ -734,6 +734,12 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+
+    case GET_SOURCE_INPUT_LIST: {
+        const char *value = config_get_str(CFG_SECTION_TV, CGF_DEFAULT_INPUT_IDS, "null");
+        r->writeString16(String16(value));
+        break;
+    }
     //Tv function END
 
     //VGA do not support now

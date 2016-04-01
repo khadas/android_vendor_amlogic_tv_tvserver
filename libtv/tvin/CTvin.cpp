@@ -468,17 +468,14 @@ int CTvin::VDIN_OnoffVScaler ( int isOn )
 
 void CTvin::VDIN_GetDisplayVFreq (int need_freq, int *last_freq, int *iSswitch, char * display_mode)
 {
-    int fd = -1;
     char buf[32] = {0};
     char *p = NULL;
 
-    fd = open("/sys/class/display/mode", O_RDWR);
-    if (fd < 0) {
-        LOGW("Open /sys/class/display/mode error(%s)!\n", strerror(errno));
+    if ( 0 != readSysfs(SYS_DISPLAY_MODE_PATH, buf) ) {
+        LOGW("Read /sys/class/display/mode failed!\n");
         return;
     }
-    read(fd, buf, sizeof(buf));
-    close(fd);
+
     LOGD( "%s, VDIN_GetDisplayVFreq is %s\n", __FUNCTION__, buf);
     if ((p = strstr(buf, "50hz")) != NULL) {
         *last_freq = 50;
@@ -531,7 +528,7 @@ int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
         }
     }
 
-    writeSysfs("/sys/class/display/mode", display_mode );
+    writeSysfs(SYS_DISPLAY_MODE_PATH, display_mode );
 
     return 0;
 }

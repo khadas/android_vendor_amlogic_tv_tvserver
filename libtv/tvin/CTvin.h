@@ -22,6 +22,7 @@
 #include "../tvutils/CThread.h"
 #include "../tv/CFrontEnd.h"
 
+#define SYS_DISPLAY_MODE_PATH       "/sys/class/display/mode"
 #define DEPTH_LEVEL_2DTO3D 33
 static const int DepthTable_2DTO3D[DEPTH_LEVEL_2DTO3D] = {
     -64, // -16

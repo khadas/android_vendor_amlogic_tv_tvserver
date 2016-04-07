@@ -78,7 +78,6 @@ int CFbcCommunication::start()
     mEpoll.setTimeout(3000);
 
     this->run();
-    mTvInput.run();
     return 0;
 }
 
@@ -449,305 +448,45 @@ int CFbcCommunication::uartReadData(unsigned char *retData, int *retLen)
 
 int CFbcCommunication::processData(COMM_DEV_TYPE_E fromDev, unsigned char *pData, int dataLen)
 {
+    __u16 key_code = 0;
     switch (fromDev) {
-    case COMM_DEV_CEC: {
-        if (mReplyList.WaitDevNo == fromDev && mReplyList.WaitCmd == pData[1]) {
+        case COMM_DEV_CEC: {
+            if (mReplyList.WaitDevNo == fromDev && mReplyList.WaitCmd == pData[1]) {
             mReplyList.reDataLen = dataLen;
             memcpy(mReplyList.replyData, pData, dataLen);
             mReplyList.WaitReplyCondition.signal();
-        } else if (0) {
+            }
+        break;
         }
-        break;
-    }
-    case COMM_DEV_SERIAL: {
-        LOGD("to signal wait dataLen:0x%x, cmdId:0x%x\n", dataLen, pData[5]);
-        if (mReplyList.WaitDevNo == fromDev && mReplyList.WaitCmd == pData[5]) {
-            mReplyList.reDataLen = dataLen;
-            memcpy(mReplyList.replyData, pData, dataLen);
-            mReplyList.WaitReplyCondition.signal();
-        } else {
-            unsigned char cmd = pData[5];
-            //just test
-            const char *value;
-            if (!mbSendKeyCode) {
-                value = config_get_str(CFG_SECTION_FBCUART, "fbc_key_event_handle", "null");
-                if ( strcmp ( value, "true" ) == 0 )
-                    mbSendKeyCode = true;
-                else mbSendKeyCode = false;
+        case COMM_DEV_SERIAL: {
+            if (mReplyList.WaitDevNo == fromDev && mReplyList.WaitCmd == pData[5]) {
+                mReplyList.reDataLen = dataLen;
+                memcpy(mReplyList.replyData, pData, dataLen);
+                mReplyList.WaitReplyCondition.signal();
+            } else {
+                unsigned char cmd = pData[5];
+                const char *value;
+                if (!mbSendKeyCode) {
+                    value = config_get_str(CFG_SECTION_FBCUART, "key_event_from_fbc", "null");
+                    if ( strcmp ( value, "true" ) == 0 ) {
+                        mbSendKeyCode = true;
+                    } else {
+                        mbSendKeyCode = false;
+                    }
+                }
+                if (mbSendKeyCode) {
+                    if (0x14 == pData[5]) {
+                        key_code =(key_code | (pData[7]<<8)) | pData[6];
+                        LOGD("to signal wait dataLen:0x%x, cmdId:0x%x , ,key:%d\n", dataLen, pData[5],key_code);
+                        mCVirtualInput.sendVirtualkeyEvent(key_code);
+                    }
+                }
             }
-#if(0)
-            switch (cmd) {
-            case 0x14:
-                if (mbSendKeyCode ) {
-                    if (pData[6] >= 12 && pData[6] <= 16 ) { //left ---enter
-                        unsigned char key = pData[6]  ;
-                        LOGD("  key:0x%x\n", key);
-
-                        //16    key 28       DPAD_CENTER
-                        //12    key 103      DPAD_UP
-                        //13    key 108      DPAD_DOWN
-                        //14    key 105      DPAD_LEFT
-                        //15    key 106      DPAD_RIGHT
-                        int checkKey = 0;
-                        if (key == 16)
-                            checkKey = 28 ;
-                        else  if (key == 12)
-                            checkKey = 103 ;
-                        else  if (key == 13)
-                            checkKey = 108 ;
-                        else  if (key == 14)
-                            checkKey = 105 ;
-                        else  if (key == 15)
-                            checkKey = 106 ;
-                        mTvInput.sendkeyCode(checkKey);
-                    }
-                }
-                break;
-
-            default:
-                break;
-            }
-#else
-            static long curTime, lastTime;
-            int tmp;
-            static int st = 0, st_key_up = 0;
-            static int st_key_down = 0;
-            static int st_key_left = 0;
-            static int st_key_right = 0;
-            static int checkKey = 0, last_checkKey = 0;
-
-
-            switch (pData[6]) {                     //different key
-            case 12:                                //DPAD_UP
-                st_key_up = pData[5];
-                if (st_key_up == 0x1D) {        //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 103;
-                    mTvInput.sendkeyCode(checkKey);
-                } else if (st_key_up == 0x1E) {     //CMD_INPUT_UP
-                    //checkKey = 103;
-                    //mTvInput.sendkeyCode_Up(checkKey);
-                }
-                break;
-
-            case 13:                                //DPAD_DOWN
-                st_key_down = pData[5];
-                if (st_key_down == 0x1D) {          //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 108;
-                    mTvInput.sendkeyCode(checkKey);
-                } else if (st_key_down == 0x1E) {   //CMD_INPUT_UP
-                    //checkKey = 108;
-                    //mTvInput.sendkeyCode_Up(checkKey);
-                }
-                break;
-
-            case 14:                                //DPAD_LEFT
-                st = pData[5];
-                if (st == 0x1D) {           //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 105;
-                    lastTime = 0;
-                    mbFbcKeyEnterDown = 1;//true
-                    mFbcEnterKeyDownTime = mTvInput.getNowMs();
-                    mTvInput.sendKeyRepeatStart(15, 1200, 1500);//code 4, dis 3, repeatTime 2
-                } else if (st == 0x1E) {    //CMD_INPUT_UP
-                    checkKey = 105;
-                    if (mbFbcKeyEnterDown == 1) {
-                        mbFbcKeyEnterDown = 0;//false
-                        mTvInput.sendKeyRepeatStop();
-                        int disFbcEnterKeyDown = mTvInput.getNowMs() - mFbcEnterKeyDownTime;
-                        LOGD("disFbcEnterKeyDown = %d", disFbcEnterKeyDown);
-                        if (disFbcEnterKeyDown > 1200) { //long down
-                        } else {
-                            mTvInput.sendkeyCode(105);
-                        }
-                    }
-                    //checkKey = 105;
-                    //mTvInput.sendkeyCode_Up(checkKey);
-                }
-                break;
-
-            case 15:                                //DPAD_RIGHT
-                st_key_right = pData[5];
-                if (st_key_right == 0x1D) {         //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 106;
-                    mTvInput.sendkeyCode(checkKey);
-                } else if (st_key_right == 0x1E) {      //CMD_INPUT_UP
-                    //checkKey = 106;
-                    //mTvInput.sendkeyCode_Up(checkKey);
-                }
-                break;
-
-            case 16:                                //DPAD_ENTER
-                st = pData[5];
-                if (st == 0x1D) {           //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 28;
-                    lastTime = 0;
-                    mbFbcKeyEnterDown = 1;//true
-                    mFbcEnterKeyDownTime = mTvInput.getNowMs();
-                    mTvInput.sendKeyRepeatStart(158, 1200, 1500);//code 4, dis 3, repeatTime 2
-                } else if (st == 0x1E) {    //CMD_INPUT_UP
-                    checkKey = 28;
-                    if (mbFbcKeyEnterDown == 1) {
-                        mbFbcKeyEnterDown = 0;//false
-                        mTvInput.sendKeyRepeatStop();
-                        int disFbcEnterKeyDown = mTvInput.getNowMs() - mFbcEnterKeyDownTime;
-                        LOGD("disFbcEnterKeyDown = %d", disFbcEnterKeyDown);
-                        if (disFbcEnterKeyDown > 1200) { //long down
-                        } else {
-                            mTvInput.sendkeyCode(28);
-                        }
-                    }
-                }
-                break;
-
-            case 20:                                //7key power
-                st_key_right = pData[5];
-                if (st_key_right == 0x1D) {         //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 116;
-                    //mTvInput.sendIRkeyCode_Down(checkKey);
-                    mTvInput.sendIRkeyCode(checkKey);
-                } else if (st_key_right == 0x1E) {      //CMD_INPUT_UP
-                    checkKey = 116;
-                    //mTvInput.sendIRkeyCode_Up(checkKey);
-                }
-                break;
-
-            case 26:                                //7key source
-                st_key_right = pData[5];
-                if (st_key_right == 0x1D) {         //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 466;
-                    mTvInput.sendIRkeyCode_Down(checkKey);
-                } else if (st_key_right == 0x1E) {      //CMD_INPUT_UP
-                    checkKey = 466;
-                    mTvInput.sendIRkeyCode_Up(checkKey);
-                }
-                break;
-
-            case 27:                                //7key menu
-                st_key_right = pData[5];
-                if (st_key_right == 0x1D) {         //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 139;
-                    mTvInput.sendkeyCode(checkKey);
-                } else if (st_key_right == 0x1E) {      //CMD_INPUT_UP
-                    //checkKey = 139;
-                    //mTvInput.sendkeyCode_Up(checkKey);
-                }
-                break;
-
-            case 40:                                //7key vol -
-                st_key_right = pData[5];
-                if (st_key_right == 0x1D) {         //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 114;
-                    mTvInput.sendIRkeyCode_Down(checkKey);
-                } else if (st_key_right == 0x1E) {      //CMD_INPUT_UP
-                    checkKey = 114;
-                    mTvInput.sendIRkeyCode_Up(checkKey);
-                }
-                break;
-
-            case 41:                                //7key vol +
-                st_key_right = pData[5];
-                if (st_key_right == 0x1D) {         //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 115;
-                    mTvInput.sendIRkeyCode_Down(checkKey);
-                } else if (st_key_right == 0x1E) {      //CMD_INPUT_UP
-                    checkKey = 115;
-                    mTvInput.sendIRkeyCode_Up(checkKey);
-                }
-                break;
-            case 201:                                //SARADC_DPAD_UP
-                st_key_up = pData[5];
-                if (st_key_up == 0x1D) {        //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 950;
-                    mTvInput.sendkeyCode_Down(checkKey);
-                } else if (st_key_up == 0x1E) {     //CMD_INPUT_UP
-                    mTvInput.sendkeyCode_Up(checkKey);
-                }
-                break;
-
-            case 202:                                //SARADC_DOWN
-                st_key_down = pData[5];
-                if (st_key_down == 0x1D) {          //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 951;
-                    mTvInput.sendkeyCode_Down(checkKey);
-                } else if (st_key_down == 0x1E) {   //CMD_INPUT_UP
-                    mTvInput.sendkeyCode_Up(checkKey);
-                }
-                break;
-
-            case 203:                                //SARADC_LEFT
-                st = pData[5];
-                if (st == 0x1D) {           //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 952;
-                    lastTime = 0;
-                    mbFbcKeyEnterDown = 1;//true
-                    mFbcEnterKeyDownTime = mTvInput.getNowMs();
-                    mTvInput.sendkeyCode_Down(checkKey);
-                    mTvInput.sendKeyRepeatStart(955, 1200, 1500);//code 4, dis 3, repeatTime 2
-                } else if (st == 0x1E) {    //CMD_INPUT_UP
-                    checkKey = 952;
-                    if (mbFbcKeyEnterDown == 1) {
-                        mbFbcKeyEnterDown = 0;//false
-                        mTvInput.sendKeyRepeatStop();
-                        int disFbcEnterKeyDown = mTvInput.getNowMs() - mFbcEnterKeyDownTime;
-                        LOGD("disFbcEnterKeyDown = %d", disFbcEnterKeyDown);
-                        if (disFbcEnterKeyDown > 1200) { //long down
-                            mTvInput.sendkeyCode_Up(955);
-                            mTvInput.sendkeyCode_Up(952);
-                        } else {
-                            mTvInput.sendkeyCode_Up(checkKey);
-                        }
-                    }
-                }
-                break;
-
-
-            case 204:                                //SARADC_RIGHT
-                st_key_right = pData[5];
-                if (st_key_right == 0x1D) {         //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 953;
-                    mTvInput.sendkeyCode_Down(checkKey);
-                } else if (st_key_right == 0x1E) {      //CMD_INPUT_UP
-                    mTvInput.sendkeyCode_Up(checkKey);
-
-                }
-                break;
-
-            case 205:                                //SARADC_ENTER
-                st_key_right = pData[5];
-                if (st_key_right == 0x1D) {         //CMD_INPUT_DOWN
-                    last_checkKey = checkKey;
-                    checkKey = 954;
-                    mTvInput.sendkeyCode_Down(checkKey);
-                } else if (st_key_right == 0x1E) {      //CMD_INPUT_UP
-                    mTvInput.sendkeyCode_Up(checkKey);
-                }
-
-                break;
-            }
-#endif
         }
-        break;
-    }
-    default: {
-        break;
-    }
     }
     return 0;
 }
+
 bool CFbcCommunication::threadLoop()
 {
     unsigned char readFrameBuf[512];
@@ -1919,9 +1658,6 @@ void CFbcCommunication::CFbcMsgQueue::handleMessage ( CMessage &msg )
 
     case TV_MSG_SEND_KEY: {
         LOGD("CFbcMsgQueue msg type = %d", msg.mType);
-        //CFbcCommunication *pFbc = ( CFbcCommunication * ) ( msg.mpData );
-        //pFbc->mTvInput.sendkeyCode_Down(4);
-        //pFbc->mbDownHaveSend = 1;//true
         break;
     }
 

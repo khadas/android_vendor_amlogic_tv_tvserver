@@ -5,7 +5,7 @@
 #include "tvutils/zepoll.h"
 #include "tvutils/CThread.h"
 #include <sys/time.h>
-#include "tvutils//CTvInput.h"
+#include "tvutils//CVirtualInput.h"
 #include "../tvutils/CMsgQueue.h"
 typedef enum COMM_DEV_TYPE_NO {
     COMM_DEV_CEC = 0,
@@ -398,7 +398,7 @@ private:
     unsigned char *mpRevDataBuf;
     unsigned int mCrc32Table[256];
     bool mbSendKeyCode;
-    CTvInput mTvInput;
+    CVirtualInput mCVirtualInput;
     CFbcMsgQueue mFbcMsgQueue;
     int mbDownHaveSend;
 

@@ -64,7 +64,7 @@ LOCAL_SRC_FILES := \
   tvutils/CSerialCommunication.cpp \
   tvutils/CSerialPort.cpp \
   tvutils/CHdmiCecCmd.cpp \
-  tvutils/CTvInput.cpp \
+  tvutils/CVirtualInput.cpp \
   tvutils/CSqlite.cpp \
   tvconfig/tvconfig.cpp \
   tvconfig/CIniFile.cpp \

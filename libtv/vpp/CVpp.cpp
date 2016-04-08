@@ -408,36 +408,15 @@ int CVpp::Vpp_GetPQModeValue(tv_source_input_type_t source_type, vpp_picture_mod
                              vpp_pq_para_t *pq_para)
 {
     vpp_pq_para_t parms;
-    vpp_picture_mode_t real_pq_mode;
 
     if (pq_para == NULL) {
         return -1;
     }
 
-    if (pq_mode == VPP_PICTURE_MODE_MOVIE) {
-        real_pq_mode = VPP_PICTURE_MODE_SOFT;
-    } else if (pq_mode == VPP_PICTURE_MODE_COLORFUL) {
-        real_pq_mode = VPP_PICTURE_MODE_BRIGHT;
-    } else {
-        real_pq_mode = pq_mode;
-    }
-    if (mpPqData->PQ_GetPQModeParams(source_type, real_pq_mode, pq_para) == 0) {
+    if (mpPqData->PQ_GetPQModeParams(source_type, pq_mode, pq_para) == 0) {
         if (mbVppCfg_pqmode_without_hue) {
             SSMReadHue(source_type, &(pq_para->hue));
         }
-        if (pq_mode == VPP_PICTURE_MODE_MOVIE) {
-            pq_para->brightness -= 10;
-            pq_para->contrast -= 10;
-            pq_para->saturation -= 10;
-            pq_para->sharpness -= 10;
-        } else if (pq_mode == VPP_PICTURE_MODE_COLORFUL) {
-            pq_para->brightness += 10;
-            pq_para->contrast += 10;
-            pq_para->saturation += 10;
-            pq_para->sharpness += 10;
-        } else {
-        }
-
     } else {
         LOGE("Vpp_GetPQModeValue, PQ_GetPQModeParams failed!\n");
         return -1;
@@ -515,13 +494,6 @@ int CVpp::Vpp_SetPQParams(tv_source_input_type_t source_type, vpp_picture_mode_t
             LOGE("Vpp_SetPQParams, PQ_GetSharpnessParams failed!\n");
         }
     }
-
-    if (pq_mode == VPP_PICTURE_MODE_MOVIE) {
-        ret |= SetColorTemperature(VPP_COLOR_TEMPERATURE_MODE_WARM, source_type, 1);
-    } else if (pq_mode == VPP_PICTURE_MODE_COLORFUL) {
-        ret |= SetColorTemperature(VPP_COLOR_TEMPERATURE_MODE_COLD, source_type, 1);
-    }
-
     return ret;
 }
 
@@ -538,19 +510,7 @@ int CVpp::Vpp_SetPQMode(vpp_picture_mode_t pq_mode, tv_source_input_type_t sourc
         ret = SSMReadSaturation(source_type, &pq_para.saturation);
         ret = SSMReadHue(source_type, &pq_para.hue);
         ret = SSMReadSharpness(source_type, &pq_para.sharpness);
-    } /*else if (pq_mode == VPP_PICTURE_MODE_MOVIE) {
-     ret = Vpp_GetPQModeValue ( source_type, VPP_PICTURE_MODE_SOFT, &pq_para );
-     pq_para.brightness -=10;
-     pq_para.contrast -=10;
-     pq_para.saturation -=10;
-     pq_para.sharpness -=10;
-     } else if (pq_mode == VPP_PICTURE_MODE_COLORFUL) {
-     ret = Vpp_GetPQModeValue ( source_type, VPP_PICTURE_MODE_BRIGHT, &pq_para );
-     pq_para.brightness +=10;
-     pq_para.contrast +=10;
-     pq_para.saturation +=10;
-     pq_para.sharpness +=10;
-     }*/else {
+    } else {
         ret = Vpp_GetPQModeValue(source_type, pq_mode, &pq_para);
     }
 

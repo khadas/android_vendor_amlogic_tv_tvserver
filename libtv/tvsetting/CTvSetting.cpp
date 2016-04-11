@@ -1188,8 +1188,7 @@ int SSMSaveParentalControlPassWord(unsigned char *password, int size)
 
 int SSMReadParentalControlPassWord(unsigned short  *password)
 {
-    if (SSMReadNTypes(SSM_RW_PARENTAL_CTL_PASSWORD_START,
-                      SSM_RW_PARENTAL_CTL_PASSWORD_LEN, (unsigned char *) password)
+    if (SSMReadNTypes(SSM_RW_PARENTAL_CTL_PASSWORD_START, 16, (unsigned char *) password)
             < 0) {
         return -1;
     }
@@ -1927,42 +1926,42 @@ int SSMReadTestPattern(unsigned char *rw_val)
 
 int SSMSaveAPL(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_APL_START, VPP_DATA_APL_SIZE, &rw_val);
+    return SSMWriteNTypes(VPP_DATA_APL_START, 1, &rw_val);
 }
 
 int SSMReadAPL(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_APL_START, VPP_DATA_APL_SIZE, rw_val);
+    return SSMReadNTypes(VPP_DATA_APL_START, 1, rw_val);
 }
 
 int SSMSaveAPL2(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_APL2_START, VPP_DATA_APL2_SIZE, &rw_val);
+    return SSMWriteNTypes(VPP_DATA_APL2_START, 1, &rw_val);
 }
 
 int SSMReadAPL2(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_APL2_START, VPP_DATA_APL2_SIZE, rw_val);
+    return SSMReadNTypes(VPP_DATA_APL2_START, 1, rw_val);
 }
 
 int SSMSaveBD(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_BD_START, VPP_DATA_BD_SIZE, &rw_val);
+    return SSMWriteNTypes(VPP_DATA_BD_START, 1, &rw_val);
 }
 
 int SSMReadBD(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_BD_START, VPP_DATA_BD_SIZE, rw_val);
+    return SSMReadNTypes(VPP_DATA_BD_START, 1, rw_val);
 }
 
 int SSMSaveBP(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_BP_START, VPP_DATA_BP_SIZE, &rw_val);
+    return SSMWriteNTypes(VPP_DATA_BP_START, 1, &rw_val);
 }
 
 int SSMReadBP(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_BP_START, VPP_DATA_BP_SIZE, rw_val);
+    return SSMReadNTypes(VPP_DATA_BP_START, 1, rw_val);
 }
 
 int SSMSaveDDRSSC(unsigned char rw_val)

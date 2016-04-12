@@ -1,4 +1,5 @@
 #define LOG_TAG "CFILE"
+//#define LOG_NDEBUG 0
 
 #include "CFile.h"
 #include "CTvLog.h"
@@ -24,19 +25,20 @@ CFile::CFile(const char *path)
 
 int CFile::openFile(const char *path)
 {
-    LOGD("openFile = %s", path);
-
+    LOGV("openFile = %s", path);
     if (mFd < 0) {
-        if (path == NULL) {
-            if (strlen(mPath) <= 0)
-                return -1;
-
-            mFd = open(mPath, O_RDWR);//读写模式打开
-            if (mFd < 0) LOGD("open file(--%s) fail", mPath);
-        } else {
-            mFd = open(path, O_RDWR);//读写模式打开
-            LOGD("open file(%s fd=%d) ", path, mFd);
+        const char *openPath = mPath;
+        if (path != NULL)
             strcpy(mPath, path);
+
+        if (strlen(openPath) <= 0) {
+            LOGW("openFile openPath is NULL, path:%d", path);
+            return -1;
+        }
+        mFd = open(openPath, O_RDWR);
+        if (mFd < 0) {
+            LOGW("open file(%s) fail", openPath);
+            return -1;
         }
     }
 

@@ -33,22 +33,18 @@ bool CSqlite::integrityCheck()
     char *err;
     int rval = sqlite3_exec(mHandle, "PRAGMA integrity_check;", sqlite3_exec_callback, NULL, &err);
     if (rval != SQLITE_OK) {
-        LOGD(" val = %d  msg = %s!\n", rval, sqlite3_errmsg(mHandle));
+        LOGE(" val = %d, msg = %s!\n", rval, sqlite3_errmsg(mHandle));
         return false;
-    } else {
-        return true;
     }
     return true;
 }
 
 int CSqlite::sqlite3_exec_callback(void *data __unused, int nColumn, char **colValues, char **colNames __unused)
 {
-    LOGD("sqlite3_exec_callback--- nums = %d", nColumn);
+    LOGD("sqlite3_exec_callback, nums = %d", nColumn);
     for (int i = 0; i < nColumn; i++) {
         LOGD("%s\t", colValues[i]);
     }
-    LOGD("\n");
-
     return 0;
 }
 
@@ -113,7 +109,7 @@ bool CSqlite::exeSql(const char *sql)
     char *errmsg;
     if (sql == NULL) return false;
     if (sqlite3_exec(mHandle, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
-        LOGD("exeSql=: %s error=%s", sql, errmsg ? errmsg : "Unknown");
+        LOGE("exeSql=: %s error=%s", sql, errmsg ? errmsg : "Unknown");
         if (errmsg)
             sqlite3_free(errmsg);
         return false;

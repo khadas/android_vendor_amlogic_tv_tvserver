@@ -126,7 +126,6 @@ public:
     int WaittingVideoPlaying(int minFrameCount = 8, int waitTime = 5000);
     int EnableVideoBlackout();
     int DisableVideoBlackout();
-    int getVideoDisableValue();
     int SetVideoLayerDisable ( int value );
     int ClearVideoBuffer();
     bool videoIsPlaying(int minFrameCount = 8);

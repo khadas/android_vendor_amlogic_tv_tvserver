@@ -333,7 +333,6 @@ public:
     int cfbc_Get_backlight_onoff(COMM_DEV_TYPE_E fromDev, int *value);
     int cfbc_Set_LVDS_SSG_Set(COMM_DEV_TYPE_E fromDev, int value);
     int cfbc_Set_AUTO_ELEC_MODE(COMM_DEV_TYPE_E fromDev, int value);
-    int cfbc_Get_AUTO_ELEC_MODE(COMM_DEV_TYPE_E fromDev, int *value);
     int cfbc_Get_FBC_MAINCODE_Version(COMM_DEV_TYPE_E fromDev, char sw_ver[], char build_time[], char git_ver[], char git_branch[], char build_name[]);
     int cfbc_Get_FBC_Get_PANel_INFO(COMM_DEV_TYPE_E fromDev, char panel_model[]);
     int cfbc_Set_FBC_panel_power_switch(COMM_DEV_TYPE_E fromDev, int switch_val);
@@ -351,13 +350,9 @@ public:
 
     int cfbc_Set_Thermal_state(COMM_DEV_TYPE_E fromDev, int value);
     int cfbc_Set_LightSensor_N310(COMM_DEV_TYPE_E fromDev, int value);
-    int cfbc_Get_LightSensor_N310(COMM_DEV_TYPE_E fromDev, int *value);
     int cfbc_Set_Dream_Panel_N310(COMM_DEV_TYPE_E fromDev, int value);
-    int cfbc_Get_Dream_Panel_N310(COMM_DEV_TYPE_E fromDev, int *value);
     int cfbc_Set_MULT_PQ_N310(COMM_DEV_TYPE_E fromDev, int value);
-    int cfbc_Get_MULT_PQ_N310(COMM_DEV_TYPE_E fromDev, int *value);
     int cfbc_Set_MEMC_N310(COMM_DEV_TYPE_E fromDev, int value);
-    int cfbc_Get_MEMC_N310(COMM_DEV_TYPE_E fromDev, int *value);
     int cfbc_Set_LockN_state(COMM_DEV_TYPE_E fromDev, int value);
     int cfbc_Set_VMute(COMM_DEV_TYPE_E fromDev, unsigned char value);
     int cfbc_SET_SPLIT_SCREEN_DEMO(COMM_DEV_TYPE_E fromDev, int value);
@@ -372,8 +367,6 @@ private:
     //now,just one item in list,haha...
     void showTime(struct timeval *_time);
     long getTime(void);
-    int rmFromRequestList();
-    int addToRequestList();
     void initCrc32Table();
     void sendAckCmd(bool isOk);
     unsigned int GetCrc32(unsigned char *InStr, unsigned int len);

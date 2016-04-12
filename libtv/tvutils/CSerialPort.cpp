@@ -1,3 +1,5 @@
+#define LOG_TAG "CSerialPort"
+
 #include "CSerialPort.h"
 #include <pthread.h>
 #include "CTvLog.h"
@@ -12,6 +14,85 @@
 #include <errno.h>
 
 #include "../tvconfig/tvconfig.h"
+
+static int com_read_data(int hComm, unsigned char *pData, unsigned int uLen)
+{
+    char inbuff[uLen];
+    char buff[uLen];
+    char tempbuff[uLen];
+    int i = 0, j = 0;
+
+    memset(inbuff, '\0', uLen);
+    memset(buff, '\0', uLen);
+    memset(tempbuff, '\0', uLen);
+
+    if (hComm < 0) {
+        return -1;
+    }
+
+    char *p = inbuff;
+
+    fd_set readset;
+    struct timeval tv;
+    int MaxFd = 0;
+
+    unsigned int c = 0;
+    int z, k;
+
+    do {
+        FD_ZERO(&readset);
+        FD_SET(hComm, &readset);
+        MaxFd = hComm + 1;
+        tv.tv_sec = 0;
+        tv.tv_usec = 100000;
+        do {
+            z = select(MaxFd, &readset, 0, 0, &tv);
+        } while (z == -1 && errno == EINTR);
+
+        if (z == -1) {
+            hComm = -1;
+            break;
+        }
+
+        if (z == 0) {
+            hComm = -1;
+            break;
+        }
+
+        if (FD_ISSET(hComm, &readset)) {
+            z = read(hComm, buff, uLen - c);
+#if 0
+            for (k = 0; k < z; k++) {
+                LOGD("%s, inbuff[%d]:%02X", "TV", k, buff[k]);
+            }
+#endif
+            c += z;
+
+            if (z > 0) {
+                if (z < (signed int) uLen) {
+                    buff[z + 1] = '\0';
+                    memcpy(p, buff, z);
+                    p += z;
+                } else {
+                    memcpy(inbuff, buff, z);
+                }
+
+                memset(buff, '\0', uLen);
+            } else {
+                hComm = -1;
+            }
+
+            if (c >= uLen) {
+                hComm = -1;
+                break;
+            }
+        }
+    } while (hComm >= 0);
+
+    memcpy(pData, inbuff, c);
+    p = NULL;
+    return c;
+}
 
 CSerialPort::CSerialPort()
 {
@@ -50,7 +131,6 @@ int CSerialPort::CloseDevice()
 {
     mDevId = -1;
     closeFile();
-
     return 0;
 }
 
@@ -187,7 +267,6 @@ int CSerialPort::set_opt(int speed, int db, int sb, char pb, int overtime, bool 
     setstopbits(&new_cfg, sb);
     setparity(&new_cfg, pb);
 
-
     if (overtime >= 0) {
         new_cfg.c_cc[VTIME] = overtime / 100; /* 设置超时 seconds*/
         new_cfg.c_cc[VMIN] = 0; /* Update the options and do it NOW */
@@ -205,7 +284,6 @@ int CSerialPort::set_opt(int speed, int db, int sb, char pb, int overtime, bool 
     }
     //clear,let be avail
     tcflush(mFd, TCIOFLUSH);
-
     return 0;
 }
 
@@ -220,85 +298,6 @@ int CSerialPort::writeFile(const unsigned char *pData, unsigned int uLen)
         LOGE("write data failed and tcflush hComm\n");
         return -1;
     }
-}
-
-static int com_read_data(int hComm, unsigned char *pData, unsigned int uLen)
-{
-    char inbuff[uLen];
-    char buff[uLen];
-    char tempbuff[uLen];
-    int i = 0, j = 0;
-
-    memset(inbuff, '\0', uLen);
-    memset(buff, '\0', uLen);
-    memset(tempbuff, '\0', uLen);
-
-    if (hComm < 0) {
-        return -1;
-    }
-
-    char *p = inbuff;
-
-    fd_set readset;
-    struct timeval tv;
-    int MaxFd = 0;
-
-    unsigned int c = 0;
-    int z, k;
-
-    do {
-        FD_ZERO(&readset);
-        FD_SET(hComm, &readset);
-        MaxFd = hComm + 1;
-        tv.tv_sec = 0;
-        tv.tv_usec = 100000;
-        do {
-            z = select(MaxFd, &readset, 0, 0, &tv);
-        } while (z == -1 && errno == EINTR);
-
-        if (z == -1) {
-            hComm = -1;
-            break;
-        }
-
-        if (z == 0) {
-            hComm = -1;
-            break;
-        }
-
-        if (FD_ISSET(hComm, &readset)) {
-            z = read(hComm, buff, uLen - c);
-#if 0
-            for (k = 0; k < z; k++) {
-                LOGD("%s, inbuff[%d]:%02X", "TV", k, buff[k]);
-            }
-#endif
-            c += z;
-
-            if (z > 0) {
-                if (z < (signed int) uLen) {
-                    buff[z + 1] = '\0';
-                    memcpy(p, buff, z);
-                    p += z;
-                } else {
-                    memcpy(inbuff, buff, z);
-                }
-
-                memset(buff, '\0', uLen);
-            } else {
-                hComm = -1;
-            }
-
-            if (c >= uLen) {
-                hComm = -1;
-                break;
-            }
-        }
-    } while (hComm >= 0);
-
-    memcpy(pData, inbuff, c);
-    p = NULL;
-    return c;
 }
 
 int CSerialPort::readFile(unsigned char *pBuf, unsigned int uLen)
@@ -356,3 +355,4 @@ int CSerialPort::setparity(struct termios *s, char pb)
     }
     return 0;
 }
+

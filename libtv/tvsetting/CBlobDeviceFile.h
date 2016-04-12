@@ -18,9 +18,6 @@ public:
 private:
     int ValidOperateCheck();
     int CreateNewFile(const char *file_name);
-
-private:
-
 };
 
-#endif // ANDROID_SSM_FILE_H
+#endif // _BLOB_FILE_H_

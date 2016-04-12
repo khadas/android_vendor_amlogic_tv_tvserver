@@ -78,7 +78,6 @@ int CVpp::Vpp_Init(const char *pq_db_path)
     }
 
     LoadVppSettings(SOURCE_TYPE_MPEG, TVIN_SIG_FMT_NULL, INDEX_2D, TVIN_TFMT_2D);
-
     return ret;
 }
 
@@ -89,6 +88,7 @@ int CVpp::Vpp_Uninit(void)
     mpPqData->closeDb();
     return 0;
 }
+
 CPqData *CVpp::getPqData()
 {
     return mpPqData;
@@ -103,13 +103,13 @@ int CVpp::doResume()
 {
     return mpPqData->reopenDB();
 }
+
 int CVpp::VPP_OpenModule(void)
 {
-
     if (vpp_amvideo_fd < 0) {
         vpp_amvideo_fd = open(VPP_DEV_PATH, O_RDWR);
 
-        LOGD("~~~open~~~##VPP_OpenModule##VPP_DEV_PATH : %s##", VPP_DEV_PATH);
+        LOGD("VPP_OpenModule path: %s", VPP_DEV_PATH);
 
         if (vpp_amvideo_fd < 0) {
             LOGE("Open vpp module, error(%s)!\n", strerror(errno));
@@ -119,7 +119,7 @@ int CVpp::VPP_OpenModule(void)
 
     if (vpp_amvideo_3d_fd < 0) {
         vpp_amvideo_3d_fd = open(VPP_3D_DEV_PATH, O_RDWR);
-        LOGD("~~~open~~~##VPP_OpenModule##VPP_3D_DEV_PATH : %s##", VPP_3D_DEV_PATH);
+        LOGD("VPP_OpenModule 3d dev path: %s", VPP_3D_DEV_PATH);
 
         if (vpp_amvideo_3d_fd < 0) {
             LOGE("Open vpp 3d module, error(%s)!\n", strerror(errno));
@@ -159,8 +159,6 @@ int CVpp::VPP_DeviceIOCtl(int request, ...)
 
 int CVpp::Vpp_LoadRegs(am_regs_t regs)
 {
-    LOGD("~~~VPP_DeviceIOCtl~~~##Vpp_LoadRegs##AMVECM_IOC_LOAD_REG##");
-
     int count_retry = 20;
     int rt = 0;
     while (count_retry) {
@@ -184,7 +182,7 @@ int CVpp::isPreviewWindow()
 {
     char prop_value[PROPERTY_VALUE_MAX] = {0};
     property_get("tv.is.preview.window", prop_value, "false");
-    LOGD("%s, prop tv.is.preview.window is \"%s\".\n", __FUNCTION__, prop_value);
+    LOGV("%s, prop tv.is.preview.window is \"%s\".\n", __FUNCTION__, prop_value);
     return (strcmp(prop_value, "true") == 0) ? 1 : 0;
 }
 
@@ -346,7 +344,7 @@ int CVpp::Vpp_LoadDI(tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt,
             ret = 0;
         }
     } else {
-        LOGE("%s getRegValues failed!\n", "Vpp_LoadDI");
+        LOGE("Vpp_LoadDI getRegValues failed!\n");
     }
     return ret;
 }
@@ -366,13 +364,13 @@ int CVpp::Vpp_LoadBasicRegs(tv_source_input_type_t source_type, tvin_sig_fmt_t s
             ret = 0;
         }
     } else {
-        LOGE("%s getRegValues failed!\n", "Vpp_LoadBasicRegs");
+        LOGE("Vpp_LoadBasicRegs getRegValues failed!\n");
     }
 
     if (mpPqData->LoadAllPQData(source_port, sig_fmt, is3d, trans_fmt, enableFlag) == 0) {
         ret = 0;
     } else {
-        LOGE("%s, getPQData failed!\n", "Vpp_LoadBasicRegs");
+        LOGE("Vpp_LoadBasicRegs getPQData failed!\n");
         ret = -1;
     }
 
@@ -441,7 +439,7 @@ int CVpp::Vpp_GetPQModeValue(tv_source_input_type_t source_type, vpp_picture_mod
         }
 
     } else {
-        LOGE("%s, PQ_GetPQModeParams failed!\n", "Vpp_GetPQModeValue");
+        LOGE("Vpp_GetPQModeValue, PQ_GetPQModeParams failed!\n");
         return -1;
     }
 
@@ -460,25 +458,24 @@ int CVpp::Vpp_SetPQParams(tv_source_input_type_t source_type, vpp_picture_mode_t
         if (mpPqData->PQ_GetBrightnessParams(source_port, sig_fmt, is3d, trans_fmt,
                                              pq_para.brightness, &brightness) == 0) {
         } else {
-            LOGE("%s, PQ_GetBrightnessParams error!\n", "Vpp_SetPQParams");
+            LOGE("Vpp_SetPQParams, PQ_GetBrightnessParams error!\n");
         }
 
         ret |= VPP_SetVideoBrightness(brightness);
     }
 
     if (pq_para.contrast >= 0 && pq_para.contrast <= 100) {
-        if (mpPqData->PQ_GetContrastParams(source_port, sig_fmt, is3d, trans_fmt, pq_para.contrast,
-                                           &contrast) == 0) {
+        if (mpPqData->PQ_GetContrastParams(source_port, sig_fmt,
+            is3d, trans_fmt, pq_para.contrast, &contrast) == 0) {
         } else {
-            LOGE("%s, PQ_GetBrightnessParams error!\n", "Vpp_SetPQParams");
+            LOGE("Vpp_SetPQParams, PQ_GetBrightnessParams error!\n");
         }
-
         ret |= VPP_SetVideoContrast(contrast);
     }
 
     if (pq_para.saturation >= 0 && pq_para.saturation <= 100) {
-        if (mpPqData->PQ_GetSaturationParams(source_port, sig_fmt, is3d, trans_fmt,
-                                             pq_para.saturation, &saturation) == 0) {
+        if (mpPqData->PQ_GetSaturationParams(source_port,
+            sig_fmt, is3d, trans_fmt, pq_para.saturation, &saturation) == 0) {
 
             if (mbVppCfg_hue_reverse) {
                 pq_para.hue = 100 - pq_para.hue;
@@ -494,10 +491,10 @@ int CVpp::Vpp_SetPQParams(tv_source_input_type_t source_type, vpp_picture_mode_t
                     hue = 0;
                 }
             } else {
-                LOGE("%s, PQ_GetHueParams error!\n", "Vpp_SetPQParams");
+                LOGE("Vpp_SetPQParams, PQ_GetHueParams error!\n");
             }
         } else {
-            LOGE("%s, PQ_GetSaturationParams error!\n", "Vpp_SetPQParams");
+            LOGE("Vpp_SetPQParams, PQ_GetSaturationParams error!\n");
         }
 
         ret |= VPP_SetVideoSaturationHue(saturation, hue);
@@ -509,13 +506,13 @@ int CVpp::Vpp_SetPQParams(tv_source_input_type_t source_type, vpp_picture_mode_t
         if (mpPqData->PQ_GetSharpnessParams(source_port, sig_fmt, is3d, trans_fmt, level, &regs,
                                             &regs_l) == 0) {
             if (Vpp_LoadRegs(regs) < 0) {
-                LOGE("%s, load reg for sharpness0 failed!\n", __FUNCTION__);
+                LOGE("Vpp_SetPQParams, load reg for sharpness0 failed!\n");
             }
             if (mpPqData->getSharpnessFlag() == 6 && Vpp_LoadRegs(regs_l) < 0) {
-                LOGE("%s, load reg for sharpness1 failed!\n", __FUNCTION__);
+                LOGE("Vpp_SetPQParams, load reg for sharpness1 failed!\n");
             }
         } else {
-            LOGE("%s, PQ_GetSharpnessParams failed!\n", __FUNCTION__);
+            LOGE("Vpp_SetPQParams, PQ_GetSharpnessParams failed!\n");
         }
     }
 
@@ -586,7 +583,7 @@ int CVpp::SetPQMode(vpp_picture_mode_t pq_mode, tv_source_input_type_t source_ty
         }
     }
 
-    LOGE("%s, failed!", "SetPQMode");
+    LOGE("SetPQMode, failed!");
     return -1;
 }
 
@@ -667,11 +664,11 @@ int CVpp::Vpp_SetColorDemoMode(vpp_color_demomode_t demomode)
 
     if (VPP_SetCMRegisterMap(&regmap) == 0) {
         tmp_demo_mode = demomode;
-        LOGD("%s, demomode[%d] success.", "Vpp_SetColorDemoMode", demomode);
+        LOGD("Vpp_SetColorDemoMode, demomode[%d] success.", demomode);
         return 0;
     }
 
-    LOGE("%s, demomode[%d] failed.", "Vpp_SetColorDemoMode", demomode);
+    LOGE("Vpp_SetColorDemoMode, demomode[%d] failed.", demomode);
     return -1;
 }
 
@@ -680,11 +677,9 @@ int CVpp::Vpp_SetBaseColorMode(vpp_color_basemode_t basemode, tvin_port_t source
 {
     int ret = -1;
     am_regs_t regs;
-    LOGD("%s.\n", "Vpp_SetBaseColorMode");
-
     if (mbVppCfg_new_cm) {
-        if (mpPqData->PQ_GetCM2Params((vpp_color_management2_t) basemode, source_port, sig_fmt,
-                                      is3d, trans_fmt, &regs) == 0) {
+        if (mpPqData->PQ_GetCM2Params((vpp_color_management2_t) basemode,
+            source_port, sig_fmt, is3d, trans_fmt, &regs) == 0) {
             ret = Vpp_LoadRegs(regs);
         } else {
             LOGE("PQ_GetCM2Params failed!\n");
@@ -728,7 +723,7 @@ int CVpp::Vpp_SetColorTemperatureUser(vpp_color_temperature_mode_t temp_mode __u
         return 0;
     }
 
-    LOGE("%s, source_type_user[%d] failed.", "Vpp_SetColorTemperatureUser", source_type);
+    LOGE("Vpp_SetColorTemperatureUser, source_type_user[%d] failed.", source_type);
     return -1;
 }
 
@@ -753,7 +748,7 @@ int CVpp::Vpp_SetColorTemperature(vpp_color_temperature_mode_t Tempmode,
         return 0;
     }
 
-    LOGE("%s, source_type[%d] failed.", "Vpp_SetColorTemperature", source_type);
+    LOGE("Vpp_SetColorTemperature, source_type[%d] failed.", source_type);
     return -1;
 }
 
@@ -766,7 +761,6 @@ int CVpp::Vpp_SetBrightness(int value, tv_source_input_type_t source_type __unus
 
     if (value >= 0 && value <= 100) {
         level = value;
-        LOGD("%s.\n", "Vpp_SetBrightness");
 
         if (mpPqData->PQ_GetBrightnessParams(source_port, sig_fmt, is3d, trans_fmt, level, &params)
                 == 0) {
@@ -774,7 +768,7 @@ int CVpp::Vpp_SetBrightness(int value, tv_source_input_type_t source_type __unus
                 return 0;
             }
         } else {
-            LOGE("%s, PQ_GetBrightnessParams failed!\n", "Vpp_SetBrightness");
+            LOGE("Vpp_SetBrightness, PQ_GetBrightnessParams failed!\n");
         }
     }
 
@@ -783,12 +777,8 @@ int CVpp::Vpp_SetBrightness(int value, tv_source_input_type_t source_type __unus
 
 int CVpp::VPP_SetVideoBrightness(int value)
 {
-    FILE *fp = NULL;
-
-    fp = fopen("/sys/class/amvecm/brightness", "w");
-
-    LOGD("~~~fopen~~~##VPP_SetVideoBrightness##%s : %d ##", "/sys/class/amvecm/brightness", value);
-
+    LOGD("VPP_SetVideoBrightness brightness : %d", value);
+    FILE *fp = fopen("/sys/class/amvecm/brightness", "w");
     if (fp == NULL) {
         LOGE("Open /sys/class/amvecm/brightness error(%s)!\n", strerror(errno));
         return -1;
@@ -813,7 +803,7 @@ int CVpp::SetBrightness(int value, tv_source_input_type_t source_type, tvin_sig_
             return 0;
         }
     } else {
-        LOGE("%s, failed!", "SetBrightness");
+        LOGE("SetBrightness, failed!");
         return -1;
     }
     return 0;
@@ -849,15 +839,13 @@ int CVpp::Vpp_SetContrast(int value, tv_source_input_type_t source_type __unused
 
     if (value >= 0 && value <= 100) {
         level = value;
-        LOGD("%s.\n", "Vpp_SetContrast");
-
         if (mpPqData->PQ_GetContrastParams(source_port, sig_fmt, is3d, trans_fmt, level, &params)
                 == 0) {
             if (VPP_SetVideoContrast(params) == 0) {
                 return 0;
             }
         } else {
-            LOGE("%s, PQ_GetContrastParams failed!\n", "Vpp_SetContrast");
+            LOGE("Vpp_SetContrast, PQ_GetContrastParams failed!\n");
         }
     }
 
@@ -866,11 +854,9 @@ int CVpp::Vpp_SetContrast(int value, tv_source_input_type_t source_type __unused
 
 int CVpp::VPP_SetVideoContrast(int value)
 {
-    FILE *fp = NULL;
+    LOGD("VPP_SetVideoContrast /sys/class/amvecm/contrast : %d", value);
 
-    fp = fopen("/sys/class/amvecm/contrast", "w");
-    LOGD("~~~fopen~~~##VPP_SetVideoContrast##%s : %d ##", "/sys/class/amvecm/contrast", value);
-
+    FILE *fp = fopen("/sys/class/amvecm/contrast", "w");
     if (fp == NULL) {
         LOGE("Open /sys/class/amvecm/contrast error(%s)!\n", strerror(errno));
         return -1;
@@ -895,7 +881,7 @@ int CVpp::SetContrast(int value, tv_source_input_type_t source_type, tvin_sig_fm
             return 0;
         }
     } else {
-        LOGE("%s, failed!", "SetContrast");
+        LOGE("SetContrast, failed!");
         return -1;
     }
 }
@@ -955,7 +941,7 @@ int CVpp::SetSaturation(int value, tv_source_input_type_t source_type, tvin_sig_
             return 0;
         }
     } else {
-        LOGE("%s, failed!", "SetSaturation");
+        LOGE("SetSaturation, failed!");
         return -1;
     }
 }
@@ -1027,7 +1013,7 @@ int CVpp::SetHue(int value, tv_source_input_type_t source_type, tvin_sig_fmt_t s
             return 0;
         }
     } else {
-        LOGE("%s, failed!", "SetHue");
+        LOGE("SetHue, failed!");
         return -1;
     }
 
@@ -1094,7 +1080,6 @@ int CVpp::SetSharpness(int value, tv_source_input_type_t source_type, int is_ena
     if (is_save == 1) {
         if (is_enable) {
             return SSMSaveSharpness(source_type, value);
-
         }
     }
 
@@ -1119,30 +1104,18 @@ int CVpp::GetSharpness(tv_source_input_type_t source_type)
         data = 50;
     }
 
-    LOGD("%s, data[%d].", "GetSharpness", data);
+    LOGD("GetSharpness, data[%d].", data);
     return data;
 }
 
 int CVpp::SetColorSpaceMode(vpp_color_space_type_t colorSpace)
 {
-    int ret = -1, fileRet = -1;
+    //int ret = -1, fileRet = -1;
     SSMSaveColorSpaceStart(colorSpace);
 
     switch (colorSpace) {
     case VPP_COLOR_SPACE_RGB:
-        //marked by haifeng
-        //        SetFileAttrValue ( "/sys/class/register/reg", "wc 0x1da1 0xc" );
-        //        SetFileAttrValue ( "/sys/class/register/reg", "wc 0x1d70 0x208" );
-        //        SetFileAttrValue ( "/sys/class/register/reg", "wc 0x1d71 0x74" );
-        break;
-
     case VPP_COLOR_SPACE_YUV:
-        //marked by haifeng
-        //        SetFileAttrValue ( "/sys/class/register/reg", "wc 0x1da1 0xe" );
-        //        SetFileAttrValue ( "/sys/class/register/reg", "wc 0x1d70 0x208" );
-        //        SetFileAttrValue ( "/sys/class/register/reg", "wc 0x1d71 0x76" );
-        break;
-
     default:
         break;
     }
@@ -1273,7 +1246,7 @@ int CVpp::Vpp_LoadGammaDefault(tv_source_input_type_t source_type, tvin_sig_fmt_
 
     tvin_port_t source_port = CTvin::Tvin_GetSourcePortBySourceType(source_type);
 
-    LOGD("Enter %s.\n", __FUNCTION__);
+    LOGV("Enter %s.\n", __FUNCTION__);
     ret = mpPqData->PQ_GetGammaTableR(panel_id, source_port, sig_fmt, &gamma_r);
     ret |= mpPqData->PQ_GetGammaTableG(panel_id, source_port, sig_fmt, &gamma_g);
     ret |= mpPqData->PQ_GetGammaTableB(panel_id, source_port, sig_fmt, &gamma_b);
@@ -1296,7 +1269,7 @@ int CVpp::Vpp_LoadGammaSpecial(int gammaValue)
     int panel_id = 0;
     tcon_gamma_table_t gamma_r, gamma_g, gamma_b;
 
-    LOGD("Enter %s.\n", __FUNCTION__);
+    LOGV("Enter %s.\n", __FUNCTION__);
     ret = mpPqData->PQ_GetGammaSpecialTable(gammaValue, "Red", &gamma_r);
     ret |= mpPqData->PQ_GetGammaSpecialTable(gammaValue, "Green", &gamma_g);
     ret |= mpPqData->PQ_GetGammaSpecialTable(gammaValue, "Blue", &gamma_b);
@@ -1543,22 +1516,16 @@ vpp_color_temperature_mode_t CVpp::GetColorTemperature(tv_source_input_type_t so
 
 int CVpp::VPP_SetNonLinearFactor(int value)
 {
-    FILE *fp = NULL;
-
-    fp = fopen("/sys/class/video/nonlinear_factor", "w");
-    LOGD("~~~fopen~~~##VPP_SetNonLinearFactor##%s : %d ##", "/sys/class/video/nonlinear_factor",
-         value);
-
+    LOGD("VPP_SetNonLinearFactor /sys/class/video/nonlinear_factor : %d", value);
+    FILE *fp = fopen("/sys/class/video/nonlinear_factor", "w");
     if (fp == NULL) {
         LOGE("Open /sys/class/video/nonlinear_factor error(%s)!\n", strerror(errno));
         return -1;
     }
 
     fprintf(fp, "%d", value);
-
     fclose(fp);
     fp = NULL;
-
     return 0;
 }
 
@@ -1592,18 +1559,15 @@ int CVpp::SetBacklightWithoutSave(int value, tv_source_input_type_t source_type 
 
 int CVpp::VPP_SetBackLightLevel(int value)
 {
-    FILE *fp = NULL;
-    fp = fopen("/sys/class/backlight/aml-bl/brightness", "w");
-    LOGD("~~~fopen~~~##VPP_SetBackLightLevel##%s : %d ##",
-         "/sys/class/backlight/aml-bl/brightness", value);
+    LOGD("VPP_SetBackLightLevel /sys/class/backlight/aml-bl/brightness : %d", value);
 
+    FILE *fp = fopen("/sys/class/backlight/aml-bl/brightness", "w");
     if (fp == NULL) {
         LOGE("Open /sys/class/backlight/aml-bl/brightness error(%s)!\n", strerror(errno));
         return -1;
     }
 
     fprintf(fp, "%d", value);
-
     fclose(fp);
     fp = NULL;
 
@@ -1679,40 +1643,31 @@ int CVpp::SaveBacklight(int value, tv_source_input_type_t source_type)
 
 int CVpp::VPP_SetBackLight_Switch(int value)
 {
-    FILE *fp = NULL;
-    fp = fopen("/sys/class/backlight/aml-bl/bl_power", "w");
-    LOGD("~~~fopen~~~##VPP_SetBackLight_Switch##%s : %d ##",
-         "/sys/class/backlight/aml-bl/bl_power", value);
-
+    LOGD("VPP_SetBackLight_Switch /sys/class/backlight/aml-bl/bl_power : %d ", value);
+    FILE *fp = fopen("/sys/class/backlight/aml-bl/bl_power", "w");
     if (fp == NULL) {
         LOGE("Open /sys/class/backlight/aml-bl/bl_power error(%s)!\n", strerror(errno));
         return -1;
     }
 
     fprintf(fp, "%d", value);
-
     fclose(fp);
     fp = NULL;
-
     return 0;
 }
 
 int CVpp::VPP_GetBackLight_Switch(void)
 {
-    FILE *fp = NULL;
     int value;
 
-    fp = fopen("/sys/class/backlight/aml-bl/bl_power", "w");
-
+    FILE *fp = fopen("/sys/class/backlight/aml-bl/bl_power", "w");
     if (fp == NULL) {
         LOGE("Open /sys/class/backlight/aml-bl/bl_power error(%s)!\n", strerror(errno));
         return -1;
     }
 
     fscanf(fp, "%d", &value);
-    LOGD("~~~fopen~~~##VPP_GetBackLight_Switch##%s : %d ##",
-         "/sys/class/backlight/aml-bl/bl_power", value);
-
+    LOGD("VPP_GetBackLight_Switch /sys/class/backlight/aml-bl/bl_power : %d", value);
     fclose(fp);
     fp = NULL;
     if (value < 0) {
@@ -1758,9 +1713,8 @@ int CVpp::SetDNLP(tv_source_input_type_t source_type, tvin_port_t source_port,
 
 int CVpp::VPP_SetVEDNLP(const struct ve_dnlp_s *pDNLP)
 {
+    LOGV("VPP_SetVEDNLP AMVECM_IOC_VE_DNLP");
     int rt = VPP_DeviceIOCtl(AMVECM_IOC_VE_DNLP, pDNLP);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetVEDNLP##AMVECM_IOC_VE_DNLP##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetVEDNLP, error(%s)!\n", strerror(errno));
     }
@@ -1770,9 +1724,8 @@ int CVpp::VPP_SetVEDNLP(const struct ve_dnlp_s *pDNLP)
 
 int CVpp::VPP_SetVENewDNLP(const ve_dnlp_table_t *pDNLP)
 {
+    LOGD("VPP_SetVENewDNLP AMVECM_IOC_VE_NEW_DNLP");
     int rt = VPP_DeviceIOCtl(AMVECM_IOC_VE_NEW_DNLP, pDNLP);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetVENewDNLP##AMVECM_IOC_VE_NEW_DNLP##");
-
     if (rt < 0) {
         LOGE("VPP_SetVENewDNLP, error(%s)!\n", strerror(errno));
     }
@@ -1791,6 +1744,7 @@ int CVpp::SetDnlp_OFF(void)
         return 0;
     }
 }
+
 int CVpp::SetDnlp_ON(void)
 {
     if (Vpp_SetDnlpOn() < 0) {
@@ -1805,11 +1759,10 @@ int CVpp::SetDnlp_ON(void)
 
 int CVpp::Vpp_SetDnlpOff(void)
 {
+    LOGD("Vpp_SetDnlpOff AMVECM_IOC_VE_DNLP_DIS");
     //According linux driver to modify the AMSTREAM_IOC_VE_DNLP_DIS  to the AMVECM_IOC_VE_DNLP_DIS.
     //int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_VE_DNLP_DIS);
     int rt = VPP_DeviceIOCtl(AMVECM_IOC_VE_DNLP_DIS);
-    LOGD("~~~VPP_DeviceIOCtl~~~##Vpp_SetDnlpOff##AMVECM_IOC_VE_DNLP_DIS##");
-
     if (rt < 0) {
         LOGE("Vpp_SetDnlpOff, error(%s)!\n", strerror(errno));
     }
@@ -1819,17 +1772,17 @@ int CVpp::Vpp_SetDnlpOff(void)
 
 int CVpp::Vpp_SetDnlpOn(void)
 {
+    LOGD("Vpp_SetDnlpOn AMVECM_IOC_VE_DNLP_EN");
     //According linux driver to modify the AMSTREAM_IOC_VE_DNLP_DIS  to the AMVECM_IOC_VE_DNLP_DIS.
     //int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_VE_DNLP_EN);
     int rt = VPP_DeviceIOCtl(AMVECM_IOC_VE_DNLP_EN);
-    LOGD("~~~VPP_DeviceIOCtl~~~##Vpp_SetDnlpOn##AMVECM_IOC_VE_DNLP_EN##");
-
     if (rt < 0) {
         LOGE("Vpp_SetDnlpOn, error(%s)!\n", strerror(errno));
     }
 
     return rt;
 }
+
 int CVpp::GetDnlp_Status()
 {
     unsigned char status = 0;
@@ -1840,8 +1793,9 @@ int CVpp::GetDnlp_Status()
 
 int CVpp::VPP_SetRGBOGO(const struct tcon_rgb_ogo_s *rgbogo)
 {
+    LOGD("VPP_SetRGBOGO AMVECM_IOC_S_RGB_OGO");
     int rt = VPP_DeviceIOCtl(AMVECM_IOC_S_RGB_OGO, rgbogo);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetRGBOGO##AMVECM_IOC_S_RGB_OGO##");
+
     usleep(50 * 1000);
 
     if (rt < 0) {
@@ -1853,9 +1807,8 @@ int CVpp::VPP_SetRGBOGO(const struct tcon_rgb_ogo_s *rgbogo)
 
 int CVpp::VPP_GetRGBOGO(const struct tcon_rgb_ogo_s *rgbogo)
 {
+    LOGD("VPP_GetRGBOGO AMVECM_IOC_G_RGB_OGO");
     int rt = VPP_DeviceIOCtl(AMVECM_IOC_G_RGB_OGO, rgbogo);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_GetRGBOGO##AMVECM_IOC_G_RGB_OGO##");
-
     if (rt < 0) {
         LOGE("Vpp_api_GetRGBOGO, error(%s)!\n", strerror(errno));
     }
@@ -2101,6 +2054,7 @@ int CVpp::SetColorTempParamsChecksum(void)
 
     return ret;
 }
+
 unsigned short CVpp::GetColorTempParamsChecksum(void)
 {
     USUC usuc;
@@ -2766,6 +2720,7 @@ int CVpp::SetLVDSSSC(int step)
     ret = TvMisc_SetLVDSSSC(step);
     return ret;
 }
+
 int CVpp::FactorySetLVDSSSC(int step)
 {
     int ret = -1;
@@ -3286,13 +3241,10 @@ void CVpp::video_get_saturation_hue(signed char *sat, signed char *hue, signed l
 
 int CVpp::VPP_SetVideoSaturationHue(int satVal, int hueVal)
 {
-    FILE *fp = NULL;
     signed long temp;
 
-    fp = fopen("/sys/class/amvecm/saturation_hue", "w");
-    LOGD("~~~fopen~~~##VPP_SetVideoSaturationHue##%s : %d %d##",
-         "/sys/class/amvecm/saturation_hue", satVal, hueVal);
-
+    LOGD("VPP_SetVideoSaturationHue /sys/class/amvecm/saturation_hue : %d %d", satVal, hueVal);
+    FILE *fp = fopen("/sys/class/amvecm/saturation_hue", "w");
     if (fp == NULL) {
         LOGE("Open /sys/class/amvecm/saturation_hue error(%s)!\n", strerror(errno));
         return -1;
@@ -3300,28 +3252,22 @@ int CVpp::VPP_SetVideoSaturationHue(int satVal, int hueVal)
 
     video_set_saturation_hue(satVal, hueVal, &temp);
     fprintf(fp, "0x%lx", temp);
-
     fclose(fp);
     fp = NULL;
-
     return 0;
 }
 
 int CVpp::VPP_SetVideoSaturation(int saturation)
 {
-    FILE *fp = NULL;
+    LOGD("VPP_SetVideoSaturation /sys/class/amvecm/saturation_hue : %d", saturation);
 
-    fp = fopen("/sys/class/amvecm/saturation_hue", "w");
-    LOGD("~~~fopen~~~##VPP_SetVideoSaturation##%s : %d ##", "/sys/class/amvecm/saturation_hue",
-         saturation);
-
+    FILE *fp = fopen("/sys/class/amvecm/saturation_hue", "w");
     if (fp == NULL) {
         LOGE("Open /sys/class/amvecm/saturation_hue error(%s)!\n", strerror(errno));
         return -1;
     }
 
     fprintf(fp, "0x%x", saturation);
-
     fclose(fp);
     fp = NULL;
 
@@ -3330,18 +3276,14 @@ int CVpp::VPP_SetVideoSaturation(int saturation)
 
 int CVpp::VPP_SetVideoHue(int hue)
 {
-    FILE *fp = NULL;
-
-    fp = fopen("/sys/class/amvecm/saturation_hue", "w");
-    LOGD("~~~fopen~~~##VPP_SetVideoHue##%s : %d ##", "/sys/class/amvecm/saturation_hue", hue);
-
+    LOGD("VPP_SetVideoHue /sys/class/amvecm/saturation_hue : %d", hue);
+    FILE *fp = fopen("/sys/class/amvecm/saturation_hue", "w");
     if (fp == NULL) {
         LOGE("Open /sys/class/amvecm/saturation_hue error(%s)!\n", strerror(errno));
         return -1;
     }
 
     fprintf(fp, "0x%x", hue);
-
     fclose(fp);
     fp = NULL;
     return 0;
@@ -3356,13 +3298,11 @@ int CVpp::VPP_SetGammaTbl_R(unsigned short red[256])
         Redtbl.data[i] = red[i];
     }
 
+    LOGD("VPP_SetGammaTbl_R AMVECM_IOC_GAMMA_TABLE_R");
     rt = VPP_DeviceIOCtl(AMVECM_IOC_GAMMA_TABLE_R, &Redtbl);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetGammaTbl_R##AMVECM_IOC_GAMMA_TABLE_R##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetGammaTbl_R, error(%s)!\n", strerror(errno));
     }
-
     return rt;
 }
 
@@ -3376,7 +3316,7 @@ int CVpp::VPP_SetGammaTbl_G(unsigned short green[256])
     }
 
     rt = VPP_DeviceIOCtl(AMVECM_IOC_GAMMA_TABLE_G, &Greentbl);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetGammaTbl_G##AMVECM_IOC_GAMMA_TABLE_G##");
+    LOGD("VPP_SetGammaTbl_G AMVECM_IOC_GAMMA_TABLE_G");
 
     if (rt < 0) {
         LOGE("Vpp_api_SetGammaTbl_R, error(%s)!\n", strerror(errno));
@@ -3395,7 +3335,7 @@ int CVpp::VPP_SetGammaTbl_B(unsigned short blue[256])
     }
 
     rt = VPP_DeviceIOCtl(AMVECM_IOC_GAMMA_TABLE_B, &Bluetbl);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetGammaTbl_B##AMVECM_IOC_GAMMA_TABLE_B##");
+    LOGD("VPP_SetGammaTbl_B AMVECM_IOC_GAMMA_TABLE_B");
 
     if (rt < 0) {
         LOGE("Vpp_api_SetGammaTbl_R, error(%s)!\n", strerror(errno));
@@ -3410,12 +3350,12 @@ int CVpp::VPP_SetGammaOnOff(unsigned char onoff)
 
     if (onoff == 1) {
         rt = VPP_DeviceIOCtl(AMVECM_IOC_GAMMA_TABLE_EN);
-        LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetGammaOnOff##AMVECM_IOC_GAMMA_TABLE_EN##");
+        LOGD("VPP_SetGammaOnOff AMVECM_IOC_GAMMA_TABLE_EN");
     }
 
     if (onoff == 0) {
         rt = VPP_DeviceIOCtl(AMVECM_IOC_GAMMA_TABLE_DIS);
-        LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetGammaOnOff##AMVECM_IOC_GAMMA_TABLE_DIS##");
+        LOGD("VPP_SetGammaOnOff AMVECM_IOC_GAMMA_TABLE_DIS");
     }
 
     if (rt < 0) {
@@ -3427,8 +3367,6 @@ int CVpp::VPP_SetGammaOnOff(unsigned char onoff)
 
 int CVpp::VPP_SetGrayPattern(int value)
 {
-
-    FILE *fp = NULL;
     if (value < 0) {
         value = 0;
     } else if (value > 255) {
@@ -3436,9 +3374,8 @@ int CVpp::VPP_SetGrayPattern(int value)
     }
     value = value << 16 | 0x8080;
 
-    fp = fopen("/sys/class/video/test_screen", "w");
-    LOGD("~~~fopen~~~##VPP_SetGrayPattern##%s : %x ##", "/sys/class/video/test_screen", value);
-
+    LOGD("VPP_SetGrayPattern /sys/class/video/test_screen : %x", value);
+    FILE *fp = fopen("/sys/class/video/test_screen", "w");
     if (fp == NULL) {
         LOGE("Open /sys/classs/video/test_screen error(%s)!\n", strerror(errno));
         return -1;
@@ -3453,12 +3390,10 @@ int CVpp::VPP_SetGrayPattern(int value)
 
 int CVpp::VPP_GetGrayPattern()
 {
-    FILE *fp = NULL;
     int value;
-    fp = fopen("/sys/class/video/test_screen", "r+");
 
-    LOGD("~~~fopen~~~##VPP_GetGrayPattern##%s  ##", "/sys/class/video/test_screen");
-
+    LOGD("VPP_GetGrayPattern /sys/class/video/test_screen");
+    FILE *fp = fopen("/sys/class/video/test_screen", "r+");
     if (fp == NULL) {
         LOGE("Open /sys/class/video/test_screen error(%s)!\n", strerror(errno));
         return -1;
@@ -3494,14 +3429,12 @@ int CVpp::VPP_SplitScreenEffect(int width, int v_register)
 
     return 0;
 }
+
 int CVpp::VPP_SetVideoNoiseReduction(int value)
 {
-    FILE *fp = NULL;
+    LOGD("VPP_SetVideoNoiseReduction /sys/class/deinterlace/di0/parameters : %d", value);
 
-    fp = fopen("/sys/class/deinterlace/di0/parameters", "w");
-    LOGD("~~~fopen~~~##VPP_SetVideoNoiseReduction##%s : %d ##",
-         "/sys/class/deinterlace/di0/parameters", value);
-
+    FILE *fp = fopen("/sys/class/deinterlace/di0/parameters", "w");
     if (fp == NULL) {
         LOGE("Open /sys/class/deinterlace/di0/parameters ERROR(%s)!!\n", strerror(errno));
         return -1;
@@ -3516,12 +3449,8 @@ int CVpp::VPP_SetVideoNoiseReduction(int value)
 
 int CVpp::VPP_SetDeinterlaceMode(int value)
 {
-    FILE *fp = NULL;
-
-    fp = fopen("/sys/module/deinterlace/parameters/deinterlace_mode", "w");
-    LOGD("~~~fopen~~~##VPP_SetDeinterlaceMode##%s : %d ##",
-         "/sys/module/deinterlace/parameters/deinterlace_mode", value);
-
+    LOGD("VPP_SetDeinterlaceMode /sys/module/deinterlace/parameters/deinterlace_mode : %d", value);
+    FILE *fp = fopen("/sys/module/deinterlace/parameters/deinterlace_mode", "w");
     if (fp == NULL) {
         LOGE("Open /sys/module/deinterlace/parameters/deinterlace_mode error(%s)!\n",
              strerror(errno));
@@ -3529,7 +3458,6 @@ int CVpp::VPP_SetDeinterlaceMode(int value)
     }
 
     fprintf(fp, "%d", value);
-
     fclose(fp);
     fp = NULL;
 
@@ -3555,10 +3483,8 @@ int CVpp::GetHistogram_AVE(void)
 
 int CVpp::Vpp_GetAVGHistogram(struct ve_hist_s *hist)
 {
-    //int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_G_HIST_AVG, hist);
+    LOGD("Vpp_GetAVGHistogram AMVECM_IOC_G_HIST_AVG");
     int rt = VPP_DeviceIOCtl(AMVECM_IOC_G_HIST_AVG, hist);
-    LOGD("~~~VPP_DeviceIOCtl~~~##Vpp_GetAVGHistogram##AMVECM_IOC_G_HIST_AVG##");
-
     if (rt < 0) {
         LOGE("Vpp_GetAVGHistogram, error(%s)!\n", strerror(errno));
     }
@@ -3568,9 +3494,8 @@ int CVpp::Vpp_GetAVGHistogram(struct ve_hist_s *hist)
 
 int CVpp::VPP_SetVEBlackExtension(const struct ve_bext_s *pBExt)
 {
+    LOGD("VPP_SetVEBlackExtension AMSTREAM_IOC_VE_BEXT");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_VE_BEXT, pBExt);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetVEBlackExtension##AMSTREAM_IOC_VE_BEXT##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetVEBlackExtension, error(%s)!\n", strerror(errno));
     }
@@ -3598,14 +3523,10 @@ tvin_cutwin_t CVpp::GetOverscan(tv_source_input_type_t source_type, tvin_sig_fmt
 
 int CVpp::VPP_SetVideoCrop(int Voffset0, int Hoffset0, int Voffset1, int Hoffset1)
 {
-    int fd = -1;
     char set_str[32];
 
-    fd = open("/sys/class/video/crop", O_RDWR);
-
-    LOGD("~~~open~~~##VPP_SetVideoCrop##%s : %d %d %d %d##", "/sys/class/video/crop", Voffset0,
-         Hoffset0, Voffset1, Hoffset1);
-
+    LOGD("VPP_SetVideoCrop /sys/class/video/crop : %d %d %d %d##", Voffset0, Hoffset0, Voffset1, Hoffset1);
+    int fd = open("/sys/class/video/crop", O_RDWR);
     if (fd < 0) {
         LOGE("Open /sys/class/video/crop error(%s)!\n", strerror(errno));
         return -1;
@@ -3621,9 +3542,8 @@ int CVpp::VPP_SetVideoCrop(int Voffset0, int Hoffset0, int Voffset1, int Hoffset
 
 int CVpp::VPP_SetVESharpness(const struct ve_hsvs_s *pHSVS)
 {
+    LOGD("VPP_SetVESharpness AMSTREAM_IOC_VE_HSVS");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_VE_HSVS, pHSVS);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetVESharpness##AMSTREAM_IOC_VE_HSVS##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetVESharpness, error(%s)!\n", strerror(errno));
     }
@@ -3633,9 +3553,8 @@ int CVpp::VPP_SetVESharpness(const struct ve_hsvs_s *pHSVS)
 
 int CVpp::VPP_SetVEChromaCoring(const struct ve_ccor_s *pCCor)
 {
+    LOGD("VPP_SetVEChromaCoring AMSTREAM_IOC_VE_CCOR");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_VE_CCOR, pCCor);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetVEChromaCoring##AMSTREAM_IOC_VE_CCOR##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetVEChromaCoring, error(%s)!\n", strerror(errno));
     }
@@ -3645,9 +3564,8 @@ int CVpp::VPP_SetVEChromaCoring(const struct ve_ccor_s *pCCor)
 
 int CVpp::VPP_SetVEBlueEnh(const struct ve_benh_s *pBEnh)
 {
+    LOGD("VPP_SetVEBlueEnh AMSTREAM_IOC_VE_BENH");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_VE_BENH, pBEnh);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetVEBlueEnh##AMSTREAM_IOC_VE_BENH##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetVEBlueEnh, error(%s)!\n", strerror(errno));
     }
@@ -3657,9 +3575,8 @@ int CVpp::VPP_SetVEBlueEnh(const struct ve_benh_s *pBEnh)
 
 int CVpp::VPP_SetVEDemo(const struct ve_demo_s *pDemo)
 {
+    LOGD("VPP_SetVEDemo AMSTREAM_IOC_VE_DEMO");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_VE_DEMO, pDemo);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetVEDemo##AMSTREAM_IOC_VE_DEMO##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetVEDemo, error(%s)!\n", strerror(errno));
     }
@@ -3669,9 +3586,8 @@ int CVpp::VPP_SetVEDemo(const struct ve_demo_s *pDemo)
 
 int CVpp::VPP_SetVERegisterMap(const struct ve_regmap_s *pRegMap)
 {
+    LOGD("VPP_SetVERegisterMap AMSTREAM_IOC_VE_REGMAP");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_VE_REGMAP, pRegMap);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetVERegisterMap##AMSTREAM_IOC_VE_REGMAP##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetVERegisterMap, error(%s)!\n", strerror(errno));
     }
@@ -3681,9 +3597,8 @@ int CVpp::VPP_SetVERegisterMap(const struct ve_regmap_s *pRegMap)
 
 int CVpp::VPP_SetVEDebug(const unsigned long long *pLData)
 {
+    LOGD("VPP_SetVEDebug AMSTREAM_IOC_VE_DEBUG");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_VE_DEBUG, pLData);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetVEDebug##AMSTREAM_IOC_VE_DEBUG##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetVEDebug, error(%s)!\n", strerror(errno));
     }
@@ -3693,9 +3608,8 @@ int CVpp::VPP_SetVEDebug(const unsigned long long *pLData)
 
 int CVpp::VPP_SetCMRegion(const struct cm_region_s *pRegion)
 {
+    LOGD("VPP_SetCMRegion AMSTREAM_IOC_CM_REGION");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_CM_REGION, pRegion);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetCMRegion##AMSTREAM_IOC_CM_REGION##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetCMRegion, error(%s)!\n", strerror(errno));
     }
@@ -3705,9 +3619,8 @@ int CVpp::VPP_SetCMRegion(const struct cm_region_s *pRegion)
 
 int CVpp::VPP_SetCMTopLayer(const struct cm_top_s *pTop)
 {
+    LOGD("VPP_SetCMTopLayer AMSTREAM_IOC_CM_TOP");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_CM_TOP, pTop);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetCMTopLayer##AMSTREAM_IOC_CM_TOP##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetCMTopLayer, error(%s)!\n", strerror(errno));
     }
@@ -3717,9 +3630,8 @@ int CVpp::VPP_SetCMTopLayer(const struct cm_top_s *pTop)
 
 int CVpp::VPP_SetCMDemo(const struct cm_demo_s *pDemo)
 {
+    LOGD("VPP_SetCMDemo AMSTREAM_IOC_CM_DEMO");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_CM_DEMO, pDemo);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetCMDemo##AMSTREAM_IOC_CM_DEMO##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetCMDemo, error(%s)!\n", strerror(errno));
     }
@@ -3729,9 +3641,8 @@ int CVpp::VPP_SetCMDemo(const struct cm_demo_s *pDemo)
 
 int CVpp::VPP_SetCMRegisterMap(struct cm_regmap_s *pRegMap)
 {
+    LOGD("VPP_SetCMRegisterMap AMSTREAM_IOC_CM_REGMAP");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_CM_REGMAP, pRegMap);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetCMRegisterMap##AMSTREAM_IOC_CM_REGMAP##");
-
     if (rt < 0) {
         LOGE("Vpp_api_SetCMRegisterMap, error(%s)!\n", strerror(errno));
     }
@@ -3741,9 +3652,8 @@ int CVpp::VPP_SetCMRegisterMap(struct cm_regmap_s *pRegMap)
 
 int CVpp::VPP_SetCMDebug(const unsigned long long *pLData)
 {
+    LOGD("VPP_SetCMDebug AMSTREAM_IOC_CM_DEBUG");
     int rt = VPP_DeviceIOCtl(AMSTREAM_IOC_CM_DEBUG, pLData);
-    LOGD("~~~VPP_DeviceIOCtl~~~##VPP_SetCMDebug##AMSTREAM_IOC_CM_DEBUG##");
-
     if (rt < 0) {
         LOGE("=VPP CPP=> set cm debug, error (%s)", strerror(errno));
     }
@@ -3760,6 +3670,7 @@ int CVpp::VPP_SetAVSyncEnable(const unsigned int enable)
 
     return rt;
 }
+
 int CVpp::VPP_SetScalerPathSel(const unsigned int value)
 {
     FILE *fp = NULL;
@@ -3775,3 +3686,4 @@ int CVpp::VPP_SetScalerPathSel(const unsigned int value)
     fp = NULL;
     return 0;
 }
+

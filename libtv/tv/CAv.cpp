@@ -46,7 +46,7 @@ int CAv::Open()
     if ( AM_SUCCESS != rt ) {
         LOGD ( "%s,  BUG: CANN'T OPEN AOUT\n", __FUNCTION__);
     }
-    //
+
     mFdAmVideo = open ( PATH_VIDEO_AMVIDEO, O_RDWR );
     if ( mFdAmVideo < 0 ) {
         LOGE ( "mFdAmVideo < 0, error(%s)!\n", strerror ( errno ) );
@@ -74,7 +74,6 @@ int CAv::Close()
     return iRet;
 }
 
-
 int CAv::GetVideoStatus(AM_AV_VideoStatus_t *status)
 {
     return AM_AV_GetVideoStatus(mTvPlayDevId, status);
@@ -92,7 +91,7 @@ int CAv::ResetAudioDecoder()
 
 int CAv::SetTSSource(AM_AV_TSSource_t ts_source)
 {
-    return  AM_AV_SetTSSource ( mTvPlayDevId, ts_source );
+    return AM_AV_SetTSSource ( mTvPlayDevId, ts_source );
 }
 
 int CAv::StartTS(uint16_t vpid, uint16_t apid, AM_AV_VFormat_t vfmt, AM_AV_AFormat_t afmt)
@@ -150,10 +149,11 @@ int CAv::DisableVideoWithBlackColor()
     SetVideoScreenColor ( 0, 16, 128, 128 ); // Show blue with vdin0, postblending disabled
     return AM_AV_DisableVideo(mTvPlayDevId);
 }
+
 //auto enable,
 int CAv::EnableVideoAuto()
 {
-    LOGD("EnableVideo");
+    LOGD("EnableVideoAuto");
     if (mCurVideoLayerMuteState == 0) {
         LOGD("video is enable, return");
         return 0;
@@ -195,9 +195,10 @@ int CAv::WaittingVideoPlaying(int minFrameCount , int waitTime )
             break;
         }
     }
+
     if (i == times) {
-        LOGD("EnableVideoWhenVideoPlaying time out!!!!!!!!!!!!!");
-        ret =  -2;
+        LOGW("EnableVideoWhenVideoPlaying time out");
+        ret = -2;
     }
     return ret;
 }
@@ -219,7 +220,7 @@ bool CAv::videoIsPlaying(int minFrameCount)
     value[1] = getVideoFrameCount();
     //usleep(20*1000);
     //value[2] = getVideoFrameCount();
-    LOGD("---videoIsPlaying framecount =%d = %d = %d", value[0], value[1], value[2]);
+    LOGD("videoIsPlaying framecount =%d = %d = %d", value[0], value[1], value[2]);
     if (value[1] >=  minFrameCount && (value[1] > value[0])) return true;
     else return false;
 }
@@ -244,7 +245,7 @@ tvin_sig_fmt_t CAv::getVideoResolutionToFmt()
 {
     tvin_sig_fmt_e sig_fmt = TVIN_SIG_FMT_HDMI_1920X1080P_60HZ;
     int height = CFile::getFileAttrValue(SYS_VIDEO_FRAME_HEIGHT);
-    LOGD("---------getVideoResolutionToFmt -------- height = %d", height);
+    LOGD("getVideoResolutionToFmt height = %d", height);
     if (height <= 576) {
         sig_fmt = TVIN_SIG_FMT_HDMI_720X480P_60HZ;
     } else if (height > 576 && height <= 1088) {
@@ -254,25 +255,25 @@ tvin_sig_fmt_t CAv::getVideoResolutionToFmt()
     }
     return sig_fmt;
 }
+
 //call disable video 2
 int CAv::ClearVideoBuffer()
 {
     LOGD("ClearVideoBuffer");
     return AM_AV_ClearVideoBuffer(mTvPlayDevId);
 }
+
 int CAv::SetVideoScreenColor ( int vdin_blending_mask, int y, int u, int v )
 {
     FILE *fp = NULL;
     unsigned long value = 0;
 
     value = vdin_blending_mask << 24;
-
     value |= ( unsigned int ) ( y << 16 ) | ( unsigned int ) ( u << 8 ) | ( unsigned int ) ( v );
 
+    LOGD ( "VPP_SetVideoScreenColor /sys/class/video/test_screen : vdin_blending_mask:%d,y:%d,u:%d,v:%d",
+        vdin_blending_mask, y, u, v);
     fp = fopen ( "/sys/class/video/test_screen", "w" );
-    LOGD ( "~~~fopen~~~##VPP_SetVideoScreenColor##%s : vdin_blending_mask:%d,y:%d,u:%d,v:%d ##" , "/sys/class/video/test_screen", vdin_blending_mask, y, u, v);
-
-
     if ( fp == NULL ) {
         LOGE ( "Open /sys/class/video/test_screen error(%s)!\n", strerror ( errno ) );
         return -1;
@@ -286,37 +287,28 @@ int CAv::SetVideoScreenColor ( int vdin_blending_mask, int y, int u, int v )
     return 0;
 }
 
-int CAv::getVideoDisableValue()
-{
-    LOGD("this fun is empty!!!!!!!!");
-    return 0;
-}
-
 int CAv::SetVideoLayerDisable ( int value )
 {
-    FILE *fp = NULL;
+    LOGD ( "VPP_SetVideoLayerDisable /sys/class/video/disable_video : %d" , value);
 
-    fp = fopen ( "/sys/class/video/disable_video", "w" );
-    LOGD ( "~~~fopen~~~##VPP_SetVideoLayerDisable##%s : %d ##" , "/sys/class/video/disable_video", value);
-
+    FILE *fp = fopen ( "/sys/class/video/disable_video", "w" );
     if ( fp == NULL ) {
         LOGE ( "Open /sys/class/video/disable_video error(%s)!\n", strerror ( errno ) );
         return -1;
     }
 
     fprintf ( fp, "%d", value );
-
     fclose ( fp );
     fp = NULL;
 
     return 0;
 }
 
-
 int CAv::setVideoScreenMode ( int value )
 {
+    LOGD ( "setVideoScreenMode %d" , value);
+
     FILE *fp = fopen ( "/sys/class/video/screen_mode", "w" );
-    LOGD ( "setVideoScreenMode %d ##" , value);
     if ( fp == NULL ) {
         LOGE ( "Open /sys/class/video/screen_mode error(%s)!\n", strerror ( errno ) );
         return -1;
@@ -328,10 +320,9 @@ int CAv::setVideoScreenMode ( int value )
 
 int CAv::setVideoAxis ( int h, int v, int width, int height )
 {
-    FILE *fp = NULL;
-    fp = fopen ( "/sys/class/video/axis", "w" );
-    LOGD ( "setVideoAxis##%s : %d %d %d %d ##" , "/sys/class/video/axis", h, v, width, height);
+    LOGD ( "setVideoAxis /sys/class/video/axis : %d %d %d %d" , h, v, width, height);
 
+    FILE *fp = fopen ( "/sys/class/video/axis", "w" );
     if ( fp == NULL ) {
         LOGE ( "Open /sys/class/video/axis ERROR(%s)!!\n", strerror ( errno ) );
         return -1;
@@ -345,7 +336,6 @@ int CAv::getVideoScreenMode()
 {
     int value;
     FILE *fp = fopen ( "/sys/class/video/screen_mode", "r+" );
-
     if ( fp == NULL ) {
         LOGE ( "Open /sys/class/video/screen_mode error(%s)!\n", strerror ( errno ) );
         return -1;
@@ -368,7 +358,7 @@ video_display_resolution_t CAv::getVideoDisplayResolution()
     } else if (strncasecmp(attrV, "1920x1080", strlen ("1920x1080")) == 0) {
         resolution = VPP_DISPLAY_RESOLUTION_1920X1080;
     } else {
-        LOGW("video display resolution  is = (%s) not define , default it", attrV);
+        LOGW("video display resolution is = (%s) not define , default it", attrV);
         resolution = VPP_DISPLAY_RESOLUTION_1920X1080;
     }
 
@@ -464,8 +454,8 @@ int CAv::set3DMode(VIDEO_3D_MODE_T mode, int LR_switch, int mode_3D_TO_2D)
 
 int CAv::setLookupPtsForDtmb(int enable)
 {
+    LOGD ( "setLookupPtsForDtmb %d" , enable);
     FILE *fp = fopen ( PATH_MEPG_DTMB_LOOKUP_PTS_FLAG, "w" );
-    LOGD ( "setLookupPtsForDtmb %d ##" , enable);
     if ( fp == NULL ) {
         LOGE ( "Open %s error(%s)!\n", PATH_MEPG_DTMB_LOOKUP_PTS_FLAG, strerror ( errno ) );
         return -1;
@@ -474,3 +464,4 @@ int CAv::setLookupPtsForDtmb(int enable)
     fclose ( fp );
     return 0;
 }
+

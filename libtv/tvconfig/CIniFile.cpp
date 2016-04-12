@@ -1,3 +1,6 @@
+#define LOG_TAG "CIniFile"
+//#define LOG_NDEBUG 0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -29,13 +32,12 @@ int CIniFile::LoadFromFile(const char *filename)
 
     FreeAllMem();
 
-    int Len;
     if (filename == NULL) {
         return -1;
     }
 
+    LOGD("LoadFromFile name = %s", filename);
     strcpy(mpFileName, filename);
-    LOGD("LoadFromFile 2name = %s", mpFileName);
     if ((m_pIniFile = fopen (mpFileName, "r")) == NULL) {
         return -1;
     }
@@ -85,74 +87,47 @@ int CIniFile::LoadFromFile(const char *filename)
             pCurLINE->pValueEnd = pCurLINE->Text + pCurLINE->LineLen - 1;
             break;
         }
-        case LINE_TYPE_COMMENT: {
+        case LINE_TYPE_COMMENT:
+        default:
             break;
-        }
-        default: {
-            break;
-        }
         }
     }
 
     fclose (m_pIniFile);
     m_pIniFile = NULL;
-
-    return 0;
-}
-
-void CIniFile::printAll()
-{
-    //line
-    for (LINE *pline = mpFirstLine; pline != NULL; pline = pline->pNext) {
-        LOGD("line = %s type = %d", pline->Text, pline->type);
-    }
-
-    //section
-    for (SECTION *psec = mpFirstSection; psec != NULL; psec = psec->pNext) {
-        LOGD("sec = %s", psec->pLine->Text);
-    }
-    return;
-}
-
-int CIniFile::LoadFromString(const char *str __unused)
-{
     return 0;
 }
 
 int CIniFile::SaveToFile(const char *filename)
 {
-    const char *file = NULL;
-    if (m_pIniFile != NULL) {
-        fclose (m_pIniFile);
-    }
+    const char *filepath = NULL;
+    FILE *pFile = NULL;
 
     if (filename == NULL) {
         if (strlen(mpFileName) == 0) {
             LOGD("error save file is null");
             return -1;
         } else {
-            file = mpFileName;
+            filepath = mpFileName;
         }
     } else {
-        file = filename;
+        filepath = filename;
     }
     //LOGD("Save to file name = %s", file);
 
-    if ((m_pIniFile = fopen (file, "wb")) == NULL) {
-        LOGD("Save to file open error = %s", file);
+    if ((pFile = fopen (filepath, "wb")) == NULL) {
+        LOGD("Save to file open error = %s", filepath);
         return -1;
     }
 
     LINE *pCurLine = NULL;
     for (pCurLine = mpFirstLine; pCurLine != NULL; pCurLine = pCurLine->pNext) {
-        fprintf (m_pIniFile, "%s\r\n", pCurLine->Text);
+        fprintf (pFile, "%s\r\n", pCurLine->Text);
     }
 
-    fflush(m_pIniFile);
-    fsync(fileno(m_pIniFile));
-
-    fclose(m_pIniFile);
-    m_pIniFile = NULL;
+    fflush(pFile);
+    fsync(fileno(pFile));
+    fclose(pFile);
     return 0;
 }
 
@@ -214,6 +189,7 @@ int CIniFile::SetString(const char *section, const char *key, const char *value)
     SaveToFile(NULL);
     return 0;
 }
+
 int CIniFile::SetInt(const char *section, const char *key, int value)
 {
     char tmp[64];
@@ -221,6 +197,7 @@ int CIniFile::SetInt(const char *section, const char *key, int value)
     SetString(section, key, tmp);
     return 0;
 }
+
 const char *CIniFile::GetString(const char *section, const char *key, const char *def_value)
 {
     SECTION *pSec = getSection(section);
@@ -230,6 +207,7 @@ const char *CIniFile::GetString(const char *section, const char *key, const char
 
     return pLine->pValueStart;
 }
+
 int CIniFile::GetInt(const char *section, const char *key, int def_value)
 {
     const char *num = GetString(section, key, NULL);
@@ -239,12 +217,10 @@ int CIniFile::GetInt(const char *section, const char *key, int def_value)
     return def_value;
 }
 
-
 LINE_TYPE CIniFile::getLineType(char *Str)
 {
     LINE_TYPE type = LINE_TYPE_COMMENT;
-    //只要有#,就是注释
-    if (strchr(Str, '#')  != NULL) {
+    if (strchr(Str, '#') != NULL) {
         type = LINE_TYPE_COMMENT;
     } else if ( (strstr (Str, "[") != NULL) && (strstr (Str, "]") != NULL) ) { /* Is Section */
         type = LINE_TYPE_SECTION;
@@ -290,6 +266,7 @@ int CIniFile::InsertSection(SECTION *pSec)
     mpFirstLine = pSec->pLine;
     return 0;
 }
+
 int CIniFile::InsertKeyLine(SECTION *pSec, LINE *line)
 {
     LINE *line1 = pSec->pLine;
@@ -298,6 +275,7 @@ int CIniFile::InsertKeyLine(SECTION *pSec, LINE *line)
     line->pNext = line2;
     return 0;
 }
+
 SECTION *CIniFile::getSection(const char *section)
 {
     //section
@@ -307,6 +285,7 @@ SECTION *CIniFile::getSection(const char *section)
     }
     return NULL;
 }
+
 LINE *CIniFile::getKeyLineAtSec(SECTION *pSec, const char *key)
 {
     //line
@@ -318,6 +297,7 @@ LINE *CIniFile::getKeyLineAtSec(SECTION *pSec, const char *key)
     }
     return NULL;
 }
+
 //去掉串里面的,空格,回车,换行,s指向转换处理后的串的开头
 void CIniFile::allTrim(char *Str)
 {
@@ -349,5 +329,4 @@ void CIniFile::allTrim(char *Str)
     }
     return;
 }
-
 

@@ -1,4 +1,5 @@
 #define LOG_TAG "CAudioAlsa"
+//#define LOG_NDEBUG 0
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,11 +55,11 @@ CAudioAlsa::CAudioAlsa()
 {
     int card_id;
     card_id = get_aml_card();
-    LOGD("[%s:%d] card_id:%d\n", __FUNCTION__, __LINE__, card_id);
+    LOGV("[%s:%d] card_id:%d\n", __FUNCTION__, __LINE__, card_id);
     mpMixer = mixer_open(card_id);
 
     card_id = get_USB_Audio_card();
-    LOGD("[%s:%d] card_id:%d\n", __FUNCTION__, __LINE__, card_id);
+    LOGV("[%s:%d] usb card_id:%d\n", __FUNCTION__, __LINE__, card_id);
     mpUsbMixer = mixer_open(card_id);
     mMainVolumeGainVal = 0;
     mSupperBassVolumeGainVal = 0;

@@ -8,6 +8,7 @@
 //  @ Author :
 //
 #define LOG_TAG "CTvDatabase"
+//#define LOG_NDEBUG 0
 
 #include <assert.h>
 #include <tinyxml.h>
@@ -54,18 +55,20 @@ int CTvDatabase::isFreqListExist()
     select(cmd, c);
     return c.moveToFirst();
 }
+
 int CTvDatabase::UnInitTvDb()
 {
     AM_DB_UnSetup();
     closeDb();
     return 0;
 }
+
 int CTvDatabase::InitTvDb(const char *path)
 {
     if (path != NULL) {
         if (Tv_Utils_IsFileExist(path) && config_get_int("TV", "tv_db_created", 0) == 1) { //exist or created
             LOGD("tv db file(%s) exist and created, open it", path);
-            if (openDb(path)  < 0 ) {
+            if (openDb(path) < 0 ) {
                 LOGD("db(%s) open fail", path);
                 return -1;
             }
@@ -98,21 +101,9 @@ int CTvDatabase::InitTvDb(const char *path)
             importXmlToDB("/etc/tv_default.xml");
             config_set_int("TV", "tv_db_created", 1);
         }
-
     }
     return 0;
 }
-//CTvDatabase::CTvDatabase(char* path, sqlite3 * h)
-//{
-/*if(path != NULL && h != NULL)
-{//setup and path set
-    AM_DB_Setup((char*)path, h);
-    mHandle = h;
-}else
-{
-    mHandle = NULL;
-}*/
-//}
 
 CTvDatabase::~CTvDatabase()
 {
@@ -121,10 +112,8 @@ CTvDatabase::~CTvDatabase()
 
 int CTvDatabase::getChannelParaList(char *path, Vector<sp<ChannelPara> > &vcp)
 {
-    //?????o?????aXML????????￡?ˉ1è±????
     TiXmlDocument myDocument(path);
     bool ret = myDocument.LoadFile();
-    //è?·?????1????′?
     TiXmlElement *RootElement = myDocument.RootElement();
     //dvbc
     TiXmlElement *channel_list_element = RootElement->FirstChildElement("channel_list");

@@ -42,7 +42,6 @@ public:
     CIniFile();
     ~CIniFile();
     int LoadFromFile(const char *filename);
-    int LoadFromString(const char *str);
 
     int SaveToFile(const char *filename = NULL);
 
@@ -52,7 +51,6 @@ public:
     const char *GetString(const char *section, const char *key, const char *def_value);
     int GetInt(const char *section, const char *key, int def_value);
 
-    void printAll();
 private:
     LINE_TYPE getLineType(char *Str);
     //去掉串里面的,空格,回车,换行,s指向转换处理后的串的开头

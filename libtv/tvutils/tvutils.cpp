@@ -1524,11 +1524,10 @@ int reboot_sys_by_fbc_uart_panel_info(CFbcCommunication *fbc)
     int panel_reverse = -1;
     int panel_outputmode = -1;
 
-
     char panel_model[64] = {0};
 
     if (fbc == NULL) {
-        LOGE("there is no fbc!!!\n");
+        LOGW("there is no fbc!!!\n");
         return -1;
     }
 

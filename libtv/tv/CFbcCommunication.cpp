@@ -2,7 +2,7 @@
 
 #include <time.h>
 #include "CFbcCommunication.h"
-#include  "CTvLog.h"
+#include "CTvLog.h"
 #include "../tvconfig/tvconfig.h"
 #include "../tvutils/tvutils.h"
 
@@ -15,7 +15,6 @@ CFbcCommunication *GetSingletonFBC()
     }
 
     return gSingletonFBC;
-
 }
 
 CFbcCommunication::CFbcCommunication()
@@ -49,13 +48,8 @@ int CFbcCommunication::start()
     //int serial_port = config_get_int("TV", "fbc.communication.serial", SERIAL_C);
     if (mSerialPort.OpenDevice(SERIAL_C) < 0) {
     } else {
-#if 0
-        LOGD("%s %d be called......\n", __FUNCTION__, __LINE__);
-        mSerialPort.set_opt(115200, 8, 1, 'N', 5000, 1);
-#else
         LOGD("%s %d be called......\n", __FUNCTION__, __LINE__);
         mSerialPort.setup_serial();
-#endif
     }
 
     if (mEpoll.create() < 0) {
@@ -134,15 +128,16 @@ void CFbcCommunication::showTime(struct timeval *_time)
         LOGD("[%ld.00000%ld]", curTime.tv_sec, curTime.tv_usec);
     }
 }
+
 long CFbcCommunication::getTime(void)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
+
 void CFbcCommunication::initCrc32Table()
 {
-    //生成Crc32的查询表
     int i, j;
     unsigned int Crc;
     for (i = 0; i < 256; i++) {
@@ -201,9 +196,9 @@ unsigned int CFbcCommunication::GetCrc32(unsigned char *InStr, unsigned int len)
 
 unsigned int CFbcCommunication::Calcrc32(unsigned int crc, const unsigned char *ptr, unsigned int buf_len)
 {
-    static const unsigned int s_crc32[16] = { 0, 0x1db71064, 0x3b6e20c8, 0x26d930ac, 0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
-                                              0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c, 0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
-                                            };
+    static const unsigned int s_crc32[16] = { 0, 0x1db71064, 0x3b6e20c8, 0x26d930ac, 0x76dc4190, 0x6b6b51f4,
+                                        0x4db26158, 0x5005713c, 0xedb88320, 0xf00f9344, 0xd6d6a3e8,
+                                        0xcb61b38c, 0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c};
     unsigned int crcu32 = crc;
     //if (buf_len < 0)
     //    return 0;
@@ -220,29 +215,11 @@ unsigned int CFbcCommunication::Calcrc32(unsigned int crc, const unsigned char *
 int CFbcCommunication::sendDataOneway(int devno, unsigned char *pData, int dataLen, int flags __unused)
 {
     int ret = -1;
-    switch (devno) {
-    case COMM_DEV_CEC: {
+    if (COMM_DEV_CEC == devno)
         ret = mHdmiCec.writeFile(pData, dataLen);
-        break;
-    }
-    case COMM_DEV_SERIAL: {
+    else if (COMM_DEV_SERIAL == devno)
         ret = mSerialPort.writeFile(pData, dataLen);
-        break;
-    }
-    default:
-        break;
-    }
     return ret;
-}
-
-int CFbcCommunication::rmFromRequestList()
-{
-    return 0;
-}
-
-int CFbcCommunication::addToRequestList()
-{
-    return 0;
 }
 
 //timeout ms
@@ -256,7 +233,6 @@ int CFbcCommunication::sendDataAndWaitReply(int devno, int waitForDevno, int wai
     mReplyList.WaitTimeOut = timeout;
     mReplyList.reDataLen = 0;
     mReplyList.replyData = mpRevDataBuf;
-    addToRequestList();
     LOGD("wait dev:%d, cmd:0x%x, timeout:%d", mReplyList.WaitDevNo, mReplyList.WaitCmd, mReplyList.WaitTimeOut);
 
     mLock.lock();
@@ -264,7 +240,6 @@ int CFbcCommunication::sendDataAndWaitReply(int devno, int waitForDevno, int wai
     LOGD("%s, %d, wait reply return = %d", __FUNCTION__, __LINE__, ret);
     mLock.unlock();
 
-    //
     if (mReplyList.reDataLen > 0) { //data have come in
         *reDataLen = mReplyList.reDataLen;
         memcpy(pReData, mReplyList.replyData, mReplyList.reDataLen);
@@ -382,26 +357,22 @@ int CFbcCommunication::uartReadData(unsigned char *retData, int *retLen)
     //leader codes 2 byte
     memset(tempBuf, 0, sizeof(tempBuf));
     do {
-        readLen = mSerialPort.readFile(tempBuf  + 0, 1);
+        readLen = mSerialPort.readFile(tempBuf + 0, 1);
         if (tempBuf[0] == 0x5A) {
             bufIndex = 1;
-            readLen = mSerialPort.readFile(tempBuf  + 1, 1);
+            readLen = mSerialPort.readFile(tempBuf + 1, 1);
             if (tempBuf[1] == 0x5A) {
                 bufIndex = 2;
                 LOGD("leading code coming...\n");
                 break;
-            } else {
-                continue;
             }
-        } else {
-            continue;
         }
     } while (true);
 
     //data len 2 byte
     int needRead = 2, haveRead = 0;
     do {
-        readLen = mSerialPort.readFile(tempBuf  + bufIndex,  needRead - haveRead);
+        readLen = mSerialPort.readFile(tempBuf + bufIndex, needRead - haveRead);
         haveRead += readLen;
         bufIndex += readLen;
         if (haveRead == needRead) {
@@ -416,7 +387,7 @@ int CFbcCommunication::uartReadData(unsigned char *retData, int *retLen)
     LOGD("cmdLen is:%d\n", cmdLen);
 
     do {
-        readLen = mSerialPort.readFile(tempBuf  + bufIndex,  needRead - haveRead);
+        readLen = mSerialPort.readFile(tempBuf + bufIndex, needRead - haveRead);
         haveRead += readLen;
         bufIndex += readLen;
         if (readLen > 0) {
@@ -432,18 +403,16 @@ int CFbcCommunication::uartReadData(unsigned char *retData, int *retLen)
         crc = Calcrc32(0, tempBuf, cmdLen - 4);//not include crc 4byte
     }
     unsigned int bufCrc = tempBuf[cmdLen - 4] |
-                          tempBuf[cmdLen - 3] << 8 |
-                          tempBuf[cmdLen - 2] << 16 |
-                          tempBuf[cmdLen - 1] << 24;
-    int idx = 0;
-
+                      tempBuf[cmdLen - 3] << 8 |
+                      tempBuf[cmdLen - 2] << 16 |
+                      tempBuf[cmdLen - 1] << 24;
     if (crc == bufCrc) {
         memcpy(retData, tempBuf, cmdLen % 512);
         *retLen = cmdLen;
         return cmdLen;
-    } else {
-        return -1;
     }
+
+    return -1;
 }
 
 int CFbcCommunication::processData(COMM_DEV_TYPE_E fromDev, unsigned char *pData, int dataLen)
@@ -452,22 +421,22 @@ int CFbcCommunication::processData(COMM_DEV_TYPE_E fromDev, unsigned char *pData
     switch (fromDev) {
         case COMM_DEV_CEC: {
             if (mReplyList.WaitDevNo == fromDev && mReplyList.WaitCmd == pData[1]) {
-            mReplyList.reDataLen = dataLen;
-            memcpy(mReplyList.replyData, pData, dataLen);
-            mReplyList.WaitReplyCondition.signal();
+                mReplyList.reDataLen = dataLen;
+                memcpy(mReplyList.replyData, pData, dataLen);
+                mReplyList.WaitReplyCondition.signal();
             }
-        break;
         }
+        break;
+
         case COMM_DEV_SERIAL: {
             if (mReplyList.WaitDevNo == fromDev && mReplyList.WaitCmd == pData[5]) {
                 mReplyList.reDataLen = dataLen;
                 memcpy(mReplyList.replyData, pData, dataLen);
                 mReplyList.WaitReplyCondition.signal();
             } else {
-                unsigned char cmd = pData[5];
-                const char *value;
+                //unsigned char cmd = pData[5];
                 if (!mbSendKeyCode) {
-                    value = config_get_str(CFG_SECTION_FBCUART, "key_event_from_fbc", "null");
+                    const char *value = config_get_str(CFG_SECTION_FBCUART, "key_event_from_fbc", "null");
                     if ( strcmp ( value, "true" ) == 0 ) {
                         mbSendKeyCode = true;
                     } else {
@@ -483,6 +452,7 @@ int CFbcCommunication::processData(COMM_DEV_TYPE_E fromDev, unsigned char *pData
                 }
             }
         }
+        break;
     }
     return 0;
 }
@@ -551,9 +521,8 @@ bool CFbcCommunication::threadLoop()
             /**
              * EPOLLOUT event
              */
-            if ((mEpoll)[i].events & EPOLLOUT) {
-
-            }
+            //if ((mEpoll)[i].events & EPOLLOUT) {
+            //}
         }
     }
     //exit
@@ -605,6 +574,7 @@ int CFbcCommunication::Fbc_Set_Value_INT8(COMM_DEV_TYPE_E toDev, int cmd_type, i
     }
     return 0;
 }
+
 int CFbcCommunication::Fbc_Set_Value_INT32(COMM_DEV_TYPE_E toDev, int cmd_type, int value)
 {
     if (mUpgradeFlag == 1) {
@@ -643,6 +613,7 @@ int CFbcCommunication::Fbc_Set_Value_INT32(COMM_DEV_TYPE_E toDev, int cmd_type, 
     }
     return -1;
 }
+
 int CFbcCommunication::Fbc_Get_Value_INT8(COMM_DEV_TYPE_E fromDev, int cmd_type, int *value)
 {
     if (mUpgradeFlag == 1) {
@@ -998,6 +969,7 @@ int CFbcCommunication::cfbc_Set_Mute(COMM_DEV_TYPE_E fromDev, int value)
     LOGD("cfbc_Set_Mute = %d", value);
     return Fbc_Set_Value_INT8(fromDev, AUDIO_CMD_SET_MUTE, value);
 }
+
 int CFbcCommunication::cfbc_Set_FBC_Audio_Source(COMM_DEV_TYPE_E fromDev, int value)
 {
     return Fbc_Set_Value_INT8(fromDev, AUDIO_CMD_SET_SOURCE, value);
@@ -1041,7 +1013,6 @@ int CFbcCommunication::cfbc_Get_Master_Volume(COMM_DEV_TYPE_E fromDev, int *valu
 int CFbcCommunication::cfbc_Set_CM(COMM_DEV_TYPE_E fromDev, unsigned char value)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = VPU_CMD_ENABLE;
     cmd[1] = VPU_MODULE_CM2;
@@ -1052,20 +1023,17 @@ int CFbcCommunication::cfbc_Set_CM(COMM_DEV_TYPE_E fromDev, unsigned char value)
 int CFbcCommunication::cfbc_Get_CM(COMM_DEV_TYPE_E fromDev, int *value)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = VPU_CMD_ENABLE | 0x80;
     cmd[1] = VPU_MODULE_CM2;
 
     Fbc_Get_BatchValue(fromDev, cmd, 2);
     *value = cmd[2];
-
     return 0;
 }
 int CFbcCommunication::cfbc_Set_DNLP(COMM_DEV_TYPE_E fromDev, unsigned char value)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = VPU_CMD_ENABLE;
     cmd[1] = VPU_MODULE_DNLP;
@@ -1077,14 +1045,12 @@ int CFbcCommunication::cfbc_Set_DNLP(COMM_DEV_TYPE_E fromDev, unsigned char valu
 int CFbcCommunication::cfbc_Get_DNLP(COMM_DEV_TYPE_E fromDev, int *value)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = VPU_CMD_ENABLE | 0x80;
     cmd[1] = VPU_MODULE_DNLP;
 
     Fbc_Get_BatchValue(fromDev, cmd, 2);
     *value = cmd[2];
-
     return 0;
 }
 
@@ -1144,15 +1110,10 @@ int CFbcCommunication::cfbc_Set_FBC_Factory_SN(COMM_DEV_TYPE_E fromDev, const ch
 {
     unsigned char cmd[512];
     int len = strlen(pSNval);
-
-    memset(cmd, 0, 512);
-
     cmd[0] = CMD_SET_FACTORY_SN;
-
     memcpy(cmd + 1, pSNval, len);
 
     LOGD("cmd : %s\n", cmd);
-
     return Fbc_Set_BatchValue(fromDev, cmd, len + 1);
 }
 
@@ -1160,7 +1121,7 @@ int CFbcCommunication::cfbc_Get_FBC_Factory_SN(COMM_DEV_TYPE_E fromDev, char Fac
 {
     int rx_len = 0;
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
+
     cmd[0] = CMD_GET_FACTORY_SN;
     rx_len = Fbc_Get_BatchValue(fromDev, cmd, 1);
     if (rx_len <= 0) {
@@ -1176,7 +1137,7 @@ int CFbcCommunication::cfbc_Get_FBC_Get_PANel_INFO(COMM_DEV_TYPE_E fromDev, char
 {
     int rx_len = 0;
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
+
     cmd[0] = CMD_DEVICE_ID;
     rx_len = Fbc_Get_BatchValue(fromDev, cmd, 1);
     if (rx_len <= 0) {
@@ -1191,9 +1152,6 @@ int CFbcCommunication::cfbc_Get_FBC_Get_PANel_INFO(COMM_DEV_TYPE_E fromDev, char
 int CFbcCommunication::cfbc_Set_FBC_panel_power_switch(COMM_DEV_TYPE_E fromDev, int switch_val)
 {
     unsigned char cmd[512];
-
-    memset(cmd, 0, 512);
-
     cmd[0] = FBC_PANEL_POWER;
     cmd[1] = switch_val; //0 is fbc panel power off, 1 is panel power on.
 
@@ -1203,23 +1161,18 @@ int CFbcCommunication::cfbc_Set_FBC_panel_power_switch(COMM_DEV_TYPE_E fromDev, 
 int CFbcCommunication::cfbc_Set_FBC_suspend(COMM_DEV_TYPE_E fromDev, int switch_val)
 {
     unsigned char cmd[512];
-
-    memset(cmd, 0, 512);
-
     cmd[0] = FBC_SUSPEND_POWER;
     cmd[1] = switch_val; //0
 
     return Fbc_Set_BatchValue(fromDev, cmd, 2);
 }
+
 int CFbcCommunication::cfbc_Set_FBC_User_Setting_Default(COMM_DEV_TYPE_E fromDev, int param)
 {
     unsigned char cmd[512];
 
-    memset(cmd, 0, 512);
-
     cmd[0] = FBC_USER_SETTING_DEFAULT;
     cmd[1] = param; //0
-
     return Fbc_Set_BatchValue(fromDev, cmd, 2);
 }
 
@@ -1231,19 +1184,14 @@ int CFbcCommunication::cfbc_SendRebootToUpgradeCmd(COMM_DEV_TYPE_E fromDev, int 
 int CFbcCommunication::cfbc_FBC_Send_Key_To_Fbc(COMM_DEV_TYPE_E fromDev, int keycode __unused, int param __unused)
 {
     unsigned char cmd[512];
-
-    memset(cmd, 0, 512);
-
     cmd[0] = CMD_ACTIVE_KEY;
-    cmd[1] = keycode; //0
-
+    cmd[1] = keycode;
     return Fbc_Set_BatchValue(fromDev, cmd, 2);
 }
 
 int CFbcCommunication::cfbc_Get_FBC_PANEL_REVERSE(COMM_DEV_TYPE_E fromDev, int *value)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = CMD_PANEL_INFO;
     //0://panel reverse
@@ -1262,7 +1210,6 @@ int CFbcCommunication::cfbc_Get_FBC_PANEL_REVERSE(COMM_DEV_TYPE_E fromDev, int *
 int CFbcCommunication::cfbc_Get_FBC_PANEL_OUTPUT(COMM_DEV_TYPE_E fromDev, int *value)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = CMD_PANEL_INFO;
     //0://panel reverse
@@ -1281,12 +1228,8 @@ int CFbcCommunication::cfbc_Get_FBC_PANEL_OUTPUT(COMM_DEV_TYPE_E fromDev, int *v
 int CFbcCommunication::cfbc_Set_FBC_project_id(COMM_DEV_TYPE_E fromDev, int prj_id)
 {
     unsigned char cmd[512];
-
-    memset(cmd, 0, 512);
-
     cmd[0] = CMD_SET_PROJECT_SELECT;
     cmd[1] = prj_id;
-
     return Fbc_Set_BatchValue(fromDev, cmd, 2);
 }
 
@@ -1298,33 +1241,28 @@ int CFbcCommunication::cfbc_Get_FBC_project_id(COMM_DEV_TYPE_E fromDev, int *prj
 int CFbcCommunication::cfbc_Set_Gamma(COMM_DEV_TYPE_E fromDev, unsigned char value)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = VPU_CMD_ENABLE;
     cmd[1] = VPU_MODULE_GAMMA;
     cmd[2] = value;//value:0~1
-
     return Fbc_Set_BatchValue(fromDev, cmd, 3);
 }
 
 int CFbcCommunication::cfbc_Get_Gamma(COMM_DEV_TYPE_E fromDev, int *value)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = VPU_CMD_ENABLE | 0x80;
     cmd[1] = VPU_MODULE_GAMMA;
 
     Fbc_Get_BatchValue(fromDev, cmd, 2);
     *value = cmd[2];
-
     return 0;
 }
 
 int CFbcCommunication::cfbc_Set_VMute(COMM_DEV_TYPE_E fromDev, unsigned char value)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = VPU_CMD_USER_VMUTE;
     cmd[1] = value;
@@ -1332,36 +1270,32 @@ int CFbcCommunication::cfbc_Set_VMute(COMM_DEV_TYPE_E fromDev, unsigned char val
 
     return Fbc_Set_BatchValue(fromDev, cmd, 2);
 }
+
 int CFbcCommunication::cfbc_Set_WhiteBalance_OnOff(COMM_DEV_TYPE_E fromDev, unsigned char value)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = VPU_CMD_ENABLE;
     cmd[1] = VPU_MODULE_WB;
     cmd[2] = value;//value:0~1
-
     return Fbc_Set_BatchValue(fromDev, cmd, 3);
 }
 
 int CFbcCommunication::cfbc_Get_WhiteBalance_OnOff(COMM_DEV_TYPE_E fromDev, int *value)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = VPU_CMD_ENABLE | 0x80;
     cmd[1] = VPU_MODULE_WB;
 
     Fbc_Get_BatchValue(fromDev, cmd, 2);
     *value = cmd[2];
-
     return 0;
 }
 
 int CFbcCommunication::cfbc_Set_WB_Batch(COMM_DEV_TYPE_E fromDev, unsigned char mode, unsigned char r_gain, unsigned char g_gain, unsigned char b_gain, unsigned char r_offset, unsigned char g_offset, unsigned char b_offset)
 {
-    unsigned char cmd[512];
-    memset(cmd, 0, 512);
+    unsigned char cmd[8];
 
     cmd[0] = VPU_CMD_WB_VALUE;
     cmd[1] = mode;
@@ -1378,25 +1312,20 @@ int CFbcCommunication::cfbc_Set_WB_Batch(COMM_DEV_TYPE_E fromDev, unsigned char 
 int CFbcCommunication::cfbc_TestPattern_Select(COMM_DEV_TYPE_E fromDev, int value)
 {
     int ret = -1;
-    unsigned char cmd[512];
-    memset(cmd, 0, 512);
+    unsigned char cmd[3];
 
     LOGD("Call vpp 63 2 1\n");
     cmd[0] = VPU_CMD_SRCIF;
     cmd[1] = 2;
     cmd[2] = 1;
-
     ret = Fbc_Set_BatchValue(fromDev, cmd, 3);//close csc0
-
     if (ret == 0) {
         LOGD("Call vpp 9 11 1\n");
-        memset(cmd, 0, 512);
         cmd[0] = VPU_CMD_ENABLE;
         cmd[1] = 11;
         cmd[2] = 1;
         ret = Fbc_Set_BatchValue(fromDev, cmd, 3);
         if (ret == 0) {
-            memset(cmd, 0, 512);
             LOGD("Call vpp 42 1-17\n");
             Fbc_Set_Value_INT8(fromDev, VPU_CMD_PATTEN_SEL, value);
         }
@@ -1404,11 +1333,12 @@ int CFbcCommunication::cfbc_TestPattern_Select(COMM_DEV_TYPE_E fromDev, int valu
 
     return ret;
 }
+
 int CFbcCommunication::cfbc_WhiteBalance_GrayPattern_OnOff(COMM_DEV_TYPE_E fromDev, int onOff)
 {
     int ret = -1;
-    unsigned char cmd[512];
-    memset(cmd, 0, 512);
+    unsigned char cmd[3];
+
     if (onOff == 0) { //On
         LOGD("Call vpp 63 2 1");
         cmd[0] = VPU_CMD_SRCIF;
@@ -1436,7 +1366,6 @@ int CFbcCommunication::cfbc_WhiteBalance_GrayPattern_OnOff(COMM_DEV_TYPE_E fromD
                 }
             }
         }
-
     } else { //Off
         LOGD("Call vpp 63 2 2");
         cmd[0] = VPU_CMD_SRCIF;
@@ -1471,8 +1400,8 @@ int CFbcCommunication::cfbc_WhiteBalance_GrayPattern_OnOff(COMM_DEV_TYPE_E fromD
 int CFbcCommunication::cfbc_WhiteBalance_SetGrayPattern(COMM_DEV_TYPE_E fromDev, unsigned char value)
 {
     int ret = -1;
-    unsigned char cmd[512];
-    memset(cmd, 0, 512);
+    unsigned char cmd[4];
+
     cmd[0] = VPU_CMD_GRAY_PATTERN;
     cmd[1] = value;
     cmd[2] = value;
@@ -1483,8 +1412,7 @@ int CFbcCommunication::cfbc_WhiteBalance_SetGrayPattern(COMM_DEV_TYPE_E fromDev,
 
 int CFbcCommunication::cfbc_Set_Auto_Backlight_OnOff(COMM_DEV_TYPE_E fromDev, unsigned char value)
 {
-    unsigned char cmd[512];
-    memset(cmd, 0, 512);
+    unsigned char cmd[2];
 
     cmd[0] = CMD_SET_AUTO_BACKLIGHT_ONFF;
     cmd[1] = value;
@@ -1497,10 +1425,12 @@ int CFbcCommunication::cfbc_Get_Auto_Backlight_OnOff(COMM_DEV_TYPE_E fromDev, in
     LOGD("cfbc_get_naturelight_onoff\n");
     return Fbc_Get_Value_INT8(fromDev, CMD_GET_AUTO_BACKLIGHT_ONFF, value);
 }
-int CFbcCommunication::cfbc_Get_WB_Batch(COMM_DEV_TYPE_E fromDev, unsigned char mode, unsigned char *r_gain, unsigned char *g_gain, unsigned char *b_gain, unsigned char *r_offset, unsigned char *g_offset, unsigned char *b_offset)
+
+int CFbcCommunication::cfbc_Get_WB_Batch(COMM_DEV_TYPE_E fromDev, unsigned char mode,
+    unsigned char *r_gain, unsigned char *g_gain, unsigned char *b_gain,
+    unsigned char *r_offset, unsigned char *g_offset, unsigned char *b_offset)
 {
-    unsigned char cmd[512];
-    memset(cmd, 0, 512);
+    unsigned char cmd[512] = {0};
 
     cmd[0] = VPU_CMD_WB_VALUE | 0x80;
     cmd[1] = mode;
@@ -1513,7 +1443,6 @@ int CFbcCommunication::cfbc_Get_WB_Batch(COMM_DEV_TYPE_E fromDev, unsigned char 
     *r_offset = cmd[5];
     *g_offset = cmd[6];
     *b_offset = cmd[7];
-
     return 0;
 }
 
@@ -1534,68 +1463,34 @@ int CFbcCommunication::cfbc_Set_LVDS_SSG_Set(COMM_DEV_TYPE_E fromDev, int value)
 
 int CFbcCommunication::cfbc_Set_AUTO_ELEC_MODE(COMM_DEV_TYPE_E fromDev, int value)
 {
-    LOGD("%s  cmd =0x%x, value=%d~~~~~~~~", __FUNCTION__, VPU_CMD_SET_ELEC_MODE, value);
+    LOGD("%s  cmd =0x%x, value=%d", __FUNCTION__, VPU_CMD_SET_ELEC_MODE, value);
     return Fbc_Set_Value_INT8(fromDev, VPU_CMD_SET_ELEC_MODE, value);
-}
-
-int CFbcCommunication::cfbc_Get_AUTO_ELEC_MODE(COMM_DEV_TYPE_E fromDev __unused, int *value __unused)
-{
-    return 0;
 }
 
 int CFbcCommunication::cfbc_Set_Thermal_state(COMM_DEV_TYPE_E fromDev, int value)
 {
-    LOGD("%s  cmd =0x%x, data%d ~~~~~~~~~\n", __FUNCTION__, CMD_HDMI_STAT, value);
-    //return Fbc_Set_Value_INT8(fromDev, CMD_HDMI_STAT, value);
+    LOGD("%s  cmd =0x%x, data%d\n", __FUNCTION__, CMD_HDMI_STAT, value);
     return Fbc_Set_Value_INT32(fromDev, CMD_HDMI_STAT, value);
 }
 
 int CFbcCommunication::cfbc_Set_LightSensor_N310(COMM_DEV_TYPE_E fromDev, int value)
 {
     return Fbc_Set_Value_INT8(fromDev, 0x84, value);
-    //    return Fbc_Set_Value_INT8(fromDev, CMD_LIGHT_SENSOR, value);
-}
-
-int CFbcCommunication::cfbc_Get_LightSensor_N310(COMM_DEV_TYPE_E fromDev __unused, int *value __unused)
-{
-    //    return Fbc_Get_Value_INT8(fromDev, CMD_LIGHT_SENSOR|0x80, value);
-    return 0;
 }
 
 int CFbcCommunication::cfbc_Set_Dream_Panel_N310(COMM_DEV_TYPE_E fromDev, int value)
 {
     return Fbc_Set_Value_INT8(fromDev, 0x83, value);
-    //    return Fbc_Set_Value_INT8(fromDev, CMD_DREAM_PANEL, value);
-}
-
-int CFbcCommunication::cfbc_Get_Dream_Panel_N310(COMM_DEV_TYPE_E fromDev __unused, int *value __unused)
-{
-    //    return Fbc_Get_Value_INT8(fromDev, CMD_DREAM_PANEL|0x80, value);
-    return 0;
 }
 
 int CFbcCommunication::cfbc_Set_MULT_PQ_N310(COMM_DEV_TYPE_E fromDev, int value)
 {
     return Fbc_Set_Value_INT8(fromDev, 0x81, value);
-    //    return Fbc_Set_Value_INT8(fromDev, CMD_MUTI_PQ, value);
-}
-
-int CFbcCommunication::cfbc_Get_MULT_PQ_N310(COMM_DEV_TYPE_E fromDev __unused, int *value __unused)
-{
-    //    return Fbc_Get_Value_INT8(fromDev, CMD_MUTI_PQ|0x80, value);
-    return 0;
 }
 
 int CFbcCommunication::cfbc_Set_MEMC_N310(COMM_DEV_TYPE_E fromDev, int value)
 {
     return Fbc_Set_Value_INT8(fromDev, 0x82, value);
-    //    return Fbc_Set_Value_INT8(fromDev, CMD_MEMC, value);
-}
-
-int CFbcCommunication::cfbc_Get_MEMC_N310(COMM_DEV_TYPE_E fromDev __unused, int *value __unused)
-{
-    //    return Fbc_Get_Value_INT8(fromDev, CMD_MEMC|0x80, value);
-    return 0;
 }
 
 int CFbcCommunication::cfbc_Set_Bluetooth_IIS_onoff(COMM_DEV_TYPE_E fromDev, int value)
@@ -1611,18 +1506,17 @@ int CFbcCommunication::cfbc_Get_Bluetooth_IIS_onoff(COMM_DEV_TYPE_E fromDev, int
 int CFbcCommunication::cfbc_Set_Led_onoff(COMM_DEV_TYPE_E fromDev, int val_1, int val_2, int val_3)
 {
     unsigned char cmd[512];
-    memset(cmd, 0, 512);
 
     cmd[0] = CMD_SET_LED_MODE;
     cmd[1] = val_1;
     cmd[2] = val_2;
     cmd[3] = val_3;
-
     return Fbc_Set_BatchValue(fromDev, cmd, 4);
 }
+
 int CFbcCommunication::cfbc_Set_LockN_state(COMM_DEV_TYPE_E fromDev, int value)
 {
-    LOGD("%s  cmd =0x%x, data%d ~~~~~~~~~\n", __FUNCTION__, CMD_SET_LOCKN_DISABLE, value);
+    LOGD("%s  cmd =0x%x, data%d\n", __FUNCTION__, CMD_SET_LOCKN_DISABLE, value);
     return Fbc_Set_Value_INT8(fromDev, CMD_SET_LOCKN_DISABLE, value);
 }
 
@@ -1635,14 +1529,13 @@ int CFbcCommunication::cfbc_SET_SPLIT_SCREEN_DEMO(COMM_DEV_TYPE_E fromDev, int v
 int CFbcCommunication::cfbc_Set_AP_STANDBY_N310(COMM_DEV_TYPE_E fromDev, int value)
 {
     return Fbc_Set_Value_INT8(fromDev, CMD_PANEL_ON_OFF, value);
-    //    return 0;
 }
 
 int CFbcCommunication::cfbc_Get_AP_STANDBY_N310(COMM_DEV_TYPE_E fromDev, int *value)
 {
     return Fbc_Get_Value_INT8(fromDev, CMD_PANEL_ON_OFF | 0x80, value);
-    //    return 0;
 }
+
 int CFbcCommunication::cfbc_Set_Fbc_Uboot_Stage(COMM_DEV_TYPE_E fromDev, int value)
 {
     return Fbc_Set_Value_INT8(fromDev, CMD_SET_UBOOT_STAGE, value);
@@ -1651,17 +1544,6 @@ int CFbcCommunication::cfbc_Set_Fbc_Uboot_Stage(COMM_DEV_TYPE_E fromDev, int val
 void CFbcCommunication::CFbcMsgQueue::handleMessage ( CMessage &msg )
 {
     LOGD ( "%s, CFbcCommunication::CFbcMsgQueue::handleMessage type = %d", __FUNCTION__,  msg.mType );
-
-    switch ( msg.mType ) {
-    case TV_MSG_COMMON:
-        break;
-
-    case TV_MSG_SEND_KEY: {
-        LOGD("CFbcMsgQueue msg type = %d", msg.mType);
-        break;
-    }
-
-    default:
-        break;
-    }
+    //msg.mType is TV_MSG_COMMON or TV_MSG_SEND_KEY
 }
+

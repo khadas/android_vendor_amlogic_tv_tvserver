@@ -28,9 +28,6 @@ LOCAL_SRC_FILES:= \
   main.cpp \
   TvService.cpp
 
-LOCAL_SHARED_LIBRARIES := \
-  libtv
-
 LOCAL_SHARED_LIBRARIES += \
   libui \
   libutils \
@@ -38,11 +35,12 @@ LOCAL_SHARED_LIBRARIES += \
   libcutils \
   libsqlite \
   libmedia \
-  libtvbinder \
   libhardware_legacy \
   libdl \
   libskia \
-  libtinyxml
+  libtinyxml \
+  libtvbinder \
+  libtv
 
 LOCAL_SHARED_LIBRARIES += \
   libzvbi \
@@ -58,12 +56,13 @@ LOCAL_C_INCLUDES := \
   $(LOCAL_PATH)/../libtv/include
 
 LOCAL_C_INCLUDES += \
-  vendor/amlogic/frameworks/libtvbinder/include \
+  $(LIB_SQLITE_PATH)/dist \
   bionic/libc/include \
   bionic/libc/private \
   system/extras/ext4_utils \
-  $(LIB_SQLITE_PATH)/dist \
-  system/media/audio_effects/include
+  system/media/audio_effects/include \
+  vendor/amlogic/frameworks/libtvbinder/include \
+  hardware/amlogic/audio/libTVaudio
 
 LOCAL_C_INCLUDES += \
   $(LIB_ZVBI_PATH)/ntsc_decode/include \
@@ -77,7 +76,7 @@ LOCAL_C_INCLUDES += \
   $(AM_LIBPLAYER_PATH)/amcodec/include \
   $(AM_LIBPLAYER_PATH)/amffmpeg \
   $(AM_LIBPLAYER_PATH)/amplayer
-LOCAL_C_INCLUDES += hardware/amlogic/audio/libTVaudio
+
 LOCAL_CFLAGS += -DTARGET_BOARD_$(strip $(TVAPI_TARGET_BOARD_VERSION))
 
 LOCAL_MODULE:= tvserver

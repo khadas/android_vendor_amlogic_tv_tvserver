@@ -1679,7 +1679,7 @@ int CTv::DoResume(int type)
 int CTv::StopTvLock ( void )
 {
     LOGD("%s, call Tv_Stop status = %d \n", __FUNCTION__, mTvStatus);
-    const char *value;
+    mSigDetectThread.requestAndWaitPauseDetect();
     Mutex::Autolock _l ( mLock );
     mAv.DisableVideoWithBlackColor();
     //we should stop audio first for audio mute.
@@ -1687,7 +1687,6 @@ int CTv::StopTvLock ( void )
     CTvin::getInstance()->Tvin_StopDecoder();
     CTvin::getInstance()->VDIN_ClosePort();
     CTvin::getInstance()->Tvin_RemovePath(TV_PATH_TYPE_TVIN);
-    mSigDetectThread.requestAndWaitPauseDetect();
     //stop scan  if scanning
     stopScan();
     mFrontDev.SetAnalogFrontEndTimerSwitch(0);

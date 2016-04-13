@@ -271,6 +271,8 @@ public:
     virtual vpp_noise_reduction_mode_t Tv_GetNoiseReductionMode ( tv_source_input_type_t source_type );
     virtual int Tv_SaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_type_t source_type );
     int Tv_SplitScreenEffect(int mode, int width, int reverse = 0);
+    int setEyeProtectionMode(int enable);
+    int getEyeProtectionMode();
 
     //audio
     virtual void updateSubtitle(int, int);

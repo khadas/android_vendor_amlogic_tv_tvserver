@@ -1705,6 +1705,23 @@ int SSMReadDisplayMode(int offset, int *rw_val)
     return tmp_ret;
 }
 
+int SSMSaveEyeProtectionMode(int rw_val)
+{
+    unsigned char tmp_val = rw_val;
+    return SSMWriteNTypes(VPP_DATA_EYE_PROTECTION_MODE_START, 1, &tmp_val);
+}
+
+int SSMReadEyeProtectionMode(int *rw_val)
+{
+    int tmp_ret = 0;
+    unsigned char tmp_val = 0;
+
+    tmp_ret = SSMReadNTypes(VPP_DATA_EYE_PROTECTION_MODE_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return tmp_ret;
+}
+
 int SSMSaveBackLightVal(int offset, int rw_val)
 {
     unsigned char tmp_val = rw_val;

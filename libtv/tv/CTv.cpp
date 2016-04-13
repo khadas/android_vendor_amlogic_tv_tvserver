@@ -71,9 +71,7 @@ static void sqliteLogCallback(void *data, int iErrCode, const char *zMsg)
     LOGD( "showbo sqlite (%d) %s\n", iErrCode, zMsg);
 }
 
-CTv::CTv() :
-    mTvMsgQueue(this),
-    mTvScannerDetectObserver(this)
+CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
 {
     mAudioMuteStatusForTv = CC_AUDIO_UNMUTE;
     mAudioMuteStatusForSystem = CC_AUDIO_UNMUTE;
@@ -3413,6 +3411,21 @@ vpp_display_mode_t CTv::Tv_GetDisplayMode ( tv_source_input_type_t source_type )
 int CTv::Tv_SaveDisplayMode ( vpp_display_mode_t mode, tv_source_input_type_t source_type )
 {
     return SSMSaveDisplayMode ( source_type, (int)mode );
+}
+
+int CTv::setEyeProtectionMode(int enable)
+{
+    int ret = -1;
+    if (getEyeProtectionMode() == enable)
+        return ret;
+
+    return CVpp::getInstance()->SetEyeProtectionMode(
+        CTvin::Tvin_SourceInputToSourceInputType(m_source_input), enable);
+}
+
+int CTv::getEyeProtectionMode()
+{
+    return CVpp::getInstance()->GetEyeProtectionMode();
 }
 
 int CTv::Tv_SetNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_type_t source_type, int is_save )

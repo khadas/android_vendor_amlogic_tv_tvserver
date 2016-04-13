@@ -719,6 +719,8 @@ int CVpp::Vpp_SetColorTemperatureUser(vpp_color_temperature_mode_t temp_mode __u
     rgbogo.b_post_offset = 0;
     rgbogo.b_pre_offset = 0;
 
+    if (GetEyeProtectionMode())//if eye protection mode is enable, b_gain / 2.
+        rgbogo.b_gain /= 2;
     if (VPP_SetRGBOGO(&rgbogo) == 0) {
         return 0;
     }
@@ -743,6 +745,8 @@ int CVpp::Vpp_SetColorTemperature(vpp_color_temperature_mode_t Tempmode,
     }
 
     GetColorTemperatureParams(Tempmode, &rgbogo);
+    if (GetEyeProtectionMode())//if eye protection mode is enable, b_gain / 2.
+        rgbogo.b_gain /= 2;
 
     if (VPP_SetRGBOGO(&rgbogo) == 0) {
         return 0;
@@ -1538,6 +1542,30 @@ vpp_display_mode_t CVpp::GetDisplayMode(tv_source_input_type_t source_type)
     data = (vpp_display_mode_t) tmp_dis_mode;
 
     return data;
+}
+
+int CVpp::SetEyeProtectionMode(tv_source_input_type_t source_type, int enable)
+{
+    int pre_mode = -1;
+    int ret = -1;
+    if (SSMReadEyeProtectionMode(&pre_mode) < 0 || pre_mode == -1 || pre_mode == enable)
+        return ret;
+
+    SSMSaveEyeProtectionMode(enable);
+    vpp_color_temperature_mode_t temp_mode = GetColorTemperature(source_type);
+    if (temp_mode == VPP_COLOR_TEMPERATURE_MODE_USER) {
+        ret |= Vpp_SetColorTemperatureUser(temp_mode, source_type);
+    } else {
+        ret |= Vpp_SetColorTemperature(temp_mode, source_type, TVIN_PORT_NULL, TVIN_SIG_FMT_NULL, TVIN_TFMT_2D);
+    }
+
+    return ret;
+}
+
+int CVpp::GetEyeProtectionMode()
+{
+    int mode = -1;
+    return (SSMReadEyeProtectionMode(&mode) < 0) ? 0 : mode;
 }
 
 int CVpp::SetBacklightWithoutSave(int value, tv_source_input_type_t source_type __unused)

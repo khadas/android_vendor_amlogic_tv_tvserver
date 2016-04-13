@@ -152,6 +152,10 @@ ifeq ($(strip $(BOARD_TV_AUDIO_TYPE)),android)
   LOCAL_CFLAGS += -DCC_TV_AUDIO_TYPE_ANDROID=1
 endif
 
+ifneq ($(TARGET_BUILD_VARIANT), user)
+	LOCAL_CFLAGS += -DTV_DEBUG_PQ_ENABLE
+endif
+
 LOCAL_C_INCLUDES += \
   bionic/libc/include \
   bionic/libc/private \

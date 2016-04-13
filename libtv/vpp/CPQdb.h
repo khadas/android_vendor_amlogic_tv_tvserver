@@ -10,24 +10,35 @@
 
 #define PQ_NO_ANDROID 0
 
-
 #if (PQ_NO_ANDROID == 1)
 #include "sqlite3.h"
 #else
 #include "../../sqlite/dist/sqlite3.h"
 #endif
+#include <cutils/properties.h>
 #include "tvutils/CFile.h"
 #include "../tvin/CTvin.h"
 #include "CVpp.h"
 #include "tvutils/CSqlite.h"
 
-#define SQL_DEBUG 0
+#ifdef TV_DEBUG_PQ_ENABLE
+#define DEBUG_FLAG 1
+#else
+#define DEBUG_FLAG 0
+#endif
+
+#define PROP_DEBUG_PQ "tv.debug.pq.enable"
 #define getSqlParams(func, buffer, args...) \
     do{\
         sprintf(buffer, ##args);\
-        if(SQL_DEBUG){\
-            LOGD("getSqlParams for %s\n", func);\
-            LOGD("%s = %s\n",#buffer, buffer);\
+        if (DEBUG_FLAG) {\
+            char value[PROPERTY_VALUE_MAX];\
+            memset(value, '\0', PROPERTY_VALUE_MAX);\
+            property_get(PROP_DEBUG_PQ, value, "0");\
+            if(!strcmp(value, "1")){\
+                LOGD("getSqlParams for %s\n", func);\
+                LOGD("%s = %s\n",#buffer, buffer);\
+            }\
         }\
     }while(0)
 

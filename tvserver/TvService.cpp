@@ -651,11 +651,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-    case GET_CURRENT_SOURCE_INPUT_TYPE: {
-        int ret = 0;//(int)mpTv->Tvin_GetSrcInputType();
-        r->writeInt32(ret);
-        break;
-    }
     case GET_CURRENT_SIGNAL_INFO: {
         tvin_info_t siginfo = mpTv->GetCurrentSignalInfo();
         int frame_rate = mpTv->getHDMIFrameRate();
@@ -663,11 +658,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(siginfo.fmt);
         r->writeInt32(siginfo.status);
         r->writeInt32(frame_rate);
-        break;
-    }
-    case IS_SOURCE_SWTICH_DONE: {
-        //int ret = mpTv->Tv_IsSourceSwtichDone();
-        r->writeInt32(0);
         break;
     }
     case SET_SOURCE_INPUT: {
@@ -689,11 +679,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-    case RUN_ADC_AUTO_CALIBRATION: {
-        //        int ret = mpTv->Tv_RunADCAutoCalibration();
-        //        r->writeInt32(ret);
-        break;
-    }
     case IS_DVI_SIGNAL: {
         int ret = mpTv->IsDVISignal();
         r->writeInt32(ret);
@@ -705,11 +690,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         break;
     }
 
-    case GET_VIDEO_STREAM_STATUS:
-    case GET_FIRST_START_SWITCH_TYPE:
-        r->writeInt32(-1);
-        break;
-
     case SET_PREVIEW_WINDOW: {
         tvin_window_pos_t win_pos;
         win_pos.x1 = p.readInt32();
@@ -717,13 +697,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         win_pos.x2 = p.readInt32();
         win_pos.y2 = p.readInt32();
         int ret = (int)mpTv->SetPreviewWindow(win_pos);
-        r->writeInt32(ret);
-        break;
-    }
-
-    case SET_VIDEO_DISABLE: {
-        int value = p.readInt32();
-        int ret = 0;//(int)mpTv->Tv_SetVideoDisable(value);
         r->writeInt32(ret);
         break;
     }
@@ -742,25 +715,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     //Tv function END
 
-    //VGA do not support now
-    case RUN_VGA_AUTO_ADJUST:
-    case GET_VGA_AUTO_ADJUST_STATUS:
-    case IS_VGA_AUTO_ADJUST_DONE:
-    case SET_VGA_HPOS:
-    case GET_VGA_HPOS:
-    case SET_VGA_VPOS:
-    case GET_VGA_VPOS:
-    case SET_VGA_CLOCK:
-    case GET_VGA_CLOCK:
-    case SET_VGA_PHASE:
-    case GET_VGA_PHASE:
-    case SET_VGA_AJUST_PARA:
-    case GET_VGA_AJUST_PARA:
-    case SET_VGAPARAM_DEFAULT:
-        r->writeInt32(-1);
-        break;
-    // VGA END
-
     // HDMI
     case SET_HDMI_EDID_VER: {
         int hdmi_port_id = p.readInt32();
@@ -775,7 +729,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(tmpRet);
         break;
     }
-
     // HDMI END
 
     // 3D
@@ -792,7 +745,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     case SET_3D_LR_SWITH: {
         int on_off = p.readInt32();
-        //int status = p.readInt32();
         int ret = mpTv->Tv_Set3DLRSwith(on_off);
         r->writeInt32(ret);
         break;
@@ -804,7 +756,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     case SET_3D_TO_2D_MODE: {
         int mode = p.readInt32();
-        //int status = p.readInt32();
         int ret = mpTv->Tv_Set3DTo2DMode(mode);
         r->writeInt32(ret);
         break;
@@ -838,7 +789,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     case GET_BRIGHTNESS: {
         int source_type = p.readInt32();
-        LOGD("GET_BRIGHTNESS------------=%d", source_type);
+        LOGD("GET_BRIGHTNESS source type:%d", source_type);
         int ret = mpTv->Tv_GetBrightness((tv_source_input_type_t)source_type);
         r->writeInt32(ret);
         break;
@@ -850,7 +801,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-
     case SET_CONTRAST: {
         int contrast = p.readInt32();
         int source_type = p.readInt32();
@@ -916,12 +866,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-
-    case SET_SCENEMODE:
-    case GET_SCENEMODE:
-        r->writeInt32(-1);
-        break;
-
     case SET_PQMODE: {
         int mode = p.readInt32();
         int source_type = p.readInt32();
@@ -1003,13 +947,13 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int mode = p.readInt32();
         int source_type = p.readInt32();
         int is_save = p.readInt32();
-        int ret  = mpTv->Tv_SetColorTemperature((vpp_color_temperature_mode_t)mode, (tv_source_input_type_t)source_type, is_save);
+        int ret = mpTv->Tv_SetColorTemperature((vpp_color_temperature_mode_t)mode, (tv_source_input_type_t)source_type, is_save);
         r->writeInt32(ret);
         break;
     }
     case GET_COLOR_TEMPERATURE: {
         int source_type = p.readInt32();
-        int ret  = mpTv->Tv_GetColorTemperature((tv_source_input_type_t)source_type);
+        int ret = mpTv->Tv_GetColorTemperature((tv_source_input_type_t)source_type);
         r->writeInt32(ret);
         break;
     }
@@ -1256,58 +1200,17 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(cutwin_t.ve);
         break;
     }
-    case DELETE_PARAM_PQ_DB: {
-        int tmpRet = mpTv->mFactoryMode.replacePQDb();
-        r->writeInt32(tmpRet);
-    }
-    case REPLACE_PARAM_PQ_DB: {
-        String8 valueStr(p.readString16());
-        int tmpRet = mpTv->mFactoryMode.replacePQDb(valueStr.string());
-        r->writeInt32(tmpRet);
-        break;
-    }
     case FACTORY_SET_OUT_DEFAULT: {
         int ret = mpTv->Tv_SSMFacRestoreDefaultSetting();
         r->writeInt32(ret);
         break;
     }
-    case FACTORY_GETGLOBALOGO_RGAIN:
-    case FACTORY_GETGLOBALOGO_GGAIN:
-    case FACTORY_GETGLOBALOGO_BGAIN:
-    case FACTORY_GETGLOBALOGO_ROFFSET:
-    case FACTORY_GETGLOBALOGO_GOFFSET:
-    case FACTORY_GETGLOBALOGO_BOFFSET:
-    case FACTORY_SETGLOBALOGO_RGAIN:
-    case FACTORY_SETGLOBALOGO_GGAIN:
-    case FACTORY_SETGLOBALOGO_BGAIN:
-    case FACTORY_SETGLOBALOGO_ROFFSET:
-    case FACTORY_SETGLOBALOGO_GOFFSET:
-    case FACTORY_SETGLOBALOGO_BOFFSET:
-        r->writeInt32(-1);
-        break;
-
     case FACTORY_CLEAN_ALL_TABLE_FOR_PROGRAM: {
         int ret = mpTv->ClearAnalogFrontEnd();
         mpTv->clearDbAllProgramInfoTable();
         r->writeInt32(ret);
         break;
     }
-    case FACTORY_SETBACKLIGHT_PWM_FREQUENCY:
-    case FACTORY_GETBACKLIGHT_PWM_FREQUENCY:
-    case FACTORY_SETBACKLIGHT_SWITCH_STATUS:
-    case FACTORY_GETBACKLIGHT_SWITCH_STATUS:
-    case FACTORY_SETBACKLIGHT_PWM_DUTY:
-    case FACTORY_GETBACKLIGHT_PWM_DUTY:
-    case FACTORY_SETLVDS_COLOR_DEPTH:
-    case FACTORY_GETLVDS_COLOR_DEPTH:
-    case FACTORY_SETLVDS_DITHER_STATUS:
-    case FACTORY_GETLVDS_DITHER_STATUS:
-    case FACTORY_SETLVDS_MAPPING_STATUS:
-    case FACTORY_GETLVDS_MAPPING_STATUS:
-    case FACTORY_SETLVDS_PORT_SWAP_STATUS:
-    case FACTORY_GETLVDS_PORT_SWAP_STATUS:
-        r->writeInt32(-1);
-        break;
     // FACTORY END
 
     // AUDIO & AUDIO MUTE
@@ -1319,17 +1222,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     case GET_AUDIO_MUTEKEY_STATUS: {
         int ret = mpTv->GetAudioMuteForSystem();
-        r->writeInt32(ret);
-        break;
-    }
-    case SET_AUDIO_FORCE_MUTE_STATUS: {
-        int status = p.readInt32();
-        int ret = 0;//pTv->getTvAudio().AudioSetForceMuteStatus(status);
-        r->writeInt32(ret);
-        break;
-    }
-    case GET_AUDIO_FORCE_MUTE_STATUS: {
-        int ret = 0;//mpTv->AudioGetForceMuteStatus();
         r->writeInt32(ret);
         break;
     }
@@ -1704,11 +1596,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-    case GET_AUDIO_SPDIF_SWITCH: {
-        int ret = 0;//mpTv->GetAudioSPDIFSwitch();
-        r->writeInt32(ret);
-        break;
-    }
     case SAVE_CUR_AUDIO_SPDIF_SWITCH: {
         int tmp_val = p.readInt32();
         int ret = mpTv->SaveCurAudioSPDIFSwitch(tmp_val);
@@ -1730,11 +1617,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-    case GET_AUDIO_SPDIF_MODE: {
-        int ret = 0;//mpTv->GetAudioSPDIFMode();
-        r->writeInt32(ret);
-        break;
-    }
     case SAVE_CUR_AUDIO_SPDIF_MODE: {
         int vol = p.readInt32();
         int ret = mpTv->SaveCurAudioSPDIFMode(vol);
@@ -1743,25 +1625,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     case GET_CUR_AUDIO_SPDIF_MODE: {
         int ret = mpTv->GetCurAudioSPDIFMode();
-        r->writeInt32(ret);
-        break;
-    }
-    case OPEN_AMAUDIO: {
-        int sr = p.readInt32();
-        int output_dev = p.readInt32();
-        int ret = 0;//mpTv->OpenAmAudio(sr, output_dev);
-        r->writeInt32(ret);
-        break;
-    }
-    case CLOSE_AMAUDIO: {
-        int ret = 0;//mpTv->CloseAmAudio();
-        r->writeInt32(ret);
-        break;
-    }
-    case SET_AMAUDIO_INPUT_SR: {
-        int sr = p.readInt32();
-        int output_dev = p.readInt32();
-        int ret = 0;//mpTv->SetAmAudioInputSr(sr, output_dev);
         r->writeInt32(ret);
         break;
     }
@@ -1796,25 +1659,11 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         LOGD("SELECT_LINE_IN_CHANNEL: channel = %d; ret = %d.\n", channel, ret);
         break;
     }
-    case SET_KALAOK_IO_LEVEL: {
-        int level = p.readInt32();
-        int ret = mpTv->SetKalaokIO(level);
-        ret = mpTv->AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_LINEIN);
-        r->writeInt32(ret);
-        LOGD("set line in source CC_AUDIO_IN_SOURCE_LINEIN\n");
-        break;
-    }
-
     case SET_LINE_IN_CAPTURE_VOL: {
         int l_vol = p.readInt32();
         int r_vol = p.readInt32();
         int ret = mpTv->AudioSetLineInCaptureVolume(l_vol, r_vol);
         r->writeInt32(ret);
-        break;
-    }
-    case HANDLE_AUDIO_HEADSET_PLUG_IN:
-    case HANDLE_AUDIO_HEADSET_PULL_OUT: {
-        r->writeInt32(0);
         break;
     }
     case SET_AUDIO_VOL_COMP: {
@@ -1826,56 +1675,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     case GET_AUDIO_VOL_COMP: {
         int ret = mpTv->GetAudioVolumeCompensationVal(-1);
         r->writeInt32(ret);
-        break;
-    }
-    case SAVE_AUDIO_VOL_COMP: {
-        int tmpVal = p.readInt32();
-        int ret = -1;//mpTv->atvSaveAudioVolumeCompensationVal(tmpVal);
-        LOGD("this cmd is empty!!!!!!!!!!!!!!!!!!!");
-        r->writeInt32(ret);
-        break;
-    }
-    case SET_NOISE_GATE_THRESHOLD: {
-        int ret = 0;
-        r->writeInt32(ret);
-        break;
-    }
-    case SET_AUDIO_SOURCE_FOR_KARAOKE: {
-        int sourceinput = p.readInt32();
-        int ret = mpTv->Tv_SetAudioSourceType((tv_source_input_t)sourceinput);
-        r->writeInt32(ret);
-        break;
-    }
-    case SET_DBX_TV_MODE: {
-        int mode = p.readInt32();
-        int son_value = p.readInt32();
-        int vol_value = p.readInt32();
-        int sur_value = p.readInt32();
-        int ret = mpTv->SetDbxTvMode(mode, son_value, vol_value, sur_value);
-        r->writeInt32(ret);
-        break;
-    }
-    case GET_DBX_TV_MODE: {
-        int mode;
-        int son_value;
-        int vol_value;
-        int sur_value;
-        int ret = mpTv->GetDbxTvMode(&mode, &son_value, &vol_value, &sur_value);
-        r->writeInt32(mode);
-        r->writeInt32(son_value);
-        r->writeInt32(vol_value);
-        r->writeInt32(sur_value);
-        r->writeInt32(ret);
-        break;
-    }
-
-    case SET_DRC_ONOFF: {
-        int val = p.readInt32();
-        r->writeInt32(0);
-        break;
-    }
-    case GET_DRC_ONOFF: {
-        r->writeInt32(0);
         break;
     }
     // AUDIO END
@@ -2003,19 +1802,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-    case SSM_SAVE_PROJECT_ID: {
-        int tmpVal = p.readInt32();
-        int tmpRet;
-        tmpRet = KeyData_SaveProjectID(tmpVal);
-        r->writeInt32(tmpRet);
-        break;
-    }
-    case SSM_READ_PROJECT_ID: {
-        int tmpRet = 0;
-        tmpRet = KeyData_ReadProjectID();
-        r->writeInt32(tmpRet);
-        break;
-    }
     case SSM_SAVE_HDCPKEY: {
         int size = p.readInt32();
         for (int i = 0; i < size; i++) {
@@ -2074,11 +1860,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(tmpRet);
         break;
     }
-    case SSM_SET_BUS_STATUS:
-    case SSM_GET_BUS_STATUS: {
-        r->writeInt32(-1);
-        break;
-    }
     case SSM_SAVE_INPUT_SRC_PARENTAL_CTL: {
         int tmpSourceIndex = p.readInt32();
         int tmpCtlFlag = p.readInt32();
@@ -2111,11 +1892,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         String16 pass_wd_str = p.readString16();
         int tmpRet = SSMSaveParentalControlPassWord((unsigned char *)pass_wd_str.string(), pass_wd_str.size() * sizeof(unsigned short));
         r->writeInt32(tmpRet);
-        break;
-    }
-    case SSM_READ_PARENTAL_CTL_PASS_WORD:
-    case SSM_SAVE_USING_DEF_HDCP_KEY_FLAG:
-    case SSM_READ_USING_DEF_HDCP_KEY_FLAG: {
         break;
     }
     case SSM_GET_CUSTOMER_DATA_START: {
@@ -2286,117 +2062,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(tmpRet);
         break;
     }
-    case SSM_EEPROM_SAVE_ONE_BYTE_N310_N311: {
-        int tmpOffset = p.readInt32();
-        int tmpVal = p.readInt32();
-        int tmpRet = SSMSaveEEP_One_N310_N311(tmpOffset, tmpVal);
-        r->writeInt32(tmpRet);
-        break;
-    }
-    case SSM_EEPROM_READ_ONE_BYTE_N310_N311: {
-        int tmpOffset = p.readInt32();
-        int tmpRet = SSMReadEEP_One_N310_N311(tmpOffset);
-        r->writeInt32(tmpRet);
-        break;
-    }
-    case SSM_EEPROM_SAVE_N_BYTES_N310_N311: {
-        int ret = -1;
-        int offset = p.readInt32();
-        int dataLen = p.readInt32();
-        if (dataLen > 0) {
-            ptrData = new int[dataLen];
-            if (ptrData != NULL) {
-                for (int i = 0; i < dataLen; i++) {
-                    ptrData[i] = p.readInt32();
-                }
-                ret = SSMSaveEEP_N_N310_N311(offset, dataLen, ptrData);
-                delete ptrData;
-                ptrData = NULL;
-            }
-        }
 
-        r->writeInt32(ret);
-        break;
-    }
-    case SSM_EEPROM_READ_N_BYTES_N310_N311: {
-        int ret = -1;
-        int offset = p.readInt32();
-        int dataLen = p.readInt32();
-
-        if (dataLen > 0) {
-            ptrData = new int[dataLen];
-            if (ptrData != NULL) {
-                ret = SSMReadEEP_N_N310_N311(offset, dataLen, ptrData);
-                if (ret < 0) {
-                    dataLen = 0;
-                }
-                r->writeInt32(dataLen);
-                for (int i = 0; i < dataLen; i++) {
-                    r->writeInt32(ptrData[i]);
-                }
-                delete ptrData;
-                ptrData = NULL;
-            }
-        }
-        r->writeInt32(ret);
-        break;
-    }
-    case SSM_FLASH_SAVE_ONE_BYTE_N310_N311: {
-        int tmpOffset = p.readInt32();
-        int tmpVal = p.readInt32();
-        int tmpRet = SSMSaveFlash_One_N310_N311(tmpOffset, tmpVal);
-        r->writeInt32(tmpRet);
-        break;
-    }
-    case SSM_FLASH_READ_ONE_BYTE_N310_N311: {
-        int tmpOffset = p.readInt32();
-        int tmpRet = SSMReadFlash_One_N310_N311(tmpOffset);
-        r->writeInt32(tmpRet);
-        break;
-    }
-    case SSM_FLASH_SAVE_N_BYTES_N310_N311: {
-        int ret = -1;
-
-        int offset = p.readInt32();
-        int len = p.readInt32();
-        if (len > 0) {
-            ptrData = new int[len];
-            if (ptrData != NULL) {
-                for (int i = 0; i < len; i++) {
-                    ptrData[i] = p.readInt32();
-                }
-                ret = SSMSaveFlash_N_N310_N311(offset, len, ptrData);
-                delete ptrData;
-                ptrData = NULL;
-            }
-        }
-
-        r->writeInt32(ret);
-        break;
-    }
-    case SSM_FLASH_READ_N_BYTES_N310_N311: {
-        int ret = -1;
-        int offset = p.readInt32();
-        int len = p.readInt32();
-
-        if (len > 0) {
-            ptrData = new int[len];
-            if (ptrData != NULL) {
-                ret = SSMReadFlash_N_N310_N311(offset, len, ptrData);
-                if (ret < 0) {
-                    len = 0;
-                }
-                r->writeInt32(len);
-                for (int i = 0; i < len; i++) {
-                    r->writeInt32(ptrData[i]);
-                }
-                delete ptrData;
-                ptrData = NULL;
-            }
-        }
-        r->writeInt32(ret);
-        break;
-    }
     case SSM_SAVE_HDMI_EDID_VER: {
         int ret = -1;
         int port_id = p.readInt32();
@@ -2428,22 +2094,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     // SSM END
 
     //MISC
-    case MISC_PROP_SET: {
-        String8 key(p.readString16());
-        String8 value(p.readString16());
-        int tmpRet = property_set(key.string(), value.string());
-        r->writeInt32(tmpRet);
-        break;
-    }
-    case MISC_PROP_GET: {
-        char value[PROPERTY_VALUE_MAX] = {0};
-        String8 key(p.readString16());
-        String8 def(p.readString16());
-
-        property_get(key.string(), value, def.string());
-        r->writeString16(String16(value));
-        break;
-    }
     case MISC_CFG_SET: {
         String8 key(p.readString16());
         String8 value(p.readString16());
@@ -2542,68 +2192,9 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-    case MISC_CHANNEL_EXPORT: {
-        int ret = mpTv->ChannelExport(String8(p.readString16()).string());
-        r->writeInt32(ret);
-        break;
-    }
-    case MISC_CHANNEL_IMPORT: {
-        int ret = mpTv->ChannelImport(String8(p.readString16()).string());
-        r->writeInt32(ret);
-        break;
-    }
-    case MISC_GET_PROJECT_INFO: {
-        project_info_t tmpInfo;
-
-        if (mpTv->Tv_GetProjectInfo(&tmpInfo) < 0) {
-            strcpy(tmpInfo.version, "UNKOWN");
-            strcpy(tmpInfo.panel_type, "UNKOWN");
-            strcpy(tmpInfo.panel_outputmode, "UNKOWN");
-            strcpy(tmpInfo.panel_rev, "UNKOWN");
-            strcpy(tmpInfo.panel_name, "UNKOWN");
-            strcpy(tmpInfo.amp_curve_name, "UNKOWN");
-        }
-
-        r->writeString16(String16(tmpInfo.version));
-        r->writeString16(String16(tmpInfo.panel_type));
-        r->writeString16(String16(tmpInfo.panel_outputmode));
-        r->writeString16(String16(tmpInfo.panel_rev));
-        r->writeString16(String16(tmpInfo.panel_name));
-        r->writeString16(String16(tmpInfo.amp_curve_name));
-        break;
-    }
-    case MISC_GET_PLATFORM_TYPE: {
-        int ret = mpTv->Tv_GetPlatformType();
-        r->writeInt32(ret);
-        break;
-    }
     //MISC  END
 
     // EXTAR
-    case SET_DEBUG_SERIAL_PORT_ONOFF: {
-        int on_off = p.readInt32();
-        int ret = mpTv->SetDebugSerialOnOff(on_off);
-        r->writeInt32(ret);
-        break;
-    }
-
-    case GET_DEBUG_SERIAL_PORT_ONOFF: {
-        int ret = mpTv->GetDebugSerialOnOff();
-        r->writeInt32(ret);
-        break;
-    }
-    case DELETE_DIR_FILES: {
-        String16 strPath = p.readString16();
-        if (strPath.size() <= 0) {
-            r->writeInt32(-1);
-            break;
-        }
-        String8 strP8 = String8(strPath);
-        int tmp_flag = p.readInt32();
-        int ret = TvMisc_DeleteDirFiles(strP8.string(), tmp_flag);
-        r->writeInt32(ret);
-        break;
-    }
     case DTV_SUBTITLE_INIT: {
         int bitmapWidth = p.readInt32();
         int bitmapHeight = p.readInt32();
@@ -2761,19 +2352,9 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(tmpRet);
         break;
     }
-    case TV_SUBTITLE_DRAW_END: {
-        int tmpRet = 0;
-        //if(pSub)pSub->lock.unlock();
-        r->writeInt32(tmpRet);
-        break;
-    }
     case STOP_PROGRAM_PLAY: {
         int tmpRet = mpTv->stopPlayingLock();
         r->writeInt32(tmpRet);
-        break;
-    }
-    case DTV_TEST_1:
-    case DTV_TEST_2: {
         break;
     }
     case ATV_DTV_SCAN_PAUSE: {
@@ -2796,29 +2377,12 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         break;
     }
 
-    case GET_DISPLAY_RESOLUTION_CONFIG: {
-        int tmpRet = mpTv->GetDisplayResolutionConfig();
-        r->writeInt32(tmpRet);
-        break;
-    }
-
-    case GET_DISPLAY_RESOLUTION_INFO: {
-        int tmpRet = mpTv->GetDisplayResolutionInfo();
-        r->writeInt32(tmpRet);
-        break;
-    }
-
     case HDMIRX_GET_KSV_INFO: {
         int data[2] = {0, 0};
         int tmpRet = mpTv->GetHdmiHdcpKeyKsvInfo(data);
         r->writeInt32(tmpRet);
         r->writeInt32(data[0]);
         r->writeInt32(data[1]);
-        break;
-    }
-
-    case HDMI_OUT_TOWHAT: {
-        r->writeInt32(mpTv->hdmiOutWithFbc() ? 1 : 0);
         break;
     }
     case FACTORY_FBC_UPGRADE: {
@@ -2894,67 +2458,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-    case FACTROY_FBC_SET_LIGHT_SENSOR_STATUS_N310: {
-        int value = p.readInt32();
-        int ret = mpTv->mFactoryMode.fbcLightSensorStatusN310Set(value);
-        r->writeInt32(ret);
-        break;
-    }
-
-    case FACTROY_FBC_GET_LIGHT_SENSOR_STATUS_N310: {
-        int ret = mpTv->mFactoryMode.fbcLightSensorStatusN310Get();
-        r->writeInt32(ret);
-        break;
-    }
-    case FACTROY_FBC_SET_DREAM_PANEL_STATUS_N310: {
-        int value = p.readInt32();
-        int ret = mpTv->mFactoryMode.fbcDreamPanelStatusN310Set(value);
-        r->writeInt32(ret);
-        break;
-    }
-
-    case FACTROY_FBC_GET_DREAM_PANEL_STATUS_N310: {
-        int ret = mpTv->mFactoryMode.fbcDreamPanelStatusN310Get();
-        r->writeInt32(ret);
-        break;
-    }
-    case FACTROY_FBC_SET_MULT_PQ_STATUS_N310: {
-        int value = p.readInt32();
-        int ret = mpTv->mFactoryMode.fbcMultPQStatusN310Set(value);
-        r->writeInt32(ret);
-        break;
-    }
-
-    case FACTROY_FBC_GET_MULT_PQ_STATUS_N310: {
-        int ret = mpTv->mFactoryMode.fbcMultPQStatusN310Get();
-        r->writeInt32(ret);
-        break;
-    }
-    case FACTROY_FBC_SET_MEMC_STATUS_N310: {
-        int value = p.readInt32();
-        int ret = mpTv->mFactoryMode.fbcMemcStatusN310Set(value);
-        r->writeInt32(ret);
-        break;
-    }
-
-    case FACTROY_FBC_GET_MEMC_STATUS_N310: {
-        int ret = mpTv->mFactoryMode.fbcMemcStatusN310Get();
-        r->writeInt32(ret);
-        break;
-    }
-
-    case MISC_SET_2K_TO_4K_SCALE_UP_MODE : {
-        int value = p.readInt32();
-        int ret = mpTv->Tv_Set2k4k_ScalerUp_Mode(value);
-        r->writeInt32(ret);
-        break;
-    }
-
-    case MISC_GET_2K_TO_4K_SCALE_UP_MODE: {
-        int ret = mpTv->Tv_Get2k4k_ScalerUp_Mode();
-        r->writeInt32(ret);
-        break;
-    }
     case FACTORY_FBC_SET_BACKLIGHT_EN : {
         int value = p.readInt32();
         int ret = mpTv->mFactoryMode.fbcBacklightOnOffSet(value);
@@ -2964,12 +2467,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
 
     case FACTORY_FBC_GET_BACKLIGHT_EN: {
         int ret = mpTv->mFactoryMode.fbcBacklightOnOffGet();
-        r->writeInt32(ret);
-        break;
-    }
-    case FACTORY_FBC_TEST_PATTERN: {
-        int value = p.readInt32();
-        int ret = mpTv->mFactoryMode.fbcSelectTestPattern(value);
         r->writeInt32(ret);
         break;
     }
@@ -2989,19 +2486,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
 
     case FACTORY_FBC_GET_ELEC_MODE: {
         int ret = mpTv->mFactoryMode.fbcGetElecMode();
-        r->writeInt32(ret);
-        break;
-    }
-
-    case FACTORY_FBC_SET_BACKLIGHT_N360: {
-        int value = p.readInt32();
-        int ret = mpTv->mFactoryMode.fbcSetBacklightN360(value);
-        r->writeInt32(ret);
-        break;
-    }
-
-    case FACTORY_FBC_GET_BACKLIGHT_N360: {
-        int ret = mpTv->mFactoryMode.fbcGetBacklightN360();
         r->writeInt32(ret);
         break;
     }
@@ -3123,19 +2607,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         break;
     }
 
-    case FACTORY_FBC_SET_COLORTEMP_MODE_N360: {
-        int value = p.readInt32();
-        int ret = mpTv->mFactoryMode.fbcColorTempModeN360Set(value);
-        r->writeInt32(ret);
-        break;
-    }
-
-    case FACTORY_FBC_GET_COLORTEMP_MODE_N360: {
-        int ret = mpTv->mFactoryMode.fbcColorTempModeN360Get();
-        r->writeInt32(ret);
-        break;
-    }
-
     case FACTORY_FBC_SET_WB_INIT: {
         int value = p.readInt32();
         int ret = mpTv->mFactoryMode.fbcWBInitialSet(value);
@@ -3236,39 +2707,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         CFbcCommunication *fbcIns = GetSingletonFBC();
         if (fbcIns != NULL) {
             int ret = fbcIns->cfbc_Set_FBC_User_Setting_Default(COMM_DEV_SERIAL, value);
-            r->writeInt32(ret);
-        } else {
-            r->writeInt32(-1);
-        }
-        break;
-    }
-    case FACTORY_FBC_VIDEO_MUTE: {
-        CFbcCommunication *fbcIns = GetSingletonFBC();
-        if (fbcIns != NULL) {
-            int ret = fbcIns->cfbc_Set_VMute(COMM_DEV_SERIAL, 1);
-            r->writeInt32(ret);
-        } else {
-            r->writeInt32(-1);
-        }
-        break;
-    }
-    case FACTORY_FBC_POWER_REBOOT: {
-        int value = p.readInt32();
-        CFbcCommunication *fbcIns = GetSingletonFBC();
-        if (fbcIns != NULL) {
-            int ret = fbcIns->cfbc_SendRebootToUpgradeCmd(COMM_DEV_SERIAL, value);
-            r->writeInt32(ret);
-        } else {
-            r->writeInt32(-1);
-        }
-        break;
-    }
-    case FACTORY_FBC_SEND_KEY_TO_FBC: {
-        int keyCode = p.readInt32();
-        int param = p.readInt32();
-        CFbcCommunication *fbcIns = GetSingletonFBC();
-        if (fbcIns != NULL) {
-            int ret = fbcIns->cfbc_FBC_Send_Key_To_Fbc(COMM_DEV_SERIAL, keyCode, param);
             r->writeInt32(ret);
         } else {
             r->writeInt32(-1);
@@ -3424,6 +2862,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(params.r_post_offset);
         r->writeInt32(params.g_post_offset);
         r->writeInt32(params.b_post_offset);
+        break;
     }
     case STOP_SCAN: {
         mpTv->stopScanLock();
@@ -3641,13 +3080,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         prog.setLockFlag(progid, bLocked);
         break;
     }
-    case DTV_SET_BOOKING_FLAG: {
-        CTvEvent ev;
-        int iEvtId = p.readInt32();
-        bool iBookFlag = (bool)p.readInt32();
-        ev.bookEvent(iEvtId, iBookFlag);
-        break;
-    }
     case DTV_GET_FREQ_BY_PROG_ID: {
         int freq = 0;
         int progid = p.readInt32();
@@ -3784,27 +3216,11 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     case DTV_STOP_RECORD:
         mpTv->StopRecording();
         break;
-    case DTV_SET_RECORD_ALL_TS: {
-        int sel = p.readInt32();
-        mpTv->SetRecCurTsOrCurProgram(sel);
-    }
-    break;
-    case TV_PRINT_DEBUG_INFO:
-        mpTv->printDebugInfo();
-        break;
     case HDMIAV_HOTPLUGDETECT_ONOFF: {
         int flag = mpTv->GetHdmiAvHotplugDetectOnoff();
         r->writeInt32(flag);
+        break;
     }
-    break;
-
-    // 2.4G headset
-    case START_OPEN_HEADSET_DETECT: {
-        int flag = mpTv->StartHeadSetDetect();
-        r->writeInt32(flag);
-    }
-    break;
-
     // EXTAR END
     default:
         LOGD("default");
@@ -3834,30 +3250,38 @@ status_t TvService::dump(int fd, const Vector<String16>& args)
     } else {
         Mutex::Autolock lock(mLock);
 
-        result.appendFormat("client num = %d\n", mUsers);
-        for (int i = 0; i < (int)mClients.size(); i++) {
-            wp<Client> client = mClients[i];
-            if (client != 0) {
-                sp<Client> c = client.promote();
-                if (c != 0) {
-                    result.appendFormat("client[%d] pid = %d\n", i, c->getPid());
-                }
-            }
-        }
-
         if (args.size() > 0) {
             for (int i = 0; i < (int)args.size(); i ++) {
-                if (args[i] == String16("-h")) {
+                if (args[i] == String16("-s")) {
+                    String8 section(args[i+1]);
+                    String8 key(args[i+2]);
+                    const char *value = config_get_str(section, key, "");
+                    result.appendFormat("section:[%s] key:[%s] value:[%s]\n", section.string(), key.string(), value);
+                }
+                else if (args[i] == String16("-h")) {
                     result.append(
-                        "tv service use to control the tv logical \n"
-                        "usage: \n"
-                        "dumpsys tvservice \n"
-                        "-h: help \n");
+                        "\ntv service use to control the tv logical \n\n"
+                        "usage: dumpsys tvservice [-s <SECTION> <KEY>][-h] \n"
+                        "-s: get config string \n"
+                        "   SECTION:[TV|ATV|SourceInputMap|SETTING|FBCUART]\n"
+                        "-h: help \n\n");
                 }
             }
         }
+        else {
+            result.appendFormat("client num = %d\n", mUsers);
+            for (int i = 0; i < (int)mClients.size(); i++) {
+                wp<Client> client = mClients[i];
+                if (client != 0) {
+                    sp<Client> c = client.promote();
+                    if (c != 0) {
+                        result.appendFormat("client[%d] pid = %d\n", i, c->getPid());
+                    }
+                }
+            }
 
-        mpTv->dump(result);
+            mpTv->dump(result);
+        }
     }
     write(fd, result.string(), result.size());
     return NO_ERROR;

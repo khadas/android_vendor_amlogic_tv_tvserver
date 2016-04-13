@@ -1321,8 +1321,7 @@ int CTvin::AFE_VGAAutoAdjust ( struct tvafe_vga_parm_s *timingadj )
             if ( CMDStatus == TVAFE_CMD_STATUS_SUCCESSFUL ) {
                 usleep ( 100 * 1000 );
                 AFE_GetADCCurrentTimingAdjust ( timingadj );
-                LOGD ( "===================================================\n" );
-                LOGW ( "AFE_VGAAutoAdjust, successfull!\n" );
+                LOGD ( "AFE_VGAAutoAdjust, successfull!\n" );
                 return 0;
             }
         }
@@ -3014,4 +3013,4 @@ int CTvin::GetITContent()
     fp = NULL;
     return value;
 }
-//**************************************************************************
+

@@ -239,8 +239,6 @@ public:
     int SendSerialData(int dev_id, int data_len, unsigned char data_buf[]);
     int SetDebugSerialOnOff(int on_off);
     int GetDebugSerialOnOff();
-    int ChannelExport(const char *destPath);
-    int ChannelImport(const char *srcPath);
     int Tv_GetProjectInfo(project_info_t *ptrInfo);
     int Tv_GetPlatformType();
     int Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);

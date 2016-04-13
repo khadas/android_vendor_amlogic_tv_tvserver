@@ -3113,72 +3113,6 @@ int CTv::SendSerialData(int dev_id, int data_len, unsigned char data_buf[])
     return tmp_ret;
 }
 
-int CTv::ChannelExport(const char *destPath)
-{
-    char tmp[256];
-    if (destPath == NULL) {
-        destPath = "/storage/external_storage/sda1/";
-    }
-
-    sprintf(tmp, "cp %s %s", DEF_VALUE_CAHNNEL_DB, destPath);
-    if (system(tmp) >= 0) {
-        LOGD("%s, copy dtv.db from /param to udisk success !", __FUNCTION__);
-        system("sync");
-        FILE *fp = fopen(destPath, "r");
-        if (fp != NULL) {
-            fclose(fp);
-            fp = NULL;
-            return 0;
-        }
-    }
-
-    return -1;
-}
-
-int CTv::ChannelImport(const char *srcPath)
-{
-    if (srcPath == NULL) {
-        srcPath = "/storage/external_storage/sda1/dvb.db";
-    }
-
-    if (Tv_Utils_IsFileExist(srcPath)) {
-        char tmp[256];
-        const char *destPath = config_get_str(CFG_SECTION_TV, CFG_CAHNNEL_DB, (char *) DEF_VALUE_CAHNNEL_DB);
-
-        LOGD("%s, file exist !" , srcPath);
-        CTvDatabase::GetTvDb()->UnInitTvDb();
-        sprintf(tmp, "rm %s", destPath);
-        if (system(tmp) >= 0) {
-            LOGD("%s, rm %s success !", __FUNCTION__, destPath);
-            memset(tmp, 0, sizeof(tmp));
-            sprintf(tmp, "cp %s %s", srcPath, destPath);
-            if (system(tmp) >= 0) {
-                LOGD("%s,  copy  to %s success !", srcPath, destPath);
-                memset(tmp, 0, sizeof(tmp));
-                sprintf(tmp, "chmod 777 %s", destPath);
-                if (system(tmp) >= 0) {
-                    LOGD("chmod 777 %s success !", destPath);
-                    system("sync");
-                    CTvDatabase::GetTvDb()->InitTvDb(TV_DB_PATH);
-                    return 0;
-                } else {
-                    LOGD("%s, %s chmod failed !", __FUNCTION__, destPath);
-                    return -1;
-                }
-            } else {
-                LOGD("%s, copy dtv.db from udisk to %s failed !", __FUNCTION__, destPath);
-                return -1;
-            }
-        } else {
-            LOGD("%s, rm %s failed !", __FUNCTION__, destPath);
-            return -2;
-        }
-    } else {
-        LOGD("%s, dtv.db file does not exist in the udisk!" , srcPath);
-        return -2;
-    }
-}
-
 int CTv::Tv_GetProjectInfo(project_info_t *ptrInfo)
 {
     return GetProjectInfo(ptrInfo, fbcIns);
@@ -5515,7 +5449,6 @@ int CTv::SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable)
     mHDMIRxManager.HdmiRxHdcpOnOff(enable);
     return 0;
 }
-
 
 void CTv::dump(String8 &result)
 {

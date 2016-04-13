@@ -32,7 +32,7 @@ int CFile::openFile(const char *path)
             strcpy(mPath, path);
 
         if (strlen(openPath) <= 0) {
-            LOGW("openFile openPath is NULL, path:%d", path);
+            LOGW("openFile openPath is NULL, path:%s", path);
             return -1;
         }
         mFd = open(openPath, O_RDWR);

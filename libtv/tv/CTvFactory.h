@@ -64,6 +64,7 @@ public:
     int setOverscan ( int sourceType, int fmt, int transFmt, tvin_cutwin_t cutwin );
     tvin_cutwin_t getOverscan ( int sourceType, int fmt, int transFmt );
     int replacePQDb(const char *newFilePath = NULL);
+    int setGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b);
     //end PQ
 
     //TV TO FBC

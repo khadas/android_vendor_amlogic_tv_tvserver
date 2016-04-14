@@ -1193,6 +1193,15 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case FACTORY_SET_GAMMA_PATTERN: {
+        tcon_gamma_table_t gamma_r, gamma_g, gamma_b;
+        memset(gamma_r.data, (unsigned short)p.readInt32(), 256);
+        memset(gamma_g.data, (unsigned short)p.readInt32(), 256);
+        memset(gamma_b.data, (unsigned short)p.readInt32(), 256);
+        int ret = mpTv->mFactoryMode.setGamma(gamma_r, gamma_g, gamma_b);
+        r->writeInt32(ret);
+        break;
+    }
     // FACTORY END
 
     // AUDIO & AUDIO MUTE

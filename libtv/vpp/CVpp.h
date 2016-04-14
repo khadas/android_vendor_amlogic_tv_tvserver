@@ -342,6 +342,7 @@ public:
     int FactoryGetLVDS_Mapping_status ( void );
     int FactorySetLVDS_PortSwap_status ( int status );
     int FactoryGetLVDS_PortSwap_status ( void );
+    int FactorySetGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b);
 
     int VPPSSMRestoreDefault();
     int VPPSSMFacRestoreDefault();

@@ -99,6 +99,11 @@ int CTvFactory::replacePQDb(const char *newFilePath)
     return CVpp::getInstance()->getPqData()->replacePQDb(newFilePath);
 }
 
+int CTvFactory::setGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b)
+{
+    return CVpp::getInstance()->FactorySetGamma(gamma_r, gamma_g, gamma_b);
+}
+
 int CTvFactory::getColorTemperatureParams ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params )
 {
     if (mHdmiOutFbc) {

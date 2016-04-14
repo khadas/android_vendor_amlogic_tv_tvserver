@@ -2968,6 +2968,16 @@ int CVpp::FactoryGetLVDS_PortSwap_status(void)
     return status;
 }
 
+int CVpp::FactorySetGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b)
+{
+    int ret = 0;
+    LOGD("%s", __FUNCTION__);
+    ret |= VPP_SetGammaTbl_R((unsigned short *) gamma_r.data);
+    ret |= VPP_SetGammaTbl_G((unsigned short *) gamma_g.data);
+    ret |= VPP_SetGammaTbl_B((unsigned short *) gamma_b.data);
+    return ret;
+}
+
 int CVpp::VPPSSMRestoreDefault()
 {
     int i = 0, tmp_val = 0;

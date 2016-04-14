@@ -922,6 +922,11 @@ typedef enum tv_hdmi_hdcpkey_enable_e {
     hdcpkey_disable ,
 } tv_hdmi_hdcpkey_enable_t;
 
+typedef enum tv_hdmi_color_range_e {
+    AUTO_RANGE = 0,
+    FULL_RANGE,
+    LIMIT_RANGE,
+} tv_hdmi_color_range_t;
 
 
 

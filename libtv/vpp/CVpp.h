@@ -6,9 +6,6 @@
 #include "pqdata.h"
 #include "../tvin/CTvin.h"
 #define GLOBAL_OGO_FORMAT_FLAG  0x6688
-#define DEFAULT_RANGE   0
-#define LIMIT_RANGE     1
-#define FULL_RANGE      2
 #define RGB_FORMAT          0
 #define YCbCr_422_FORMAT    1
 #define YCbCr_444_FORMAT    2

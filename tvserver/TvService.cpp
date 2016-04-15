@@ -970,6 +970,13 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case SET_GAMMA: {
+        int gamma_curve = p.readInt32();
+        int is_save = p.readInt32();
+        int ret = mpTv->setGamma((vpp_gamma_curve_t)gamma_curve, is_save);
+        r->writeInt32(ret);
+        break;
+    }
     case SET_NOISE_REDUCTION_MODE: {
         int mode = p.readInt32();
         int source_type = p.readInt32();

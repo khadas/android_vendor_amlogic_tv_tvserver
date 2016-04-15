@@ -275,6 +275,7 @@ public:
     int getEyeProtectionMode();
     int SetHdmiColorRangeMode(tv_hdmi_color_range_t range_mode);
     tv_hdmi_color_range_t GetHdmiColorRangeMode();
+    int setGamma(vpp_gamma_curve_t gamma_curve, int is_save);
 
     //audio
     virtual void updateSubtitle(int, int);

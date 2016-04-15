@@ -142,7 +142,7 @@ public:
     int PQ_GetGammaTableR(int panel_id, tvin_port_t source_port, tvin_sig_fmt_t fmt, tcon_gamma_table_t *gamma_r);
     int PQ_GetGammaTableG(int panel_id, tvin_port_t source_port, tvin_sig_fmt_t fmt, tcon_gamma_table_t *gamma_g);
     int PQ_GetGammaTableB(int panel_id, tvin_port_t source_port, tvin_sig_fmt_t fmt, tcon_gamma_table_t *gamma_b);
-    int PQ_GetGammaSpecialTable(int gammaValue, const char *f_name, tcon_gamma_table_t *gamma_r);
+    int PQ_GetGammaSpecialTable(vpp_gamma_curve_t gamma_curve, const char *f_name, tcon_gamma_table_t *gamma_r);
     int PQ_GetVGAAjustPara(tvin_sig_fmt_t vga_fmt, tvafe_vga_parm_t *adjparam);
     int PQ_SetVGAAjustPara(tvin_sig_fmt_t vga_fmt, tvafe_vga_parm_t adjparam);
     int PQ_GetPhaseArray(am_phase_t *am_phase);

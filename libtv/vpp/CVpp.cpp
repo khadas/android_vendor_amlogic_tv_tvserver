@@ -212,7 +212,7 @@ int CVpp::LoadVppSettings(tv_source_input_type_t source_type, tvin_sig_fmt_t sig
 
     Vpp_LoadDI(source_type, sig_fmt, is3d, trans_fmt);
     Vpp_LoadBasicRegs(source_type, sig_fmt, is3d, trans_fmt);
-    Vpp_LoadGamma(source_type, sig_fmt);
+    SetGammaValue(VPP_GAMMA_CURVE_AUTO, 1);
 
     ret |= Vpp_SetBaseColorMode(GetBaseColorMode(), source_port, sig_fmt, is3d, trans_fmt);
 
@@ -1202,41 +1202,16 @@ int CVpp::Vpp_SetDeblockMode(vpp_deblock_mode_t mode, tvin_port_t source_port,
     return ret;
 }
 
-int CVpp::Vpp_LoadGammaDefault(tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt)
-{
-    int ret = -1;
-    int panel_id = 0;
-    tcon_gamma_table_t gamma_r, gamma_g, gamma_b;
-
-    tvin_port_t source_port = CTvin::Tvin_GetSourcePortBySourceType(source_type);
-
-    LOGV("Enter %s.\n", __FUNCTION__);
-    ret = mpPqData->PQ_GetGammaTableR(panel_id, source_port, sig_fmt, &gamma_r);
-    ret |= mpPqData->PQ_GetGammaTableG(panel_id, source_port, sig_fmt, &gamma_g);
-    ret |= mpPqData->PQ_GetGammaTableB(panel_id, source_port, sig_fmt, &gamma_b);
-
-    if (ret == 0) {
-        VPP_SetGammaTbl_R((unsigned short *) gamma_r.data);
-        VPP_SetGammaTbl_G((unsigned short *) gamma_g.data);
-        VPP_SetGammaTbl_B((unsigned short *) gamma_b.data);
-    } else {
-        LOGE("%s, PQ_GetGammaTable failed!", __FUNCTION__);
-    }
-
-    return ret;
-
-}
-
-int CVpp::Vpp_LoadGammaSpecial(int gammaValue)
+int CVpp::Vpp_LoadGamma(vpp_gamma_curve_t gamma_curve)
 {
     int ret = -1;
     int panel_id = 0;
     tcon_gamma_table_t gamma_r, gamma_g, gamma_b;
 
     LOGV("Enter %s.\n", __FUNCTION__);
-    ret = mpPqData->PQ_GetGammaSpecialTable(gammaValue, "Red", &gamma_r);
-    ret |= mpPqData->PQ_GetGammaSpecialTable(gammaValue, "Green", &gamma_g);
-    ret |= mpPqData->PQ_GetGammaSpecialTable(gammaValue, "Blue", &gamma_b);
+    ret = mpPqData->PQ_GetGammaSpecialTable(gamma_curve, "Red", &gamma_r);
+    ret |= mpPqData->PQ_GetGammaSpecialTable(gamma_curve, "Green", &gamma_g);
+    ret |= mpPqData->PQ_GetGammaSpecialTable(gamma_curve, "Blue", &gamma_b);
 
     if (ret == 0) {
         VPP_SetGammaTbl_R((unsigned short *) gamma_r.data);
@@ -1247,61 +1222,28 @@ int CVpp::Vpp_LoadGammaSpecial(int gammaValue)
     }
 
     return ret;
-
 }
 
-int CVpp::Vpp_LoadGamma(tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt)
+int CVpp::SetGammaValue(vpp_gamma_curve_t gamma_curve, int is_save)
 {
-    int gammaValue = 0, ret = -1;
-
-    if (SSMReadGammaValue(&gammaValue) < 0) {
-        LOGE("%s, SSMReadGammaValue ERROR, So Load Default GAMMA!\n", __FUNCTION__);
-        ret = Vpp_LoadGammaDefault(source_type, sig_fmt);
+    int rw_val = 0;
+    if (gamma_curve < VPP_GAMMA_CURVE_AUTO || gamma_curve > VPP_GAMMA_CURVE_MAX)
         return -1;
-    }
 
-    if (gammaValue < -4 || gammaValue > 4) {
-        LOGE("%s, Gamma Value beyond the UI's range of -4 to 4 .\n", __FUNCTION__);
-        gammaValue = 0;
-        SSMSaveGammaValue(gammaValue);
-    }
-
-    switch (gammaValue) {
-    case 0:
-        ret = Vpp_LoadGammaDefault(source_type, sig_fmt);
-        break;
-
-    default:
-        ret = Vpp_LoadGammaSpecial(gammaValue);
-        break;
-    }
-
-    return ret;
-}
-
-/*int CVpp::SetGammaValue(int gammaValue)
- {
-     int ret = -1;
-     tvin_sig_fmt_t sig_fmt = TVIN_SIG_FMT_NULL;
-     tv_source_input_type_t source_type = SOURCE_TYPE_TV;
-     sig_fmt = Tvin_GetSigFormat();
-     source_type = Tvin_GetSrcInputType();
-     LOGD("%s, source_type = %d, sig_fmt = %d, gammaValue = %d\n", __FUNCTION__, (int)source_type,
-            (int)sig_fmt, gammaValue);
-     if (gammaValue >= -4 || gammaValue <= 4) {
-         switch (gammaValue) {
-         case 0:
-             ret = Vpp_LoadGammaDefault(source_type, sig_fmt);
-             break;
-         default:
-             ret = Vpp_LoadGammaSpecial(gammaValue);
-             break;
+    if (gamma_curve == VPP_GAMMA_CURVE_AUTO) {
+        if (SSMReadGammaValue(&rw_val) < 0) {
+            gamma_curve = VPP_GAMMA_CURVE_DEFAULT;
+        } else {
+            gamma_curve = (vpp_gamma_curve_t)rw_val;
         }
-        if (0 == ret)
-            ret = SSMSaveGammaValue(gammaValue);
-     }
-     return ret;
- }*/
+    }
+    LOGE("%s, gamma curve is %d.", __FUNCTION__, gamma_curve);
+
+    if (is_save) {
+        SSMSaveGammaValue(gamma_curve);
+    }
+    return Vpp_LoadGamma(gamma_curve);
+}
 
 int CVpp::GetGammaValue()
 {

@@ -3428,6 +3428,11 @@ int CTv::getEyeProtectionMode()
     return CVpp::getInstance()->GetEyeProtectionMode();
 }
 
+int CTv::setGamma(vpp_gamma_curve_t gamma_curve, int is_save)
+{
+    return CVpp::getInstance()->SetGammaValue(gamma_curve, is_save);
+}
+
 int CTv::Tv_SetNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_type_t source_type, int is_save )
 {
     return CVpp::getInstance()->SetNoiseReductionMode((vpp_noise_reduction_mode_t)mode,

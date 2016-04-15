@@ -212,6 +212,16 @@ typedef enum vpp_dream_panel_e {
     VPP_DREAM_PANEL_MAX,
 } vpp_dream_panel_t;
 
+typedef enum vpp_gamma_curve_e {
+    VPP_GAMMA_CURVE_AUTO = -1,//choose gamma table by value has been saved.
+    VPP_GAMMA_CURVE_DEFAULT,
+    VPP_GAMMA_CURVE_2_1,
+    VPP_GAMMA_CURVE_2_2,
+    VPP_GAMMA_CURVE_2_3,
+    VPP_GAMMA_CURVE_2_4,
+    VPP_GAMMA_CURVE_MAX,
+} vpp_gamma_curve_t;
+
 class CPqData;
 
 class CVpp {
@@ -247,7 +257,7 @@ public:
     int SetRGBValue ( vpp_color_temperature_mode_t temp_mode,  unsigned char data_buf[] );
     int GetRGBValue ( vpp_color_temperature_mode_t temp_mode,  tcon_rgb_ogo_t *p_rgbogo );
     int SetColorSpaceMode ( vpp_color_space_type_t colorSpace );
-    //int Tv_SetGammaValue(int gammaValue);
+    int SetGammaValue(vpp_gamma_curve_t gamma_curve, int is_save);
     int GetGammaValue();
     //int Tv_SetColorDemoMode ( vpp_color_demomode_t demomode );
     vpp_color_demomode_t GetColorDemoMode ( void );
@@ -370,9 +380,6 @@ public:
     int Vpp_GetPQModeValue ( tv_source_input_type_t, vpp_picture_mode_t, vpp_pq_para_t * );
     int Vpp_SetPQParams ( tv_source_input_type_t source_type, vpp_picture_mode_t pq_mode, vpp_pq_para_t pq_para , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
 
-    int Vpp_LoadGammaDefault ( tv_source_input_type_t, tvin_sig_fmt_t );
-    int Vpp_LoadGammaSpecial ( int );
-    int Vpp_LoadGamma ( tv_source_input_type_t, tvin_sig_fmt_t );
     int FactoryResetNonlinear();
     tvin_cutwin_t GetOverscan ( tv_source_input_type_t source_type, tvin_sig_fmt_t fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     static is_3d_type_t Check2Dor3D ( is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
@@ -390,6 +397,7 @@ public:
     static CVpp *getInstance();
 private:
     //
+    int Vpp_LoadGamma(vpp_gamma_curve_t gamma_curve);
     int VPP_OpenModule ( void );
     int VPP_CloseModule ( void );
     int VPP_SetVideoBrightness ( int value );

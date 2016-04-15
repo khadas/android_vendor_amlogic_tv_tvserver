@@ -1361,14 +1361,18 @@ int CPqData::PQ_ResetAllPQModeParams(void)
     return rval;
 }
 
-int CPqData::PQ_GetGammaSpecialTable(int gammaValue, const char *f_name,
+int CPqData::PQ_GetGammaSpecialTable(vpp_gamma_curve_t gamma_curve, const char *f_name,
                                      tcon_gamma_table_t *gamma_value)
 {
     CSqlite::Cursor c;
     char sqlmaster[256];
     int rval = -1;
 
-    getSqlParams(__FUNCTION__, sqlmaster, "select %s from GAMMA_%d", f_name, gammaValue);
+    if (gamma_curve == VPP_GAMMA_CURVE_DEFAULT) {
+        getSqlParams(__FUNCTION__, sqlmaster, "select %s from GAMMA_ALL", f_name);
+    } else {
+        getSqlParams(__FUNCTION__, sqlmaster, "select %s from GAMMA_%d", f_name, gamma_curve);
+    }
 
     rval = this->select(sqlmaster, c);
 

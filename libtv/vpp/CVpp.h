@@ -17,6 +17,7 @@
 
 #define VPP_DEV_PATH    "/dev/amvecm"
 #define VPP_3D_DEV_PATH    "/dev/amvideo"
+#define VPP_PANEL_BACKLIGHT_DEV_PATH   "/sys/class/aml_bl/power"
 
 #define MODE_VPP_3D_DISABLE     0x00000000
 #define MODE_VPP_3D_ENABLE      0x00000001

@@ -990,9 +990,10 @@ int CTvFactory::fbcWBInitialGet ()
     return 0;
 }
 
-int CTvFactory::fbcBacklightOnOffSet ( int value )
+int CTvFactory::fbcBacklightOnOffSet(int value)
 {
     if (mFbcObj != NULL) {
+        value = value ? 0 : 1;
         mFbcObj->cfbc_Set_backlight_onoff(COMM_DEV_SERIAL, value);
         return 0;
     }
@@ -1000,12 +1001,13 @@ int CTvFactory::fbcBacklightOnOffSet ( int value )
     return -1;
 }
 
-int CTvFactory::fbcBacklightOnOffGet ()
+int CTvFactory::fbcBacklightOnOffGet()
 {
     int temp_value = 0;
 
     if (mFbcObj != NULL) {
         mFbcObj->cfbc_Get_backlight_onoff(COMM_DEV_SERIAL, &temp_value);
+        temp_value = temp_value ? 0 : 1;
         return temp_value;
     }
 

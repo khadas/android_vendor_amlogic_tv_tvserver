@@ -34,7 +34,6 @@ int CVirtualInput::setup_uinput_device()
 
     // Setup the uinput device
     ioctl(uinp_fd, UI_SET_EVBIT, EV_KEY);
-    ioctl(uinp_fd, UI_SET_EVBIT, EV_REL);
     for (int i = 0; i < 256; i++) {
         ioctl(uinp_fd, UI_SET_KEYBIT, i);
     }
@@ -55,7 +54,7 @@ void CVirtualInput::sendVirtualkeyEvent(__u16 key_code)
         LOGD("uinput not open, sendVirtualkeyEvent failed!!!\n");
         return;
     }
-    // Report BUTTON CLICK - PRESS event
+    // Report key event
     memset(&event, 0, sizeof(event));
     gettimeofday(&event.time, NULL);
     event.type = EV_KEY;
@@ -63,19 +62,6 @@ void CVirtualInput::sendVirtualkeyEvent(__u16 key_code)
     event.value = 1;
     write(uinp_fd, &event, sizeof(event));
 
-    event.type = EV_SYN;
-    event.code = SYN_REPORT;
-    event.value = 0;
-    write(uinp_fd, &event, sizeof(event));
-
-    // Report BUTTON CLICK - RELEASE event
-    memset(&event, 0, sizeof(event));
-    gettimeofday(&event.time, NULL);
-    event.type = EV_KEY;
-    event.code = key_code;
-    event.value = 0;
-
-    write(uinp_fd, &event, sizeof(event));
     event.type = EV_SYN;
     event.code = SYN_REPORT;
     event.value = 0;

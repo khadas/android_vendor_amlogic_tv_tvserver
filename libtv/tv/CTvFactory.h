@@ -61,8 +61,8 @@ public:
     int getLVDSSSC ();
     int setNolineParams ( int nolineParamstype, int sourceType, noline_params_t nolineParams );
     noline_params_t getNolineParams ( int nolineParamstype, int sourceType );
-    int setOverscan ( int sourceType, int fmt, int status3d, int transFmt, tvin_cutwin_t cutwin );
-    tvin_cutwin_t getOverscan ( int sourceType, int fmt, int status3d, int transFmt );
+    int setOverscan ( int sourceType, int fmt, int transFmt, tvin_cutwin_t cutwin );
+    tvin_cutwin_t getOverscan ( int sourceType, int fmt, int transFmt );
     int replacePQDb(const char *newFilePath = NULL);
     //end PQ
 
@@ -144,12 +144,7 @@ public:
     int fbcMemcStatusN310Set ( int value );
     int fbcMemcStatusN310Get ();
     //end TV TO FBC
-
-    void set3DMode ( VIDEO_3D_MODE_T mode ) {
-        m3DMode = mode;
-    };
 private:
-    int is2Dor3D ( VIDEO_3D_MODE_T mode3d, tvin_trans_fmt_t transFmt );
     int getItemFromBatch(vpp_color_temperature_mode_t colortemp_mode, int item);
     int formatInputGainParams(int value);
     int formatInputOffsetParams(int value);
@@ -166,7 +161,6 @@ private:
     bool mHdmiOutFbc;
     CFbcCommunication *mFbcObj;
     CAv mAv;
-    VIDEO_3D_MODE_T m3DMode;
 };
 
 #endif/*_CTV_FACTORY_H_*/

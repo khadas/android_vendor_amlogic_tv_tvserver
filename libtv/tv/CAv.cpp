@@ -406,52 +406,6 @@ void CAv::av_evt_callback ( long dev_no, int event_type, void *param, void *user
         __FUNCTION__, dev_no, pAv->mCurAvEvent.type , (int)param);
 }
 
-int CAv::set3DMode(VIDEO_3D_MODE_T mode, int LR_switch, int mode_3D_TO_2D)
-{
-    unsigned int cmd = MODE_3D_DISABLE;
-    switch (mode) {
-    case VIDEO_3D_MODE_DISABLE:
-        cmd = MODE_3D_DISABLE;
-        break;
-    case VIDEO_3D_MODE_AUTO:
-        cmd = MODE_3D_ENABLE | MODE_3D_AUTO;
-        break;
-    case VIDEO_3D_MODE_LR:
-        cmd = MODE_3D_ENABLE | MODE_3D_LR;
-        break;
-    case VIDEO_3D_MODE_TB:
-        cmd = MODE_3D_ENABLE | MODE_3D_TB;
-        break;
-    case VIDEO_3D_MODE_LA:
-        cmd = MODE_3D_ENABLE | MODE_3D_LA;
-        break;
-    case VIDEO_3D_MODE_FA:
-        cmd = MODE_3D_ENABLE | MODE_3D_FA;
-        break;
-    default:
-        cmd = MODE_3D_DISABLE;
-        break;
-    }
-
-    if (LR_switch == 1) {
-        cmd = cmd | MODE_3D_LR_SWITCH;
-    }
-
-    if (mode_3D_TO_2D == 1) {
-        cmd = cmd | MODE_3D_TO_2D_L;
-    }
-
-    if (mode_3D_TO_2D == 2) {
-        cmd = cmd | MODE_3D_TO_2D_R;
-    }
-    LOGD("set 3d mode fd = %d cmd = 0x%x", mFdAmVideo, cmd);
-    int ret = ioctl(mFdAmVideo, AMSTREAM_IOC_SET_3D_TYPE , cmd);
-    if (ret < 0) {
-        LOGE("set3DMode error ( %s )", strerror ( errno ));
-    }
-    return 0;
-}
-
 int CAv::setLookupPtsForDtmb(int enable)
 {
     LOGD ( "setLookupPtsForDtmb %d" , enable);

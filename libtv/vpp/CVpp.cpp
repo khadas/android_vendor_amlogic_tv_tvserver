@@ -2853,7 +2853,7 @@ int CVpp::FactorySetNolineParams(int type, int source_type, noline_params_t noli
     return ret;
 }
 
-int CVpp::FactorySetOverscan(int source_type, int fmt, int status_3d __unused, int trans_fmt,
+int CVpp::FactorySetOverscan(int source_type, int fmt, int trans_fmt,
                              tvin_cutwin_t cutwin_t)
 {
     int ret = -1;

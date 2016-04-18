@@ -38,16 +38,6 @@ static const char *PATH_MEPG_DTMB_LOOKUP_PTS_FLAG = "/sys/module/amvdec_mpeg12/p
 #define MODE_3D_OUT_FA_LB_FIRST 0x00004000
 #define MODE_3D_OUT_FA_RB_FIRST 0x00008000
 
-
-typedef enum VIDEO_3D_MODE_E {
-    VIDEO_3D_MODE_DISABLE,
-    VIDEO_3D_MODE_AUTO,
-    VIDEO_3D_MODE_LR,
-    VIDEO_3D_MODE_TB,
-    VIDEO_3D_MODE_LA,
-    VIDEO_3D_MODE_FA
-} VIDEO_3D_MODE_T;
-
 //end 3D===================================================================
 typedef enum video_display_resolution_e {
     VPP_DISPLAY_RESOLUTION_1366X768,
@@ -133,9 +123,7 @@ public:
     int getVideoScreenMode();
     int setVideoAxis ( int h, int v, int width, int height );
     video_display_resolution_t getVideoDisplayResolution();
-    //LR_switch: 1 is  enable,    3D_TO_2D:1 is L  , 2 is R
-    int set3DMode(VIDEO_3D_MODE_T mode, int LR_switch, int mode_3D_TO_2D);
-    //
+
     int setLookupPtsForDtmb(int enable);
     tvin_sig_fmt_t getVideoResolutionToFmt();
 private:

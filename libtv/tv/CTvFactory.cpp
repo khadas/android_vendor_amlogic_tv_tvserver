@@ -26,8 +26,7 @@
 
 CTvFactory::CTvFactory()
     :mHdmiOutFbc(false),
-    mFbcObj(NULL),
-    m3DMode(VIDEO_3D_MODE_DISABLE)
+    mFbcObj(NULL)
 {
 }
 
@@ -199,11 +198,9 @@ noline_params_t CTvFactory::getNolineParams ( int nolineParamstype, int sourceTy
     return CVpp::getInstance()->FactoryGetNolineParams(nolineParamstype, sourceType);
 }
 
-int CTvFactory::setOverscan ( int sourceType, int fmt, int status3d, int transFmt, tvin_cutwin_t cutwin )
+int CTvFactory::setOverscan ( int sourceType, int fmt, int transFmt, tvin_cutwin_t cutwin )
 {
-    //tvin_cutwin_t cutwin = CVpp::getInstance()->getOverscan(sourceType, fmt, status3d, transFmt);
-    CVpp::getInstance()->FactorySetOverscan(sourceType, fmt, status3d, transFmt, cutwin);
-    //} else {
+    CVpp::getInstance()->FactorySetOverscan(sourceType, fmt, transFmt, cutwin);
 #if 0
     char val_buf[256];
     memset(val_buf, '\0', 256);
@@ -215,10 +212,9 @@ int CTvFactory::setOverscan ( int sourceType, int fmt, int status3d, int transFm
     return CVpp::getInstance()->VPP_SetVideoCrop ( ( int ) cutwin.vs, ( int ) cutwin.hs, ( int ) cutwin.ve, ( int ) cutwin.he );
 }
 
-tvin_cutwin_t CTvFactory::getOverscan ( int sourceType, int fmt, int status3d __unused, int transFmt )
+tvin_cutwin_t CTvFactory::getOverscan ( int sourceType, int fmt, int transFmt )
 {
-    return CVpp::getInstance()->FactoryGetOverscan(sourceType, fmt,
-            (is_3d_type_t)is2Dor3D(m3DMode, (tvin_trans_fmt_t)transFmt), transFmt);
+    return CVpp::getInstance()->FactoryGetOverscan(sourceType, fmt, INDEX_2D, transFmt);
 }
 
 int CTvFactory::fbcSetBrightness ( int value )
@@ -1111,21 +1107,6 @@ int CTvFactory::fbcMemcStatusN310Get ()
     }
 
     return -1;
-}
-
-int CTvFactory::is2Dor3D ( VIDEO_3D_MODE_T mode3d, tvin_trans_fmt_t transFmt )
-{
-    if ( mode3d == VIDEO_3D_MODE_DISABLE ) {
-        return INDEX_2D;
-    } else if ( mode3d == VIDEO_3D_MODE_AUTO ) {
-        if ( transFmt == TVIN_TFMT_2D ) {
-            return INDEX_2D;
-        } else {
-            return INDEX_3D;
-        }
-    } else {
-        return INDEX_3D;
-    }
 }
 
 int CTvFactory::getItemFromBatch(vpp_color_temperature_mode_t colortemp_mode, int item)

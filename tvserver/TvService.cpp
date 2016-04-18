@@ -731,53 +731,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     // HDMI END
 
-    // 3D
-    case SET_3D_MODE: {
-        int mode = p.readInt32();
-        int ret = mpTv->Tv_Set3DMode((VIDEO_3D_MODE_T)mode);
-        r->writeInt32(ret);
-        break;
-    }
-    case GET_3D_MODE: {
-        int ret = (int)mpTv->Tv_Get3DMode();
-        r->writeInt32(ret);
-        break;
-    }
-    case SET_3D_LR_SWITH: {
-        int on_off = p.readInt32();
-        int ret = mpTv->Tv_Set3DLRSwith(on_off);
-        r->writeInt32(ret);
-        break;
-    }
-    case GET_3D_LR_SWITH: {
-        int ret = mpTv->Tv_Get3DLRSwith();
-        r->writeInt32(ret);
-        break;
-    }
-    case SET_3D_TO_2D_MODE: {
-        int mode = p.readInt32();
-        int ret = mpTv->Tv_Set3DTo2DMode(mode);
-        r->writeInt32(ret);
-        break;
-    }
-    case GET_3D_TO_2D_MODE: {
-        int ret = mpTv->Tv_Get3DTo2DMode();
-        r->writeInt32(ret);
-        break;
-    }
-    case SET_3D_DEPTH: {
-        int value = p.readInt32();
-        int ret = mpTv->Tv_Set3DDepth(value);
-        r->writeInt32(ret);
-        break;
-    }
-    case GET_3D_DEPTH: {
-        int ret = mpTv->GetSave3DDepth();
-        r->writeInt32(ret);
-        break;
-    }
-    // 3D END
-
     // PQ
     case SET_BRIGHTNESS: {
         int brightness = p.readInt32();
@@ -891,7 +844,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int value = p.readInt32();
         int source_type = p.readInt32();
         int en = p.readInt32();
-        int status_3d = p.readInt32();
         int is_save = p.readInt32();
         int ret = mpTv->Tv_SetSharpness(value, (tv_source_input_type_t)source_type, en, is_save);
         r->writeInt32(ret);
@@ -1178,22 +1130,20 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         tvin_cutwin_t cutwin_t;
         int source_type = p.readInt32();
         int fmt = p.readInt32();
-        int status_3d = p.readInt32();
         int trans_fmt = p.readInt32();
         cutwin_t.hs = p.readInt32();
         cutwin_t.he = p.readInt32();
         cutwin_t.vs = p.readInt32();
         cutwin_t.ve = p.readInt32();
-        int ret = mpTv->mFactoryMode.setOverscan(source_type, fmt, status_3d, trans_fmt, cutwin_t);
+        int ret = mpTv->mFactoryMode.setOverscan(source_type, fmt, trans_fmt, cutwin_t);
         r->writeInt32(ret);
         break;
     }
     case FACTORY_GETOVERSCAN: {
         int source_type = p.readInt32();
         int fmt = p.readInt32();
-        int status_3d = p.readInt32();
         int trans_fmt = p.readInt32();
-        tvin_cutwin_t cutwin_t = mpTv->mFactoryMode.getOverscan(source_type, fmt, status_3d, trans_fmt);
+        tvin_cutwin_t cutwin_t = mpTv->mFactoryMode.getOverscan(source_type, fmt, trans_fmt);
         r->writeInt32(cutwin_t.hs);
         r->writeInt32(cutwin_t.he);
         r->writeInt32(cutwin_t.vs);
@@ -1945,17 +1895,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     case SSM_READ_HDMIINTERNAL_MODE: {
         int tmpRet = SSMReadHDMIInternalMode();
-        r->writeInt32(tmpRet);
-        break;
-    }
-    case SSM_SAVE_DISABLE_3D: {
-        int tmp_val = p.readInt32();
-        int tmpRet = SSMSaveDisable3D(tmp_val);
-        r->writeInt32(tmpRet);
-        break;
-    }
-    case SSM_READ_DISABLE_3D: {
-        int tmpRet = SSMReadDisable3D();
         r->writeInt32(tmpRet);
         break;
     }

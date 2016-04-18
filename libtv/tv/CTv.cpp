@@ -1565,7 +1565,6 @@ int CTv::OpenTv ( void )
     Tvin_GetTvinConfig();
     m_last_source_input = SOURCE_INVALID;
     m_source_input = SOURCE_INVALID;
-    m_mode_3d = VIDEO_3D_MODE_DISABLE;
     m_hdmi_sampling_rate = 0;
     int8_t blackout_enable;
     SSMReadBlackoutEnable(&blackout_enable);
@@ -1951,7 +1950,8 @@ void CTv::onSigToStable()
     }
     //showbo mark  hdmi auto 3d, tran fmt  is 3d, so switch to 3d
 
-    CVpp::getInstance()->LoadVppSettings (CTvin::Tvin_SourceInputToSourceInputType(m_source_input), mSigDetectThread.getCurSigInfo().fmt, Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ), mSigDetectThread.getCurSigInfo().trans_fmt );
+    CVpp::getInstance()->LoadVppSettings (CTvin::Tvin_SourceInputToSourceInputType(m_source_input),
+        mSigDetectThread.getCurSigInfo().fmt, INDEX_2D, mSigDetectThread.getCurSigInfo().trans_fmt );
 
     if ( m_win_mode == PREVIEW_WONDOW ) {
         mAv.setVideoAxis(m_win_pos.x1, m_win_pos.y1, m_win_pos.x2, m_win_pos.y2);
@@ -2219,7 +2219,8 @@ void CTv::onStableSigFmtChange()
     LOGD("hdmi trans_fmt = %d", mSigDetectThread.getCurSigInfo().trans_fmt);
 
     //load pq parameters
-    CVpp::getInstance()->LoadVppSettings (CTvin::Tvin_SourceInputToSourceInputType(m_source_input), mSigDetectThread.getCurSigInfo().fmt, Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ), mSigDetectThread.getCurSigInfo().trans_fmt );
+    CVpp::getInstance()->LoadVppSettings (CTvin::Tvin_SourceInputToSourceInputType(m_source_input),
+        mSigDetectThread.getCurSigInfo().fmt, INDEX_2D, mSigDetectThread.getCurSigInfo().trans_fmt);
 
     if ( m_win_mode == PREVIEW_WONDOW ) {
         mAv.setVideoAxis(m_win_pos.x1, m_win_pos.y1, m_win_pos.x2, m_win_pos.y2);
@@ -2397,85 +2398,6 @@ int CTv::Tv_GetHistgram(int *histgram_buf)
         return -1;
     }
     return CTvin::getInstance()->VDIN_GetHistgram(histgram_buf);
-}
-
-int CTv::Tv_Set3DMode ( VIDEO_3D_MODE_T mode )
-{
-    if (mode == VIDEO_3D_MODE_AUTO) {
-        CTvin::getInstance()->VDIN_SetDI3DDetc (1);
-    } else {
-        CTvin::getInstance()->VDIN_SetDI3DDetc (0);
-    }
-
-    mFactoryMode.set3DMode(mode);
-    mAv.set3DMode(mode, 0, 0);
-    m_mode_3d = mode;
-    SSMSave3DMode ( ( unsigned char ) mode );
-    return 0;
-}
-
-VIDEO_3D_MODE_T CTv::Tv_Get3DMode ( void )
-{
-    return m_mode_3d;
-}
-
-int CTv::Tv_Set3DLRSwith ( int on_off)
-{
-    LOGW ( "%s,Set3D LRSwith on_off %d",  __FUNCTION__, on_off);
-    mAv.set3DMode(m_mode_3d, on_off, 0);
-    SSMSave3DLRSwitch(on_off);
-    return 0;
-}
-
-int CTv::Tv_Get3DLRSwith ( void )
-{
-    unsigned char val = 0;
-    SSMRead3DLRSwitch ( &val );
-    return ( int ) val;
-}
-
-int CTv::Tv_Set3DTo2DMode ( int mode)
-{
-    LOGW ( "%s,Set3D to 2D mode %d",  __FUNCTION__  , mode);
-    mAv.set3DMode(m_mode_3d, 0, mode);
-    SSMSave3DTO2D ( mode );
-    return 0;
-}
-
-int CTv::Tv_Get3DTo2DMode ( void )
-{
-    unsigned char val = 0;
-    SSMRead3DTO2D ( &val );
-    return val;
-}
-
-int CTv::Tv_Set3DDepth ( int value )
-{
-    CTvin::getInstance()->Tvin_SetDepthOf2Dto3D( value );
-    SSMSave3DDepth ( value );
-    return 0;
-}
-
-int CTv::GetSave3DDepth ( void )
-{
-    unsigned char val = 0;
-    SSMRead3DDepth ( &val );
-    return val;
-}
-
-is_3d_type_t CTv::Check2Dor3D ( VIDEO_3D_MODE_T mode3d, tvin_trans_fmt_t trans_fmt )
-{
-    if ( mode3d == VIDEO_3D_MODE_DISABLE ) {
-        return INDEX_2D;
-    } else if ( mode3d == VIDEO_3D_MODE_AUTO ) {
-        if ( trans_fmt == TVIN_TFMT_2D ) {
-            return INDEX_2D;
-        } else {
-            return INDEX_3D;
-        }
-    } else {
-        return INDEX_3D;
-    }
 }
 
 int CTv::Tvin_SetPLLValues ()
@@ -3220,7 +3142,10 @@ int CTv::Tv_SetDDDRCMode(tv_source_input_t source_input)
 //PQ
 int CTv::Tv_SetBrightness ( int brightness, tv_source_input_type_t source_type, int is_save )
 {
-    return CVpp::getInstance()->SetBrightness(brightness, (tv_source_input_type_t)source_type, mSigDetectThread.getCurSigInfo().fmt, mSigDetectThread.getCurSigInfo().trans_fmt, Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ), is_save);
+    return CVpp::getInstance()->SetBrightness(brightness,
+        (tv_source_input_type_t)source_type,
+        mSigDetectThread.getCurSigInfo().fmt,
+        mSigDetectThread.getCurSigInfo().trans_fmt, INDEX_2D, is_save);
 }
 
 int CTv::Tv_GetBrightness ( tv_source_input_type_t source_type )
@@ -3235,7 +3160,8 @@ int CTv::Tv_SaveBrightness ( int brightness, tv_source_input_type_t source_type 
 
 int CTv::Tv_SetContrast ( int contrast, tv_source_input_type_t source_type,  int is_save )
 {
-    return CVpp::getInstance()->SetContrast(contrast, (tv_source_input_type_t)source_type, mSigDetectThread.getCurSigInfo().fmt, mSigDetectThread.getCurSigInfo().trans_fmt, Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ), is_save);
+    return CVpp::getInstance()->SetContrast(contrast, (tv_source_input_type_t)source_type,
+        mSigDetectThread.getCurSigInfo().fmt, mSigDetectThread.getCurSigInfo().trans_fmt, INDEX_2D, is_save);
 }
 
 int CTv::Tv_GetContrast ( tv_source_input_type_t source_type )
@@ -3250,7 +3176,8 @@ int CTv::Tv_SaveContrast ( int contrast, tv_source_input_type_t source_type )
 
 int CTv::Tv_SetSaturation ( int satuation, tv_source_input_type_t source_type, tvin_sig_fmt_t fmt, int is_save )
 {
-    return CVpp::getInstance()->SetSaturation(satuation, (tv_source_input_type_t)source_type, (tvin_sig_fmt_t)fmt, mSigDetectThread.getCurSigInfo().trans_fmt, Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ), is_save);
+    return CVpp::getInstance()->SetSaturation(satuation, (tv_source_input_type_t)source_type,
+        (tvin_sig_fmt_t)fmt, mSigDetectThread.getCurSigInfo().trans_fmt, INDEX_2D, is_save);
 }
 
 int CTv::Tv_GetSaturation ( tv_source_input_type_t source_type )
@@ -3265,7 +3192,8 @@ int CTv::Tv_SaveSaturation ( int satuation, tv_source_input_type_t source_type )
 
 int CTv::Tv_SetHue ( int hue, tv_source_input_type_t source_type, tvin_sig_fmt_t fmt, int is_save )
 {
-    return CVpp::getInstance()->SetHue(hue, (tv_source_input_type_t)source_type, (tvin_sig_fmt_t)fmt, mSigDetectThread.getCurSigInfo().trans_fmt, Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ), is_save);
+    return CVpp::getInstance()->SetHue(hue, (tv_source_input_type_t)source_type, (tvin_sig_fmt_t)fmt,
+        mSigDetectThread.getCurSigInfo().trans_fmt, INDEX_2D, is_save);
 }
 
 int CTv::Tv_GetHue ( tv_source_input_type_t source_type )
@@ -3280,7 +3208,10 @@ int CTv::Tv_SaveHue ( int hue, tv_source_input_type_t source_type )
 
 int CTv::Tv_SetPQMode ( vpp_picture_mode_t mode, tv_source_input_type_t source_type, int is_save )
 {
-    return CVpp::getInstance()->SetPQMode((vpp_picture_mode_t)mode, (tv_source_input_type_t)source_type, mSigDetectThread.getCurSigInfo().fmt, mSigDetectThread.getCurSigInfo().trans_fmt, Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ), is_save);
+    return CVpp::getInstance()->SetPQMode((vpp_picture_mode_t)mode,
+        (tv_source_input_type_t)source_type, mSigDetectThread.getCurSigInfo().fmt,
+        mSigDetectThread.getCurSigInfo().trans_fmt,
+        INDEX_2D, is_save);
 }
 
 vpp_picture_mode_t CTv::Tv_GetPQMode ( tv_source_input_type_t source_type )
@@ -3297,7 +3228,7 @@ int CTv::Tv_SetSharpness ( int value, tv_source_input_type_t source_type, int en
 {
     return CVpp::getInstance()->SetSharpness(value,
             (tv_source_input_type_t)source_type, en,
-            Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ),
+            INDEX_2D,
             mSigDetectThread.getCurSigInfo().fmt,
             mSigDetectThread.getCurSigInfo().trans_fmt,
             is_save);
@@ -3379,12 +3310,8 @@ int CTv::Tv_SaveColorTemperature ( vpp_color_temperature_mode_t mode, tv_source_
 
 int CTv::Tv_SetDisplayMode ( vpp_display_mode_t mode, tv_source_input_type_t source_type, tvin_sig_fmt_t fmt, int is_save )
 {
-    int ret = 0;
-    if (m_mode_3d == VIDEO_3D_MODE_DISABLE) {
-        ret = SetDisplayMode((vpp_display_mode_t)mode, (tv_source_input_type_t)source_type, (tvin_sig_fmt_t)fmt);
-    } else { //3D
-        ret = SetDisplayMode(VPP_DISPLAY_MODE_PERSON, (tv_source_input_type_t)source_type, (tvin_sig_fmt_t)fmt);
-    }
+    int ret = SetDisplayMode((vpp_display_mode_t)mode, (tv_source_input_type_t)source_type, (tvin_sig_fmt_t)fmt);
+    //ret = SetDisplayMode(VPP_DISPLAY_MODE_PERSON, (tv_source_input_type_t)source_type, (tvin_sig_fmt_t)fmt);
     if (ret == 0) {
         if (is_save == 1) {
             ret = ret | SSMSaveDisplayMode ( source_type, (int)mode );
@@ -3397,7 +3324,8 @@ int CTv::SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_type_
 {
     LOGD("SetDisplayMode, display_mode = %d, source_type = %d fmt = %d  tranfmt = %d\n",  display_mode, source_type, sig_fmt, mSigDetectThread.getCurSigInfo().trans_fmt);
 
-    tvin_cutwin_t cutwin = CVpp::getInstance()->GetOverscan ( source_type, sig_fmt, Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ), mSigDetectThread.getCurSigInfo().trans_fmt);
+    tvin_cutwin_t cutwin = CVpp::getInstance()->GetOverscan ( source_type, sig_fmt,
+        INDEX_2D, mSigDetectThread.getCurSigInfo().trans_fmt);
     LOGD("SetDisplayMode , get crop %d %d %d %d \n", cutwin.vs, cutwin.hs, cutwin.ve, cutwin.he);
     int video_screen_mode = CAv::VIDEO_WIDEOPTION_16_9;
     tvin_window_pos_t win_pos;
@@ -3416,7 +3344,6 @@ int CTv::SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_type_
     case VPP_DISPLAY_MODE_FULL:
         video_screen_mode = CAv::VIDEO_WIDEOPTION_NONLINEAR;
         CVpp::getInstance()->VPP_SetNonLinearFactor ( 20 );
-        //CVpp::getInstance()->VPP_SetNonLinearFactor ( 20 );
         break;
     case VPP_DISPLAY_MODE_CROP_FULL:
         cutwin.vs = 0;
@@ -3487,123 +3414,16 @@ int CTv::Tv_SaveDisplayMode ( vpp_display_mode_t mode, tv_source_input_type_t so
 
 int CTv::Tv_SetNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_type_t source_type, int is_save )
 {
-    return CVpp::getInstance()->SetNoiseReductionMode((vpp_noise_reduction_mode_t)mode, (tv_source_input_type_t)source_type, mSigDetectThread.getCurSigInfo().fmt, Check2Dor3D(m_mode_3d, mSigDetectThread.getCurSigInfo().trans_fmt ), mSigDetectThread.getCurSigInfo().trans_fmt, is_save);
+    return CVpp::getInstance()->SetNoiseReductionMode((vpp_noise_reduction_mode_t)mode,
+        (tv_source_input_type_t)source_type,
+        mSigDetectThread.getCurSigInfo().fmt,
+        INDEX_2D,
+        mSigDetectThread.getCurSigInfo().trans_fmt, is_save);
 }
 
 int CTv::Tv_SaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_type_t source_type )
 {
     return CVpp::getInstance()->SaveNoiseReductionMode ( mode, source_type );
-}
-
-int CTv::Tv_Set2k4k_ScalerUp_Mode ( int value )
-{
-    int ret = 0, fmt_hd_sd = 0;
-    int nodeVal = 0;
-    char s[8];
-
-    LOGD("%s, value [%d]\n", __FUNCTION__ , value);
-
-    if ( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_HDMI &&
-            CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_AV &&
-            CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_TV) {
-        int fd = open(SYS_VIDEO_FRAME_HEIGHT, O_RDONLY);
-        if (fd <= 0) {
-            LOGE("open %s ERROR!!error = -%s- \n",SYS_VIDEO_FRAME_HEIGHT, strerror ( errno ));
-            return -1;
-        }
-        read(fd, s, sizeof(s));
-        close(fd);
-        nodeVal = atoi(s);
-        if (nodeVal < 900) {
-            fmt_hd_sd = 0;
-        } else {
-            fmt_hd_sd = 1;
-        }
-    } else if ( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_HDMI ) {
-        if (isSDFmtInHdmi()) {
-            fmt_hd_sd = 0;
-        } else {
-            fmt_hd_sd = 1;
-        }
-    } else if ( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_AV ||
-                CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_TV) {
-        fmt_hd_sd = 0;
-    }
-
-    switch (value) {
-    case 1: //  on
-        if (fmt_hd_sd) {
-            ret = Tv_Utils_SetFileAttrStr(SYS_VIDEO_SCALER_PATH_SEL, (char *)"0");
-        } else {
-            ret = Tv_Utils_SetFileAttrStr(SYS_VIDEO_SCALER_PATH_SEL, (char *)"1");
-        }
-        break;
-
-    case 0: //  off
-    default:
-        if (fmt_hd_sd) {
-            ret = Tv_Utils_SetFileAttrStr(SYS_VIDEO_SCALER_PATH_SEL, (char *)"1");
-        } else {
-            ret = Tv_Utils_SetFileAttrStr(SYS_VIDEO_SCALER_PATH_SEL, (char *)"0");
-        }
-        break;
-    }
-    return ret;
-}
-
-int CTv::Tv_Get2k4k_ScalerUp_Mode ( void )
-{
-    char attrV[64];
-    int ret = 0, fmt_hd_sd = 0;
-    int nodeVal = 0;
-    char s[8];
-
-    memset (attrV, '\0', 64);
-
-    if ( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_HDMI &&
-            CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_AV &&
-            CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_TV) {
-        int fd = open(SYS_VIDEO_FRAME_HEIGHT, O_RDONLY);
-        if (fd <= 0) {
-            LOGE("open %s ERROR!!error = -%s- \n",SYS_VIDEO_FRAME_HEIGHT, strerror ( errno ));
-            return -1;
-        }
-        read(fd, s, sizeof(s));
-        close(fd);
-        nodeVal = atoi(s);
-        if (nodeVal < 900) {
-            fmt_hd_sd = 0;
-        } else {
-            fmt_hd_sd = 1;
-        }
-    } else if ( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_HDMI ) {
-        if (isSDFmtInHdmi()) {
-            fmt_hd_sd = 0;
-        } else {
-            fmt_hd_sd = 1;
-        }
-    } else if ( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_AV ||  CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_TV) {
-        fmt_hd_sd = 0;
-    }
-
-    Tv_Utils_GetFileAttrStr(SYS_VIDEO_SCALER_PATH_SEL, 64, attrV);
-    if (strncasecmp(attrV, "1", strlen ("1")) == 0) {
-        if (fmt_hd_sd) {
-            ret = 0;
-        } else {
-            ret = 1;
-        }
-    } else if (strncasecmp(attrV, "0", strlen ("0")) == 0) {
-        if (fmt_hd_sd) {
-            ret = 1;
-        } else {
-            ret = 0;
-        }
-    } else {
-        ret = -1;
-    }
-
-    return ret;
 }
 
 vpp_noise_reduction_mode_t CTv::Tv_GetNoiseReductionMode ( tv_source_input_type_t source_type )

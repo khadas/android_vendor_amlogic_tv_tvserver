@@ -196,15 +196,6 @@ public:
     int getHDMIFrameRate ( void );
     void RefreshAudioMasterVolume ( tv_source_input_t source_input );
 
-    int Tv_Set3DMode ( VIDEO_3D_MODE_T mode );
-    VIDEO_3D_MODE_T Tv_Get3DMode ( void );
-    int Tv_Set3DLRSwith ( int on_off);
-    int Tv_Get3DLRSwith ( void );
-    int Tv_Set3DTo2DMode ( int mode);
-    int Tv_Get3DTo2DMode ( void );
-    int Tv_Set3DDepth ( int value );
-    int GetSave3DDepth ( void );
-    is_3d_type_t Check2Dor3D ( VIDEO_3D_MODE_T mode3d, tvin_trans_fmt_t trans_fmt );
     int Tvin_SetPLLValues ();
     int SetCVD2Values ();
     unsigned int Vpp_GetDisplayResolutionInfo(tvin_window_pos_t *win_pos);
@@ -281,8 +272,6 @@ public:
     virtual int Tv_SaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_type_t source_type );
     int Tv_SplitScreenEffect(int mode, int width, int reverse = 0);
 
-    int Tv_Set2k4k_ScalerUp_Mode ( int value );
-    int Tv_Get2k4k_ScalerUp_Mode ( void );
     //audio
     virtual void updateSubtitle(int, int);
 
@@ -623,9 +612,6 @@ protected:
     bool mAutoSetDisplayFreq;
     int m_sig_stable_nums;
     bool mSetHdmiEdid;
-    /** for L/R or B/T 3d mode overscan **/
-    /** for 3D **/
-    VIDEO_3D_MODE_T m_mode_3d;
     /** for HDMI-in sampling detection. **/
     int  m_hdmi_sampling_rate;
     int	m_hdmi_audio_data;

@@ -323,7 +323,7 @@ public:
     int SetLVDSSSC(int step);
     int FactorySetNolineParams ( int type, int source_type, noline_params_t noline_params );
     noline_params_t FactoryGetNolineParams ( int type, int source_type );
-    int FactorySetOverscan ( int source_type, int fmt, int status_3d, int trans_fmt, tvin_cutwin_t cutwin_t );
+    int FactorySetOverscan ( int source_type, int fmt, int trans_fmt, tvin_cutwin_t cutwin_t );
     tvin_cutwin_t FactoryGetOverscan ( int source_type, int fmt, is_3d_type_t is3d, int trans_fmt );
     int FactorySetBacklightPWM_Frequency(int freq);
     int FactoryGetBacklightPWM_Frequency ( void );

@@ -543,6 +543,7 @@ int CTv::dtvAutoScan()
 {
     AutoMutex lock ( mLock );
     mTvAction |= TV_ACTION_SCANNING;
+    LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
     //mTvEpg.leaveChannel();
     mAv.StopTS ();
     mAv.DisableVideoWithBlueColor();
@@ -1002,7 +1003,8 @@ int CTv::playDtvProgram ( int mode, int freq, int para1, int para2,
         mAv.DisableVideoBlackout();
     }
     mFrontDev.Open(FE_ANALOG);
-    mFrontDev.setPara ( mode, freq, para1, para2);
+    if (!(mTvAction & TV_ACTION_SCANNING))
+        mFrontDev.setPara ( mode, freq, para1, para2);
     mTvAction |= TV_ACTION_PLAYING;
     startPlayTv ( SOURCE_DTV, vpid, apid, vfmt, afmt );
 
@@ -1095,6 +1097,7 @@ int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __u
 
 int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 {
+    LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
     if (mTvAction & TV_ACTION_SCANNING) {
         return -1;
     }

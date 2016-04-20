@@ -1643,10 +1643,10 @@ int CVpp::SaveBacklight(int value, tv_source_input_type_t source_type)
 
 int CVpp::VPP_SetBackLight_Switch(int value)
 {
-    LOGD("VPP_SetBackLight_Switch /sys/class/backlight/aml-bl/bl_power : %d ", value);
-    FILE *fp = fopen("/sys/class/backlight/aml-bl/bl_power", "w");
+    LOGD("VPP_SetBackLight_Switch VPP_PANEL_BACKLIGHT_DEV_PATH : %d ", value);
+    FILE *fp = fopen(VPP_PANEL_BACKLIGHT_DEV_PATH, "w");
     if (fp == NULL) {
-        LOGE("Open /sys/class/backlight/aml-bl/bl_power error(%s)!\n", strerror(errno));
+        LOGE("Open VPP_PANEL_BACKLIGHT_DEV_PATH error(%s)!\n", strerror(errno));
         return -1;
     }
 
@@ -1660,14 +1660,14 @@ int CVpp::VPP_GetBackLight_Switch(void)
 {
     int value;
 
-    FILE *fp = fopen("/sys/class/backlight/aml-bl/bl_power", "w");
+    FILE *fp = fopen(VPP_PANEL_BACKLIGHT_DEV_PATH, "w");
     if (fp == NULL) {
-        LOGE("Open /sys/class/backlight/aml-bl/bl_power error(%s)!\n", strerror(errno));
+        LOGE("Open VPP_PANEL_BACKLIGHT_DEV_PATH error(%s)!\n", strerror(errno));
         return -1;
     }
 
     fscanf(fp, "%d", &value);
-    LOGD("VPP_GetBackLight_Switch /sys/class/backlight/aml-bl/bl_power : %d", value);
+    LOGD("VPP_GetBackLight_Switch VPP_PANEL_BACKLIGHT_DEV_PATH : %d", value);
     fclose(fp);
     fp = NULL;
     if (value < 0) {

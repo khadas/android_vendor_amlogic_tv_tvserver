@@ -142,6 +142,16 @@ void TvService::onTvEvent(const CTvEv &ev)
                 p.writeInt32(pScannerEv->mScrambled);
                 p.writeInt32(pScannerEv->mScanMode);
                 p.writeInt32(pScannerEv->mSdtVer);
+                p.writeInt32(pScannerEv->mSortMode);
+
+                p.writeInt32(pScannerEv->mLcnInfo.net_id);
+                p.writeInt32(pScannerEv->mLcnInfo.ts_id);
+                p.writeInt32(pScannerEv->mLcnInfo.service_id);
+                for (int i=0; i<MAX_LCN; i++) {
+                    p.writeInt32(pScannerEv->mLcnInfo.visible[i]);
+                    p.writeInt32(pScannerEv->mLcnInfo.lcn[i]);
+                    p.writeInt32(pScannerEv->mLcnInfo.valid[i]);
+                }
                 ScannerClient->notifyCallback(SCAN_EVENT_CALLBACK, p);
             }
         }

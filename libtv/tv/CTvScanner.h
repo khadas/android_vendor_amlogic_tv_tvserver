@@ -17,6 +17,9 @@
 #include "CTvEv.h"
 #include "tvin/CTvin.h"
 
+#include <list>
+
+
 #if !defined(_CTVSCANNER_H)
 #define _CTVSCANNER_H
 class CTvScanner {
@@ -44,6 +47,21 @@ public:
     int pauseScan();
     int resumeScan();
 
+    struct ScannerLcnInfo {
+
+        public:
+        #define MAX_LCN 4
+        int net_id;
+        int ts_id;
+        int service_id;
+        int visible[MAX_LCN];
+        int lcn[MAX_LCN];
+        int valid[MAX_LCN];
+    };
+
+    typedef std::list<ScannerLcnInfo*> lcn_list_t;
+
+
     class ScannerEvent: public CTvEv {
     public:
         static const int EVENT_SCAN_PROGRESS = 0;
@@ -57,6 +75,7 @@ public:
         static const int EVENT_DTV_PROG_DATA = 8;
         static const int EVENT_SCAN_EXIT     = 9;
         static const int EVENT_SCAN_BEGIN    = 10;
+        static const int EVENT_LCN_INFO_DATA = 11;
 
         ScannerEvent(): CTvEv(CTvEv::TV_EVENT_SCANNER)
         {
@@ -69,6 +88,8 @@ public:
             mMSG[0] = '\0';
             mAcnt = 0;
             mScnt = 0;
+
+            memset(&mLcnInfo, 0, sizeof(ScannerLcnInfo));
         }
         ~ScannerEvent()
         {
@@ -131,6 +152,10 @@ public:
         int mScanMode;
 
         int mSdtVer;
+
+        int mSortMode;
+
+        ScannerLcnInfo  mLcnInfo;
         //      ScannerEvent(int type){
         //          this->mType = type;
         //      }
@@ -152,6 +177,7 @@ public:
         mpObserver = ob;
         return 0;
     }
+
 private:
     static AM_Bool_t s_atv_cvbs_lock_check(void *);
     AM_Bool_t atv_cvbs_lock_check(v4l2_std_id  *colorStd);
@@ -209,6 +235,7 @@ private:
         int sdt_version;
     } SCAN_ServiceInfo_t;
 
+    typedef std::list<SCAN_ServiceInfo_t*> service_list_t;
 
     static dvbpsi_pat_t *get_valid_pats(AM_SCAN_TS_t *ts);
     static void scan_process_ts_info(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, ScannerEvent *evt);
@@ -220,7 +247,10 @@ private:
     static void scan_store_dvb_ts_evt_service(SCAN_ServiceInfo_t *srv);
     static void scan_store_dvb_ts(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts);
     static void dtv_scan_store(AM_SCAN_Result_t *result);
-
+    static void scan_store_dvb_ts(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist=CTvScanner::service_list_dummy);
+    static void scan_get_lcn_info(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, lcn_list_t &llist);
+    static void scan_store_dvb_ts_evt_lcn(ScannerLcnInfo *lcn);
+    static int scan_insert_lcn(lcn_list_t &llist, ScannerLcnInfo *lcn, int idx);
 
 private:
 
@@ -270,5 +300,7 @@ private:
 
     ScannerEvent mCurEv;
     static CTvScanner *m_s_Scanner;
+
+    static service_list_t service_list_dummy;
 };
 #endif //CTVSCANNER_H

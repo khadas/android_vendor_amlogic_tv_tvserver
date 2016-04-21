@@ -209,6 +209,7 @@ void CFrontEnd::dmd_fend_callback(long dev_no __unused, int event_type __unused,
     if (!evt)
         return;
 
+    LOGD("fend callback: status[0x%x]\n", evt->status);
     if (evt->status &  FE_HAS_LOCK) {
         pFront->mCurSigEv.mCurSigStaus = FEEvent::EVENT_FE_HAS_SIG;
         pFront->mCurSigEv.mCurFreq = evt->parameters.frequency;

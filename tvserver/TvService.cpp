@@ -948,6 +948,17 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case SET_EYE_PROTETION_MODE: {
+        int enable = p.readInt32();
+        int ret = mpTv->setEyeProtectionMode(enable);
+        r->writeInt32(ret);
+        break;
+    }
+    case GET_EYE_PROTETION_MODE: {
+        bool ret = mpTv->getEyeProtectionMode();
+        r->writeInt32(ret);
+        break;
+    }
     case SET_NOISE_REDUCTION_MODE: {
         int mode = p.readInt32();
         int source_type = p.readInt32();

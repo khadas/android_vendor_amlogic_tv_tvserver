@@ -146,6 +146,8 @@ int SSMSaveDisplayMode(int offset, int rw_val);
 int SSMReadDisplayMode(int offset, int *rw_val);
 int SSMSaveBackLightVal(int offset, int rw_val);
 int SSMReadBackLightVal(int offset, int *rw_val);
+int SSMSaveEyeProtectionMode(int rw_val);
+int SSMReadEyeProtectionMode(int *rw_val);
 
 int SSMReadFBCN360BackLightVal(int *rw_val);
 int SSMSaveFBCN360BackLightVal(int rw_val);

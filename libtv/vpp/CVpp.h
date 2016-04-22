@@ -286,8 +286,8 @@ public:
     vpp_noise_reduction_mode_t GetNoiseReductionMode ( tv_source_input_type_t source_type );
     int SetDNLP ( tv_source_input_type_t source_type, tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int LoadVppSettings ( tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    //int Tv_SetVppParamDefault(void);
-
+    int SetEyeProtectionMode(tv_source_input_type_t source_type, int enable);
+    int GetEyeProtectionMode();
 
     int FactorySetPQMode_Brightness ( int source_type, int pq_mode, int brightness );
     int FactoryGetPQMode_Brightness ( int source_type, int pq_mode );

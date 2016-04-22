@@ -5286,6 +5286,16 @@ int CTv::SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable)
     return 0;
 }
 
+int CTv::SetHdmiColorRangeMode(tv_hdmi_color_range_t range_mode)
+{
+    return mHDMIRxManager.SetHdmiColorRangeMode(range_mode);
+}
+
+tv_hdmi_color_range_t CTv::GetHdmiColorRangeMode()
+{
+    return mHDMIRxManager.GetHdmiColorRangeMode();
+}
+
 void CTv::dump(String8 &result)
 {
     result.appendFormat("\naction = %x\n", mTvAction);

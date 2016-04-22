@@ -273,6 +273,8 @@ public:
     int Tv_SplitScreenEffect(int mode, int width, int reverse = 0);
     int setEyeProtectionMode(int enable);
     int getEyeProtectionMode();
+    int SetHdmiColorRangeMode(tv_hdmi_color_range_t range_mode);
+    tv_hdmi_color_range_t GetHdmiColorRangeMode();
 
     //audio
     virtual void updateSubtitle(int, int);

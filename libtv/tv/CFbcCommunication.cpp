@@ -591,7 +591,7 @@ int CFbcCommunication::Fbc_Set_Value_INT32(COMM_DEV_TYPE_E toDev, int cmd_type, 
         write_buf[0] = 0x5a;
         write_buf[1] = 0x5a;
         //package length from begin to end
-        write_buf[2] = 14;
+        write_buf[2] = 0xe;
         write_buf[3] = 0x0;
         //Ack byte
         write_buf[4] = 0x0;
@@ -1236,6 +1236,17 @@ int CFbcCommunication::cfbc_Set_FBC_project_id(COMM_DEV_TYPE_E fromDev, int prj_
 int CFbcCommunication::cfbc_Get_FBC_project_id(COMM_DEV_TYPE_E fromDev, int *prj_id)
 {
     return Fbc_Get_Value_INT8(fromDev, CMD_GET_PROJECT_SELECT, prj_id);
+}
+
+int CFbcCommunication::fbcSetGammaPattern(COMM_DEV_TYPE_E fromDev, unsigned short gamma_r, unsigned short gamma_g, unsigned short gamma_b)
+{
+    unsigned char cmd[4];
+
+    cmd[0] = VPU_CMD_GAMMA_PATTERN;
+    cmd[1] = gamma_r;
+    cmd[2] = gamma_g;
+    cmd[3] = gamma_b;
+    return Fbc_Set_BatchValue(fromDev, cmd, 4);
 }
 
 int CFbcCommunication::cfbc_Set_Gamma(COMM_DEV_TYPE_E fromDev, unsigned char value)

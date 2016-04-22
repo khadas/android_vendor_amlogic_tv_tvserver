@@ -93,7 +93,7 @@ typedef enum fbc_command_e {
     VPU_CMD_PATTERN_EN, //0 or 1;on or off
     VPU_CMD_PATTEN_SEL, //0x2a parameter num 1;PATTEN SELECT
     VPU_CMD_RES2,
-    VPU_CMD_RES3,
+    VPU_CMD_GAMMA_PATTERN,
     VPU_CMD_RES4,
     VPU_CMD_RES5,
     VPU_CMD_USER_VMUTE = 0x2e,
@@ -362,6 +362,7 @@ public:
     int cfbc_Set_AP_STANDBY_N310(COMM_DEV_TYPE_E fromDev, int value);
     int cfbc_Get_AP_STANDBY_N310(COMM_DEV_TYPE_E fromDev, int *value);
     virtual int cfbc_Set_Fbc_Uboot_Stage(COMM_DEV_TYPE_E fromDev, int value);
+    int fbcSetGammaPattern(COMM_DEV_TYPE_E fromDev, unsigned short gamma_r, unsigned short gamma_g, unsigned short gamma_b);
 
 private:
     //now,just one item in list,haha...

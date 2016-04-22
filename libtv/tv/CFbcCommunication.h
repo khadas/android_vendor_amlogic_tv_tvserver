@@ -97,7 +97,7 @@ typedef enum fbc_command_e {
     VPU_CMD_RES4,
     VPU_CMD_RES5,
     VPU_CMD_USER_VMUTE = 0x2e,
-    VPU_CMD_USER_GAMMA ,
+    VPU_CMD_USER_GAMMA,
     //0x30:sound_mode_def
     VPU_CMD_COLOR_TEMPERATURE_DEF = 0x31,   //def:factory setting
     VPU_CMD_BRIGHTNESS_DEF,
@@ -362,6 +362,7 @@ public:
     int cfbc_Set_AP_STANDBY_N310(COMM_DEV_TYPE_E fromDev, int value);
     int cfbc_Get_AP_STANDBY_N310(COMM_DEV_TYPE_E fromDev, int *value);
     virtual int cfbc_Set_Fbc_Uboot_Stage(COMM_DEV_TYPE_E fromDev, int value);
+    int fbcSetGammaValue(COMM_DEV_TYPE_E fromDev, int gamma_curve, int is_save);
     int fbcSetGammaPattern(COMM_DEV_TYPE_E fromDev, unsigned short gamma_r, unsigned short gamma_g, unsigned short gamma_b);
 
 private:

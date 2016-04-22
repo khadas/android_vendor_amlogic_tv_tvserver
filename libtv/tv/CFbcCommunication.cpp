@@ -1238,6 +1238,16 @@ int CFbcCommunication::cfbc_Get_FBC_project_id(COMM_DEV_TYPE_E fromDev, int *prj
     return Fbc_Get_Value_INT8(fromDev, CMD_GET_PROJECT_SELECT, prj_id);
 }
 
+int CFbcCommunication::fbcSetGammaValue(COMM_DEV_TYPE_E fromDev, int gamma_curve, int is_save)
+{
+    unsigned char cmd[3];
+
+    cmd[0] = VPU_CMD_USER_GAMMA;
+    cmd[1] = gamma_curve;
+    cmd[2] = is_save;
+    return Fbc_Set_BatchValue(fromDev, cmd, 3);
+}
+
 int CFbcCommunication::fbcSetGammaPattern(COMM_DEV_TYPE_E fromDev, unsigned short gamma_r, unsigned short gamma_g, unsigned short gamma_b)
 {
     unsigned char cmd[4];

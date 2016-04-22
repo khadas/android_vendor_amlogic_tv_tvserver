@@ -425,7 +425,7 @@ int CVpp::Vpp_GetPQModeValue(tv_source_input_type_t source_type, vpp_picture_mod
     return 0;
 }
 
-int CVpp::Vpp_SetPQParams(tv_source_input_type_t source_type, vpp_picture_mode_t pq_mode,
+int CVpp::Vpp_SetPQParams(tv_source_input_type_t source_type, vpp_picture_mode_t pq_mode __unused,
                           vpp_pq_para_t pq_para, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d,
                           tvin_trans_fmt_t trans_fmt)
 {

@@ -101,6 +101,7 @@ public:
     int fbcGetOffsetGreen( void );
     int fbcSetOffsetBlue( int value );
     int fbcGetOffsetBlue ();
+    int fbcSetGammaValue(vpp_gamma_curve_t gamma_curve, int is_save);
     int whiteBalanceGainRedGet(int sourceType, int colortemp_mode);
     int whiteBalanceGainGreenGet(int sourceType, int colortemp_mode);
     int whiteBalanceGainBlueGet(int sourceType, int colortemp_mode);

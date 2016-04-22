@@ -445,6 +445,15 @@ int CTvFactory::fbcSelectTestPattern(int value)
     return ret;
 }
 
+int CTvFactory::fbcSetGammaValue(vpp_gamma_curve_t gamma_curve, int is_save)
+{
+    if (mFbcObj != NULL) {
+        mFbcObj->fbcSetGammaValue(COMM_DEV_SERIAL, (int)gamma_curve, is_save);
+        return 0;
+    }
+    return -1;
+}
+
 int CTvFactory::fbcSetGainRed( int value )
 {
     if (mFbcObj != NULL) {

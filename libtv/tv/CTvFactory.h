@@ -128,6 +128,7 @@ public:
     int fbcColorTempModeN360Get ();
     int fbcWBInitialSet( int status );
     int fbcWBInitialGet ();
+    int fbcSetColorTemperature(vpp_color_temperature_mode_t temp_mode);
 
     int fbcSetThermalState( int value );
     int fbcBacklightOnOffSet(int value);

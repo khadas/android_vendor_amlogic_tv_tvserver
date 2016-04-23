@@ -33,6 +33,11 @@ CVpp::CVpp()
     vpp_amvideo_fd = -1;
     vpp_amvideo_3d_fd = -1;
     mpPqData = new CPqData();
+    fbcIns = GetSingletonFBC();
+    const char *value = config_get_str(CFG_SECTION_TV, CFG_FBC_USED, "true");
+    if (strcmp(value, "true") == 0) {
+        mHdmiOutFbc = true;
+    }
 }
 
 CVpp::~CVpp()
@@ -178,14 +183,6 @@ int CVpp::Vpp_LoadRegs(am_regs_t regs)
     return rt;
 }
 
-int CVpp::isPreviewWindow()
-{
-    char prop_value[PROPERTY_VALUE_MAX] = {0};
-    property_get("tv.is.preview.window", prop_value, "false");
-    LOGV("%s, prop tv.is.preview.window is \"%s\".\n", __FUNCTION__, prop_value);
-    return (strcmp(prop_value, "true") == 0) ? 1 : 0;
-}
-
 int CVpp::LoadVppSettings(tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt,
                           is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
 {
@@ -216,23 +213,10 @@ int CVpp::LoadVppSettings(tv_source_input_type_t source_type, tvin_sig_fmt_t sig
 
     ret |= Vpp_SetBaseColorMode(GetBaseColorMode(), source_port, sig_fmt, is3d, trans_fmt);
 
-    if (isPreviewWindow()) {
-        temp_mode = GetColorTemperature(SOURCE_TYPE_MPEG);
-        if (temp_mode == VPP_COLOR_TEMPERATURE_MODE_USER) {
-            ret |= Vpp_SetColorTemperatureUser(temp_mode, SOURCE_TYPE_MPEG);
-        } else {
-            CheckColorTemperatureParamAlldata(TVIN_PORT_HDMI0, sig_fmt, trans_fmt); // check colortmp backup data
-            ret |= Vpp_SetColorTemperature(temp_mode, SOURCE_TYPE_MPEG, source_port, sig_fmt, trans_fmt);
-        }
-    } else {
-        temp_mode = GetColorTemperature(source_type);
-        if (temp_mode == VPP_COLOR_TEMPERATURE_MODE_USER) {
-            ret |= Vpp_SetColorTemperatureUser(temp_mode, source_type);
-        } else {
-            CheckColorTemperatureParamAlldata(TVIN_PORT_HDMI0, sig_fmt, trans_fmt); // check colortmp backup data
-            ret |= Vpp_SetColorTemperature(temp_mode, source_type, source_port, sig_fmt, trans_fmt);
-        }
-    }
+    temp_mode = GetColorTemperature(source_type);
+    if (temp_mode != VPP_COLOR_TEMPERATURE_MODE_USER)
+        CheckColorTemperatureParamAlldata(TVIN_PORT_HDMI0, sig_fmt, trans_fmt);
+    ret |= SetColorTemperature(temp_mode, source_type, 0);
 
     pqmode = GetPQMode(source_type);
     ret |= Vpp_SetPQMode(pqmode, source_type, source_port, sig_fmt, is3d, trans_fmt);
@@ -686,33 +670,6 @@ int CVpp::Vpp_SetColorTemperatureUser(vpp_color_temperature_mode_t temp_mode __u
     }
 
     LOGE("Vpp_SetColorTemperatureUser, source_type_user[%d] failed.", source_type);
-    return -1;
-}
-
-int CVpp::Vpp_SetColorTemperature(vpp_color_temperature_mode_t Tempmode,
-                                  tv_source_input_type_t source_type,
-                                  tvin_port_t source_port __unused,
-                                  tvin_sig_fmt_t sig_fmt __unused,
-                                  tvin_trans_fmt_t trans_fmt __unused)
-{
-    tcon_rgb_ogo_t rgbogo, rgbPreOffset;
-    int ret = -1;
-
-    if (mbVppCfg_gamma_onoff) {
-        VPP_SetGammaOnOff(0);
-    } else {
-        VPP_SetGammaOnOff(1);
-    }
-
-    GetColorTemperatureParams(Tempmode, &rgbogo);
-    if (GetEyeProtectionMode())//if eye protection mode is enable, b_gain / 2.
-        rgbogo.b_gain /= 2;
-
-    if (VPP_SetRGBOGO(&rgbogo) == 0) {
-        return 0;
-    }
-
-    LOGE("Vpp_SetColorTemperature, source_type[%d] failed.", source_type);
     return -1;
 }
 
@@ -1351,6 +1308,8 @@ int CVpp::SetColorTempWithoutSave(vpp_color_temperature_mode_t Tempmode,
     }
 
     GetColorTemperatureParams(Tempmode, &rgbogo);
+    if (GetEyeProtectionMode())//if eye protection mode is enable, b_gain / 2.
+        rgbogo.b_gain /= 2;
 
     return VPP_SetRGBOGO(&rgbogo);
 
@@ -1385,19 +1344,25 @@ int CVpp::SaveColorTemp(vpp_color_temperature_mode_t Tempmode, tv_source_input_t
     return ret;
 }
 
-int CVpp::SetColorTemperature(vpp_color_temperature_mode_t Tempmode,
+int CVpp::SetColorTemperature(vpp_color_temperature_mode_t temp_mode,
                               tv_source_input_type_t source_type, int is_save)
 {
-    if (SetColorTempWithoutSave(Tempmode, source_type) < 0) {
-        LOGE("%s, failed!", __FUNCTION__);
-        return -1;
+    if (mHdmiOutFbc) {
+        return VPP_FBCSetColorTemperature(temp_mode);
+    }
+
+    if (temp_mode == VPP_COLOR_TEMPERATURE_MODE_USER) {
+        if (Vpp_SetColorTemperatureUser(temp_mode, source_type) < 0) {
+            LOGE("%s, Vpp_SetColorTemperatureUser failed.", __FUNCTION__);
+            return -1;
+        }
     } else {
-        if (is_save == 1) {
-            return SaveColorTemp(Tempmode, source_type);
-        } else {
-            return 0;
+        if (SetColorTempWithoutSave(temp_mode, source_type) < 0) {
+            LOGE("%s, SetColorTempWithoutSave failed!", __FUNCTION__);
+            return -1;
         }
     }
+    return (is_save == 1) ? SaveColorTemp(temp_mode, source_type) : 0;
 }
 
 vpp_color_temperature_mode_t CVpp::GetColorTemperature(tv_source_input_type_t source_type)
@@ -1455,12 +1420,7 @@ int CVpp::SetEyeProtectionMode(tv_source_input_type_t source_type, int enable)
 
     SSMSaveEyeProtectionMode(enable);
     vpp_color_temperature_mode_t temp_mode = GetColorTemperature(source_type);
-    if (temp_mode == VPP_COLOR_TEMPERATURE_MODE_USER) {
-        ret |= Vpp_SetColorTemperatureUser(temp_mode, source_type);
-    } else {
-        ret |= Vpp_SetColorTemperature(temp_mode, source_type, TVIN_PORT_NULL, TVIN_SIG_FMT_NULL, TVIN_TFMT_2D);
-    }
-
+    SetColorTemperature(temp_mode, source_type, 0);
     return ret;
 }
 
@@ -3625,5 +3585,91 @@ int CVpp::VPP_SetScalerPathSel(const unsigned int value)
     fclose(fp);
     fp = NULL;
     return 0;
+}
+
+int CVpp::VPP_FBCSetColorTemperature(vpp_color_temperature_mode_t temp_mode)
+{
+    int ret = -1;
+    if (CVpp::getInstance()->GetEyeProtectionMode()) {
+        tcon_rgb_ogo_t rgb_ogo;
+        VPP_FBCColorTempBatchGet(temp_mode, &rgb_ogo);
+        rgb_ogo.b_gain /= 2;
+        ret = VPP_FBCColorTempBatchSet(temp_mode, rgb_ogo);
+    } else {
+        if (fbcIns != NULL)
+            ret = fbcIns->cfbc_Set_ColorTemp_Mode(COMM_DEV_SERIAL, temp_mode);
+    }
+    return ret;
+}
+
+int CVpp::VPP_FBCColorTempBatchSet(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params)
+{
+    unsigned char mode = 0, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset;
+    switch (Tempmode) {
+    case VPP_COLOR_TEMPERATURE_MODE_STANDARD:
+        mode = 1;   //COLOR_TEMP_STD
+        break;
+    case VPP_COLOR_TEMPERATURE_MODE_WARM:
+        mode = 2;   //COLOR_TEMP_WARM
+        break;
+    case VPP_COLOR_TEMPERATURE_MODE_COLD:
+        mode = 0;  //COLOR_TEMP_COLD
+        break;
+    case VPP_COLOR_TEMPERATURE_MODE_USER:
+        mode = 3;   //COLOR_TEMP_USER
+        break;
+    default:
+        break;
+    }
+    r_gain = (params.r_gain * 255) / 2047; // u1.10, range 0~2047, default is 1024 (1.0x)
+    g_gain = (params.g_gain * 255) / 2047;
+    b_gain = (params.b_gain * 255) / 2047;
+    r_offset = (params.r_post_offset + 1024) * 255 / 2047; // s11.0, range -1024~+1023, default is 0
+    g_offset = (params.g_post_offset + 1024) * 255 / 2047;
+    b_offset = (params.b_post_offset + 1024) * 255 / 2047;
+    LOGD ( "~colorTempBatchSet##%d,%d,%d,%d,%d,%d,##", r_gain, g_gain, b_gain, r_offset, g_offset, b_offset );
+
+    if (fbcIns != NULL) {
+        fbcIns->cfbc_Set_WB_Batch(COMM_DEV_SERIAL, mode, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset);
+        return 0;
+    }
+
+    return -1;
+}
+
+int CVpp::VPP_FBCColorTempBatchGet(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params)
+{
+    unsigned char mode = 0, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset;
+    switch (Tempmode) {
+    case VPP_COLOR_TEMPERATURE_MODE_STANDARD:
+        mode = 1;   //COLOR_TEMP_STD
+        break;
+    case VPP_COLOR_TEMPERATURE_MODE_WARM:
+        mode = 2;   //COLOR_TEMP_WARM
+        break;
+    case VPP_COLOR_TEMPERATURE_MODE_COLD:
+        mode = 0;  //COLOR_TEMP_COLD
+        break;
+    case VPP_COLOR_TEMPERATURE_MODE_USER:
+        mode = 3;   //COLOR_TEMP_USER
+        break;
+    default:
+        break;
+    }
+
+    if (fbcIns != NULL) {
+        fbcIns->cfbc_Get_WB_Batch(COMM_DEV_SERIAL, mode, &r_gain, &g_gain, &b_gain, &r_offset, &g_offset, &b_offset);
+        LOGD ( "~colorTempBatchGet##%d,%d,%d,%d,%d,%d,##", r_gain, g_gain, b_gain, r_offset, g_offset, b_offset );
+
+        params->r_gain = (r_gain * 2047) / 255;
+        params->g_gain = (g_gain * 2047) / 255;
+        params->b_gain = (b_gain * 2047) / 255;
+        params->r_post_offset = (r_offset * 2047) / 255 - 1024;
+        params->g_post_offset = (g_offset * 2047) / 255 - 1024;
+        params->b_post_offset = (b_offset * 2047) / 255 - 1024;
+        return 0;
+    }
+
+    return -1;
 }
 

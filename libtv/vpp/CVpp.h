@@ -5,6 +5,8 @@
 #include "amvecm.h"
 #include "pqdata.h"
 #include "../tvin/CTvin.h"
+#include "../tv/CFbcCommunication.h"
+
 #define GLOBAL_OGO_FORMAT_FLAG  0x6688
 #define RGB_FORMAT          0
 #define YCbCr_422_FORMAT    1
@@ -236,8 +238,6 @@ public:
     int Vpp_ResetLastVppSettingsSourceType ( void );
     int Vpp_SetColorDemoMode ( vpp_color_demomode_t demomode );
     int Vpp_SetBaseColorMode ( vpp_color_basemode_t basemode , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
-    int Vpp_SetColorTemperatureUser ( vpp_color_temperature_mode_t temp_mode, tv_source_input_type_t source_type );
-    int Vpp_SetColorTemperature ( vpp_color_temperature_mode_t Tempmode, tv_source_input_type_t source_type, tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt);
     int Vpp_SetBrightness ( int value, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int Vpp_SetContrast ( int value, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int Vpp_SetSaturation ( int value, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
@@ -266,7 +266,7 @@ public:
     vpp_color_basemode_t GetBaseColorMode ( void );
     int SetBaseColorModeWithoutSave ( vpp_color_basemode_t basemode , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
     int SaveBaseColorMode ( vpp_color_basemode_t basemode );
-    int SetColorTemperature ( vpp_color_temperature_mode_t Tempmode, tv_source_input_type_t source_type, int is_save );
+    int SetColorTemperature ( vpp_color_temperature_mode_t temp_mode, tv_source_input_type_t source_type, int is_save );
     vpp_color_temperature_mode_t GetColorTemperature ( tv_source_input_type_t source_type );
     int SetColorTempWithoutSave ( vpp_color_temperature_mode_t Tempmode, tv_source_input_type_t source_type );
     int SaveColorTemp ( vpp_color_temperature_mode_t Tempmode, tv_source_input_type_t source_type );
@@ -398,6 +398,7 @@ public:
 private:
     //
     int Vpp_LoadGamma(vpp_gamma_curve_t gamma_curve);
+    int Vpp_SetColorTemperatureUser(vpp_color_temperature_mode_t temp_mode, tv_source_input_type_t source_type);
     int VPP_OpenModule ( void );
     int VPP_CloseModule ( void );
     int VPP_SetVideoBrightness ( int value );
@@ -437,10 +438,13 @@ private:
     int VPP_SetVideoSaturation ( int );
     int VPP_SetVideoHue ( int );
     int VPP_SetDeinterlaceMode ( int );
-
-    int isPreviewWindow();
+    int VPP_FBCColorTempBatchGet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t *);
+    int VPP_FBCColorTempBatchSet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t);
+    int VPP_FBCSetColorTemperature(vpp_color_temperature_mode_t);
 
     static CVpp *mInstance;
+    bool mHdmiOutFbc;
+    CFbcCommunication *fbcIns;
     tv_source_input_type_t vpp_setting_last_source_type;
     tvin_sig_fmt_t vpp_setting_last_sig_fmt;
     tvin_trans_fmt_t vpp_setting_last_trans_fmt;

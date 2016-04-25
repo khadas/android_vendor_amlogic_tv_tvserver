@@ -1209,6 +1209,20 @@ int CTvFactory::formatOutputGainParams(int value)
     return value;
 }
 
+int CTvFactory::fbcSetColorTemperature(vpp_color_temperature_mode_t temp_mode)
+{
+    int ret = -1;
+    if (CVpp::getInstance()->GetEyeProtectionMode()) {
+        tcon_rgb_ogo_t rgb_ogo;
+        colorTempBatchGet(temp_mode, &rgb_ogo);
+        rgb_ogo.b_gain /= 2;
+        ret = colorTempBatchSet(temp_mode, rgb_ogo);
+    } else {
+        ret = fbcColorTempModeSet(temp_mode);
+    }
+    return ret;
+}
+
 int CTvFactory::colorTempBatchSet(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params)
 {
     unsigned char mode = 0, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset;

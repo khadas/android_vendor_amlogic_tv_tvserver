@@ -51,3 +51,15 @@ int config_set_int(const char *section, const char *key, const int value)
     pIniFile->SetInt(section, key, value);
     return 0;
 }
+
+float config_get_float(const char *section, const char *key, const float def_value)
+{
+    return pIniFile->GetFloat(section, key, def_value);
+}
+
+int config_set_float(const char *section, const char *key, const int value)
+{
+    pIniFile->SetFloat(section, key, value);
+    return 0;
+}
+

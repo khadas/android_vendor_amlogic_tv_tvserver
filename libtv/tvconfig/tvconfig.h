@@ -43,11 +43,14 @@
 #define CFG_AUDIO_SRS_CLARITY_GAIN              "audio.srs.dialogclarity.gain"
 #define CFG_AUDIO_SRS_DEFINITION_GAIN           "audio.srs.definition.gain"
 
-#define CFG_AUDIO_SRS_SOURROUND_MASTER_GAIN "audio.srs.sourround.ampmaster.gain"
+#define CFG_AUDIO_SRS_SOURROUND_MASTER_GAIN     "audio.srs.sourround.ampmaster.gain"
 #define CFG_AUDIO_SRS_CLARITY_MASTER_GAIN       "audio.srs.dialogclarity.ampmaster.gain"
 #define CFG_AUDIO_SRS_TRUBASS_MASTER_GAIN       "audio.srs.trubass.ampmaster.gain"
 #define CFG_AUDIO_SRS_TRUBASS_CLARITY_MASTER_GAIN "audio.srs.trubass.dialogclarity.ampmaster.gain"
-
+#define CFG_AUDIO_PRE_GAIN_FOR_ATV              "audio.pre.gain.for.atv"
+#define CFG_AUDIO_PRE_GAIN_FOR_DTV              "audio.pre.gain.for.dtv"
+#define CFG_AUDIO_PRE_GAIN_FOR_AV               "audio.pre.gain.for.av"
+#define CFG_AUDIO_PRE_GAIN_FOR_HDMI             "audio.pre.gain.for.hdmi"
 
 #define CFG_FBC_PANEL_INFO                      "fbc.get.panelinfo"
 #define CFG_FBC_USED                            "platform.havefbc"
@@ -95,6 +98,8 @@ extern int config_set_str(const char *section, const char *key, const char *valu
 extern const char *config_get_str(const char *section, const char *key, const char *def_value);
 extern int config_get_int(const char *section, const char *key, const int def_value);
 extern int config_set_int(const char *section, const char *key, const int value);
+extern float config_get_float(const char *section, const char *key, const float def_value);
+extern int config_set_float(const char *section, const char *key, const int value);
 
 
 #endif //__TVCONFIG_API_H__

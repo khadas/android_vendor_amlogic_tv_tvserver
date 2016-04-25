@@ -50,6 +50,8 @@ public:
 
     const char *GetString(const char *section, const char *key, const char *def_value);
     int GetInt(const char *section, const char *key, int def_value);
+    float GetFloat(const char *section, const char *key, float def_value);
+    int SetFloat(const char *section, const char *key, float value);
 
 private:
     LINE_TYPE getLineType(char *Str);

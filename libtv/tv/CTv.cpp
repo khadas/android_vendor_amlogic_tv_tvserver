@@ -1777,7 +1777,7 @@ int CTv::Tv_MiscSetBySource ( tv_source_input_t source_input )
     return ret;
 }
 
-int CTv::SetSourceSwitchInput (tv_source_input_t source_input )
+int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
 {
     Mutex::Autolock _l ( mLock );
     LOGD ( "%s, source input = %d", __FUNCTION__, source_input );
@@ -1998,6 +1998,7 @@ void CTv::onSigStillStable()
     }
     if ( m_sig_stable_nums == 3) {
         LOGD("still stable , to unmute audio/video");
+        setAudioPreGain(m_source_input);
         CMessage msg;
         msg.mDelayMs = 0;
         msg.mType = CTvMsgQueue::TV_MSG_ENABLE_VIDEO_LATER;
@@ -3418,6 +3419,44 @@ int CTv::Tv_SaveDisplayMode ( vpp_display_mode_t mode, tv_source_input_type_t so
     return SSMSaveDisplayMode ( source_type, (int)mode );
 }
 
+int CTv::setAudioPreGain(tv_source_input_t source_input)
+{
+    float pre_gain = getAudioPreGain(source_input);
+    if (pre_gain > -100.000001 && pre_gain < -99.999999) {
+        return -1;
+    }
+
+    return setAmAudioPreGain(pre_gain);
+}
+
+float CTv::getAudioPreGain(tv_source_input_t source_input)
+{
+    float pre_gain = -100;//default value is -100, if value of gain is -100, don't set it to AMAUDIO.
+    switch (source_input) {
+    case SOURCE_AV1:
+    case SOURCE_AV2:
+        pre_gain = config_get_float(CFG_SECTION_TV, CFG_AUDIO_PRE_GAIN_FOR_AV, -100);
+        break;
+    case SOURCE_HDMI1:
+    case SOURCE_HDMI2:
+    case SOURCE_HDMI3:
+        pre_gain = config_get_float(CFG_SECTION_TV, CFG_AUDIO_PRE_GAIN_FOR_HDMI, -100);
+        break;
+    case SOURCE_DTV:
+        pre_gain = config_get_float(CFG_SECTION_TV, CFG_AUDIO_PRE_GAIN_FOR_DTV, -100);
+        break;
+    case SOURCE_MPEG:
+        pre_gain = 0;
+        break;
+    case SOURCE_TV:
+        pre_gain = config_get_float(CFG_SECTION_TV, CFG_AUDIO_PRE_GAIN_FOR_ATV, -100);
+        break;
+    default:
+        break;
+    }
+    return pre_gain;
+}
+
 int CTv::setEyeProtectionMode(int enable)
 {
     int ret = -1;
@@ -4833,6 +4872,54 @@ int CTv::OpenAmAudio(unsigned int sr, int input_device, int output_device)
 int CTv::CloseAmAudio(void)
 {
     return amAudioClose();
+}
+
+int CTv::setAmAudioPreMute(int mute)
+{
+    LOGD("%s, ", __FUNCTION__);
+    int ret = -1;
+    if (m_source_input == SOURCE_DTV) {
+        ret = mAv.AudioSetPreMute(mute);
+    } else {
+        ret = amAudioSetPreMute(mute);
+    }
+    return ret;
+}
+
+int CTv::getAmAudioPreMute()
+{
+    LOGD("%s, ", __FUNCTION__);
+    uint mute = -1;
+    if (m_source_input == SOURCE_DTV) {
+        mAv.AudioGetPreMute(&mute);
+    } else {
+        amAudioGetPreMute(&mute);
+    }
+    return mute;
+}
+
+int CTv::setAmAudioPreGain(float pre_gain)
+{
+    LOGD("%s, ", __FUNCTION__);
+    int ret = -1;
+    if (m_source_input == SOURCE_DTV) {
+        ret = mAv.AudioSetPreGain(pre_gain);
+    } else {
+        ret = amAudioSetPreGain(pre_gain);
+    }
+    return ret;
+}
+
+float CTv::getAmAudioPreGain()
+{
+    LOGD("%s, ", __FUNCTION__);
+    float pre_gain = -1;
+    if (m_source_input == SOURCE_DTV) {
+        mAv.AudioGetPreGain(&pre_gain);
+    } else {
+        amAudioGetPreGain(&pre_gain);
+    }
+    return pre_gain;
 }
 
 int CTv::SetAmAudioInputSr(unsigned int sr, int output_device)

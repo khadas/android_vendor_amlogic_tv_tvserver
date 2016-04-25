@@ -372,6 +372,10 @@ public:
     int AudioSetLineInCaptureVolume(int l_vol, int r_vol);
     int SetKalaokIO(int level);
     int setAudioPcmPlaybackVolume(int val);
+    int setAmAudioPreGain(float pre_gain);
+    float getAmAudioPreGain();
+    int setAmAudioPreMute(int mute);
+    int getAmAudioPreMute();
 
     int openTvAudio();
     int closeTvAudio();
@@ -445,6 +449,8 @@ private:
     int MappingLine(int, int, int, int, int);
     int MappingTrebleBassAndEqualizer(int, int, int, int);
     int SetSPDIFMode(int mode_val);
+    int setAudioPreGain(tv_source_input_t source_input);
+    float getAudioPreGain(tv_source_input_t source_input);
 
     CAudioAlsa mAudioAlsa;
     CAudioEffect mAudioEffect;

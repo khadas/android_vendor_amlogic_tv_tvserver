@@ -2641,15 +2641,18 @@ int CTvin::Tvin_RemovePath ( tv_path_type_t pathtype )
     int ret = -1;
     int i = 0, dly = 10;
 
-    while (true) {
+    for ( i = 0; i<500; i++ ) {
         ret = Tvin_CheckPathActive ( pathtype );
-
         if ( ret == TV_PATH_STATUS_INACTIVE ) {
             LOGD ( "%s, check path is inactive, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
             break;
         } else if ( ret == TV_PATH_STATUS_ACTIVE ) {
             usleep ( dly * 1000 );
         }
+    }
+
+    if ( i == 500 ) {
+        LOGE ( "%s, check path active faild, %d ms gone.\n", "TV", ( dly * i ) );
     }
 
     if ( pathtype == TV_PATH_TYPE_DEFAULT ) {

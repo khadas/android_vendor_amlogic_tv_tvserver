@@ -5,7 +5,7 @@
 #include "CBlobDeviceE2prom.h"
 #include "CBlobDeviceFile.h"
 
-#include "../tvconfig/tvconfig.h"
+#include <tvconfig.h>
 
 #include "CTvLog.h"
 #include "CTvSettingCfg.h"

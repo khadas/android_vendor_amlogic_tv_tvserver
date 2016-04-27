@@ -5,6 +5,7 @@ include $(CLEAR_VARS)
 $(shell rm -r vendor/amlogic/prebuilt/tv)
 
 DVB_PATH := $(wildcard external/dvb)
+LIB_TV_UTILS := $(LOCAL_PATH)/../tvutils
 
 ifeq ($(DVB_PATH), )
   DVB_PATH := $(wildcard vendor/amlogic/external/dvb)
@@ -30,7 +31,6 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := \
   tv/CAutoPQparam.cpp \
   tv/AutoBackLight.cpp \
-  tv/CTvLog.cpp \
   tv/CTvEv.cpp \
   tv/CTvEpg.cpp \
   tv/CTvRecord.cpp \
@@ -41,9 +41,7 @@ LOCAL_SRC_FILES := \
   tv/CTvBooking.cpp \
   tv/CFrontEnd.cpp \
   tv/CTvVchipCheck.cpp \
-  tv/CFbcCommunication.cpp \
   tv/CTvScreenCapture.cpp \
-  tv/CUpgradeFBC.cpp \
   tv/CAv.cpp \
   tv/CTvDmx.cpp \
   tv/CTvFactory.cpp \
@@ -54,20 +52,6 @@ LOCAL_SRC_FILES := \
   vpp/CVpp.cpp \
   vpp/pqdata.cpp \
   vpp/CPQdb.cpp \
-  tvutils/tvutils.cpp \
-  tvutils/CFile.cpp \
-  tvutils/CThread.cpp \
-  tvutils/CMsgQueue.cpp \
-  tvutils/zepoll.cpp \
-  tvutils/serial_base.cpp \
-  tvutils/serial_operate.cpp \
-  tvutils/CSerialCommunication.cpp \
-  tvutils/CSerialPort.cpp \
-  tvutils/CHdmiCecCmd.cpp \
-  tvutils/CVirtualInput.cpp \
-  tvutils/CSqlite.cpp \
-  tvconfig/tvconfig.cpp \
-  tvconfig/CIniFile.cpp \
   audio/CTvAudio.cpp \
   audio/audio_effect.cpp \
   audio/audio_alsa.cpp \
@@ -85,7 +69,9 @@ LOCAL_SRC_FILES := \
   tvdb/CTvEvent.cpp \
   tvdb/CTvGroup.cpp \
   tvdb/CTvProgram.cpp \
-  tvdb/CTvRegion.cpp
+  tvdb/CTvRegion.cpp \
+  fbcutils/CFbcCommunication.cpp \
+  fbcutils/fbcutils.cpp
 
 LOCAL_SHARED_LIBRARIES := \
   libui \
@@ -121,7 +107,15 @@ else
   LOCAL_SHARED_LIBRARIES += libasound
 endif
 
-LOCAL_STATIC_LIBRARIES += libz
+LOCAL_STATIC_LIBRARIES += \
+  libz \
+  libtv_utils
+
+LOCAL_C_INCLUDES += \
+  $(LOCAL_PATH)/../tvfbclinker/include \
+  $(LIB_TV_UTILS)/include
+
+LOCAL_SHARED_LIBRARIES += libtv_linker
 
 LOCAL_CFLAGS := \
   -fPIC -fsigned-char -D_POSIX_SOURCE \

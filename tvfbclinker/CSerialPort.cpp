@@ -1,8 +1,7 @@
-#define LOG_TAG "tvserver"
+#define LOG_TAG "CSerialPort"
 
 #include "CSerialPort.h"
 #include <pthread.h>
-#include "CTvLog.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -12,8 +11,6 @@
 #include <string.h>
 #include <termios.h>
 #include <errno.h>
-
-#include "../tvconfig/tvconfig.h"
 
 static int com_read_data(int hComm, unsigned char *pData, unsigned int uLen)
 {
@@ -61,11 +58,6 @@ static int com_read_data(int hComm, unsigned char *pData, unsigned int uLen)
 
         if (FD_ISSET(hComm, &readset)) {
             z = read(hComm, buff, uLen - c);
-#if 0
-            for (k = 0; k < z; k++) {
-                LOGD("%s, inbuff[%d]:%02X", "TV", k, buff[k]);
-            }
-#endif
             c += z;
 
             if (z > 0) {
@@ -245,12 +237,12 @@ int CSerialPort::set_opt(int speed, int db, int sb, char pb, int overtime, bool 
     int i = 0;
     struct termios old_cfg, new_cfg;
     if (mFd <= 0) {
-        LOGE("not open dev, when set opt");
+        //LOGE("not open dev, when set opt");
         return -1;
     }
     //first get it
     if (tcgetattr(mFd, &old_cfg) != 0) {
-        LOGE("get serial attr error mFd = %d(%s)!\n", mFd, strerror(errno));
+        //LOGE("get serial attr error mFd = %d(%s)!\n", mFd, strerror(errno));
         return -1;
     }
 
@@ -279,7 +271,7 @@ int CSerialPort::set_opt(int speed, int db, int sb, char pb, int overtime, bool 
     //clear
     tcflush(mFd, TCIOFLUSH);
     if (tcsetattr(mFd, TCSANOW, &new_cfg) < 0) {
-        LOGE("%s, set serial attr error(%s)!\n", "TV", strerror(errno));
+        //LOGE("%s, set serial attr error(%s)!\n", "TV", strerror(errno));
         return -1;
     }
     //clear,let be avail
@@ -295,7 +287,7 @@ int CSerialPort::writeFile(const unsigned char *pData, unsigned int uLen)
         return len;
     } else {
         tcflush(mFd, TCOFLUSH);
-        LOGE("write data failed and tcflush hComm\n");
+        //LOGE("write data failed and tcflush hComm\n");
         return -1;
     }
 }
@@ -317,7 +309,7 @@ int CSerialPort::setdatabits(struct termios *s, int db)
     } else if (db == 8) {
         s->c_cflag = (s->c_cflag & ~CSIZE) | (CS8 & CSIZE);
     } else {
-        LOGE("Unsupported data size!\n");
+        //LOGE("Unsupported data size!\n");
     }
     return 0;
 }
@@ -329,7 +321,7 @@ int CSerialPort::setstopbits(struct termios *s, int sb)
     } else if (sb == 2) {
         s->c_cflag |= CSTOPB;
     } else {
-        LOGE("Unsupported stop bits!\n");
+        //LOGE("Unsupported stop bits!\n");
     }
     return 0;
 }
@@ -351,7 +343,7 @@ int CSerialPort::setparity(struct termios *s, char pb)
         s->c_cflag &= ~CSTOPB;
         s->c_cflag |= INPCK; /* Disable parity checking */
     } else {
-        LOGE("Unsupported parity!\n");
+        //LOGE("Unsupported parity!\n");
     }
     return 0;
 }

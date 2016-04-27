@@ -13,7 +13,7 @@
 #include <am_dvr.h>
 #include <errno.h>
 #include "CTvProgram.h"
-#include "../tvconfig/tvconfig.h"
+#include <tvconfig.h>
 #include "CTvRecord.h"
 
 #define FEND_DEV_NO 0

@@ -5,7 +5,7 @@
 #include "amvecm.h"
 #include "pqdata.h"
 #include "../tvin/CTvin.h"
-#include "../tv/CFbcCommunication.h"
+#include "fbcutils/CFbcCommunication.h"
 
 #define GLOBAL_OGO_FORMAT_FLAG  0x6688
 #define RGB_FORMAT          0

@@ -1,21 +1,9 @@
-//
-//
-//  amlogic 2015
-//
-//  @ Project : tv
-//  @ File Name :
-//  @ Date : 2015 -9
-//  @ Author : hao.fu
-//
-//
-
-
 #if !defined(_CAUTOPQPARAM_H)
 #define _CAUTOPQPARAM_H
 #include "CAv.h"
-#include "../tvutils/CThread.h"
+#include <CThread.h>
 #include "../vpp/CVpp.h"
-#include "../tvconfig/tvconfig.h"
+#include <tvconfig.h>
 
 class CAutoPQparam: public CThread {
 private:

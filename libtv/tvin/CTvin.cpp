@@ -19,9 +19,9 @@
 #include "../vpp/CPQdb.h"
 #include "CAv.h"
 #include "../tvsetting/CTvSetting.h"
-#include "../tvutils/tvutils.h"
-#include "../tvconfig/tvconfig.h"
-#include "CFbcCommunication.h"
+#include <tvutils.h>
+#include <tvconfig.h>
+#include "fbcutils/CFbcCommunication.h"
 
 #define AFE_DEV_PATH        "/dev/tvafe0"
 #define AMLVIDEO2_DEV_PATH  "/dev/video11"
@@ -2482,8 +2482,8 @@ int CTvin::CTvinSigDetect::Tv_TvinSigDetect ( int &sleeptime )
     CTvin::getInstance()->VDIN_GetSignalInfo ( &m_cur_sig_info ); //get info
     //set no sig check times
     static long long sNosigKeepTime = 0;
-    LOGD("stime=%d status=%d, fmt = %d sNosigKeepTime = %lld, mKeepNosigTime = %d",
-        sleeptime, m_cur_sig_info.status, m_cur_sig_info.fmt, sNosigKeepTime, mKeepNosigTime);
+    //LOGD("stime=%d status=%d, fmt = %d sNosigKeepTime = %lld, mKeepNosigTime = %d",
+    //    sleeptime, m_cur_sig_info.status, m_cur_sig_info.fmt, sNosigKeepTime, mKeepNosigTime);
     if ( m_cur_sig_info.status == TVIN_SIG_STATUS_NOSIG  || m_cur_sig_info.status == TVIN_SIG_STATUS_NULL ) {
         sNosigKeepTime += sleeptime;
         if ( sNosigKeepTime > mKeepNosigTime ) { //real no sig

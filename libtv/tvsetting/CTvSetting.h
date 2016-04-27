@@ -7,7 +7,7 @@
 #include "CTvSettingCfg.h"
 #include "CTvSettingDeviceFactory.h"
 #include "TvKeyData.h"
-#include "../tv/CTvLog.h"
+#include <CTvLog.h>
 
 using namespace android;
 
@@ -80,8 +80,6 @@ int SSMSaveNonStandardValue(unsigned short rw_val);
 int SSMReadNonStandardValue(void);
 int SSMSaveAdbSwitchValue(int rw_val);
 int SSMReadAdbSwitchValue(void);
-int SSMSaveSerialCMDSwitchValue(int rw_val);
-int SSMReadSerialCMDSwitchValue(void);
 int SSMSaveNoiseGateThresholdValue(int rw_val);
 int SSMReadNoiseGateThresholdValue(void);
 int SSMSaveGraphyBacklight(int rw_val);

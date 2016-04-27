@@ -4,8 +4,8 @@
 #include <assert.h>
 #include <tinyxml.h>
 #include "CTvDatabase.h"
-#include "tvutils/tvutils.h"
-#include "../tvconfig/tvconfig.h"
+#include <tvutils.h>
+#include <tvconfig.h>
 
 const char *CTvDatabase::DEFAULT_DB_PATH = "/param/tv_default.xml";
 

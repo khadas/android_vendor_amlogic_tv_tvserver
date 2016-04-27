@@ -1,19 +1,7 @@
-//
-//
-//  amlogic 2015
-//
-//  @ Project : tv
-//  @ File Name :
-//  @ Date : 2015 -7
-//  @ Author : hao.fu
-//
-//
-
-
 #if !defined(_AUTOBACKLIGHT_H)
 #define _AUTOBACKLIGHT_H
 #include "../tvin/CTvin.h"
-#include "../tvutils/CThread.h"
+#include "CThread.h"
 #include "../vpp/CVpp.h"
 
 class AutoBackLight: public CThread {

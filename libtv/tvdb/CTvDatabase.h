@@ -1,24 +1,13 @@
-//
-//
-//  amlogic 2013
-//
-//  @ Project : tv
-//  @ File Name : CTvDatabase.h
-//  @ Date : 2013-11
-//  @ Author :
-//
-//
 #include <am_db.h>
 #if !defined(_CTVDATABASE_H)
 #define _CTVDATABASE_H
-//  π”√AM_DB
 #include <unistd.h>
 #include <stdlib.h>
 #include <utils/String8.h>
 #include <utils/Log.h>
 #include <utils/Vector.h>
 #include <utils/RefBase.h>
-#include <tvutils/CSqlite.h>
+#include <CSqlite.h>
 
 #include "CTvLog.h"
 

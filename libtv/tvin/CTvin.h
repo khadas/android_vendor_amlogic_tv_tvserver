@@ -19,7 +19,7 @@
 #include <pthread.h>
 #include <cm.h>
 #include <ve.h>
-#include "../tvutils/CThread.h"
+#include <CThread.h>
 #include "../tv/CFrontEnd.h"
 
 #define SYS_DISPLAY_MODE_PATH       "/sys/class/display/mode"

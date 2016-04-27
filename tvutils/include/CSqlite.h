@@ -1,13 +1,3 @@
-//
-//
-//  amlogic 2015
-//
-//  @ Project : tv
-//  @ File Name : CSqlite
-//  @ Date : 2015-5
-//  @ Author :
-//
-//
 #if !defined(_CSQLITE_H_)
 #define _CSQLITE_H_
 #include <unistd.h>

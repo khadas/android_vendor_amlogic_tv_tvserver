@@ -6,7 +6,6 @@
 #include <dirent.h>
 #include <am_epg.h>
 #include <am_mem.h>
-#include "CTvDatabase.h"
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
@@ -31,14 +30,20 @@
 #endif
 #include <string.h>
 #include <signal.h>
+#include <hardware_legacy/power.h>
 
+
+#include <tvutils.h>
+#include <tvconfig.h>
+#include <CFile.h>
+#include <serial_operate.h>
+#include <CFbcHelper.h>
+
+#include "CTvDatabase.h"
 #include "../version/version.h"
 #include "../tvsetting/CTvSetting.h"
-#include "../tvutils/tvutils.h"
-#include "../tvconfig/tvconfig.h"
-#include "../tvutils/CFile.h"
+
 #include <hardware_legacy/power.h>
-#include "../tvutils/serial_operate.h"
 
 extern "C" {
 #include "am_ver.h"
@@ -137,16 +142,10 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     mSigDetectThread.setObserver ( this );
     mSourceConnectDetectThread.setObserver ( this );
     mFrontDev.setObserver ( &mTvMsgQueue );
-    mpUpgradeFBC = NULL;
     if (mHdmiOutFbc) {
         fbcIns = GetSingletonFBC();
-
-        mpUpgradeFBC = new CUpgradeFBC();
-        mpUpgradeFBC->setObserver(this);
+        setUpgradeFbcObserver(this);
     }
-    mSerialA.setObserver(this);
-    mSerialB.setObserver(this);
-    mSerialC.setObserver(this);
     mSubtitle.setObserver(this);
     mHeadSet.setObserver(this);
     mTvScanner.setGlobalScanerObject(&mTvScanner);
@@ -204,9 +203,10 @@ CTv::~CTv()
     mTvStatus = TV_INIT_ED;
     mFrontDev.Close();
 
-    if (mpUpgradeFBC != NULL) {
-        delete mpUpgradeFBC;
-        mpUpgradeFBC = NULL;
+    if (fbcIns != NULL) {
+        fbcIns->fbcRelease();
+        delete fbcIns;
+        fbcIns = NULL;
     }
 }
 
@@ -1450,10 +1450,10 @@ int CTv::OpenTv ( void )
     //reboot system by fbc setting.
     const char * value = config_get_str ( CFG_SECTION_TV, CFG_FBC_PANEL_INFO, "null" );
     LOGD("open tv, get fbc panel info:%s\n", value);
-    if ( strcmp ( value, "edid" ) == 0 ) {
-        reboot_sys_by_fbc_edid_info();
-    } else if ( strcmp ( value, "uart" ) == 0 ) {
-        reboot_sys_by_fbc_uart_panel_info(fbcIns);
+    if (strcmp(value, "edid") == 0 ) {
+        rebootSystemByEdidInfo();
+    } else if (strcmp(value, "uart") == 0 ) {
+        rebootSystemByUartPanelInfo(fbcIns);
     }
 
     mpTvin->Tvin_LoadSourceInputToPortMap();
@@ -1501,10 +1501,6 @@ int CTv::OpenTv ( void )
     mAv.Open();
     resetDmxAndAvSource();
     mSourceConnectDetectThread.startDetect();
-
-    if (SSMReadSerialCMDSwitchValue() == 1) {
-        SetSerialSwitch(SERIAL_A, 1);
-    }
     ClearAnalogFrontEnd();
 
     if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_DEFAULT) > 0) {
@@ -1520,9 +1516,6 @@ int CTv::CloseTv ( void )
 {
     LOGD ( "tv close");
     mSigDetectThread.stopDetect();
-    if (mpUpgradeFBC != NULL) {
-        mpUpgradeFBC->stop();
-    }
     mpTvin->Tv_uninit_afe();
     mpTvin->uninit_vdin();
     CVpp::getInstance()->Vpp_Uninit();
@@ -2728,32 +2721,7 @@ void CTv::onUpgradeStatus(int state, int param)
 
 int CTv::StartUpgradeFBC(char *file_name, int mode, int upgrade_blk_size)
 {
-    if (mpUpgradeFBC != NULL) {
-        mpUpgradeFBC->SetUpgradeFileName(file_name);
-        mpUpgradeFBC->SetUpgradeMode(mode);
-        mpUpgradeFBC->SetUpgradeBlockSize(upgrade_blk_size);
-        mpUpgradeFBC->start();
-        return 0;
-    }
-
-    return -1;
-}
-
-void CTv::onSerialCommunication(int dev_id, int rd_len, unsigned char data_buf[])
-{
-    TvEvent::SerialCommunicationEvent ev;
-
-    if (rd_len > CC_MAX_SERIAL_RD_BUF_LEN) {
-        LOGE("%s, rd_len(%d) > buffer len(%d)", __FUNCTION__, rd_len, CC_MAX_SERIAL_RD_BUF_LEN);
-        return;
-    }
-
-    ev.mDevId = dev_id;
-    ev.mDataCount = rd_len;
-    for (int i = 0; i < rd_len; i++) {
-        ev.mDataBuf[i] = data_buf[i];
-    }
-    sendTvEvent(ev);
+    return fbcIns->fbcStartUpgrade(file_name, mode, upgrade_blk_size);
 }
 
 int CTv::StartHeadSetDetect()
@@ -2810,80 +2778,6 @@ void CTv::onThermalDetect(int state)
     } else {
         LOGD ( "%s, tvin thermal threshold disable\n", __FUNCTION__);
     }
-}
-
-int CTv::SetDebugSerialOnOff(int on_off)
-{
-    if (on_off) {
-        setBootEnv(UBOOTENV_CONSOLE, "ttyS0,115200n8");
-    } else {
-        setBootEnv(UBOOTENV_CONSOLE, "off");
-    }
-    return 0;
-}
-
-int CTv::GetDebugSerialOnOff()
-{
-    char prop[256] = {0};
-    getBootEnv(UBOOTENV_CONSOLE, prop, "null" );
-    if (!strcmp(prop, "ttyS0,115200n8")) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-int CTv::SetSerialSwitch(int dev_id, int switch_val)
-{
-    int tmp_ret = 0;
-    if (dev_id == SERIAL_A) {
-        if (switch_val == 0) {
-            tmp_ret |= mSerialA.stop();
-            tmp_ret |= mSerialA.CloseModule();
-
-            tmp_ret |= system("start console");
-            tmp_ret |= system("echo 7 > /proc/sys/kernel/printk");
-        } else {
-            tmp_ret |= system("echo 0 > /proc/sys/kernel/printk");
-            tmp_ret |= system("stop console");
-
-            mSerialA.OpenModule(dev_id);
-            tmp_ret |= mSerialA.start();
-        }
-    } else if (dev_id == SERIAL_B) {
-        if (switch_val == 0) {
-            tmp_ret |= mSerialB.stop();
-            tmp_ret |= mSerialB.CloseModule();
-        } else {
-            mSerialB.OpenModule(dev_id);
-            tmp_ret = mSerialB.start();
-        }
-    } else if (dev_id == SERIAL_C) {
-        if (switch_val == 0) {
-            tmp_ret |= mSerialC.stop();
-            tmp_ret |= mSerialC.CloseModule();
-        } else {
-            mSerialC.OpenModule(dev_id);
-            tmp_ret = mSerialC.start();
-        }
-    }
-
-    return tmp_ret;
-}
-
-int CTv::SendSerialData(int dev_id, int data_len, unsigned char data_buf[])
-{
-    int tmp_ret = 0;
-
-    if (dev_id == SERIAL_A) {
-        tmp_ret = mSerialA.sendData(data_len, data_buf);
-    } else if (dev_id == SERIAL_B) {
-        tmp_ret = mSerialB.sendData(data_len, data_buf);
-    } else if (dev_id == SERIAL_C) {
-        tmp_ret = mSerialC.sendData(data_len, data_buf);
-    }
-
-    return tmp_ret;
 }
 
 int CTv::Tv_GetProjectInfo(project_info_t *ptrInfo)

@@ -2,8 +2,8 @@
 
 #include "AutoBackLight.h"
 #include "../tvsetting/CTvSetting.h"
-#include "../tvconfig/tvconfig.h"
-#include "../tvutils/tvutils.h"
+#include <tvconfig.h>
+#include <tvutils.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>

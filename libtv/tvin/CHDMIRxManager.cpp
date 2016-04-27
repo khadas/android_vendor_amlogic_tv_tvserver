@@ -5,7 +5,7 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <CTvLog.h>
-#include "../tvutils/tvutils.h"
+#include <tvutils.h>
 
 
 CHDMIRxManager::CHDMIRxManager()

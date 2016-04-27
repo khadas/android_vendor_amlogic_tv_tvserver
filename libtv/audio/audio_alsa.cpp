@@ -13,7 +13,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <tinyalsa/asoundlib.h>
-#include "CFbcCommunication.h"
+#include "fbcutils/CFbcCommunication.h"
 #include <sys/poll.h>
 #include "tvsetting/audio_cfg.h"
 #include "audio_alsa.h"

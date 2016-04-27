@@ -1,18 +1,25 @@
 #define LOG_TAG "tvserver"
 
-#include <CTvLog.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/prctl.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <utils/Log.h>
 
-#include <cutils/log.h>
+#include "CFbcUpgrade.h"
 
-#include "CUpgradeFBC.h"
+static CFbcUpgrade *mInstance;
+CFbcUpgrade *getFbcUpgradeInstance()
+{
+    if (mInstance == NULL) {
+        mInstance = new CFbcUpgrade();
+    }
+    return mInstance;
+}
 
-CUpgradeFBC::CUpgradeFBC()
+CFbcUpgrade::CFbcUpgrade()
 {
     mUpgradeMode = CC_UPGRADE_MODE_MAIN;
     mFileName[0] = 0;
@@ -24,11 +31,11 @@ CUpgradeFBC::CUpgradeFBC()
 
     mpObserver = NULL;
     mState = STATE_STOPED;
-    mCfbcIns = GetSingletonFBC();
+    mCfbcIns = GetFbcProtocolInstance();
     mCfbcIns->SetUpgradeFlag(0);
 }
 
-CUpgradeFBC::~CUpgradeFBC()
+CFbcUpgrade::~CFbcUpgrade()
 {
     if (mBinFileBuf != NULL) {
         delete mBinFileBuf;
@@ -36,7 +43,7 @@ CUpgradeFBC::~CUpgradeFBC()
     }
 }
 
-int CUpgradeFBC::start()
+int CFbcUpgrade::start()
 {
     if (mState == STATE_STOPED || mState == STATE_ABORT || mState == STATE_FINISHED) {
         mCfbcIns->SetUpgradeFlag(1);
@@ -47,7 +54,7 @@ int CUpgradeFBC::start()
     return 0;
 }
 
-int CUpgradeFBC::stop()
+int CFbcUpgrade::stop()
 {
     requestExit();
     mState = STATE_STOPED;
@@ -55,12 +62,12 @@ int CUpgradeFBC::stop()
     return 0;
 }
 
-int CUpgradeFBC::GetUpgradeFBCProgress()
+int CFbcUpgrade::GetUpgradeFBCProgress()
 {
     return 0;
 }
 
-int CUpgradeFBC::SetUpgradeFileName(char *file_name)
+int CFbcUpgrade::SetUpgradeFileName(char *file_name)
 {
     if (file_name == NULL) {
         return -1;
@@ -71,19 +78,19 @@ int CUpgradeFBC::SetUpgradeFileName(char *file_name)
     return 0;
 }
 
-int CUpgradeFBC::SetUpgradeFileSize(int file_size)
+int CFbcUpgrade::SetUpgradeFileSize(int file_size)
 {
     mBinFileSize = file_size;
     return 0;
 }
 
-int CUpgradeFBC::SetUpgradeBlockSize(int block_size)
+int CFbcUpgrade::SetUpgradeBlockSize(int block_size)
 {
     mUpgradeBlockSize = block_size;
     return 0;
 }
 
-int CUpgradeFBC::SetUpgradeMode(int mode)
+int CFbcUpgrade::SetUpgradeMode(int mode)
 {
     int tmp_val = 0;
 
@@ -93,7 +100,7 @@ int CUpgradeFBC::SetUpgradeMode(int mode)
     return tmp_val;
 }
 
-int CUpgradeFBC::AddCRCToDataBuf(unsigned char data_buf[], int data_len)
+int CFbcUpgrade::AddCRCToDataBuf(unsigned char data_buf[], int data_len)
 {
     unsigned int tmp_crc = 0;
 
@@ -106,7 +113,7 @@ int CUpgradeFBC::AddCRCToDataBuf(unsigned char data_buf[], int data_len)
     return 0;
 }
 
-bool CUpgradeFBC::threadLoop()
+bool CFbcUpgrade::threadLoop()
 {
     int file_handle = -1;
     int i = 0, tmp_flag = 0, cmd_len = 0, tmp_prog = 0, total_item = 0;
@@ -119,22 +126,14 @@ bool CUpgradeFBC::threadLoop()
         return false;
     }
 
-    LOGD("%s, entering...\n", "TV");
+    ALOGD("%s, entering...\n", "TV");
 
-    prctl(PR_SET_NAME, (unsigned long)"CUpgradeFBC thread loop");
+    prctl(PR_SET_NAME, (unsigned long)"CFbcUpgrade thread loop");
 
     mState = STATE_RUNNING;
 
-    LOGD("%s, upgrade mode = %d\n", __FUNCTION__, mUpgradeMode);
-    if (mUpgradeMode != CC_UPGRADE_MODE_BOOT_MAIN && mUpgradeMode != CC_UPGRADE_MODE_BOOT &&
-            mUpgradeMode != CC_UPGRADE_MODE_MAIN && mUpgradeMode != CC_UPGRADE_MODE_COMPACT_BOOT &&
-            mUpgradeMode != CC_UPGRADE_MODE_ALL && mUpgradeMode != CC_UPGRADE_MODE_MAIN_PQ_WB &&
-            mUpgradeMode != CC_UPGRADE_MODE_ALL_PQ_WB && mUpgradeMode != CC_UPGRADE_MODE_MAIN_WB &&
-            mUpgradeMode != CC_UPGRADE_MODE_ALL_WB && mUpgradeMode != CC_UPGRADE_MODE_MAIN_PQ &&
-            mUpgradeMode != CC_UPGRADE_MODE_ALL_PQ && mUpgradeMode != CC_UPGRADE_MODE_PQ_WB_ONLY &&
-            mUpgradeMode != CC_UPGRADE_MODE_WB_ONLY && mUpgradeMode != CC_UPGRADE_MODE_PQ_ONLY &&
-            mUpgradeMode != CC_UPGRADE_MODE_CUR_PQ_BIN && mUpgradeMode != CC_UPGRADE_MODE_BURN &&
-            mUpgradeMode != CC_UPGRADE_MODE_DUMMY) {
+    ALOGD("%s, upgrade mode = %d\n", __FUNCTION__, mUpgradeMode);
+    if (mUpgradeMode < CC_UPGRADE_MODE_BOOT_MAIN || mUpgradeMode > CC_UPGRADE_MODE_DUMMY) {
         mState = STATE_ABORT;
         upgrade_err_code = ERR_NOT_SUPPORT_UPGRADE_MDOE;
         mpObserver->onUpgradeStatus(mState, upgrade_err_code);
@@ -143,7 +142,7 @@ bool CUpgradeFBC::threadLoop()
         return false;
     }
 
-    if (mUpgradeBlockSize % 0x1000 != 0) {
+    if (mUpgradeBlockSize % 0x1000 != 0) {//unit is 4k
         mState = STATE_ABORT;
         upgrade_err_code = ERR_NOT_CORRECT_UPGRADE_BLKSIZE;
         mpObserver->onUpgradeStatus(mState, upgrade_err_code);
@@ -188,7 +187,7 @@ bool CUpgradeFBC::threadLoop()
     //open upgrade source file and read it to temp buffer.
     file_handle = open(mFileName, O_RDONLY);
     if (file_handle < 0) {
-        LOGE("%s, Can't Open file %s\n", __FUNCTION__, mFileName);
+        ALOGE("%s, Can't Open file %s\n", __FUNCTION__, mFileName);
         mState = STATE_ABORT;
         upgrade_err_code = ERR_OPEN_BIN_FILE;
         mpObserver->onUpgradeStatus(mState, upgrade_err_code);
@@ -203,7 +202,7 @@ bool CUpgradeFBC::threadLoop()
     memset(mBinFileBuf, 0, mOPTotalSize);
     rw_size = read(file_handle, mBinFileBuf, mBinFileSize);
     if (rw_size != mBinFileSize || rw_size <= 0) {
-        LOGE("%s, read file %s error(%d, %d)\n", __FUNCTION__, mFileName, mBinFileSize, rw_size);
+        ALOGE("%s, read file %s error(%d, %d)\n", __FUNCTION__, mFileName, mBinFileSize, rw_size);
         mState = STATE_ABORT;
         upgrade_err_code = ERR_READ_BIN_FILE;
         mpObserver->onUpgradeStatus(mState, upgrade_err_code);
@@ -448,7 +447,7 @@ bool CUpgradeFBC::threadLoop()
 
         //send upgrade start addr and write size
         sprintf((char *)tmp_buf, "upgrade 0x%x 0x%x\n", cur_off, rw_size);
-        LOGD("\n\n%s, %s\n", __FUNCTION__, tmp_buf);
+        ALOGD("\n\n%s, %s\n", __FUNCTION__, tmp_buf);
         cmd_len = strlen((char *)tmp_buf);
         if (mCfbcIns->sendDataOneway(COMM_DEV_SERIAL, tmp_buf, cmd_len, 0) <= 0) {
             mState = STATE_ABORT;
@@ -484,21 +483,21 @@ bool CUpgradeFBC::threadLoop()
         rw_size = mCfbcIns->uartReadStream(mDataBuf, CC_UPGRADE_DATA_BUF_SIZE, 2000);
         for (i = 0; i < rw_size - 3; i++) {
             if ((0x5A == mDataBuf[i]) && (0x5A == mDataBuf[i + 1]) && (0x5A == mDataBuf[i + 2])) {
-                LOGD("%s, fbc write data at 0x%x ok!\n", __FUNCTION__, old_off);
+                ALOGD("%s, fbc write data at 0x%x ok!\n", __FUNCTION__, old_off);
                 tmp_flag = 1;
                 break;
             }
         }
 
         if (tmp_flag == 0) {
-            LOGE("%s, fbc write data at 0x%x error! rewrite!\n", __FUNCTION__, old_off);
+            ALOGE("%s, fbc write data at 0x%x error! rewrite!\n", __FUNCTION__, old_off);
             if (upgrade_try_cnt < 6) {
                 cur_off = old_off;
                 upgrade_try_cnt += 1;
 
                 mpObserver->onUpgradeStatus(mState, ERR_DATA_CRC_ERROR);
             } else {
-                LOGE("%s, we have rewrite more than %d times, abort.\n", __FUNCTION__, upgrade_try_cnt);
+                ALOGE("%s, we have rewrite more than %d times, abort.\n", __FUNCTION__, upgrade_try_cnt);
                 mState = STATE_ABORT;
                 upgrade_err_code = ERR_SERIAL_CONNECT;
                 upgrade_flag = 0;
@@ -546,7 +545,7 @@ bool CUpgradeFBC::threadLoop()
         mBinFileBuf = NULL;
     }
 
-    LOGD("%s, exiting...\n", "TV");
+    ALOGD("%s, exiting...\n", "TV");
     system("reboot");
     //return true, run again, return false,not run.
     return false;

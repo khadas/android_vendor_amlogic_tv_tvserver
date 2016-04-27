@@ -26,18 +26,17 @@
 #include "../vpp/CPQdb.h"
 #include "../tvin/CTvin.h"
 #include "../tvin/CHDMIRxManager.h"
-#include "../tvutils/CMsgQueue.h"
-#include "../tvutils/CSerialCommunication.h"
-#include "../tvutils/serial_operate.h"
+#include <CMsgQueue.h>
+#include <serial_operate.h>
 #include "CTvRecord.h"
 #include "CTvSubtitle.h"
-#include "CUpgradeFBC.h"
 #include "CAv.h"
 #include "CTvDmx.h"
 #include "../audio/CTvAudio.h"
 #include "AutoBackLight.h"
 #include "CAutoPQparam.h"
 #include "tvin/CSourceConnectDetect.h"
+#include "fbcutils/fbcutils.h"
 
 #include <CTvFactory.h>
 
@@ -84,7 +83,7 @@ typedef enum TvRunStatus_s {
     TV_CLOSE_ED,
 } TvRunStatus_t;
 
-class CTv : public CTvin::CTvinSigDetect::ISigDetectObserver, public CSourceConnectDetect::ISourceConnectObserver, public CUpgradeFBC::IUpgradeFBCObserver, public CSerialCommunication::ISerialCommunicationObserver, public CTvSubtitle::IObserver, public  CTv2d4GHeadSetDetect::IHeadSetObserver {
+class CTv : public CTvin::CTvinSigDetect::ISigDetectObserver, public CSourceConnectDetect::ISourceConnectObserver, public IUpgradeFBCObserver, public CTvSubtitle::IObserver, public  CTv2d4GHeadSetDetect::IHeadSetObserver {
 public:
     static const int TV_ACTION_NULL = 0x0000;
     static const int TV_ACTION_STARTING = 0x0001;
@@ -202,10 +201,7 @@ public:
     CTvin::CTvinSigDetect mSigDetectThread;
     CSourceConnectDetect mSourceConnectDetectThread;
     CHDMIRxManager mHDMIRxManager;
-    CUpgradeFBC *mpUpgradeFBC;
-    CSerialCommunication mSerialA;
-    CSerialCommunication mSerialB;
-    CSerialCommunication mSerialC;
+
     CTvSubtitle mSubtitle;
     CTv2d4GHeadSetDetect mHeadSet;
 
@@ -219,10 +215,7 @@ public:
     int GetHdmiHdcpKeyKsvInfo(int data_buf[]);
     virtual bool hdmiOutWithFbc();
     int StartUpgradeFBC(char *file_name, int mode, int upgrade_blk_size);
-    int SetSerialSwitch(int dev_id, int switch_val);
-    int SendSerialData(int dev_id, int data_len, unsigned char data_buf[]);
-    int SetDebugSerialOnOff(int on_off);
-    int GetDebugSerialOnOff();
+
     int Tv_GetProjectInfo(project_info_t *ptrInfo);
     int Tv_GetPlatformType();
     int Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);
@@ -575,7 +568,6 @@ protected:
 
     virtual void onSourceConnect(int source_type, int connect_status);
     virtual void onUpgradeStatus(int status, int progress);
-    virtual void onSerialCommunication(int dev_id, int rd_len, unsigned char data_buf[]);
     virtual void onThermalDetect(int state);
     virtual void onVframeSizeChange();
 

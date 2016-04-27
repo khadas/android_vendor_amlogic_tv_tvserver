@@ -16,7 +16,7 @@
 #include <netutils/ifc.h>
 #include <netutils/dhcp.h>
 
-#include "tvconfig/tvconfig.h"
+#include <tvconfig.h>
 #include "CTvSettingCfg.h"
 #include "TvKeyData.h"
 

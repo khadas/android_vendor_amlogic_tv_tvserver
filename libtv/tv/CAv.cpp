@@ -1,8 +1,9 @@
 #define LOG_TAG "tvserver"
 
 #include "CAv.h"
-#include "../tvutils/tvutils.h"
-#include "../tvconfig/tvconfig.h"
+#include <CFile.h>
+#include <tvutils.h>
+#include <tvconfig.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>

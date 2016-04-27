@@ -13,14 +13,14 @@
 #include <cutils/atomic.h>
 #include <cutils/properties.h>
 #include <stdint.h>
-#include <tvconfig/tvconfig.h>
+#include <CTvLog.h>
+#include <tvconfig.h>
+#include <tvutils.h>
 #include <tvsetting/CTvSetting.h>
 #include <tv/CTvFactory.h>
 #include <audio/CTvAudio.h>
-#include <tvutils/tvutils.h>
 #include <version/version.h>
 #include "tvcmd.h"
-#include "tv/CTvLog.h"
 #include <tvdb/CTvRegion.h>
 extern "C" {
 #include <stdio.h>
@@ -1997,18 +1997,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(tmpRet);
         break;
     }
-    case SSM_SAVE_SERIAL_CMD_SWITCH_STATUS: {
-        int tmp_val = p.readInt32();
-        int tmpRet = SSMSaveSerialCMDSwitchValue(tmp_val);
-        tmpRet |= mpTv->SetSerialSwitch(SERIAL_A, tmp_val);
-        r->writeInt32(tmpRet);
-        break;
-    }
-    case SSM_READ_SERIAL_CMD_SWITCH_STATUS: {
-        int tmpRet = SSMReadSerialCMDSwitchValue();
-        r->writeInt32(tmpRet);
-        break;
-    }
     case SSM_SET_HDCP_KEY: {
         int tmpRet = SSMSetHDCPKey();
         r->writeInt32(tmpRet);
@@ -2167,28 +2155,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
 
         str = dvb_get_build_name_info();
         r->writeString16(String16(str));
-        break;
-    }
-    case MISC_SERIAL_SWITCH: {
-        int dev_id = p.readInt32();
-        int switch_val = p.readInt32();
-        int ret = mpTv->SetSerialSwitch(dev_id, switch_val);
-        r->writeInt32(ret);
-        break;
-    }
-    case MISC_SERIAL_SEND_DATA: {
-        int devId = p.readInt32();
-        int bufSize = p.readInt32();
-        if (bufSize > (int)sizeof(dataBuf)) {
-            bufSize = sizeof(dataBuf);
-        }
-
-        for (int i = 0; i < bufSize; i++) {
-            dataBuf[i] = p.readInt32() & 0xFF;
-        }
-
-        int ret = mpTv->SendSerialData(devId, bufSize, dataBuf);
-        r->writeInt32(ret);
         break;
     }
     //MISC  END

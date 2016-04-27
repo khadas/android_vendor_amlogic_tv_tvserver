@@ -16,10 +16,11 @@
 #include "../../sqlite/dist/sqlite3.h"
 #endif
 #include <cutils/properties.h>
-#include "tvutils/CFile.h"
+#include <CFile.h>
+#include <CSqlite.h>
+
 #include "../tvin/CTvin.h"
 #include "CVpp.h"
-#include "tvutils/CSqlite.h"
 
 #ifdef TV_DEBUG_PQ_ENABLE
 #define DEBUG_FLAG 1

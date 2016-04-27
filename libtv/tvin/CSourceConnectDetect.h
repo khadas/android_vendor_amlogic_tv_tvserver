@@ -1,7 +1,10 @@
 #ifndef C_SOURCE_CONNECT_DETECT_H
 #define C_SOURCE_CONNECT_DETECT_H
-#include "../tvutils/CThread.h"
-#include "../tvutils/CFile.h"
+
+#include <CThread.h>
+#include <CFile.h>
+#include <zepoll.h>
+
 enum avin_status_e {
     AVIN_STATUS_IN = 0,
     AVIN_STATUS_OUT = 1,

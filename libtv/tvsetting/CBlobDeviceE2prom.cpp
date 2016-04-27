@@ -8,8 +8,8 @@
 #include <errno.h>
 
 #include "CBlobDeviceE2prom.h"
-#include "../tvconfig/tvconfig.h"
-#include "../tvutils/tvutils.h"
+#include <tvconfig.h>
+#include <tvutils.h>
 #include "CTvLog.h"
 
 CBlobDeviceE2prom::CBlobDeviceE2prom()

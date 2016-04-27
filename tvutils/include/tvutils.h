@@ -1,9 +1,6 @@
-#ifndef __TV_MISC_H__
-#define __TV_MISC_H__
+#ifndef _TV_UTILS_H_
+#define _TV_UTILS_H_
 
-#include "../tv/CFbcCommunication.h"
-#define CC_MIN_ADC_CHANNEL_VAL              (0)
-#define CC_MAX_ADC_CHANNEL_VAL              (5)
 #define SYS_STR_LEN                         1024
 
 int tvReadSysfs(const char *path, char *value);
@@ -28,23 +25,7 @@ extern int Set_Fixed_NonStandard(int value);
 extern int TvMisc_DeleteDirFiles(const char *strPath, int flag);
 
 extern bool Tv_Utils_IsFileExist(const char *file_name);
-extern int reboot_sys_by_fbc_edid_info();
-extern int reboot_sys_by_fbc_uart_panel_info(CFbcCommunication *fbc = NULL);
 extern int GetPlatformHaveDDFlag();
-
-#define CC_PROJECT_INFO_ITEM_MAX_LEN  (64)
-
-typedef struct project_info_s {
-    char version[CC_PROJECT_INFO_ITEM_MAX_LEN];
-    char panel_type[CC_PROJECT_INFO_ITEM_MAX_LEN];
-    char panel_outputmode[CC_PROJECT_INFO_ITEM_MAX_LEN];
-    char panel_rev[CC_PROJECT_INFO_ITEM_MAX_LEN];
-    char panel_name[CC_PROJECT_INFO_ITEM_MAX_LEN];
-    char amp_curve_name[CC_PROJECT_INFO_ITEM_MAX_LEN];
-} project_info_t;
-
-extern unsigned int CalCRC32(unsigned int crc, const unsigned char *ptr, unsigned int buf_len);
-extern int GetProjectInfo(project_info_t *proj_info_ptr, CFbcCommunication *fbcIns = NULL);
 extern int getBootEnv(const char *key, char *value, const char *def_val);
 extern void setBootEnv(const char *key, const char *value);
 extern int readSysfs(const char *path, char *value);

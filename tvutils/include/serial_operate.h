@@ -1,6 +1,6 @@
 #ifndef __SERIAL_OPERATE_H__
 #define __SERIAL_OPERATE_H__
-#include "tvutils/CThread.h"
+#include "CThread.h"
 
 class CTv2d4GHeadSetDetect: public CThread {
 

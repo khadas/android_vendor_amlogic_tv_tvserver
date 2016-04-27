@@ -27,7 +27,7 @@
 #include "../vpp/CVpp.h"
 #include "../vpp/CPQdb.h"
 #include "../tvin/CTvin.h"
-#include "../tv/CFbcCommunication.h"
+#include "fbcutils/CFbcCommunication.h"
 
 using namespace android;
 

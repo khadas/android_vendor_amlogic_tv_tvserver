@@ -21,9 +21,9 @@
 #define LOG_TAG "tvserver"
 
 #include <CTvFactory.h>
-#include "../tvconfig/tvconfig.h"
+#include <tvconfig.h>
+#include <tvutils.h>
 #include "../tvsetting/CTvSetting.h"
-#include "../tvutils/tvutils.h"
 
 CTvFactory::CTvFactory()
     :mHdmiOutFbc(false),

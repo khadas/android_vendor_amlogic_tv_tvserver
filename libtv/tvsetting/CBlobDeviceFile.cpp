@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include "tvconfig/tvconfig.h"
+#include <tvconfig.h>
 #include "CBlobDeviceFile.h"
 #include "CTvLog.h"
 

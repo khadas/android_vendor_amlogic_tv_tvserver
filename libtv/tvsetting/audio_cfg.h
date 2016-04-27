@@ -1,8 +1,8 @@
 #ifndef __TV_AUDIO_CFG_H__
 #define __TV_AUDIO_CFG_H__
 
-#include "../tvconfig/tvconfig.h"
-#include "../tvutils/tvutils.h"
+#include <tvconfig.h>
+#include <tvutils.h>
 
 #include "../tvin/CTvin.h"
 

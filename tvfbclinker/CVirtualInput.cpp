@@ -5,7 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <CTvLog.h>
+#include <utils/Log.h>
 
 CVirtualInput::CVirtualInput()
 {
@@ -23,7 +23,7 @@ int CVirtualInput::setup_uinput_device()
     // Open the input device
     uinp_fd = open(DEV_UINPUT, O_WRONLY | O_NDELAY);
     if (uinp_fd < 0) {
-        LOGD("Unable to open /dev/uinput!!!\n");
+        ALOGE("Unable to open /dev/uinput!!!\n");
         return -1;
     }
 
@@ -42,7 +42,7 @@ int CVirtualInput::setup_uinput_device()
     /* Create input device into input sub-system */
     write(uinp_fd, &uinp, sizeof(uinp));
     if (ioctl(uinp_fd, UI_DEV_CREATE)) {
-        LOGD("Unable to create UINPUT device.\n");
+        ALOGE("Unable to create UINPUT device.\n");
         return -1;
     }
     return 1;
@@ -52,7 +52,7 @@ void CVirtualInput::sendVirtualkeyEvent(__u16 key_code)
 {
     struct input_event event;
     if (uinp_fd < 0) {
-        LOGD("uinput not open, sendVirtualkeyEvent failed!!!\n");
+        ALOGE("uinput not open, sendVirtualkeyEvent failed!!!\n");
         return;
     }
     // Report BUTTON CLICK - PRESS event

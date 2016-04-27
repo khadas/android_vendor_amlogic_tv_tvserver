@@ -18,10 +18,10 @@
 
 #include "CTvSetting.h"
 
-#include "../tvconfig/tvconfig.h"
-#include "../tvutils/tvutils.h"
+#include <tvconfig.h>
+#include <tvutils.h>
+#include <CTvLog.h>
 
-#include "../tv/CTvLog.h"
 #define CC_DEF_CHARACTER_CHAR_VAL                   (0x8A)
 
 pthread_mutex_t ssm_r_w_op_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -479,7 +479,6 @@ int MiscSSMRestoreDefault()
     SSMSaveSystemSleepTimer(0xFFFFFFFF);
     SSMSaveInputSourceParentalControl(0, 0);
     SSMSaveParentalControlSwitch(0);
-    SSMSaveSerialCMDSwitchValue(0);
     SSMSaveBlackoutEnable(0);
     return 0;
 }
@@ -965,27 +964,6 @@ int SSMReadAdbSwitchValue(void)
     unsigned char switch_val = 0;
 
     if (SSMReadNTypes(SSM_RW_ADB_SWITCH_START, 1, &switch_val) < 0) {
-        LOGD("%s, read switch value error", CFG_SECTION_TV);
-        return -1;
-    }
-
-    LOGD("%s, read switch value = %d", CFG_SECTION_TV, switch_val);
-
-    return switch_val;
-}
-
-int SSMSaveSerialCMDSwitchValue(int rw_val)
-{
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_SERIAL_CMD_SWITCH_START, 1, &tmp_val);
-}
-
-int SSMReadSerialCMDSwitchValue(void)
-{
-    unsigned char switch_val = 0;
-
-    if (SSMReadNTypes(SSM_RW_SERIAL_CMD_SWITCH_START, 1, &switch_val) < 0) {
         LOGD("%s, read switch value error", CFG_SECTION_TV);
         return -1;
     }

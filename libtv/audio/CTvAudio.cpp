@@ -11,8 +11,8 @@
 #include <cutils/properties.h>
 
 #include "../tvsetting/CTvSetting.h"
-#include "../tvutils/tvutils.h"
-#include "../tvutils/CFile.h"
+#include <tvutils.h>
+#include <CFile.h>
 #include "audio_effect.h"
 #include "CTvAudio.h"
 

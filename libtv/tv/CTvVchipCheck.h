@@ -20,7 +20,7 @@
 #include "CTvTime.h"
 #include "CTvEvent.h"
 #include "CTvLog.h"
-#include "tvutils/CThread.h"
+#include <CThread.h>
 // TV ATSC rating dimension
 class CTvVchipCheck: public CThread {
 public:

@@ -7,7 +7,7 @@
 
 #include "CBlobDevice.h"
 
-#include "../tvconfig/tvconfig.h"
+#include <tvconfig.h>
 
 #include "CTvSettingCfg.h"
 

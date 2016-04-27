@@ -3,7 +3,7 @@
 #include "CVpp.h"
 #include <CTvLog.h>
 #include "../tvsetting/CTvSetting.h"
-#include "../tvutils/tvutils.h"
+#include <tvutils.h>
 #include <cutils/properties.h>
 #include "CPQdb.h"
 #include <math.h>
@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <dlfcn.h>
 #include "CTvLog.h"
-#include "../tvconfig/tvconfig.h"
+#include <tvconfig.h>
 #include "CAv.h"
 
 #define PI 3.14159265358979

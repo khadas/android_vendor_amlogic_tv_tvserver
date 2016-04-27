@@ -4,7 +4,7 @@
 #include "CTvProgram.h"
 #include "CTvTime.h"
 #include "CTvEvent.h"
-#include "../tvconfig/tvconfig.h"
+#include <tvconfig.h>
 
 /**
  *TV ATSC rating dimension

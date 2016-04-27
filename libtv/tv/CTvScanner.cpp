@@ -5,7 +5,7 @@
 #include "CTvRegion.h"
 #include "CFrontEnd.h"
 
-#include "../tvconfig/tvconfig.h"
+#include <tvconfig.h>
 
 CTvScanner *CTvScanner::m_s_Scanner = NULL;
 //int CTvScanner::getStartPara()

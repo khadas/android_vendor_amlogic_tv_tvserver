@@ -11,8 +11,8 @@
 
 #include <cutils/log.h>
 
-#include "../tvutils/tvutils.h"
-#include "../tvconfig/tvconfig.h"
+#include <tvutils.h>
+#include <tvconfig.h>
 
 #include "CSourceConnectDetect.h"
 

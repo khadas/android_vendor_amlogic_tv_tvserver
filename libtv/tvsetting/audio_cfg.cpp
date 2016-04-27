@@ -7,7 +7,7 @@
 #include <cutils/properties.h>
 
 #include "../tvsetting/CTvSetting.h"
-#include "../tvconfig/tvconfig.h"
+#include <tvconfig.h>
 #include "audio_cfg.h"
 
 #include "CTvLog.h"

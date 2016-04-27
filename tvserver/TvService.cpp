@@ -2986,15 +2986,15 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         break;
     }
     case START_AUTO_BACKLIGHT: {
-        mpTv->startAutoBackLight();
+        mpTv->setAutoBackLightStatus(1);
         break;
     }
     case STOP_AUTO_BACKLIGHT: {
-        mpTv->stopAutoBackLight();
+        mpTv->setAutoBackLightStatus(0);
         break;
     }
     case IS_AUTO_BACKLIGHTING: {
-        int on = mpTv->getAutoBackLight_on_off();
+        int on = mpTv->getAutoBackLightStatus();
         r->writeInt32(on);
         break;
     }

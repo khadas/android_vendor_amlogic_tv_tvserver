@@ -2530,31 +2530,25 @@ int CTv::getSaveBlackoutEnable()
     return enable;
 }
 
-void CTv::startAutoBackLight()
+int CTv::setAutoBackLightStatus(int status)
 {
     if (mHdmiOutFbc) {
-        mFactoryMode.fbcSetAutoBacklightOnOff(1);
-    } else {
-        mAutoBackLight.startAutoBacklight(CTvin::Tvin_SourceInputToSourceInputType(m_source_input));
+        return mFactoryMode.fbcSetAutoBacklightOnOff(status);
     }
+
+    return tvWriteSysfs(BL_LOCAL_DIMING_FUNC_ENABLE, status);
 }
 
-void CTv::stopAutoBackLight()
-{
-    if (mHdmiOutFbc) {
-        mFactoryMode.fbcSetAutoBacklightOnOff(0);
-    } else {
-        mAutoBackLight.stopAutoBacklight();
-    }
-}
-
-int CTv::getAutoBackLight_on_off()
+int CTv::getAutoBackLightStatus()
 {
     if (mHdmiOutFbc) {
         return mFactoryMode.fbcGetAutoBacklightOnOff();
-    } else {
-        return mAutoBackLight.isAutoBacklightOn() ? 1 : 0;
     }
+
+    char str_value[3] = {0};
+    tvReadSysfs(BL_LOCAL_DIMING_FUNC_ENABLE, str_value);
+    int value = atoi(str_value);
+    return (value < 0) ? -1 : value;
 }
 
 int CTv::getAverageLuma()

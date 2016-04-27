@@ -1377,19 +1377,8 @@ int CVpp::SetBacklightWithoutSave(int value, tv_source_input_type_t source_type 
 
 int CVpp::VPP_SetBackLightLevel(int value)
 {
-    LOGD("VPP_SetBackLightLevel /sys/class/backlight/aml-bl/brightness : %d", value);
-
-    FILE *fp = fopen("/sys/class/backlight/aml-bl/brightness", "w");
-    if (fp == NULL) {
-        LOGE("Open /sys/class/backlight/aml-bl/brightness error(%s)!\n", strerror(errno));
-        return -1;
-    }
-
-    fprintf(fp, "%d", value);
-    fclose(fp);
-    fp = NULL;
-
-    return 0;
+    LOGD("VPP_SetBackLightLevel %s : %d", BACKLIGHT_BRIGHTNESS, value);
+    return tvWriteSysfs(BACKLIGHT_BRIGHTNESS, value);
 }
 
 int CVpp::SetBacklight(int value, tv_source_input_type_t source_type, int is_save)

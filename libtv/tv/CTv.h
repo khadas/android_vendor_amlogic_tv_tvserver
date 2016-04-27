@@ -51,6 +51,7 @@ static const char *TV_CHANNEL_LIST_PARAM_PATH = "/param/tv_default.xml";
 static const char *TV_SSM_DATA_SYSTEM_PATH = "/system/etc/ssm_data";
 static const char *TV_SSM_DATA_PARAM_PATH = "/param/ssm_data";
 
+#define BL_LOCAL_DIMING_FUNC_ENABLE "/sys/class/aml_ldim/func_en"
 #define DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN "/sys/class/tsync/av_threshold_min"
 #define AV_THRESHOLD_MIN_MS "540000" //6S = 6*90000
 
@@ -140,8 +141,6 @@ public:
     virtual int stopPlayingLock();
     virtual int resetFrontEndPara ( frontend_para_set_t feParms );
     virtual int SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt );
-    virtual void startAutoBackLight();
-    virtual void stopAutoBackLight();
     virtual void onHdmiSrChanged(int  sr, bool bInit);
     virtual void onHMDIAudioStatusChanged(int status);
     virtual int GetATVAFCType();
@@ -169,7 +168,6 @@ public:
     int getChannelInfoBydbID ( int dbID, channel_info_t &chan_info );
     int setBlackoutEnable(int enable);
     int getSaveBlackoutEnable();
-    int getAutoBackLight_on_off();
     int saveATVProgramID ( int dbID );
     int getATVProgramID ( void );
     int saveDTVProgramID ( int dbID );
@@ -178,6 +176,8 @@ public:
     int getAverageLuma();
     int setAutobacklightData(const char *value);
     int getAutoBacklightData(int *data);
+    int getAutoBackLightStatus();
+    int setAutoBackLightStatus(int status);
 
     virtual int Tv_SSMRestoreDefaultSetting();
 

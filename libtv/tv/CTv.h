@@ -124,6 +124,8 @@ public:
     virtual int atvAutoScan(int videoStd, int audioStd, int searchType, int procMode);
     virtual int pauseScan();
     virtual int resumeScan();
+    virtual void setDvbTextCoding(char *coding);
+
     virtual int clearAllProgram(int arg0);
     virtual int clearDbAllProgramInfoTable();
     virtual void setSourceSwitchAndPlay();

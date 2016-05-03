@@ -38,6 +38,8 @@ CVpp::CVpp()
     const char *value = config_get_str(CFG_SECTION_TV, CFG_FBC_USED, "true");
     if (strcmp(value, "true") == 0) {
         mHdmiOutFbc = true;
+    } else {
+        mHdmiOutFbc = false;
     }
 }
 

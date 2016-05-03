@@ -786,6 +786,15 @@ int CTv::resumeScan()
     return mTvScanner.resumeScan();
 }
 
+void CTv::setDvbTextCoding(char *coding)
+{
+    if (!strcmp(coding, "standard")) {
+        AM_SI_SetDefaultDVBTextCoding("");
+    } else {
+        AM_SI_SetDefaultDVBTextCoding(coding);
+    }
+}
+
 int CTv::playProgramLock ( int progId )
 {
     /*AutoMutex lock ( mLock );

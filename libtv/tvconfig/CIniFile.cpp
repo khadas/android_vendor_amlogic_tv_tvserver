@@ -1,4 +1,4 @@
-#define LOG_TAG "CIniFile"
+#define LOG_TAG "tvserver"
 //#define LOG_NDEBUG 0
 
 #include <stdio.h>
@@ -213,23 +213,6 @@ int CIniFile::GetInt(const char *section, const char *key, int def_value)
     const char *num = GetString(section, key, NULL);
     if (num != NULL) {
         return atoi(num);
-    }
-    return def_value;
-}
-
-int CIniFile::SetFloat(const char *section, const char *key, float value)
-{
-    char tmp[64];
-    sprintf(tmp, "%.2f", value);
-    SetString(section, key, tmp);
-    return 0;
-}
-
-float CIniFile::GetFloat(const char *section, const char *key, float def_value)
-{
-    const char *num = GetString(section, key, NULL);
-    if (num != NULL) {
-        return atof(num);
     }
     return def_value;
 }

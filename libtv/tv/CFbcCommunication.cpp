@@ -1,4 +1,4 @@
-#define LOG_TAG "FBC"
+#define LOG_TAG "tvserver"
 
 #include <time.h>
 #include "CFbcCommunication.h"

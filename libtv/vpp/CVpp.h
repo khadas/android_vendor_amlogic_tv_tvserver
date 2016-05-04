@@ -254,13 +254,8 @@ public:
     int VppRegisterInterface();
     int RGBGainValueSSMToRisterMapping ( int gainValue );
     int RGBOffsetValueSSMToRisterMapping ( int gainValue );
-    int SetRGBValue ( vpp_color_temperature_mode_t temp_mode,  unsigned char data_buf[] );
-    int GetRGBValue ( vpp_color_temperature_mode_t temp_mode,  tcon_rgb_ogo_t *p_rgbogo );
-    int SetColorSpaceMode ( vpp_color_space_type_t colorSpace );
     int SetGammaValue(vpp_gamma_curve_t gamma_curve, int is_save);
     int GetGammaValue();
-    //int Tv_SetColorDemoMode ( vpp_color_demomode_t demomode );
-    vpp_color_demomode_t GetColorDemoMode ( void );
 
     int SetBaseColorMode ( vpp_color_basemode_t basemode , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
     vpp_color_basemode_t GetBaseColorMode ( void );
@@ -338,27 +333,12 @@ public:
     noline_params_t FactoryGetNolineParams ( int type, int source_type );
     int FactorySetOverscan ( int source_type, int fmt, int trans_fmt, tvin_cutwin_t cutwin_t );
     tvin_cutwin_t FactoryGetOverscan ( int source_type, int fmt, is_3d_type_t is3d, int trans_fmt );
-    int FactorySetBacklightPWM_Frequency(int freq);
-    int FactoryGetBacklightPWM_Frequency ( void );
-    int FactorySetBacklight_Switch_status ( int status );
-    int FactoryGetBacklight_Switch_status ( void );
-    int FactorySetBacklightPWM_Duty ( int duty );
-    int FactoryGetBacklightPWM_Duty ( void );
-    int FactorySetLVDS_ColorDepth ( int depth );
-    int FactoryGetLVDS_ColorDepth ( void );
-    int FactorySetLVDS_ColorDither_status ( int status );
-    int FactoryGetLVDS_ColorDither_status ( void );
-    int FactorySetLVDS_Mapping_status ( int status );
-    int FactoryGetLVDS_Mapping_status ( void );
-    int FactorySetLVDS_PortSwap_status ( int status );
-    int FactoryGetLVDS_PortSwap_status ( void );
     int FactorySetGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b);
 
     int VPPSSMRestoreDefault();
     int VPPSSMFacRestoreDefault();
 
 
-    int GetHistogram_AVE();
     int SetDnlp_OFF();
     int SetDnlp_ON ( void );
     int GetDnlp_Status();
@@ -384,12 +364,10 @@ public:
     tvin_cutwin_t GetOverscan ( tv_source_input_type_t source_type, tvin_sig_fmt_t fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     static is_3d_type_t Check2Dor3D ( is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     //api
-    int VPP_SetVEBlackExtension ( const struct ve_bext_s *pBExt );
     int VPP_SetVideoCrop ( int Voffset0, int Hoffset0, int Voffset1, int Hoffset1 );
     int VPP_SetNonLinearFactor ( int value );
     int VPP_SetGrayPattern(int value);
     int VPP_GetGrayPattern();
-    int VPP_SplitScreenEffect(int width, int v_register);
     int VPP_SetBackLight_Switch ( int value );
     int VPP_GetBackLight_Switch ( void );
     int VPP_SetScalerPathSel (const unsigned int value);
@@ -423,20 +401,8 @@ private:
     int VPP_SetVESharpness ( const ve_hsvs_s * );
     int VPP_SetVEChromaCoring ( const ve_ccor_s * );
     int VPP_SetVEBlueEnh ( const ve_benh_s * );
-    int VPP_SetVEDemo ( const ve_demo_s * );
-    int VPP_SetVERegisterMap ( const ve_regmap_s * );
-    int VPP_SetVEDebug ( const long long unsigned int * );
-    int VPP_SetCMRegion ( const cm_region_s * );
-    int VPP_SetCMTopLayer ( const cm_top_s * );
-    int VPP_SetCMDemo ( const cm_demo_s * );
-
     int VPP_DeviceIOCtl ( int request, ... );
-    int VPP3D_DeviceIOCtl ( int, ... );
-    int VPP_SetCMDebug ( const long long unsigned int * );
-    int VPP_SetAVSyncEnable ( unsigned int );
     int VPP_SetVideoNoiseReduction ( int );
-    int VPP_SetVideoSaturation ( int );
-    int VPP_SetVideoHue ( int );
     int VPP_SetDeinterlaceMode ( int );
     int VPP_FBCColorTempBatchGet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t *);
     int VPP_FBCColorTempBatchSet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t);
@@ -464,6 +430,5 @@ private:
     CPqData *mpPqData;
 
     int vpp_amvideo_fd;
-    int vpp_amvideo_3d_fd;
 };
 #endif

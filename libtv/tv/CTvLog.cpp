@@ -1,14 +1,6 @@
-//
-//
-//  amlogic 2013
-//
-//  @ Project : tv
-//  @ File Name : CTvDatabase.h
-//  @ Date : 2013-11
-//  @ Author :
-//
-//
+#define LOG_TAG "tvserver"
 #include "CTvLog.h"
+
 /*void CTvLog::LOGD()
 {
 }

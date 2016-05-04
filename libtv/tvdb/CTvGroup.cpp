@@ -1,14 +1,4 @@
-//
-//
-//  amlogic 2013
-//
-//  @ Project : tv
-//  @ File Name : CTvGroup.cpp
-//  @ Date : 2013-11
-//  @ Author :
-//
-//
-
+#define LOG_TAG "tvserver"
 
 #include "CTvGroup.h"
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #define LOG_NDEBUG 1
-#define LOG_TAG "ScreenCatch"
+#define LOG_TAG "tvserver"
 
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/MediaDefs.h>

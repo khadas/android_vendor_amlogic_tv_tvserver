@@ -1028,18 +1028,11 @@ public:
     int TvinApi_GetHDMIAudioStatus ( void );
     int TvinApi_LoadPLLValues ( am_regs_t regs );
     int TvinApi_LoadCVD2Values ( am_regs_t regs );
-    int TvinApi_GetFbSize ( unsigned int *fb_width, unsigned int *fb_height );
     int Tvin_StartDecoder ( tvin_info_t &info );
     int Tvin_StopDecoder();
     int get_hdmi_sampling_rate();
     int SwitchPort (tvin_port_t source_port );
-    //
-    void Tvin_SetDepthOf2Dto3D ( int value );
-    int set3D_FL_Frame(int value);
-    int setLatchFlag(int value);
-    //
-    int IsFileExist ( const char *file_name );
-    char *DelSub ( char *str, char *sub );
+
     int VDIN_AddPath ( const char *videopath );
     int VDIN_RmDefPath ( void );
     int VDIN_RmTvPath ( void );
@@ -1058,17 +1051,10 @@ public:
     int VDIN_GetSignalInfo ( struct tvin_info_s *SignalInfo );
     int VDIN_SetVdinParam ( const struct tvin_parm_s *vdinParam );
     int VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam );
-    int VDIN_OnoffVScaler ( int isOn );
     void VDIN_GetDisplayVFreq (int need_freq, int *last_freq, int *iSswitch, char * display_mode);
     int VDIN_SetDisplayVFreq ( int freq, bool isFbc);
 
-    int VDIN_Set2D3DDepth ( int count );
-
-    int VDIN_Set2Dto3D ( int on_off );
-    int VDIN_Set3DCmd ( int cmd );
-
     int VDIN_Get_avg_luma(void);
-    int VDIN_GetHistgram ( int *hisgram );
     int VDIN_SetMVCViewMode ( int mode );
     int VDIN_GetMVCViewMode ( void );
     int VDIN_SetDIBuffMgrMode ( int mgr_mode );
@@ -1088,8 +1074,6 @@ public:
     int VDIN_SetDIDet3DMode ( int value );
     int VDIN_SetDIBypass3D ( int enable );
     int VDIN_SetDIBypassPost ( int enable );
-    int VDIN_SetDIProg_Proc_Config ( int value );
-    int VDIN_SetDIInput2Pre ( int value );
     int VDIN_SetVdinFlag ( int flag );
     int VDIN_EnableRDMA ( int enable );
     int AFE_OpenModule ( void );
@@ -1120,7 +1104,6 @@ public:
     static int CvbsFtmToColorStdEnum(tvin_sig_fmt_t fmt);
     int VDIN_GetPortConnect ( int port );
     int VDIN_OpenHDMIPinMuxOn ( bool flag );
-    int TVAFE_EnablePlugInDetect ( bool flag );
     int GetITContent();
     /*******************************************extend funs*********************/
     static tv_source_input_type_t Tvin_SourcePortToSourceInputType ( tvin_port_t source_port );
@@ -1225,7 +1208,7 @@ private:
     tvin_info_t gTvinAFESignalInfo;
     static int mSourceInputToPortMap[SOURCE_MAX];
     char gVideoPath[256];
-    int m_is_decoder_start;
+    bool mDecoderStarted;
 
     char config_tv_path[64];
     char config_default_path[64];

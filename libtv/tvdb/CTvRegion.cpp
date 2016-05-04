@@ -1,14 +1,4 @@
-//
-//
-//  amlogic 2013
-//
-//  @ Project : tv
-//  @ File Name : CTvRegion.cpp
-//  @ Date : 2013-11
-//  @ Author :
-//
-//
-#define LOG_TAG "CTvRegion"
+#define LOG_TAG "tvserver"
 
 #include "CTvRegion.h"
 #include "CTvDatabase.h"

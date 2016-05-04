@@ -1,4 +1,4 @@
-#define LOG_TAG "BLOB_FILE"
+#define LOG_TAG "tvserver"
 
 #include <stdio.h>
 #include <unistd.h>

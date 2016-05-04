@@ -1,13 +1,4 @@
-//
-//
-//  amlogic 2013
-//
-//  @ Project : tv
-//  @ File Name : CTvEvent.cpp
-//  @ Date : 2013-11
-//  @ Author :
-//
-#define LOG_TAG "CTvEvent"
+#define LOG_TAG "tvserver"
 
 #include "CTvEvent.h"
 #include "CTvDatabase.h"

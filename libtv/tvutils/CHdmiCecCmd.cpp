@@ -1,3 +1,5 @@
+#define LOG_TAG "tvserver"
+
 #include "CHdmiCecCmd.h"
 CHdmiCec::CHdmiCec()
 {

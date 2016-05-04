@@ -1,4 +1,4 @@
-#define LOG_TAG "AutoBackLight"
+#define LOG_TAG "tvserver"
 
 #include "AutoBackLight.h"
 #include "../tvsetting/CTvSetting.h"

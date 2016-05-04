@@ -1,13 +1,4 @@
-//
-//
-//  amlogic 2013
-//
-//  @ Project : tv
-//  @ File Name : CTvDatabase.cpp
-//  @ Date : 2013-11
-//  @ Author :
-//
-#define LOG_TAG "CTvDatabase"
+#define LOG_TAG "tvserver"
 //#define LOG_NDEBUG 0
 
 #include <assert.h>

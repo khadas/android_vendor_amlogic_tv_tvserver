@@ -1,4 +1,4 @@
-#define LOG_TAG "CFILE"
+#define LOG_TAG "tvserver"
 //#define LOG_NDEBUG 0
 
 #include "CFile.h"

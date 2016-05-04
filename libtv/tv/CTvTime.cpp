@@ -1,13 +1,4 @@
-//
-//
-//  amlogic 2013
-//
-//  @ Project : tv
-//  @ File Name : CTvChannel.h
-//  @ Date : 2013-11
-//  @ Author :
-//
-#define LOG_TAG "CTvTime"
+#define LOG_TAG "tvserver"
 
 #include "CTvTime.h"
 

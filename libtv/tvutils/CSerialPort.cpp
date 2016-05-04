@@ -1,4 +1,4 @@
-#define LOG_TAG "CSerialPort"
+#define LOG_TAG "tvserver"
 
 #include "CSerialPort.h"
 #include <pthread.h>

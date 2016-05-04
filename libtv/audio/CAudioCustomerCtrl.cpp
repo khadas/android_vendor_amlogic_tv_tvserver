@@ -1,3 +1,5 @@
+#define LOG_TAG "tvserver"
+
 #include "CAudioCustomerCtrl.h"
 #include <dlfcn.h>
 #include "CTvLog.h"

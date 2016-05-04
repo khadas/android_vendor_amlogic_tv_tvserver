@@ -1,10 +1,11 @@
+#define LOG_TAG "tvserver"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include "tvconfig.h"
 
-#define LOG_TAG "TVCONFIG"
 #include "CTvLog.h"
 #include "CIniFile.h"
 static const char *TV_SECTION = "TV";
@@ -51,15 +52,3 @@ int config_set_int(const char *section, const char *key, const int value)
     pIniFile->SetInt(section, key, value);
     return 0;
 }
-
-float config_get_float(const char *section, const char *key, const float def_value)
-{
-    return pIniFile->GetFloat(section, key, def_value);
-}
-
-int config_set_float(const char *section, const char *key, const int value)
-{
-    pIniFile->SetFloat(section, key, value);
-    return 0;
-}
-

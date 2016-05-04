@@ -1,12 +1,4 @@
-//
-//
-//  amlogic 2013
-//
-//  @ Project : tv
-//  @ Date : 2013-11
-//  @ Author :
-//
-#define LOG_TAG "CTvSubtitle"
+#define LOG_TAG "tvserver"
 
 #include "CTvSubtitle.h"
 #include "am_misc.h"

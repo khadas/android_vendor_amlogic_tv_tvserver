@@ -1,11 +1,11 @@
+#define LOG_TAG "tvserver"
+
 #include <stdio.h>
 #include <string.h>
 
 #include <android/log.h>
 
 #include "CTvSettingDeviceRam.h"
-
-#define LOG_TAG "ssmram"
 #include "CTvLog.h"
 
 CTvSettingDeviceRam::CTvSettingDeviceRam()

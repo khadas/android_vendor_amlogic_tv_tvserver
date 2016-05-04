@@ -129,17 +129,11 @@ public:
     virtual int clearAllProgram(int arg0);
     virtual int clearDbAllProgramInfoTable();
     virtual void setSourceSwitchAndPlay();
-    virtual int GetDisplayResolutionConfig();
-    virtual int GetDisplayResolutionInfo();
     virtual int atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd, int store_Type = 0, int channel_num = 0 );
     virtual int stopScanLock();
-    virtual int dtvAutoScanAtscLock(int attenna, int videoStd, int audioStd);
     virtual void SetRecordFileName ( char *name );
     virtual  void StartToRecord();
     virtual void StopRecording();
-    virtual void SetRecCurTsOrCurProgram ( int sel );
-    virtual void printDebugInfo();
-    virtual int playProgramLock ( int progId );
     virtual int playDvbcProgram ( int progId );
     virtual int playDtmbProgram ( int progId );
     virtual int playAtvProgram ( int, int, int, int, int);
@@ -149,7 +143,6 @@ public:
     virtual int SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt );
     virtual void startAutoBackLight();
     virtual void stopAutoBackLight();
-    virtual const char *getPqDbPath();
     virtual void onHdmiSrChanged(int  sr, bool bInit);
     virtual void onHMDIAudioStatusChanged(int status);
     virtual int GetATVAFCType();
@@ -193,7 +186,6 @@ public:
     int GetSourceConnectStatus(tv_source_input_t source_input);
     int IsDVISignal();
     int isVgaFmtInHdmi();
-    int isSDFmtInHdmi ( void );
 
     int getHDMIFrameRate ( void );
     void RefreshAudioMasterVolume ( tv_source_input_t source_input );
@@ -203,7 +195,6 @@ public:
     unsigned int Vpp_GetDisplayResolutionInfo(tvin_window_pos_t *win_pos);
     //SSM
     virtual int Tv_SSMFacRestoreDefaultSetting();
-    int Tv_GetHistgram(int *histgram_buf);
     int StartHeadSetDetect();
     virtual void onHeadSetDetect(int state, int para);
 
@@ -272,7 +263,6 @@ public:
     virtual int Tv_SetNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_type_t source_type, int is_save );
     virtual vpp_noise_reduction_mode_t Tv_GetNoiseReductionMode ( tv_source_input_type_t source_type );
     virtual int Tv_SaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_type_t source_type );
-    int Tv_SplitScreenEffect(int mode, int width, int reverse = 0);
     int setEyeProtectionMode(int enable);
     int getEyeProtectionMode();
     int SetHdmiColorRangeMode(tv_hdmi_color_range_t range_mode);
@@ -372,10 +362,6 @@ public:
     int AudioSetLineInCaptureVolume(int l_vol, int r_vol);
     int SetKalaokIO(int level);
     int setAudioPcmPlaybackVolume(int val);
-    int setAmAudioPreGain(float pre_gain);
-    float getAmAudioPreGain();
-    int setAmAudioPreMute(int mute);
-    int getAmAudioPreMute();
 
     int openTvAudio();
     int closeTvAudio();
@@ -449,8 +435,6 @@ private:
     int MappingLine(int, int, int, int, int);
     int MappingTrebleBassAndEqualizer(int, int, int, int);
     int SetSPDIFMode(int mode_val);
-    int setAudioPreGain(tv_source_input_t source_input);
-    float getAudioPreGain(tv_source_input_t source_input);
 
     CAudioAlsa mAudioAlsa;
     CAudioEffect mAudioEffect;
@@ -558,8 +542,6 @@ protected:
     int SetAudioVolDigitLUTTable ( tv_source_input_t source_input );
     virtual int Tv_SetAudioInSource (tv_source_input_t source_input);
     void Tv_SetAudioOutputSwap_Type (tv_source_input_t source_input);
-    void Tv_ADCDigitalCapture_Volume (void);
-    void Tv_SetPGAIn_Gain (void);
     void Tv_SetDACDigitalPlayBack_Volume (int audio_src_in_type);
     void Tv_SetAVOutPut_Input_gain(tv_source_input_t source_input);
     /*********************** Audio end **********************/
@@ -585,7 +567,6 @@ protected:
     virtual void onSigDetectLoop();
 
     virtual void onSourceConnect(int source_type, int connect_status);
-    virtual void onHDMIRxCECMessage(int msg_len, unsigned char msg_buf[]);
     virtual void onUpgradeStatus(int status, int progress);
     virtual void onSerialCommunication(int dev_id, int rd_len, unsigned char data_buf[]);
     virtual void onThermalDetect(int state);
@@ -612,7 +593,7 @@ protected:
     /* for tvin window mode and pos*/
     tvin_window_pos_t m_win_pos;
     tv_window_mode_t m_win_mode;
-    int m_blackout_enable;// 1 enable 0 disable
+    bool mBlackoutEnable;// true: enable false: disable
     int m_cur_playing_prog_id;
     bool mHdmiOutFbc;
     CFbcCommunication *fbcIns;
@@ -633,7 +614,9 @@ protected:
     //audio mute
     int mAudioMuteStatusForTv;
     int mAudioMuteStatusForSystem;
-    char mMainVolLutTableExtraName[16];
+    char mMainVolLutTableExtraName[CC_PROJECT_INFO_ITEM_MAX_LEN];
+
+    CTvin *mpTvin;
 };
 
 #endif  //_CDTV_H

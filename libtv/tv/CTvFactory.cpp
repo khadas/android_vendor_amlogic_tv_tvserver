@@ -18,6 +18,7 @@
  *  @par function description:
  *  - 1 tv factory test function
  */
+#define LOG_TAG "tvserver"
 
 #include <CTvFactory.h>
 #include "../tvconfig/tvconfig.h"

@@ -1,4 +1,4 @@
-#define LOG_TAG "CUpgradeFBC"
+#define LOG_TAG "tvserver"
 
 #include <CTvLog.h>
 #include <stdio.h>

@@ -1,14 +1,4 @@
-/*
- * CPQdb.cpp
- *
- *  d on: 2011-12-13
- *      Author: casey
- *
- * change 2015.04
- * showbo
- */
-
-#define LOG_TAG "CPQdb"
+#define LOG_TAG "tvserver"
 
 #include <stdio.h>
 #include <string.h>

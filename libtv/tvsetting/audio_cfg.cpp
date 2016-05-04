@@ -1,4 +1,4 @@
-#define LOG_TAG "audio_cfg"
+#define LOG_TAG "tvserver"
 
 #include <stdio.h>
 #include <stdlib.h>

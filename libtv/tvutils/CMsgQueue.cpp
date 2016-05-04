@@ -1,4 +1,4 @@
-#define LOG_TAG "CMsgQueueThread"
+#define LOG_TAG "tvserver"
 
 #include "CMsgQueue.h"
 #include <CTvLog.h>

@@ -1,44 +1,30 @@
 #ifndef _C_AV_H
 #define _C_AV_H
+
 #include "am_av.h"
 #include "am_aout.h"
 #include "CTvEv.h"
 #include "CTvLog.h"
 #include "../tvin/CTvin.h"
+
 static const char *PATH_FRAME_COUNT  = "/sys/module/di/parameters/frame_count";
-//3D=====================================================================
-static const char *PATH_SET_3D_TYPE = "/sys/class/video/threedim_mode";
 static const char *PATH_VIDEO_AMVIDEO = "/dev/amvideo";
-//3和1是做不同的3dsclaer   0是不做任何scaler
-static const char *PATH_3D_SCALER = "/sys/module/amvideo/parameters/force_3d_scaler";
-//0是不做3dscaler 1是做3dscaler
-static const char *PATH_VIDEO_SCALER = "/sys/class/video/stereo_scaler";
-
 static const char *PATH_MEPG_DTMB_LOOKUP_PTS_FLAG = "/sys/module/amvdec_mpeg12/parameters/dtmb_flag";
-/*cmd use for 3d operation*/
-#define MODE_3D_DISABLE     0x00000000
-#define MODE_3D_ENABLE      0x00000001
-#define MODE_3D_AUTO        0x00000002
-#define MODE_3D_LR          0x00000004
-#define MODE_3D_TB          0x00000008
-#define MODE_3D_LA          0x00000010
-#define MODE_3D_FA          0x00000020
-#define MODE_3D_LR_SWITCH   0x00000100
-#define MODE_3D_TO_2D_L     0x00000200
-#define MODE_3D_TO_2D_R     0x00000400
-#define MODE_3D_MVC     0x00000800
-#define MODE_3D_OUT_TB  0x00010000
-#define MODE_3D_OUT_LR  0x00020000
 
-/*when the output mode is field alterlative*/
-//LRLRLRLRL mode
-#define MODE_3D_OUT_FA_L_FIRST  0x00001000
-#define MODE_3D_OUT_FA_R_FIRST  0x00002000
-//LBRBLBRB
-#define MODE_3D_OUT_FA_LB_FIRST 0x00004000
-#define MODE_3D_OUT_FA_RB_FIRST 0x00008000
+#define VIDEO_TEST_SCREEN   "/sys/class/video/test_screen"
+#define VIDEO_DISABLE_VIDEO "/sys/class/video/disable_video"
+#define VIDEO_SCREEN_MODE   "/sys/class/video/screen_mode"
+#define VIDEO_AXIS          "/sys/class/video/axis"
+#define VIDEO_DEVICE_RESOLUTION "/sys/class/video/device_resolution"
 
-//end 3D===================================================================
+
+enum {
+    VIDEO_LAYER_NONE                    = -1,
+    VIDEO_LAYER_ENABLE                  = 0,
+    VIDEO_LAYER_DISABLE_BLACK           = 1,
+    VIDEO_LAYER_DISABLE_BLUE            = 2
+};
+
 typedef enum video_display_resolution_e {
     VPP_DISPLAY_RESOLUTION_1366X768,
     VPP_DISPLAY_RESOLUTION_1920X1080,
@@ -61,8 +47,6 @@ public:
     static const int VIDEO_WIDEOPTION_CROP_FULL        = 6;
     static const int VIDEO_WIDEOPTION_CROP             = 7;
     //
-    static const int DISABLE_VIDEO_COLOR_BLUE = 1;
-    static const int DISABLE_VIDEO_COLOR_BLACK = 2;
     class AVEvent : public CTvEv {
     public:
         AVEvent(): CTvEv(CTvEv::TV_EVENT_AV)
@@ -107,10 +91,6 @@ public:
     int StopTS();
     int AudioGetOutputMode(AM_AOUT_OutputMode_t *mode);
     int AudioSetOutputMode(AM_AOUT_OutputMode_t mode);
-    int AudioSetPreGain(float pre_gain);
-    int AudioGetPreGain(float *gain);
-    int AudioSetPreMute(uint mute);
-    int AudioGetPreMute(uint *mute);
     int SetVideoScreenColor (int vdin_blending_mask, int y, int u, int v);
     int DisableVideoWithBlueColor();
     int DisableVideoWithBlackColor();
@@ -124,7 +104,6 @@ public:
     int ClearVideoBuffer();
     bool videoIsPlaying(int minFrameCount = 8);
     int setVideoScreenMode ( int value );
-    int getVideoScreenMode();
     int setVideoAxis ( int h, int v, int width, int height );
     video_display_resolution_t getVideoDisplayResolution();
 
@@ -136,8 +115,7 @@ private:
     int mTvPlayDevId;
     IObserver *mpObserver;
     AVEvent mCurAvEvent;
-    int mCurVideoLayerMuteState;
-    int mCurDisableVideoColor;
+    int mVideoLayerState;
 
     int mFdAmVideo;
 };

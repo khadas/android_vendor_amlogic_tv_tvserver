@@ -1,3 +1,5 @@
+#define LOG_TAG "tvserver"
+
 #include "CTvVchipCheck.h"
 CTvVchipCheck:: CTvVchipCheck()
 {

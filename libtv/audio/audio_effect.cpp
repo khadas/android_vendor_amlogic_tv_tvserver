@@ -1,3 +1,5 @@
+#define LOG_TAG "tvserver"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -12,8 +14,6 @@
 
 #include "audio_amaudio.h"
 #include "audio_effect.h"
-
-#define LOG_TAG "CAudioEffect"
 #include "CTvLog.h"
 
 CAudioEffect::CAudioEffect()

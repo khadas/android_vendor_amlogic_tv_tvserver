@@ -1,3 +1,5 @@
+#define LOG_TAG "tvserver"
+
 #include <stdio.h>
 #include <string.h>
 #include <android/log.h>

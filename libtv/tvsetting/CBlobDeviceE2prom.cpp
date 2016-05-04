@@ -1,4 +1,4 @@
-#define LOG_TAG "CBlobDeviceE2prom"
+#define LOG_TAG "tvserver"
 
 #include <stdio.h>
 #include <stdlib.h>

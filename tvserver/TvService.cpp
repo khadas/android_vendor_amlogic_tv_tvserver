@@ -1,4 +1,4 @@
-#define LOG_TAG "TvService"
+#define LOG_TAG "tvserver"
 
 #include <utils/Log.h>
 #include <binder/IServiceManager.h>
@@ -998,14 +998,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-    case VPP_SPLIT_SCREEN_EFFECT: {
-        int mode = p.readInt32();
-        int width = p.readInt32();
-        int reverse = p.readInt32();
-        int ret = mpTv->Tv_SplitScreenEffect(mode, width, reverse);
-        r->writeInt32(ret);
-        break;
-    }
     // PQ END
 
     // FACTORY
@@ -1650,23 +1642,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-    case SET_AMAUDIO_PRE_GAIN: {
-        float tmp_val = p.readFloat();
-        int ret = mpTv->setAmAudioPreGain(tmp_val);
-        r->writeInt32(ret);
-        break;
-    }
-    case SET_AMAUDIO_PRE_MUTE: {
-        int tmp_val = p.readInt32();
-        int ret = mpTv->setAmAudioPreMute(tmp_val);
-        r->writeInt32(ret);
-        break;
-    }
-    case GET_AMAUDIO_PRE_MUTE: {
-        int ret = mpTv->getAmAudioPreMute();
-        r->writeInt32(ret);
-        break;
-    }
     case SELECT_LINE_IN_CHANNEL: {
         int channel = p.readInt32();
         int ret = mpTv->AudioLineInSelectChannel(channel);
@@ -2114,12 +2089,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeString16(String16(value));
         break;
     }
-    case MISC_READ_ADC_VAL: {
-        int tmpChanNum = p.readInt32();
-        int tmpRet = ReadADCSpecialChannelValue(tmpChanNum);
-        r->writeInt32(tmpRet);
-        break;
-    }
     case MISC_SET_WDT_USER_PET: {
         int counter = p.readInt32();
         int ret = TvMisc_SetUserCounter(counter);
@@ -2343,15 +2312,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     case DTV_SCAN_AUTO: {
         int tmpRet = mpTv->dtvAutoScan();
-        mTvService->mpScannerClient = this;
-        r->writeInt32(tmpRet);
-        break;
-    }
-    case DTV_SCAN_AUTO_ATSC: {
-        int attenna = p.readInt32();
-        int vstd = p.readInt32();
-        int astd = p.readInt32();
-        int tmpRet = mpTv->dtvAutoScanAtscLock(attenna, vstd, astd);
         mTvService->mpScannerClient = this;
         r->writeInt32(tmpRet);
         break;

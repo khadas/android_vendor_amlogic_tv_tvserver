@@ -1,4 +1,4 @@
-#define LOG_TAG "CTvRecord"
+#define LOG_TAG "tvserver"
 
 #include <string.h>
 #include <fcntl.h>

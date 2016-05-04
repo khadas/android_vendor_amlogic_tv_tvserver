@@ -1,4 +1,4 @@
-#define LOG_TAG "CFrontEnd"
+#define LOG_TAG "tvserver"
 
 #include <stdio.h>
 #include <unistd.h>

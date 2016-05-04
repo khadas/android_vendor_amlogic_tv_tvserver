@@ -1,14 +1,4 @@
-//
-//
-//  amlogic 2015
-//
-//  @ Project : tv
-//  @ File Name : CSqlite
-//  @ Date : 2015-5
-//  @ Author :
-//
-//
-#define LOG_TAG "CSqlite"
+#define LOG_TAG "tvserver"
 
 #include "CSqlite.h"
 

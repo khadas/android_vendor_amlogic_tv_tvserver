@@ -42,9 +42,6 @@ public:
 protected:
     unsigned char *mDataBuf;
 
-private:
-    int IsFileExist(const char *file_name);
-
 };
 
 #endif // ANDROID_SSM_BASE_H

@@ -1,3 +1,4 @@
+#define LOG_TAG "tvserver"
 
 #include <stdlib.h>
 #include <fcntl.h>

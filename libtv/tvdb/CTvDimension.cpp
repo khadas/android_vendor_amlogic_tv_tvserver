@@ -1,4 +1,4 @@
-#define LOG_TAG "CTvDimension"
+#define LOG_TAG "tvserver"
 
 #include "CTvDimension.h"
 #include "CTvProgram.h"

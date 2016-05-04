@@ -1,4 +1,4 @@
-#define LOG_TAG "CBlobDevice"
+#define LOG_TAG "tvserver"
 
 #include <stdio.h>
 #include <string.h>
@@ -16,11 +16,5 @@ CBlobDevice::CBlobDevice()
 
 CBlobDevice::~CBlobDevice()
 {
-}
-
-int CBlobDevice::IsFileExist(const char *file_name)
-{
-    struct stat tmp_st;
-    return stat(file_name, &tmp_st);
 }
 

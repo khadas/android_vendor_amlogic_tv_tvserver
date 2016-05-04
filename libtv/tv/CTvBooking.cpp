@@ -1,4 +1,4 @@
-#define LOG_TAG "CTvBooking"
+#define LOG_TAG "tvserver"
 
 #include "CTvBooking.h"
 #include "CTvDatabase.h"

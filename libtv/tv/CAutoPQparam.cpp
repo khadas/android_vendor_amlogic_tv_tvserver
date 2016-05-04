@@ -1,4 +1,4 @@
-#define LOG_TAG "CAutoPQ"
+#define LOG_TAG "tvserver"
 
 #include "CAutoPQparam.h"
 #include "../tvsetting/CTvSetting.h"

@@ -1,6 +1,4 @@
-/*
-reference android api, just linux pthread
-*/
+#define LOG_TAG "tvserver"
 
 #include <stdio.h>
 #include <stdlib.h>

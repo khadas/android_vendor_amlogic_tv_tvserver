@@ -1,4 +1,4 @@
-#define LOG_TAG "CTvin"
+#define LOG_TAG "tvserver"
 
 #include "CTvin.h"
 #include <CTvLog.h>
@@ -24,24 +24,10 @@
 #include "CFbcCommunication.h"
 
 #define AFE_DEV_PATH        "/dev/tvafe0"
-#define HDMIRX_KSV_PATH     "/dev/hdmirx0"
 #define AMLVIDEO2_DEV_PATH  "/dev/video11"
 
 
 #define CC_SEL_VDIN_DEV   (0)
-
-#define MODE_3D_DISABLE         0x00000000
-#define MODE_3D_ENABLE          0x00000001
-#define MODE_AUTO               0x00000002
-#define MODE_2D_TO_3D           0x00000004
-#define MODE_LR                 0x00000008
-#define MODE_BT                 0x00000010
-#define MODE_LR_SWITCH          0x00000020
-#define MODE_FIELD_DEPTH        0x00000040
-//#define MODE_3D_TO_2D_L         0x00000080 redefine
-//#define MODE_3D_TO_2D_R         0x00000100 redefine
-#define LR_FORMAT_INDICATOR     0x00000200
-#define BT_FORMAT_INDICATOR     0x00000400
 
 /* ADC calibration pattern & format define */
 /* default 100% 8 color-bar */
@@ -70,7 +56,7 @@ CTvin::CTvin()
     afe_dev_fd = -1;
 
     m_tvin_param.index = 0;
-    m_is_decoder_start = false;
+    mDecoderStarted = false;
     gVideoPath[0] = '\0';
 
     for (i = 0; i < SOURCE_MAX; i++) {
@@ -104,46 +90,6 @@ int CTvin::OpenTvin()
     config_value = config_get_str ( CFG_SECTION_TV, "tvin.manual.set.defaultpath", "null" );
     strcpy ( config_default_path, config_value );
     return 0;
-}
-
-int CTvin::IsFileExist ( const char *file_name )
-{
-    struct stat tmp_st;
-
-    if ( stat ( file_name, &tmp_st ) < 0 ) {
-        return 0;
-    }
-
-    return 1;
-}
-
-char *CTvin::DelSub ( char *str, char *sub )
-{
-    char *psrc = str, *pdest = str, *psub = NULL, *p = NULL;
-
-    if ( ( str == NULL ) || ( sub == NULL ) ) {
-        return NULL;
-    }
-
-    while ( *psrc ) {
-        p = psrc;
-        psub = sub;
-
-        while ( *p && *p == *psub ) {
-            p++;
-            psub++;
-        }
-
-        if ( *psub == 0 ) {
-            psrc = p;
-        } else {
-            *pdest++ = *psrc++;
-        }
-    }
-
-    *pdest = 0;
-
-    return str;
 }
 
 int CTvin::setMpeg2Vdin(int enable)
@@ -236,7 +182,7 @@ int CTvin::VDIN_RmTvPath ( void )
 int CTvin::VDIN_AddVideoPath ( int selPath )
 {
     int ret = -1;
-    int Existamlvideo2 = IsFileExist ( AMLVIDEO2_DEV_PATH );
+    int Existamlvideo2 = Tv_Utils_IsFileExist ( AMLVIDEO2_DEV_PATH );
 
     switch ( selPath ) {
     case TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:
@@ -408,21 +354,16 @@ int CTvin::VDIN_GetSignalInfo ( struct tvin_info_s *SignalInfo )
     int rt = -1;
 
     rt = VDIN_DeviceIOCtl ( TVIN_IOC_G_SIG_INFO, SignalInfo );
-
     if ( rt < 0 ) {
         LOGW ( "Vdin get signal info, error(%s), ret = %d.\n", strerror ( errno ), rt );
-        //system("reboot");
     }
-
     return rt;
 }
 
 int CTvin::VDIN_SetVdinParam ( const struct tvin_parm_s *vdinParam )
 {
-    int rt = -1, i = 0;
-
+    int rt = -1;
     rt = VDIN_DeviceIOCtl ( TVIN_IOC_S_PARM, vdinParam );
-
     if ( rt < 0 ) {
         LOGW ( "Vdin set signal param, error(%s)\n", strerror ( errno ) );
     }
@@ -443,35 +384,12 @@ int CTvin::VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam )
     return rt;
 }
 
-int CTvin::VDIN_OnoffVScaler ( int isOn )
-{
-    FILE *fp = NULL;
-
-    if ( isOn == 1 ) {
-        isOn = 1;
-    } else {
-        isOn = 0;
-    }
-
-    fp = fopen ( "/sys/class/video/vscaler", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/class/video/vscaler error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", ( int ) isOn );
-    fclose ( fp );
-    fp = NULL;
-
-    return 0;
-}
-
 void CTvin::VDIN_GetDisplayVFreq (int need_freq, int *last_freq, int *iSswitch, char * display_mode)
 {
     char buf[32] = {0};
     char *p = NULL;
 
-    if ( 0 != readSysfs(SYS_DISPLAY_MODE_PATH, buf) ) {
+    if ( 0 != tvReadSysfs(SYS_DISPLAY_MODE_PATH, buf) ) {
         LOGW("Read /sys/class/display/mode failed!\n");
         return;
     }
@@ -506,8 +424,6 @@ void CTvin::VDIN_GetDisplayVFreq (int need_freq, int *last_freq, int *iSswitch, 
 
 int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
 {
-    const char *config_value = NULL;
-    CFbcCommunication *pFBC = NULL;
     static int last_freq = 50;
     int iSswitch = 0;
     char display_mode[32] = {0};
@@ -521,62 +437,12 @@ int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
     }
 
     if ( isFbc ) {
-        pFBC = GetSingletonFBC();
-        if (pFBC != NULL) {
-            pFBC->cfbc_Set_VMute (COMM_DEV_SERIAL, 2);
-            usleep ( 300000 );
-        }
+        GetSingletonFBC()->cfbc_Set_VMute (COMM_DEV_SERIAL, 2);
+        usleep ( 300000 );
     }
 
-    writeSysfs(SYS_DISPLAY_MODE_PATH, display_mode );
-
+    tvWriteSysfs(SYS_DISPLAY_MODE_PATH, display_mode );
     return 0;
-}
-
-void CTvin::Tvin_SetDepthOf2Dto3D ( int value )
-{
-    //value = -16~16
-    int tmp_value = DepthTable_2DTO3D[value + 16];
-    LOGD ( "%s, value: %d", __FUNCTION__,  value );
-    VDIN_Set2D3DDepth ( value );
-}
-
-
-int CTvin::VDIN_Set2D3DDepth ( int count )
-{
-    FILE *fp = NULL;
-
-
-    fp = fopen ( "/sys/module/d2d3/parameters/depth", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/d2d3/parameters/depth ERROR(%s)!!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    if ( count >= -127 && count <= 127 ) {
-#ifdef LOGD_3D_FUNCTION
-        LOGD ( "set depth value (%d).\n", count );
-#endif
-    } else {
-        count = 8 * 12;
-        LOGE ( "set depth value ERROR!! set default depth.\n" );
-    }
-
-    fprintf ( fp, "%d", count );
-    fclose ( fp );
-    fp = NULL;
-
-    return 0;
-}
-
-int CTvin::VDIN_Set2Dto3D ( int on_off )
-{
-    struct tvin_parm_s VdinParam;
-    VDIN_GetVdinParam ( &VdinParam );
-    VdinParam.flag &= ( ~TVIN_PARM_FLAG_2D_TO_3D );
-    VdinParam.flag |= ( on_off ) ? ( TVIN_PARM_FLAG_2D_TO_3D ) : ( 0 );
-    return VDIN_SetVdinParam ( &VdinParam );
 }
 
 int CTvin::VDIN_Get_avg_luma(void)
@@ -587,7 +453,7 @@ int CTvin::VDIN_Get_avg_luma(void)
     if ( 0 == VDIN_GetVdinParam( &vdinParam )) {
         lum_sum = vdinParam.luma_sum;
         pixel_sum = vdinParam.pixel_sum * 2;
-        if (pixel_sum != 0 && m_is_decoder_start) {
+        if (pixel_sum != 0 && mDecoderStarted) {
             luma_avg = lum_sum / pixel_sum;
         } else {
             luma_avg = 116;
@@ -597,26 +463,6 @@ int CTvin::VDIN_Get_avg_luma(void)
     }
     LOGD ( "VDIN_get_avg_lut lum_sum =%d,pixel_sum=%d,lut_avg=%d\n", lum_sum, pixel_sum, luma_avg);
     return luma_avg;
-}
-
-int CTvin::VDIN_GetHistgram ( int *hisgram )
-{
-    int i = 0;
-    struct tvin_parm_s vdinParam;
-
-    if ( NULL == hisgram ) {
-        return -1;
-    }
-
-    if ( 0 == VDIN_GetVdinParam ( &vdinParam ) ) {
-        for ( i = 0; i < CC_HIST_GRAM_BUF_SIZE; i++ ) {
-            hisgram[i] = ( int ) vdinParam.histgram[i];
-        }
-    } else {
-        return -1;
-    }
-
-    return 0;
 }
 
 int CTvin::VDIN_SetMVCViewMode ( int mode )
@@ -1009,78 +855,6 @@ int CTvin::VDIN_SetDIBypassPost ( int enable )
     return 0;
 }
 
-int CTvin::set3D_FL_Frame(int value)
-{
-    FILE *fp = NULL;
-    fp = fopen ( "/sys/module/amvideo/parameters/pause_one_3d_fl_frame", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/amvideo/parameters/pause_one_3d_fl_frame error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-    fprintf ( fp, "%d", value );
-    fclose ( fp );
-    fp = NULL;
-    return 0;
-}
-
-int CTvin::setLatchFlag(int value)
-{
-    int fd = -1;
-    int nodeVal = 0;
-    char s[10];
-    FILE *fp = NULL;
-    memset(s, 0, sizeof(s));
-    read(fd, s, sizeof(s));
-    close(fd);
-    nodeVal = atoi(s);
-    fp = fopen ( "/sys/module/am_vecm/parameters/vecm_latch_flag", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "/sys/module/am_vecm/parameters/vecm_latch_flag error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-    fprintf ( fp, "%d", value | nodeVal);
-    fclose ( fp );
-    fp = NULL;
-    LOGD ( "read vecm_latch_flag = (%s)====(0x%x), then set vecm_latch_flag | 0x%x = 0x%x.\n", s, nodeVal, value, value | nodeVal);
-    return 0;
-}
-
-int CTvin::VDIN_SetDIProg_Proc_Config ( int value )
-{
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/module/di/parameters/prog_proc_config", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/prog_proc_config error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", value );
-    fclose ( fp );
-    fp = NULL;
-
-    return 0;
-}
-
-#if(1)
-int CTvin::VDIN_SetDIInput2Pre ( int value )
-{
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/module/di/parameters/input2pre", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/input2pre error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", value );
-    fclose ( fp );
-    fp = NULL;
-
-    return 0;
-
-}
-#endif
 int CTvin::VDIN_SetVdinFlag ( int flag )
 {
     FILE *fp = NULL;
@@ -1136,8 +910,6 @@ void CTvin::AFE_CloseModule ( void )
         close ( afe_dev_fd );
         afe_dev_fd = -1;
     }
-
-    return;
 }
 
 int CTvin::AFE_DeviceIOCtl ( int request, ... )
@@ -1944,10 +1716,7 @@ int CTvin::AFE_GetMemData ( int typeSel, struct adc_cal_s *mem_data )
 
 int CTvin::AFE_GetCVBSLockStatus ( enum tvafe_cvbs_video_e *cvbs_lock_status )
 {
-    int rt = -1;
-
-    rt = AFE_DeviceIOCtl ( TVIN_IOC_G_AFE_CVBS_LOCK, cvbs_lock_status );
-
+    int rt = AFE_DeviceIOCtl ( TVIN_IOC_G_AFE_CVBS_LOCK, cvbs_lock_status );
     if ( rt < 0 ) {
         LOGD ( "AFE_GetCVBSLockStatus, error: return(%d), error(%s)!\n", rt, strerror ( errno ) );
     } else {
@@ -1959,11 +1728,8 @@ int CTvin::AFE_GetCVBSLockStatus ( enum tvafe_cvbs_video_e *cvbs_lock_status )
 
 int CTvin::AFE_SetCVBSStd ( tvin_sig_fmt_t fmt )
 {
-    int rt = -1;
-
     LOGD ( "AFE_SetCVBSStd, sig_fmt = %d\n", fmt );
-    rt = AFE_DeviceIOCtl ( TVIN_IOC_S_AFE_CVBS_STD, &fmt );
-
+    int rt = AFE_DeviceIOCtl ( TVIN_IOC_S_AFE_CVBS_STD, &fmt );
     if ( rt < 0 ) {
         LOGD ( "AFE_SetCVBSStd, error: return(%d), error(%s)!\n", rt, strerror ( errno ) );
     }
@@ -1973,98 +1739,59 @@ int CTvin::AFE_SetCVBSStd ( tvin_sig_fmt_t fmt )
 
 int CTvin::TvinApi_SetStartDropFrameCn ( int count )
 {
-    int ret = -1;
-    char set_str[4];
-
-    memset ( set_str, 0, 4 );
+    char set_str[4] = {0};
     sprintf ( set_str, "%d", count );
-    return SetFileAttrValue ( "/sys/module/di/parameters/start_frame_drop_count", set_str );
+    return tvWriteSysfs ( "/sys/module/di/parameters/start_frame_drop_count", set_str );
 }
 
 int CTvin::TvinApi_SetVdinHVScale ( int vdinx, int hscale, int vscale )
 {
     int ret = -1;
-    char set_str[32];
+    char set_str[32]= {0};
 
-    memset ( set_str, 0, 32 );
     sprintf ( set_str, "%s %d %d", "hvscaler", hscale, vscale );
-
     if ( vdinx == 0 ) {
-        ret = SetFileAttrValue ( "/sys/class/vdin/vdin0/attr", set_str );
+        ret = tvWriteSysfs ( "/sys/class/vdin/vdin0/attr", set_str );
     } else {
-        ret = SetFileAttrValue ( "/sys/class/vdin/vdin1/attr", set_str );
+        ret = tvWriteSysfs ( "/sys/class/vdin/vdin1/attr", set_str );
     }
 
     return ret;
 }
+
 int CTvin::TvinApi_SetCompPhase ( am_phase_t &am_phase )
 {
-    int ret = -1, fd = -1;
-    unsigned int i = 0;
-    int idx = 0, len = 0;
-    char str1[200], str2[100];
+    int idx = 0;
+    char str1[200] = {0}, str2[100] = {0};
 
     LOGD ( "enter,TvinApi_SetCompPhase" );
 
-    fd = open ( "/sys/module/tvin_afe/parameters/comp_phase", O_RDWR );
-    if ( fd < 0 ) {
-        LOGW ( "Open vdin_comp_phase_op_mutex error(%s)!!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    for ( i = 0; i < am_phase.length; i++ ) {
+    for (int i = 0; i < (int)am_phase.length; i++ ) {
         sprintf ( &str1[idx], "%d,", am_phase.phase[i] );
         sprintf ( str2, "%d,", am_phase.phase[i] );
         int len = strlen ( str2 );
         idx = idx + len;
     }
 
-    LOGD ( "##########str1 = %s\n", str1 );
-
-    ret = write ( fd, str1, strlen ( str1 ) );
-    if ( ret < 0 ) {
-        LOGD ( "Write vdin_comp_phase_op_mutex error(%s)!!\n", strerror ( errno ) );
-    }
-
-    LOGD ( "write ok!!!" );
-    close ( fd );
-    fd = -1;
-
-    return ret;
+    LOGD ( "write str = %s\n", str1 );
+    tvWriteSysfs("/sys/module/tvin_afe/parameters/comp_phase", str1);
+    return 0;
 }
 
 tvin_trans_fmt CTvin::TvinApi_Get3DDectMode()
 {
-    int fd;
-    int ret;
-    char det_3d[10];
-    int det_3dmode = 8;
-    //LOGW("det_3dmode %d\n", det_3dmode);
+    char buf[32] = {0};
 
-    fd = open ( "/sys/module/di/parameters/det3d_mode", O_RDWR );
-    if ( fd < 0 ) {
-        LOGW ( "/sys/module/di/parameters/det3d_mode error(%s)!!\n", strerror ( errno ) );
-
-        return  TVIN_TFMT_3D_MAX;
-    }
-
-    ret = read ( fd, det_3d, 10 );
-    if ( ret < 0 ) {
-        LOGW ( "/sys/module/di/parameters/det3d_mode error(%s)!!\n", strerror ( errno ) );
-    }
-
-    det_3dmode = atoi ( det_3d );
-    close ( fd );
-    fd = -1;
-
-    return (tvin_trans_fmt)det_3dmode;
+    tvReadSysfs("/sys/module/di/parameters/det3d_mode", buf);
+    int mode3d = atoi(buf);
+    return (tvin_trans_fmt)mode3d;
 }
 
 int CTvin::TvinApi_SetCompPhaseEnable ( int enable )
 {
     int ret = -1;
     if ( enable == 1 ) {
-        ret = SetFileAttrValue ( "/sys/module/tvin_afe/parameters/enable_dphase", "Y" );
+        ret = tvWriteSysfs ( "/sys/module/tvin_afe/parameters/enable_dphase", "Y" );
         LOGD ( "%s, enable TvinApi_SetCompPhase.", CFG_SECTION_TV );
     }
 
@@ -2091,72 +1818,29 @@ int CTvin::VDIN_GetPortConnect ( int port )
 
 int CTvin::VDIN_OpenHDMIPinMuxOn ( bool flag )
 {
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/class/hdmirx/hdmirx0/debug", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/class/hdmirx/hdmirx0/debug(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
+    char buf[32] = {0};
     if ( flag ) {
-        fprintf ( fp, "%s", "pinmux_on" );
+        sprintf ( buf, "%s", "pinmux_on" );
     } else {
-        fprintf ( fp, "%s", "pinmux_off" );
-
+        sprintf ( buf, "%s", "pinmux_off" );
     }
 
-    fclose ( fp );
-    fp = NULL;
+    tvWriteSysfs("/sys/class/hdmirx/hdmirx0/debug", buf);
     return 1;
-}
-
-int CTvin::TVAFE_EnablePlugInDetect ( bool flag )
-{
-    FILE *fp = NULL;
-    int status = 1;
-
-    fp = fopen ( "/sys/class/tvafe/tvafe0/debug", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/class/tvafe/tvafe0/debug (%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    if ( flag ) {
-        fprintf ( fp, "%s", "tvafe_enable" );
-    } else {
-        fprintf ( fp, "%s", "tvafe_down" );
-
-    }
-
-    fclose ( fp );
-    fp = NULL;
-    return status;
 }
 
 int CTvin::TvinApi_GetHDMIAudioStatus ( void )
 {
-    int fd;
-    int val = 0;
-    char bcmd[16];
-    fd = open ( "/sys/module/tvin_hdmirx/parameters/auds_rcv_sts", O_RDONLY );
+    char buf[32] = {0};
 
-    if ( fd >= 0 ) {
-        read ( fd, bcmd, sizeof ( bcmd ) );
-        val = strtol ( bcmd, NULL, 10 );
-        close ( fd );
-    } else {
-        LOGE ( "open /sys/module/tvin_hdmirx/parameters/auds_rcv_sts ERROR(%s)!!\n",  strerror ( errno ) );
-        return -1;
-    }
-
+    tvReadSysfs("/sys/module/tvin_hdmirx/parameters/auds_rcv_sts", buf);
+    int val = atoi(buf);
     return val;
 }
 
 int CTvin::TvinApi_LoadPLLValues ( am_regs_t regs )
 {
     int rt = AFE_DeviceIOCtl ( TVIN_IOC_LOAD_REG, &regs );
-
     if ( rt < 0 ) {
         LOGE ( "TvinApi_LoadPLLValues, error(%s)!\n", strerror ( errno ) );
     }
@@ -2167,41 +1851,11 @@ int CTvin::TvinApi_LoadPLLValues ( am_regs_t regs )
 int CTvin::TvinApi_LoadCVD2Values ( am_regs_t regs )
 {
     int rt = AFE_DeviceIOCtl ( TVIN_IOC_LOAD_REG, &regs );
-
     if ( rt < 0 ) {
         LOGE ( "TvinApi_LoadCVD2Values, error(%s)!\n", strerror ( errno ) );
     }
 
     return rt;
-}
-
-int CTvin::TvinApi_GetFbSize ( unsigned int *fb_width, unsigned int *fb_height )
-{
-    int fbfd = 0;
-    struct fb_var_screeninfo vinfo;
-    struct fb_fix_screeninfo finfo;
-    int xres = 0, yres = 0, bits_per_pixel = 0;
-
-    fbfd = open ( "/dev/graphics/fb0", O_RDWR );
-    if ( !fbfd ) {
-        return -1;
-    }
-
-    if ( ioctl ( fbfd, FBIOGET_FSCREENINFO, &finfo ) ) {
-        goto fail_close_fb;
-    }
-
-    if ( ioctl ( fbfd, FBIOGET_VSCREENINFO, &vinfo ) ) {
-        goto fail_close_fb;
-    }
-
-    *fb_width = vinfo.xres;
-    *fb_height = vinfo.yres;
-    return 1;
-
-fail_close_fb:
-    close ( fbfd );;
-    return -1;
 }
 
 tv_source_input_type_t CTvin::Tvin_SourceInputToSourceInputType ( tv_source_input_t source_input )
@@ -2283,19 +1937,13 @@ tvin_port_t CTvin::Tvin_GetSourcePortBySourceInput ( tv_source_input_t source_in
 
 tv_source_input_t CTvin::Tvin_PortToSourceInput ( tvin_port_t port )
 {
-    int i;
-
-    for ( i = SOURCE_TV; i < SOURCE_MAX; i++ ) {
+    for ( int i = SOURCE_TV; i < SOURCE_MAX; i++ ) {
         if ( mSourceInputToPortMap[i] == (int)port ) {
-            break;
+            return (tv_source_input_t)i;
         }
     }
 
-    if ( i == SOURCE_MAX ) {
-        return SOURCE_MAX;
-    } else {
-        return tv_source_input_t ( i );
-    }
+    return SOURCE_MAX;
 }
 
 unsigned int CTvin::Tvin_TransPortStringToValue(const char *port_str)
@@ -2567,21 +2215,19 @@ bool CTvin::Tvin_IsDeinterlaceFmt ( tvin_sig_fmt_t fmt )
 
 int CTvin::Tvin_StartDecoder ( tvin_info_t &info )
 {
-    if ( m_is_decoder_start == false ) {
-        m_tvin_param.info = info;
-
-        if ( VDIN_StartDec ( &m_tvin_param ) >= 0 ) {
-            LOGD ( "StartDecoder succeed." );
-            m_is_decoder_start = true;
-        } else {
-            LOGW ( "StartDecoder failed." );
-            return -1;
-        }
-    } else {
+    if (mDecoderStarted)
         return -2;
+
+    m_tvin_param.info = info;
+
+    if ( VDIN_StartDec ( &m_tvin_param ) >= 0 ) {
+        LOGD ( "StartDecoder succeed." );
+        mDecoderStarted = true;
+        return 0;
     }
 
-    return 0;
+    LOGW ( "StartDecoder failed." );
+    return -1;
 }
 
 int CTvin::SwitchPort (tvin_port_t source_port )
@@ -2589,18 +2235,15 @@ int CTvin::SwitchPort (tvin_port_t source_port )
     int ret = 0;
     LOGD ("%s, source_port = %x", __FUNCTION__,  source_port);
     ret = Tvin_StopDecoder();
-    if ( 0 == ret || 1 == ret ) {
-        if ( 1 == ret ) { //decode not started
-            //mVpp.Tvin_SetVideoScreenColorType ( TV_SIGNAL_BLUE_PATTERN );
-        }
-        VDIN_ClosePort();
-    } else {
+    if (ret < 0) {
         LOGW ( "%s,stop decoder failed.", __FUNCTION__);
         return -1;
     }
+
+    VDIN_ClosePort();
     // Open Port
     if ( VDIN_OpenPort ( source_port ) < 0 ) {
-        LOGD ( "%s, OpenPort failed,  source_port =%x ", __FUNCTION__,  source_port );
+        LOGD ( "%s, OpenPort failed, source_port =%x ", __FUNCTION__,  source_port );
     }
     m_tvin_param.port = source_port;
     return 0;
@@ -2608,18 +2251,14 @@ int CTvin::SwitchPort (tvin_port_t source_port )
 
 int CTvin::Tvin_StopDecoder()
 {
-    if ( m_is_decoder_start == true ) {
-        if ( VDIN_StopDec() >= 0 ) {
-            LOGD ( "StopDecoder ok!" );
-            m_is_decoder_start = false;
-            return 0;
-        } else {
-            LOGD ( "StopDecoder Failed!" );
-        }
-    } else {
+    if (!mDecoderStarted)
         return 1;
-    }
 
+    if ( VDIN_StopDec() >= 0 ) {
+        LOGD ( "StopDecoder ok!" );
+        mDecoderStarted = false;
+        return 0;
+    }
     return -1;
 }
 
@@ -2732,7 +2371,6 @@ int CTvin::Tvin_CheckPathActive ( tv_path_type_t path_type)
     return is_active;
 }
 
-
 int CTvin::Tv_init_afe ( void )
 {
     AFE_OpenModule();
@@ -2747,16 +2385,10 @@ int CTvin::Tv_uninit_afe ( void )
 
 int CTvin::get_hdmi_sampling_rate()
 {
-    int fd;
-    int val = 0;
-    char bcmd[16];
-    fd = open ( "/sys/module/tvin_hdmirx/parameters/audio_sample_rate", O_RDONLY );
-    if ( fd >= 0 ) {
-        read ( fd, bcmd, sizeof ( bcmd ) );
-        val = strtol ( bcmd, NULL, 10 );
-        close ( fd );
-    }
+    char buf[32] = {0};
 
+    tvReadSysfs("/sys/module/tvin_hdmirx/parameters/audio_sample_rate", buf);
+    int val = atoi(buf);
     return val;
 }
 
@@ -2774,7 +2406,7 @@ CTvin::CTvinSigDetect::~CTvinSigDetect()
 
 int CTvin::CTvinSigDetect::startDetect(bool bPause)
 {
-    LOGD ( "startDetect()" );
+    LOGD ("startDetect detect state:%d", mDetectState);
 
     if ( mDetectState == STATE_RUNNING || mDetectState == STATE_PAUSE ) {
         return mDetectState;
@@ -2850,7 +2482,8 @@ int CTvin::CTvinSigDetect::Tv_TvinSigDetect ( int &sleeptime )
     CTvin::getInstance()->VDIN_GetSignalInfo ( &m_cur_sig_info ); //get info
     //set no sig check times
     static long long sNosigKeepTime = 0;
-    //LOGD("stime=%d status=%d, fmt = %d sNosigKeepTime = %d, mKeepNosigTime = %d", sleeptime, m_cur_sig_info.status,m_cur_sig_info.fmt, sNosigKeepTime, mKeepNosigTime);
+    LOGD("stime=%d status=%d, fmt = %d sNosigKeepTime = %lld, mKeepNosigTime = %d",
+        sleeptime, m_cur_sig_info.status, m_cur_sig_info.fmt, sNosigKeepTime, mKeepNosigTime);
     if ( m_cur_sig_info.status == TVIN_SIG_STATUS_NOSIG  || m_cur_sig_info.status == TVIN_SIG_STATUS_NULL ) {
         sNosigKeepTime += sleeptime;
         if ( sNosigKeepTime > mKeepNosigTime ) { //real no sig
@@ -3004,16 +2637,10 @@ int CTvin::CvbsFtmToColorStdEnum(tvin_sig_fmt_t fmt)
 
 int CTvin::GetITContent()
 {
-    FILE *fp = NULL;
-    int value = 0;
-    fp = fopen("/sys/module/tvin_hdmirx/parameters/it_content", "r");
-    if (fp == NULL) {
-        LOGE ( "Open /sys/module/tvin_hdmirx/parameters/it_content error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-    fscanf(fp, "%d", &value );
-    fclose(fp);
-    fp = NULL;
+    char buf[32] = {0};
+
+    tvReadSysfs("/sys/module/tvin_hdmirx/parameters/it_content", buf);
+    int value = atoi(buf);
     return value;
 }
 

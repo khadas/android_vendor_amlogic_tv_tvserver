@@ -1,10 +1,4 @@
-/*
- * amlogic 2013
- *@ Project : tv
- *@ Date : 2013-12
- *@ Author :
-*/
-#define LOG_TAG "CTvEpg"
+#define LOG_TAG "tvserver"
 
 #include "CTvEpg.h"
 #include "CTvChannel.h"

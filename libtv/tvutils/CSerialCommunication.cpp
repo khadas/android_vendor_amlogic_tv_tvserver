@@ -1,4 +1,4 @@
-#define LOG_TAG "CSerialCommunication"
+#define LOG_TAG "tvserver"
 
 #include <CTvLog.h>
 #include <stdio.h>

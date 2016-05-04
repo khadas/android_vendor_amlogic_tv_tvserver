@@ -1,9 +1,11 @@
+#define LOG_TAG "tvserver"
 
 #include "CHDMIRxManager.h"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <CTvLog.h>
+#include "../tvutils/tvutils.h"
 
 
 CHDMIRxManager::CHDMIRxManager()
@@ -77,31 +79,17 @@ int CHDMIRxManager::GetHdmiHdcpKeyKsvInfo(struct _hdcp_ksv *msg)
 
 int CHDMIRxManager::SetHdmiColorRangeMode(tv_hdmi_color_range_t range_mode)
 {
-    FILE *fp = NULL;
-    int value = 0;
-    fp = fopen(HDMI_FORCE_COLOR_RANGE, "w");
-    if (fp == NULL) {
-        LOGE ( "Open %s (%s)!\n", HDMI_FORCE_COLOR_RANGE, strerror(errno));
-        return -1;
-    }
-    fprintf(fp, "%d", (int)range_mode);
-    fclose(fp);
-    fp = NULL;
-    return value;
+    char val[5] = {0};
+    sprintf(val, "%d", range_mode);
+    tvWriteSysfs(HDMI_FORCE_COLOR_RANGE, val);
+    return 0;
 }
 
 tv_hdmi_color_range_t CHDMIRxManager::GetHdmiColorRangeMode()
 {
-    FILE *fp = NULL;
-    int value = 0;
-    fp = fopen(HDMI_FORCE_COLOR_RANGE, "r");
-    if (fp == NULL) {
-        LOGE ( "Open %s (%s)!\n", HDMI_FORCE_COLOR_RANGE, strerror(errno));
-        return AUTO_RANGE;
-    }
-    fscanf(fp, "%d", &value);
-    fclose(fp);
-    fp = NULL;
-    return (tv_hdmi_color_range_t)value;
+    char value[5] = {0};
+    tvReadSysfs(HDMI_FORCE_COLOR_RANGE, value);
+
+    return (tv_hdmi_color_range_t)atoi(value);
 }
 

@@ -1642,6 +1642,23 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case SET_AMAUDIO_PRE_GAIN: {
+        float tmp_val = p.readFloat();
+        int ret = mpTv->setAmAudioPreGain(tmp_val);
+        r->writeInt32(ret);
+        break;
+    }
+    case SET_AMAUDIO_PRE_MUTE: {
+        int tmp_val = p.readInt32();
+        int ret = mpTv->setAmAudioPreMute(tmp_val);
+        r->writeInt32(ret);
+        break;
+    }
+    case GET_AMAUDIO_PRE_MUTE: {
+        int ret = mpTv->getAmAudioPreMute();
+        r->writeInt32(ret);
+        break;
+    }
     case SELECT_LINE_IN_CHANNEL: {
         int channel = p.readInt32();
         int ret = mpTv->AudioLineInSelectChannel(channel);

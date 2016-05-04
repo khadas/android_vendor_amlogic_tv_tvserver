@@ -113,6 +113,30 @@ int CAv::AudioSetOutputMode(AM_AOUT_OutputMode_t mode)
     return AM_AOUT_SetOutputMode ( mTvPlayDevId, mode );
 }
 
+int CAv::AudioSetPreGain(float pre_gain)
+{
+    return AM_AOUT_SetPreGain(0, pre_gain);
+}
+
+int CAv::AudioGetPreGain(float *gain)
+{
+    return AM_AOUT_GetPreGain(0, gain);
+}
+
+int CAv::AudioSetPreMute(uint mute)
+{
+    return AM_AOUT_SetPreMute(0, mute);
+}
+
+int CAv::AudioGetPreMute(uint *mute)
+{
+  int ret = -1;
+  AM_Bool_t btemp_mute = 0;
+  ret = AM_AOUT_GetPreMute(0, &btemp_mute);
+  *mute = btemp_mute ? 1 : 0;
+  return ret;
+}
+
 int CAv::EnableVideoBlackout()
 {
     return AM_AV_EnableVideoBlackout(mTvPlayDevId);

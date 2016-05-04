@@ -91,6 +91,10 @@ public:
     int StopTS();
     int AudioGetOutputMode(AM_AOUT_OutputMode_t *mode);
     int AudioSetOutputMode(AM_AOUT_OutputMode_t mode);
+    int AudioSetPreGain(float pre_gain);
+    int AudioGetPreGain(float *gain);
+    int AudioSetPreMute(uint mute);
+    int AudioGetPreMute(uint *mute);
     int SetVideoScreenColor (int vdin_blending_mask, int y, int u, int v);
     int DisableVideoWithBlueColor();
     int DisableVideoWithBlackColor();

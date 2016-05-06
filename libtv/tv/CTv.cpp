@@ -1773,6 +1773,7 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
         SetCustomEQGain();
         mpTvin->setMpeg2Vdin(1);
         mAv.setLookupPtsForDtmb(1);
+        CVpp::getInstance()->LoadVppSettings(SOURCE_TYPE_DTV, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, INDEX_2D, TVIN_TFMT_2D);
         Tv_SetAudioInSource ( source_input );
     } else {
         mpTvin->setMpeg2Vdin(0);
@@ -2265,7 +2266,7 @@ void CTv::onSourceConnect(int source_type, int connect_status)
 void CTv::onVframeSizeChange()
 {
     if (m_source_input == SOURCE_DTV) {
-        CVpp::getInstance()->LoadVppSettings ( SOURCE_TYPE_DTV, mAv.getVideoResolutionToFmt(), INDEX_2D, TVIN_TFMT_2D );
+        //CVpp::getInstance()->LoadVppSettings ( SOURCE_TYPE_DTV, mAv.getVideoResolutionToFmt(), INDEX_2D, TVIN_TFMT_2D );
     } else if (m_source_input == SOURCE_INVALID) {
         CVpp::getInstance()->LoadVppSettings ( SOURCE_TYPE_MPEG, mAv.getVideoResolutionToFmt(), INDEX_2D, TVIN_TFMT_2D );
     }

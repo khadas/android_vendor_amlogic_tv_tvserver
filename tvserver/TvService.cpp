@@ -998,6 +998,15 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case SET_VIDEO_AXIS: {
+        int  x = p.readInt32();
+        int y = p.readInt32();
+        int width = p.readInt32();
+        int height = p.readInt32();
+        int ret = mpTv->SetVideoAxis(x, y, width, height);
+        r->writeInt32(ret);
+        break;
+    }
     // PQ END
 
     // FACTORY

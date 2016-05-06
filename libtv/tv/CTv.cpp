@@ -5190,6 +5190,11 @@ tv_hdmi_color_range_t CTv::GetHdmiColorRangeMode()
     return mHDMIRxManager.GetHdmiColorRangeMode();
 }
 
+int CTv::SetVideoAxis(int x, int y, int width, int heigth)
+{
+    return mAv.setVideoAxis(x, y, width, heigth);
+}
+
 void CTv::dump(String8 &result)
 {
     result.appendFormat("\naction = %x\n", mTvAction);

@@ -396,6 +396,7 @@ public:
     int GetHdmiAvHotplugDetectOnoff();
     int SetHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);
     int SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable);
+    int SetVideoAxis(int x, int y, int width, int heigth);
 
     void dump(String8 &result);
 private:

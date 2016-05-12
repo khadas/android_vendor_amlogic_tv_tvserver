@@ -87,7 +87,7 @@ public:
     int SwitchTSAudio(int apid, AM_AV_AFormat_t afmt);
     int ResetAudioDecoder();
     int SetTSSource(AM_AV_TSSource_t ts_source);
-    int StartTS(uint16_t vpid, uint16_t apid, AM_AV_VFormat_t vfmt, AM_AV_AFormat_t afmt);
+    int StartTS(uint16_t vpid, uint16_t apid, uint16_t pcrid, AM_AV_VFormat_t vfmt, AM_AV_AFormat_t afmt);
     int StopTS();
     int AudioGetOutputMode(AM_AOUT_OutputMode_t *mode);
     int AudioSetOutputMode(AM_AOUT_OutputMode_t mode);

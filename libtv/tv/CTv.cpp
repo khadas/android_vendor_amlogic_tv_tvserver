@@ -795,7 +795,7 @@ int CTv::playDvbcProgram ( int progId )
     }
     mTvEpg.leaveProgram();
     mTvEpg.leaveChannel();
-    startPlayTv ( SOURCE_DTV, vpid, apid, vfmt, afmt );
+    startPlayTv ( SOURCE_DTV, vpid, apid, prog.getPcrId(), vfmt, afmt );
 
     mTvEpg.enterChannel ( channel.getID() );
     mTvEpg.enterProgram ( prog.getID() );
@@ -921,7 +921,7 @@ int CTv::ResetAudioDecoderForPCMOutput()
 }
 
 int CTv::playDtvProgram ( int mode, int freq, int para1, int para2,
-                          int vpid, int vfmt, int apid, int afmt, int pcr __unused, int audioCompetation)
+                          int vpid, int vfmt, int apid, int afmt, int pcr, int audioCompetation)
 {
     AutoMutex lock ( mLock );
     mTvAction |= TV_ACTION_PLAYING;
@@ -934,7 +934,7 @@ int CTv::playDtvProgram ( int mode, int freq, int para1, int para2,
     if (!(mTvAction & TV_ACTION_SCANNING))
         mFrontDev.setPara ( mode, freq, para1, para2);
     mTvAction |= TV_ACTION_PLAYING;
-    startPlayTv ( SOURCE_DTV, vpid, apid, vfmt, afmt );
+    startPlayTv ( SOURCE_DTV, vpid, apid, pcr, vfmt, afmt );
 
     CMessage msg;
     msg.mDelayMs = 2000;
@@ -988,7 +988,7 @@ int CTv::playDtmbProgram ( int progId )
 
     mTvEpg.leaveProgram();
     mTvEpg.leaveChannel();
-    startPlayTv ( SOURCE_DTV, vpid, apid, vfmt, afmt );
+    startPlayTv ( SOURCE_DTV, vpid, apid, prog.getPcrId(), vfmt, afmt );
     mTvEpg.enterChannel ( channel.getID() );
     mTvEpg.enterProgram ( prog.getID() );
     return 0;
@@ -1116,12 +1116,12 @@ int CTv::GetAudioVolumeCompensationVal(int progxxId __unused)
     return tmpVolValue;
 }
 
-int CTv::startPlayTv ( int source, int vid, int aid, int vfat, int afat )
+int CTv::startPlayTv ( int source, int vid, int aid, int pcrid, int vfat, int afat )
 {
     if ( source == SOURCE_DTV ) {
         AM_FileEcho ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
         LOGD ( "%s, startPlayTv", __FUNCTION__);
-        mAv.StartTS (vid, aid, ( AM_AV_VFormat_t ) vfat, ( AM_AV_AFormat_t ) afat );
+        mAv.StartTS (vid, aid, pcrid, ( AM_AV_VFormat_t ) vfat, ( AM_AV_AFormat_t ) afat );
     }
     return 0;
 }

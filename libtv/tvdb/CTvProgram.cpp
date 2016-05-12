@@ -127,6 +127,9 @@ int CTvProgram::CreateFromCursor(CTvDatabase::Cursor &c)
     this->mpVideo = new Video(pid, fmt);
     //LOGD("----------vpid = %d", this->mpVideo->getPID());
 
+    col = c.getColumnIndex("pcr_pid");
+    this->pcrID = c.getInt(col);
+
     //Audio
     String8 strPids;
     String8 strFmts;

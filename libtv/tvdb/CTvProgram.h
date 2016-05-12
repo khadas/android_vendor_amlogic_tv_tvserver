@@ -470,6 +470,11 @@ public:
     {
         return dvbServiceID;
     };
+    int getPcrId()
+    {
+        return pcrID;
+    };
+
     int getProgSkipFlag();
     int getSubtitleIndex(int progId);
     int setSubtitleIndex(int progId, int index);
@@ -524,6 +529,7 @@ private:
     bool scrambled;
     // video信息,类型不定
     Video *mpVideo;
+    int pcrID;
     // audio信息,类型不定
     Vector<Audio *> mvAudios;
     // subtitle信息类型不定

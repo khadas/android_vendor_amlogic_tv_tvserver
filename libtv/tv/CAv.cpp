@@ -94,9 +94,9 @@ int CAv::SetTSSource(AM_AV_TSSource_t ts_source)
     return AM_AV_SetTSSource ( mTvPlayDevId, ts_source );
 }
 
-int CAv::StartTS(uint16_t vpid, uint16_t apid, AM_AV_VFormat_t vfmt, AM_AV_AFormat_t afmt)
+int CAv::StartTS(uint16_t vpid, uint16_t apid, uint16_t pcrid, AM_AV_VFormat_t vfmt, AM_AV_AFormat_t afmt)
 {
-    return AM_AV_StartTS ( mTvPlayDevId, vpid, apid, ( AM_AV_VFormat_t ) vfmt, ( AM_AV_AFormat_t ) afmt );
+    return AM_AV_StartTSWithPCR ( mTvPlayDevId, vpid, apid, pcrid, ( AM_AV_VFormat_t ) vfmt, ( AM_AV_AFormat_t ) afmt );
 }
 
 int CAv::StopTS()

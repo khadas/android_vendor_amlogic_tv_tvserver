@@ -521,7 +521,7 @@ protected:
     int stopScan();
     int stopPlaying();
     void sendTvEvent ( const CTvEv &ev );
-    int startPlayTv ( int source, int vid, int aid, int vfat, int afat );
+    int startPlayTv ( int source, int vid, int aid, int pcrid, int vfat, int afat );
     //scan observer
     void onEvent ( const CTvScanner::ScannerEvent &ev );
     //epg observer

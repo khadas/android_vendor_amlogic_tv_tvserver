@@ -37,6 +37,7 @@
 #include "CAutoPQparam.h"
 #include "tvin/CSourceConnectDetect.h"
 #include "fbcutils/fbcutils.h"
+#include "CTvGpio.h"
 
 #include <CTvFactory.h>
 
@@ -181,6 +182,7 @@ public:
 
     virtual int Tv_SSMRestoreDefaultSetting();
 
+    int handleGPIO(const char *port_name, bool is_out, int edge);
 
     int GetSourceConnectStatus(tv_source_input_t source_input);
     int IsDVISignal();
@@ -616,6 +618,7 @@ protected:
     char mMainVolLutTableExtraName[CC_PROJECT_INFO_ITEM_MAX_LEN];
 
     CTvin *mpTvin;
+    CTvGpio *pGpio;
 };
 
 #endif  //_CDTV_H

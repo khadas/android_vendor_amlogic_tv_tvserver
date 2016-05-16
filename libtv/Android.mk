@@ -71,7 +71,8 @@ LOCAL_SRC_FILES := \
   tvdb/CTvProgram.cpp \
   tvdb/CTvRegion.cpp \
   fbcutils/CFbcCommunication.cpp \
-  fbcutils/fbcutils.cpp
+  fbcutils/fbcutils.cpp \
+  gpio/CTvGpio.cpp
 
 LOCAL_SHARED_LIBRARIES := \
   libui \
@@ -192,6 +193,7 @@ LOCAL_C_INCLUDES += \
   $(AM_LIBPLAYER_PATH)/amplayer \
   $(LOCAL_PATH)/tvdb \
   $(LOCAL_PATH)/tv \
+  $(LOCAL_PATH)/gpio \
   $(LOCAL_PATH)/include \
   $(LOCAL_PATH)/../build/include \
   $(TOP)/vendor/amlogic/frameworks/services \

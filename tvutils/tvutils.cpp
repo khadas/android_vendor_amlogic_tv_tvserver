@@ -172,6 +172,22 @@ int tvWriteSysfs(const char *path, const char *value) {
 #endif
 }
 
+int tvWriteSysfs(const char *path, int value)
+{
+    char str_value[64] = {0};
+    sprintf(str_value, "%d", value);
+#ifdef USE_SYSTEM_CONTROL
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        sws->writeSysfs(String16(path), String16(str_value));
+    }
+    return 0;
+#else
+    return writeSys(path, str_value);
+#endif
+}
+
+
 int Tv_MiscRegs(const char *cmd)
 {
     FILE *fp = NULL;

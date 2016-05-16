@@ -190,6 +190,7 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
 
     mTvAction &= TV_ACTION_NULL;
     mTvStatus = TV_INIT_ED;
+    pGpio = new CTvGpio();
     print_version_info();
 }
 
@@ -207,6 +208,11 @@ CTv::~CTv()
         fbcIns->fbcRelease();
         delete fbcIns;
         fbcIns = NULL;
+    }
+
+    if (pGpio != NULL) {
+        delete pGpio;
+        pGpio = NULL;
     }
 }
 
@@ -5082,6 +5088,11 @@ tv_hdmi_color_range_t CTv::GetHdmiColorRangeMode()
 int CTv::SetVideoAxis(int x, int y, int width, int heigth)
 {
     return mAv.setVideoAxis(x, y, width, heigth);
+}
+
+int CTv::handleGPIO(const char *port_name, bool is_out, int edge)
+{
+    return pGpio->processCommand(port_name, is_out, edge);
 }
 
 void CTv::dump(String8 &result)

@@ -55,6 +55,7 @@ LOCAL_C_INCLUDES := \
   $(LOCAL_PATH)/../libtv/tvdb \
   $(LOCAL_PATH)/../libtv/tv \
   $(LOCAL_PATH)/../libtv/include \
+  $(LOCAL_PATH)/../libtv/gpio \
   $(LOCAL_PATH)/../tvfbclinker/include \
   $(LIB_TV_UTILS)/include
 

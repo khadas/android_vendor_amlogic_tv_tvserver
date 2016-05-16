@@ -5,6 +5,8 @@
 
 int tvReadSysfs(const char *path, char *value);
 int tvWriteSysfs(const char *path, const char *value);
+int tvWriteSysfs(const char *path, int value);
+
 
 extern int Tv_MiscRegs(const char *cmd);
 

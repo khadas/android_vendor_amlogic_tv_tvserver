@@ -3182,6 +3182,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(flag);
         break;
     }
+    case HANDLE_GPIO: {
+        String8 strName(p.readString16());
+        int is_out = p.readInt32();
+        int edge = p.readInt32();
+        int ret = mpTv->handleGPIO((char *)strName.string(), is_out, edge);
+        r->writeInt32(ret);
+        break;
+    }
     // EXTAR END
     default:
         LOGD("default");

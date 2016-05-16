@@ -115,7 +115,12 @@ int CTvScanner::ATVManualScan(int min_freq, int max_freq, int std, int store_Typ
 
         para.dtv_para.resort_all = AM_FALSE;
         para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
-        para.store_cb = am_scan_atv_store;
+        const char *db_mode = config_get_str ( CFG_SECTION_TV, SYS_SCAN_TO_PRIVATE_DB, "false");
+        if (!strcmp(db_mode, "true")) {
+            para.store_cb = NULL;
+        } else {
+            para.store_cb = am_scan_atv_store;
+        }
         para.atv_para.channel_num = channel_num;
 
         memset(&dmx_para, 0, sizeof(dmx_para));
@@ -233,7 +238,12 @@ int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type
 
         para.dtv_para.resort_all = AM_FALSE;
         para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
-        para.store_cb = am_scan_atv_store;
+        const char *db_mode = config_get_str ( CFG_SECTION_TV, SYS_SCAN_TO_PRIVATE_DB, "false");
+        if (!strcmp(db_mode, "true")) {
+            para.store_cb = NULL;
+        } else {
+            para.store_cb = am_scan_atv_store;
+        }
 
         para.proc_mode = proc_mode;
 
@@ -1048,8 +1058,12 @@ int CTvScanner::manualDtmbScan(int beginFreq, int endFreq, int modulation)
         else
             para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
 
-        para.store_cb = dtv_scan_store;
-
+        const char *db_mode = config_get_str ( CFG_SECTION_TV, SYS_SCAN_TO_PRIVATE_DB, "false");
+        if (!strcmp(db_mode, "true")) {
+            para.store_cb = NULL;
+        } else {
+            para.store_cb = dtv_scan_store;
+        }
 
         memset(&dmx_para, 0, sizeof(dmx_para));
         AM_DMX_Open(para.dtv_para.dmx_dev_id, &dmx_para);
@@ -1326,7 +1340,12 @@ int CTvScanner::autoDtmbScan()
         else
             para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
 
-        para.store_cb = dtv_scan_store;
+        const char *db_mode = config_get_str ( CFG_SECTION_TV, SYS_SCAN_TO_PRIVATE_DB, "false");
+        if (!strcmp(db_mode, "true")) {
+            para.store_cb = NULL;
+        } else {
+            para.store_cb = dtv_scan_store;
+        }
 
         memset(&dmx_para, 0, sizeof(dmx_para));
         AM_DMX_Open(para.dtv_para.dmx_dev_id, &dmx_para);

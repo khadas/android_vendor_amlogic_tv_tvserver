@@ -88,6 +88,9 @@
 #define SYS_DROILOGIC_DEBUG                     "/sys/class/amlogic/debug"
 #define SYS_ATV_DEMOD_DEBUG                     "/sys/class/amlatvdemod/atvdemod_debug"
 
+#define SYS_SCAN_TO_PRIVATE_DB                  "tuner.device.scan.to.private.db.en"
+
+
 extern int tv_config_load(const char *file_name);
 extern int tv_config_unload();
 extern int tv_config_save();

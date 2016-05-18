@@ -182,6 +182,7 @@ int CAv::EnableVideoAuto()
         return 0;
     }
     mVideoLayerState = VIDEO_LAYER_ENABLE;
+    LOGD("DisableVideoWithBlackColor");
     SetVideoScreenColor ( 0, 16, 128, 128 ); // Show black with vdin0, postblending disabled
     ClearVideoBuffer();//disable video 2
     return 0;
@@ -197,10 +198,8 @@ int CAv::EnableVideoNow()
         return 0;
     }
     mVideoLayerState = VIDEO_LAYER_ENABLE;
-    const char *value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-    if (strcmp ( value, "black" )) { //don't black
-        SetVideoScreenColor ( 0, 16, 128, 128 ); // Show blue with vdin0, postblending disabled
-    }
+    LOGD("DisableVideoWithBlackColor");
+    SetVideoScreenColor ( 0, 16, 128, 128 );
     return AM_AV_EnableVideo(mTvPlayDevId);
 }
 

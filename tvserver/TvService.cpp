@@ -3190,6 +3190,12 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case SET_LCD_ENABLE: {
+        int enable = p.readInt32();
+        int ret = mpTv->setLcdEnable(enable);
+        r->writeInt32(ret);
+        break;
+    }
     // EXTAR END
     default:
         LOGD("default");

@@ -2169,7 +2169,7 @@ void CTv::onSigDetectLoop()
 
         //m_hdmi_audio_data init is 0, not audio data , when switch to HDMI
         int hdmi_audio_data = mpTvin->TvinApi_GetHDMIAudioStatus();
-        if (hdmi_audio_data != m_hdmi_audio_data) {
+        if (hdmi_audio_data != m_hdmi_audio_data && sr > 0) {
             LOGD("HDMI  auds_rcv_sts CHANGED = %d", hdmi_audio_data);
             m_hdmi_audio_data = hdmi_audio_data;
             onHMDIAudioStatusChanged(hdmi_audio_data);

@@ -337,6 +337,10 @@ void CTv::onEvent(const CAv::AVEvent &ev)
     }
 
     case CAv::AVEvent::EVENT_AV_RESUEM: {
+        int feState = mFrontDev.getStatus();
+        if ((feState & FE_HAS_LOCK) != FE_HAS_LOCK) {
+            break;
+        }
         //if (mAv.WaittingVideoPlaying() == 0) {
         SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) ),
                          CTvin::Tvin_SourceInputToSourceInputType(m_source_input),
@@ -589,7 +593,7 @@ int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchTyp
     AutoMutex lock ( mLock );
     mAv.DisableVideoWithBlueColor();
     mTvAction |= TV_ACTION_SCANNING;
-    stopPlaying();
+    stopPlaying(true);
     mTvScanner.setObserver ( &mTvMsgQueue );
     SetAudioMuteForTv ( CC_AUDIO_MUTE );
     getATVMinMaxFreq (&minScanFreq, &maxScanFreq );
@@ -1137,10 +1141,10 @@ int CTv::stopPlayingLock()
     AutoMutex lock ( mLock );
     if (mSubtitle.sub_switch_status() == 1)
         mSubtitle.sub_stop_dvb_sub();
-    return stopPlaying();
+    return stopPlaying(true);
 }
 
-int CTv::stopPlaying()
+int CTv::stopPlaying(bool isShowTestScreen)
 {
     const char *config_value = NULL;
     if (!(mTvAction & TV_ACTION_PLAYING)) {
@@ -1159,12 +1163,16 @@ int CTv::stopPlaying()
         //mTvEpg.leaveChannel();
         //mTvEpg.leaveProgram();
     }
-    config_value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-    if ( strcmp ( config_value, "black" ) == 0 ) {
-        mAv.DisableVideoWithBlackColor();
-    } else {
-        mAv.DisableVideoWithBlueColor();
+
+    if ( true == isShowTestScreen ) {
+        config_value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
+        if ( strcmp ( config_value, "black" ) == 0 ) {
+            mAv.DisableVideoWithBlackColor();
+        } else {
+            mAv.DisableVideoWithBlueColor();
+        }
     }
+
     mTvAction &= ~TV_ACTION_PLAYING;
     return 0;
 }
@@ -1612,7 +1620,7 @@ int CTv::StopTvLock ( void )
     stopScan();
     mFrontDev.SetAnalogFrontEndTimerSwitch(0);
     //first stop play(if playing)
-    stopPlaying();
+    stopPlaying(false);
     //
     setAudioChannel(AM_AOUT_OUTPUT_STEREO);
     mpTvin->setMpeg2Vdin(0);

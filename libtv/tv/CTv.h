@@ -521,7 +521,7 @@ protected:
     void onEnableVideoLater(int framecount);
     int resetDmxAndAvSource();
     int stopScan();
-    int stopPlaying();
+    int stopPlaying(bool isShowTestScreen);
     void sendTvEvent ( const CTvEv &ev );
     int startPlayTv ( int source, int vid, int aid, int pcrid, int vfat, int afat );
     //scan observer

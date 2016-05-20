@@ -3129,7 +3129,7 @@ int CTv::SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_type_
     default:
         break;
     }
-    if (source_type == SOURCE_TYPE_DTV || source_type == SOURCE_TYPE_MPEG) {
+    if (source_type == SOURCE_TYPE_DTV) {
         cutwin.vs = cutwin.vs + 12;
         cutwin.ve = cutwin.ve + 12;
         cutwin.hs = cutwin.hs + 12;

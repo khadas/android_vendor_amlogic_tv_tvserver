@@ -182,9 +182,7 @@ private:
     static AM_Bool_t s_atv_cvbs_lock_check(void *);
     AM_Bool_t atv_cvbs_lock_check(v4l2_std_id  *colorStd);
     static void tv_scan_evt_callback(long dev_no, int event_type, void *param, void *data);
-    static void storeATV(AM_SCAN_Result_t *result);
-    static void storeATVTs(AM_SCAN_TS_t *ts);
-
+    static void am_scan_atv_store(AM_SCAN_Result_t *result);
     void tv_scan_reconnect_dmx_to_fend(int dmx_no, int fend_no);
     int getAtscChannelPara(int attennaType, Vector<sp<CTvChannel> > &vcp);
     void sendEvent(ScannerEvent &evt);
@@ -253,7 +251,6 @@ private:
     static void scan_get_lcn_info(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, lcn_list_t &llist);
     static void scan_store_dvb_ts_evt_lcn(ScannerLcnInfo *lcn);
     static int scan_insert_lcn(lcn_list_t &llist, ScannerLcnInfo *lcn, int idx);
-    static void storeDTV(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts);
 
 private:
 

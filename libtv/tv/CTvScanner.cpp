@@ -119,7 +119,7 @@ int CTvScanner::ATVManualScan(int min_freq, int max_freq, int std, int store_Typ
         if (!strcmp(db_mode, "true")) {
             para.store_cb = NULL;
         } else {
-            para.store_cb = storeATV;
+            para.store_cb = am_scan_atv_store;
         }
         para.atv_para.channel_num = channel_num;
 
@@ -165,16 +165,13 @@ int CTvScanner::ATVManualScan(int min_freq, int max_freq, int std, int store_Typ
 
 }
 
-void CTvScanner::storeATV(AM_SCAN_Result_t *result)
+void CTvScanner::am_scan_atv_store(AM_SCAN_Result_t *result)
 {
     AM_SCAN_TS_t *ts;
-
-    for (ts = result->tses; ts != NULL; ts = ts->p_next)
-        storeATVTs(ts);
-}
-
-void CTvScanner::storeATVTs(AM_SCAN_TS_t *ts)
-{
+    int i, ret, db_sat_id = -1;
+    //AM_SCAN_RecTab_t srv_tab;
+    for (ts = result->tses; ts != NULL; ts = ts->p_next) {
+        //
         m_s_Scanner->mCurEv.clear();
         m_s_Scanner->mCurEv.mType = ScannerEvent::EVENT_ATV_PROG_DATA;
         m_s_Scanner->mCurEv.mVideoStd = CFrontEnd::stdAndColorToVideoEnum(ts->analog.std);
@@ -184,6 +181,7 @@ void CTvScanner::storeATVTs(AM_SCAN_TS_t *ts)
         //
         m_s_Scanner->sendEvent(m_s_Scanner->mCurEv);
         LOGD("ATV: > freq:%d", m_s_Scanner->mCurEv.mFrequency);
+    }
 }
 
 void CTvScanner::setGlobalScanerObject(CTvScanner *s)
@@ -244,7 +242,7 @@ int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type
         if (!strcmp(db_mode, "true")) {
             para.store_cb = NULL;
         } else {
-            para.store_cb = storeATV;
+            para.store_cb = am_scan_atv_store;
         }
 
         para.proc_mode = proc_mode;
@@ -962,14 +960,6 @@ void CTvScanner::scan_store_dvb_ts_evt_lcn(ScannerLcnInfo *lcn)
         m_s_Scanner->sendEvent(m_s_Scanner->mCurEv);
 }
 
-void CTvScanner::storeDTV(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts)
-{
-    UNUSED(ts);
-
-    LOGD("storeDTV");
-    dtv_scan_store(result);
-}
-
 void CTvScanner::dtv_scan_store(AM_SCAN_Result_t *result)
 {
     AM_SCAN_TS_t *ts;
@@ -1534,7 +1524,7 @@ void CTvScanner::tv_scan_evt_callback(long dev_no, int event_type, void *param, 
     CTvScanner *pT = NULL;
     long long tmpFreq = 0;
 
-    LOGD("evt evt:%#x", event_type);
+    LOGD("evt evt:%d", event_type);
     AM_SCAN_GetUserData((AM_SCAN_Handle_t)dev_no, (void **)&pT);
     if (pT == NULL) {
         return;
@@ -1687,25 +1677,6 @@ void CTvScanner::tv_scan_evt_callback(long dev_no, int event_type, void *param, 
                 pT->mCurEv.mType = ScannerEvent::EVENT_SCAN_PROGRESS;
 
                 pT->sendEvent(pT->mCurEv);
-            }
-        }
-        break;
-        case AM_SCAN_PROGRESS_NEW_PROGRAM_MORE: {
-            AM_SCAN_NewProgram_Data_t *npd = (AM_SCAN_NewProgram_Data_t *)evt->data;
-            if (npd != NULL) {
-                switch (npd->newts->type) {
-                    case AM_SCAN_TS_ANALOG:
-                        if (npd->result->start_para->atv_para.mode == AM_SCAN_ATVMODE_AUTO)
-                            storeATVTs(npd->newts);
-                    break;
-                    case AM_SCAN_TS_DIGITAL:
-                        if ((npd->result->start_para->dtv_para.mode == AM_SCAN_DTVMODE_AUTO)
-                            || (npd->result->start_para->dtv_para.mode == AM_SCAN_DTVMODE_ALLBAND))
-                            storeDTV(npd->result, npd->newts);
-                    break;
-                    default:
-                    break;
-                }
             }
         }
         break;

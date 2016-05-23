@@ -189,7 +189,7 @@ int CAv::EnableVideoAuto()
 }
 
 //just enable video
-int CAv::EnableVideoNow()
+int CAv::EnableVideoNow(bool IsShowTestScreen)
 {
     LOGD("EnableVideoNow");
 
@@ -198,8 +198,10 @@ int CAv::EnableVideoNow()
         return 0;
     }
     mVideoLayerState = VIDEO_LAYER_ENABLE;
-    LOGD("DisableVideoWithBlackColor");
-    SetVideoScreenColor ( 0, 16, 128, 128 );
+    if ( IsShowTestScreen ) {
+        LOGD("DisableVideoWithBlackColor");
+        SetVideoScreenColor ( 0, 16, 128, 128 );
+    }
     return AM_AV_EnableVideo(mTvPlayDevId);
 }
 
@@ -222,7 +224,7 @@ int CAv::EnableVideoWhenVideoPlaying(int minFrameCount, int waitTime)
 {
     int ret = WaittingVideoPlaying(minFrameCount, waitTime);
     if (ret == 0) { //ok to playing
-        EnableVideoNow();
+        EnableVideoNow( true );
     }
     return ret;
 }

@@ -99,7 +99,7 @@ public:
     int DisableVideoWithBlueColor();
     int DisableVideoWithBlackColor();
     int EnableVideoAuto();
-    int EnableVideoNow();
+    int EnableVideoNow(bool IsShowTestScreen);
     int EnableVideoWhenVideoPlaying(int minFrameCount = 8, int waitTime = 5000);
     int WaittingVideoPlaying(int minFrameCount = 8, int waitTime = 5000);
     int EnableVideoBlackout();

@@ -25,6 +25,9 @@
 
 #define AFE_DEV_PATH        "/dev/tvafe0"
 #define AMLVIDEO2_DEV_PATH  "/dev/video11"
+#define VDIN0_ATTR_PATH     "/sys/class/vdin/vdin0/attr"
+#define VDIN1_ATTR_PATH     "/sys/class/vdin/vdin1/attr"
+
 
 
 #define CC_SEL_VDIN_DEV   (0)
@@ -700,7 +703,7 @@ int CTvin::VDIN_SetVideoFreeze ( int enable )
 {
     FILE *fp = NULL;
 
-    fp = fopen ( "/sys/class/vdin/vdin0/attr", "w" );
+    fp = fopen ( VDIN0_ATTR_PATH, "w" );
     if ( fp == NULL ) {
         LOGW ( "Open /sys/class/vdin/vdin0/attr error(%s)!\n", strerror ( errno ) );
         return -1;
@@ -1751,9 +1754,9 @@ int CTvin::TvinApi_SetVdinHVScale ( int vdinx, int hscale, int vscale )
 
     sprintf ( set_str, "%s %d %d", "hvscaler", hscale, vscale );
     if ( vdinx == 0 ) {
-        ret = tvWriteSysfs ( "/sys/class/vdin/vdin0/attr", set_str );
+        ret = tvWriteSysfs ( VDIN0_ATTR_PATH, set_str );
     } else {
-        ret = tvWriteSysfs ( "/sys/class/vdin/vdin1/attr", set_str );
+        ret = tvWriteSysfs ( VDIN1_ATTR_PATH, set_str );
     }
 
     return ret;
@@ -2230,11 +2233,28 @@ int CTvin::Tvin_StartDecoder ( tvin_info_t &info )
     return -1;
 }
 
+int CTvin::SwitchSnow(bool enable)
+{
+    int ret = -1;
+
+    if ( enable ) {
+        ret = tvWriteSysfs( VDIN0_ATTR_PATH, "snowon" );
+        mDecoderStarted = true;
+    } else {
+        ret = tvWriteSysfs( VDIN0_ATTR_PATH, "snowoff" );
+    }
+
+    return ret;
+}
+
 int CTvin::SwitchPort (tvin_port_t source_port )
 {
     int ret = 0;
     LOGD ("%s, source_port = %x", __FUNCTION__,  source_port);
-    ret = Tvin_StopDecoder();
+    if ( TVIN_PORT_CVBS3 != source_port ) {
+        ret = Tvin_StopDecoder();
+    }
+
     if (ret < 0) {
         LOGW ( "%s,stop decoder failed.", __FUNCTION__);
         return -1;
@@ -2246,6 +2266,12 @@ int CTvin::SwitchPort (tvin_port_t source_port )
         LOGD ( "%s, OpenPort failed, source_port =%x ", __FUNCTION__,  source_port );
     }
     m_tvin_param.port = source_port;
+
+    if ( TVIN_PORT_CVBS3 == source_port ) {
+        ret = SwitchSnow( true);
+        return ret;
+    }
+
     return 0;
 }
 

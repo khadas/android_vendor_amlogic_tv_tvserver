@@ -433,6 +433,7 @@ void CTv::CTvMsgQueue::handleMessage ( CMessage &msg )
     case TV_MSG_HDMI_SR_CHANGED: {
         int sr = ((int *)(msg.mpPara))[0];
         mpTv->onHdmiSrChanged(sr, (((int *)(msg.mpPara))[1] == 0) ? true : false);
+        mpTv->setAudioPreGain(mpTv->m_source_input);
         break;
     }
 

@@ -392,7 +392,7 @@ void CTvin::VDIN_GetDisplayVFreq (int need_freq, int *last_freq, int *iSswitch, 
     char buf[32] = {0};
     char *p = NULL;
 
-    if ( 0 != tvReadSysfs(SYS_DISPLAY_MODE_PATH, buf) ) {
+    if ( 0 > tvReadSysfs(SYS_DISPLAY_MODE_PATH, buf) ) {
         LOGW("Read /sys/class/display/mode failed!\n");
         return;
     }

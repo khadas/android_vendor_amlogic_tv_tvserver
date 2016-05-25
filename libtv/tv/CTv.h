@@ -144,8 +144,6 @@ public:
     virtual int SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt );
     virtual void onHdmiSrChanged(int  sr, bool bInit);
     virtual void onHMDIAudioStatusChanged(int status);
-    virtual int GetATVAFCType();
-    virtual int GetATVSourceTimerSwitch();
     int SetCurProgramAudioVolumeCompensationVal ( int tmpVal );
     int GetAudioVolumeCompensationVal(int progDbId);
     //dtv audio track info
@@ -273,9 +271,6 @@ public:
     virtual int SetAudioMuteForSystem(int muteOrUnmute);
     virtual int GetAudioMuteForSystem();
     virtual int SetAudioMuteForTv(int muteOrUnmute);
-    virtual char *GetMainVolLutTableExtraName();
-    virtual int SetDbxTvMode(int mode, int son_value, int vol_value, int sur_value);
-    virtual int GetDbxTvMode(int *mode, int *son_value, int *vol_value, int *sur_value);
     int SetAudioAVOutMute(int muteStatus);
     int GetAudioAVOutMute();
     int SetAudioSPDIFMute(int muteStatus);
@@ -355,7 +350,6 @@ public:
     int SetAudioVolumeCompensationVal(int tmp_vol_comp_val);
     int AudioLineInSelectChannel(int audio_channel);
     int AudioSetLineInCaptureVolume(int l_vol, int r_vol);
-    int SetKalaokIO(int level);
     int setAudioPcmPlaybackVolume(int val);
     int setAmAudioPreGain(float pre_gain);
     float getAmAudioPreGain();
@@ -363,7 +357,6 @@ public:
     int getAmAudioPreMute();
 
     int openTvAudio();
-    int closeTvAudio();
 
     int InitTvAudio(int sr, int input_device);
     int UnInitTvAudio();
@@ -544,7 +537,6 @@ protected:
     int SetAudioVolDigitLUTTable ( tv_source_input_t source_input );
     virtual int Tv_SetAudioInSource (tv_source_input_t source_input);
     void Tv_SetAudioOutputSwap_Type (tv_source_input_t source_input);
-    void Tv_SetDACDigitalPlayBack_Volume (int audio_src_in_type);
     void Tv_SetAVOutPut_Input_gain(tv_source_input_t source_input);
     /*********************** Audio end **********************/
 
@@ -574,7 +566,7 @@ protected:
     virtual void onVframeSizeChange();
 
     CTvEpg mTvEpg;
-    CTvScanner mTvScanner;
+    CTvScanner *mTvScanner;
     mutable Mutex mLock;
     CTvTime mTvTime;
     CTvRecord mTvRec;
@@ -595,7 +587,6 @@ protected:
     tvin_window_pos_t m_win_pos;
     tv_window_mode_t m_win_mode;
     bool mBlackoutEnable;// true: enable false: disable
-    int m_cur_playing_prog_id;
     bool mHdmiOutFbc;
     CFbcCommunication *fbcIns;
 

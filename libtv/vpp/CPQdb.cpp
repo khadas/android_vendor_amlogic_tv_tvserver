@@ -178,7 +178,7 @@ int CPqData::openPqDB(const char *db_path)
         }
     }
 
-    LOGD("openPqDB path = %s   = %s", db_path, PQ_DB_PATH);
+    LOGD("openPqDB path = %s, system pq = %s", db_path, SYSTEM_PQ);
     if (access(PQ_DB_PATH, 0) < 0) {
         CFile file(SYSTEM_PQ);
         if (file.copyTo(PQ_DB_PATH) != 0) {

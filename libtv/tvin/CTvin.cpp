@@ -53,8 +53,6 @@ CTvin *CTvin::getInstance()
 
 CTvin::CTvin()
 {
-    int i = 0;
-
     m_vdin_dev_fd = -1;
     afe_dev_fd = -1;
 
@@ -62,7 +60,7 @@ CTvin::CTvin()
     mDecoderStarted = false;
     gVideoPath[0] = '\0';
 
-    for (i = 0; i < SOURCE_MAX; i++) {
+    for (int i = 0; i < SOURCE_MAX; i++) {
         mSourceInputToPortMap[i] = TVIN_PORT_NULL;
     }
 
@@ -98,88 +96,31 @@ int CTvin::OpenTvin()
 int CTvin::setMpeg2Vdin(int enable)
 {
     /* let output data loop to vdin */
-    FILE *fp = fopen ( "/sys/module/di/parameters/mpeg2vdin_en", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/mpeg2vdin_en error\n" );
-        return -1;
-    }
-    fprintf ( fp, "%d", enable );
-    fclose ( fp );
-    return 0;
+    char str[32] = {0};
+    sprintf (str, "%d", enable);
+    return tvWriteSysfs("/sys/module/di/parameters/mpeg2vdin_en", str);
 }
 
 int CTvin::VDIN_AddPath ( const char *videopath )
 {
-    FILE *fp = NULL;
-    int ret = -1;
-
-    fp = fopen ( "/sys/class/vfm/map", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/class/vfm/map error(%s)!\n", strerror ( errno ) );
+    if (strlen(videopath) > 1024) {
+        LOGE("video path too long\n");
         return -1;
     }
 
-    ret = fprintf ( fp, "%s", videopath );
-
-    if ( ret < 0 ) {
-        LOGW ( "Add VideoPath error(%s)!\n", strerror ( errno ) );
-    }
-
-    fclose ( fp );
-    fp = NULL;
-
-    return ret;
+    char str[1024 + 1] = {0};
+    sprintf (str, "%s", videopath);
+    return tvWriteSysfs("/sys/class/vfm/map", str);
 }
 
 int CTvin::VDIN_RmDefPath ( void )
 {
-    int fd = -1, ret;
-    char str[] = "rm default";
-
-
-    fd = open ( "/sys/class/vfm/map", O_RDWR );
-
-    if ( fd < 0 ) {
-        LOGW ( "Open /sys/class/vfm/map error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    ret = write ( fd, str, sizeof ( str ) );
-
-    if ( ret < 0 ) {
-        LOGW ( "Rm default path error(%s)!\n", strerror ( errno ) );
-    }
-
-    close ( fd );
-    fd = -1;
-
-    return ret;
+    return tvWriteSysfs("/sys/class/vfm/map", "rm default");
 }
 
 int CTvin::VDIN_RmTvPath ( void )
 {
-    int fd, ret;
-    char str[] = "rm tvpath";
-
-
-    fd = open ( "/sys/class/vfm/map", O_RDWR );
-
-    if ( fd < 0 ) {
-        LOGW ( "Open /sys/class/vfm/map error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    ret = write ( fd, str, sizeof ( str ) );
-
-    if ( ret <= 0 ) {
-        LOGW ( "Rm tv path error(%s)!\n", strerror ( errno ) );
-    }
-
-    close ( fd );
-    fd = -1;
-    return ret;
+    return tvWriteSysfs("/sys/class/vfm/map", "rm tvpath");
 }
 
 int CTvin::VDIN_AddVideoPath ( int selPath )
@@ -191,10 +132,10 @@ int CTvin::VDIN_AddVideoPath ( int selPath )
     case TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:
         if (Existamlvideo2) {
             ret = VDIN_AddPath ( "add tvpath vdin0 amlvideo2 ppmgr deinterlace amvideo" );
-            }
+        }
         else {
             ret = VDIN_AddPath ( "add tvpath vdin0 ppmgr deinterlace amvideo" );
-            }
+        }
         break;
 
     case TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:
@@ -214,27 +155,7 @@ int CTvin::VDIN_AddVideoPath ( int selPath )
 
 int CTvin::VDIN_RmPreviewPath ( void )
 {
-    int fd, ret;
-    char str[] = "rm previewpath";
-
-
-    fd = open ( "/sys/class/vfm/map", O_RDWR );
-
-    if ( fd < 0 ) {
-        LOGW ( "Open /sys/class/vfm/map error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    ret = write ( fd, str, sizeof ( str ) );
-
-    if ( ret < 0 ) {
-        LOGW ( "Rm tv path error(%s)!\n", strerror ( errno ) );
-    }
-
-    close ( fd );
-    fd = -1;
-
-    return ret;
+    return tvWriteSysfs("/sys/class/vfm/map", "rm previewpath");
 }
 
 int CTvin::VDIN_OpenModule()
@@ -291,12 +212,10 @@ int CTvin::VDIN_DeviceIOCtl ( int request, ... )
 
 int CTvin::VDIN_OpenPort ( tvin_port_t port )
 {
-    int rt = -1;
     struct tvin_parm_s vdinParam;
     vdinParam.port = port;
     vdinParam.index = 0;
-    rt = VDIN_DeviceIOCtl ( TVIN_IOC_OPEN, &vdinParam );
-
+    int rt = VDIN_DeviceIOCtl ( TVIN_IOC_OPEN, &vdinParam );
     if ( rt < 0 ) {
         LOGW ( "Vdin open port, error(%s)!", strerror ( errno ) );
     }
@@ -306,10 +225,7 @@ int CTvin::VDIN_OpenPort ( tvin_port_t port )
 
 int CTvin::VDIN_ClosePort()
 {
-    int rt = -1;
-
-    rt = VDIN_DeviceIOCtl ( TVIN_IOC_CLOSE );
-
+    int rt = VDIN_DeviceIOCtl ( TVIN_IOC_CLOSE );
     if ( rt < 0 ) {
         LOGW ( "Vdin close port, error(%s)!", strerror ( errno ) );
     }
@@ -319,19 +235,13 @@ int CTvin::VDIN_ClosePort()
 
 int CTvin::VDIN_StartDec ( const struct tvin_parm_s *vdinParam )
 {
-    int rt = -1;
-
     if ( vdinParam == NULL ) {
         return -1;
     }
 
-    rt = VDIN_DeviceIOCtl ( TVIN_IOC_START_DEC, vdinParam );
-
-    LOGD ( "VDIN_StartDec:\n" );
-    LOGD ( "index = [%d]\n", vdinParam->index );
-    LOGD ( "port = [0x%x]\n", ( unsigned int ) vdinParam->port );
-    LOGD ( "format = [0x%x]\n", ( unsigned int ) ( vdinParam->info.fmt ) );
-
+    LOGD ( "VDIN_StartDec: index = [%d] port = [0x%x] format = [0x%x]\n",
+        vdinParam->index, ( unsigned int ) vdinParam->port, ( unsigned int ) ( vdinParam->info.fmt ));
+    int rt = VDIN_DeviceIOCtl ( TVIN_IOC_START_DEC, vdinParam );
     if ( rt < 0 ) {
         LOGW ( "Vdin start decode, error(%s)!\n", strerror ( errno ) );
     }
@@ -341,10 +251,7 @@ int CTvin::VDIN_StartDec ( const struct tvin_parm_s *vdinParam )
 
 int CTvin::VDIN_StopDec()
 {
-    int rt = -1;
-
-    rt = VDIN_DeviceIOCtl ( TVIN_IOC_STOP_DEC );
-
+    int rt = VDIN_DeviceIOCtl ( TVIN_IOC_STOP_DEC );
     if ( rt < 0 ) {
         LOGW ( "Vdin stop decode, error(%s)", strerror ( errno ) );
     }
@@ -354,9 +261,7 @@ int CTvin::VDIN_StopDec()
 
 int CTvin::VDIN_GetSignalInfo ( struct tvin_info_s *SignalInfo )
 {
-    int rt = -1;
-
-    rt = VDIN_DeviceIOCtl ( TVIN_IOC_G_SIG_INFO, SignalInfo );
+    int rt = VDIN_DeviceIOCtl ( TVIN_IOC_G_SIG_INFO, SignalInfo );
     if ( rt < 0 ) {
         LOGW ( "Vdin get signal info, error(%s), ret = %d.\n", strerror ( errno ), rt );
     }
@@ -365,8 +270,7 @@ int CTvin::VDIN_GetSignalInfo ( struct tvin_info_s *SignalInfo )
 
 int CTvin::VDIN_SetVdinParam ( const struct tvin_parm_s *vdinParam )
 {
-    int rt = -1;
-    rt = VDIN_DeviceIOCtl ( TVIN_IOC_S_PARM, vdinParam );
+    int rt = VDIN_DeviceIOCtl ( TVIN_IOC_S_PARM, vdinParam );
     if ( rt < 0 ) {
         LOGW ( "Vdin set signal param, error(%s)\n", strerror ( errno ) );
     }
@@ -376,10 +280,7 @@ int CTvin::VDIN_SetVdinParam ( const struct tvin_parm_s *vdinParam )
 
 int CTvin::VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam )
 {
-    int rt = -1, i = 0;
-
-    rt = VDIN_DeviceIOCtl ( TVIN_IOC_G_PARM, vdinParam );
-
+    int rt = VDIN_DeviceIOCtl ( TVIN_IOC_G_PARM, vdinParam );
     if ( rt < 0 ) {
         LOGW ( "Vdin get signal param, error(%s)\n", strerror ( errno ) );
     }
@@ -387,8 +288,9 @@ int CTvin::VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam )
     return rt;
 }
 
-void CTvin::VDIN_GetDisplayVFreq (int need_freq, int *last_freq, int *iSswitch, char * display_mode)
+void CTvin::VDIN_GetDisplayVFreq (int need_freq, int *iSswitch, char * display_mode)
 {
+    int lastFreq = 50;
     char buf[32] = {0};
     char *p = NULL;
 
@@ -397,43 +299,34 @@ void CTvin::VDIN_GetDisplayVFreq (int need_freq, int *last_freq, int *iSswitch, 
         return;
     }
 
-    LOGD( "%s, VDIN_GetDisplayVFreq is %s\n", __FUNCTION__, buf);
+    LOGD( "%s, display mode: %s\n", __FUNCTION__, buf);
     if ((p = strstr(buf, "50hz")) != NULL) {
-        *last_freq = 50;
+        lastFreq = 50;
     } else if ((p = strstr(buf, "60hz")) != NULL) {
-        *last_freq = 60;
+        lastFreq = 60;
     } else {
-        *last_freq = 50;
+        LOGW("%s, can not find 50hz or 60hz in %s\n", __FUNCTION__, buf);
     }
 
-    if (need_freq != *last_freq) {
-        if (p) {
-            switch (need_freq) {
-                case 50:
-                    strncpy( p, "50hz", 4);
-                    break;
-                case 60:
-                    strncpy( p, "60hz", 4);
-                    break;
-                default:
-                    break;
-            }
-            strcpy(display_mode, buf);
-            *last_freq = need_freq;
-            *iSswitch = 1;
-        }
+    if ((need_freq != lastFreq) && (NULL != p)) {
+        if (50 == need_freq)
+            strncpy( p, "50hz", 4);
+        else if (60 == need_freq)
+            strncpy( p, "60hz", 4);
+
+        strcpy(display_mode, buf);
+        *iSswitch = 1;
     }
 }
 
 int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
 {
-    static int last_freq = 50;
     int iSswitch = 0;
     char display_mode[32] = {0};
 
-    VDIN_GetDisplayVFreq(freq, &last_freq, &iSswitch, display_mode);
+    VDIN_GetDisplayVFreq(freq, &iSswitch, display_mode);
     if (0 == iSswitch) {
-        LOGD ( "%s, same freq, last_freq = %d, need_freq = %d.", __FUNCTION__, last_freq, freq);
+        LOGW ( "%s, same freq = %d.", __FUNCTION__, freq);
         return 0;
     } else {
         LOGD ( "%s, set display mode to %s", __FUNCTION__, display_mode);
@@ -470,153 +363,61 @@ int CTvin::VDIN_Get_avg_luma(void)
 
 int CTvin::VDIN_SetMVCViewMode ( int mode )
 {
-    FILE *fp = NULL;
-
-
-    fp = fopen ( "/sys/module/amvdec_h264mvc/parameters/view_mode", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/amvdec_h264mvc/parameters/view_mode error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", ( int ) mode );
-
-    fclose ( fp );
-    fp = NULL;
-
+    char str[32] = {0};
+    sprintf (str, "%d", mode);
+    tvWriteSysfs("/sys/module/amvdec_h264mvc/parameters/view_mode", str);
     return 0;
 }
 
 int CTvin::VDIN_GetMVCViewMode ( void )
 {
-    FILE *fp = NULL;
-    int ret = 0;
-    int mode = 0;
+    char buf[32] = {0};
 
-
-    fp = fopen ( "/sys/module/amvdec_h264mvc/parameters/view_mode", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/amvdec_h264mvc/parameters/view_mode ERROR(%s)!!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    ret = fread ( &mode, 1, 1, fp );
-    LOGD ( "fread /sys/module/amvdec_h264mvc/parameters/view_mode = [%d]", mode );
-
-    fclose ( fp );
-    fp = NULL;
-
+    tvReadSysfs("/sys/module/amvdec_h264mvc/parameters/view_mode", buf);
+    int mode = atoi(buf);
     return mode;
 }
 
 int CTvin::VDIN_SetDIBuffMgrMode ( int mgr_mode )
 {
-    FILE *fp = NULL;
-
-
-    fp = fopen ( "sys/module/di/parameters/buf_mgr_mode", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/buf_mgr_mode error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", mgr_mode );
-
-    fclose ( fp );
-    fp = NULL;
-
+    char str[32] = {0};
+    sprintf (str, "%d", mgr_mode);
+    tvWriteSysfs("sys/module/di/parameters/buf_mgr_mode", str);
     return 0;
 }
 
 int CTvin::VDIN_SetDICFG ( int cfg )
 {
-    FILE *fp = NULL;
-
-
-    fp = fopen ( "sys/class/deinterlace/di0/config", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/class/deinterlace/di0/config error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    if ( 0 == cfg ) {
-        fprintf ( fp, "%s", "disable" );
-    } else {
-        fprintf ( fp, "%s", "enable" );
-    }
-
-    fclose ( fp );
-    fp = NULL;
-
+    tvWriteSysfs("sys/class/deinterlace/di0/config", (0 == cfg)?"disable":"enable");
     return 0;
 }
 
 int CTvin::VDIN_SetDI3DDetc ( int enable )
 {
-    FILE *fp = NULL;
-
-
-    fp = fopen ( "/sys/module/di/parameters/det3d_en", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/det3d_en error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", enable );
-
-
-    fclose ( fp );
-    fp = NULL;
-
+    char str[32] = {0};
+    sprintf (str, "%d", enable);
+    tvWriteSysfs("/sys/module/di/parameters/det3d_en", str);
     return 0;
 }
 
 int CTvin::VDIN_Get3DDetc ( void )
 {
-    int fd = -1;
-    int ret = -1;
-    char buf[10];
+    char buf[32] = {0};
 
-    fd = open ( "/sys/module/di/parameters/det3d_en", O_RDWR );
-    if ( fd < 0 ) {
-        LOGW ( "Open /sys/module/di/parameters/det3d_en error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    ret = read ( fd, buf, sizeof ( buf ) );
-    close ( fd );
-    fd = -1;
-
+    tvReadSysfs("/sys/module/di/parameters/det3d_en", buf);
     if ( strcmp ( "enable", buf ) == 0 ) {
         return 1;
-    } else {
-        return 0;
     }
+    return 0;
 }
 
 
 int CTvin::VDIN_GetVscalerStatus ( void )
 {
-    int fd = -1;
-    int ret = -1;
-    char buf[7];
+    char buf[32] = {0};
 
-    fd = open ( "/sys/class/video/vscaler", O_RDWR );
-    if ( fd < 0 ) {
-        LOGW ( "Open /sys/class/video/vscaler error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    ret = read ( fd, buf, sizeof ( buf ) );
-    close ( fd );
-    fd = -1;
-
-    sscanf ( buf, "%d", &ret );
+    tvReadSysfs("/sys/class/video/vscaler", buf);
+    int ret = atoi(buf);
 
     ret = ( ( ret & 0x40000 ) == 0 ) ? 1 : 0;
     if ( ret == 1 ) {
@@ -628,267 +429,63 @@ int CTvin::VDIN_GetVscalerStatus ( void )
 
 int CTvin::VDIN_TurnOnBlackBarDetect ( int isEnable )
 {
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/module/tvin_vdin/parameters/black_bar_enable", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/tvin_vdin/parameters/black_bar_enable error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", isEnable );
-    fclose ( fp );
-    fp = NULL;
-
+    char str[32] = {0};
+    sprintf (str, "%d", isEnable);
+    tvWriteSysfs("/sys/module/tvin_vdin/parameters/black_bar_enable", str);
     return 0;
-}
-
-int CTvin::VDIN_LoadHdcpKey ( unsigned char *hdcpkey_buff __unused)
-{
-    unsigned char testHdcp[368] = { 0x53, 0x4B, 0x59, 0x01, 0x00, 0x10, 0x0D, 0x15, 0x3A, 0x8E, 0x99, 0xEE, 0x2A, 0x55, 0x58, 0xEE, 0xED, 0x4B, 0xBE, 0x00, 0x74, 0xA9, 0x00, 0x10, 0x0A, 0x21, 0xE3,
-                                    0x30, 0x66, 0x34, 0xCE, 0x9C, 0xC7, 0x8B, 0x51, 0x27, 0xF9, 0x0B, 0xAD, 0x09, 0x5F, 0x4D, 0xC2, 0xCA, 0xA2, 0x13, 0x06, 0x18, 0x8D, 0x34, 0x82, 0x46, 0x2D, 0xC9, 0x4B, 0xB0, 0x1C, 0xDE,
-                                    0x3D, 0x49, 0x39, 0x58, 0xEF, 0x2B, 0x68, 0x39, 0x71, 0xC9, 0x4D, 0x25, 0xE9, 0x75, 0x4D, 0xAC, 0x62, 0xF5, 0xF5, 0x87, 0xA0, 0xB2, 0x4A, 0x60, 0xD3, 0xF1, 0x09, 0x3A, 0xB2, 0x3E, 0x19,
-                                    0x4F, 0x3B, 0x1B, 0x2F, 0x85, 0x14, 0x28, 0x44, 0xFC, 0x69, 0x6F, 0x50, 0x42, 0x81, 0xBF, 0x7C, 0x2B, 0x3A, 0x17, 0x2C, 0x15, 0xE4, 0x93, 0x77, 0x74, 0xE8, 0x1F, 0x1C, 0x38, 0x54, 0x49,
-                                    0x10, 0x64, 0x5B, 0x7D, 0x90, 0x3D, 0xA0, 0xE1, 0x8B, 0x67, 0x5C, 0x19, 0xE6, 0xCA, 0x9D, 0xE9, 0x68, 0x5A, 0xB5, 0x62, 0xDF, 0xA1, 0x28, 0xBC, 0x68, 0x82, 0x9A, 0x22, 0xC4, 0xDC, 0x48,
-                                    0x85, 0x0F, 0xF1, 0x3E, 0x05, 0xDD, 0x1B, 0x2D, 0xF5, 0x49, 0x3A, 0x15, 0x29, 0xE7, 0xB6, 0x0B, 0x2A, 0x40, 0xE3, 0xB0, 0x89, 0xD5, 0x75, 0x84, 0x2E, 0x76, 0xE7, 0xBC, 0x63, 0x67, 0xE3,
-                                    0x57, 0x67, 0x86, 0x81, 0xF4, 0xD7, 0xEA, 0x4D, 0x89, 0x8E, 0x37, 0x95, 0x59, 0x1C, 0x8A, 0xCD, 0x79, 0xF8, 0x4F, 0x82, 0xF2, 0x6C, 0x7E, 0x7F, 0x79, 0x8A, 0x6B, 0x90, 0xC0, 0xAF, 0x4C,
-                                    0x8D, 0x43, 0x47, 0x1F, 0x9A, 0xF1, 0xBB, 0x88, 0x64, 0x49, 0x14, 0x50, 0xD1, 0xC3, 0xDF, 0xA6, 0x87, 0xA0, 0x15, 0x98, 0x51, 0x81, 0xF5, 0x97, 0x55, 0x10, 0x4A, 0x99, 0x30, 0x54, 0xA4,
-                                    0xFC, 0xDA, 0x0E, 0xAC, 0x6A, 0xFA, 0x90, 0xEE, 0x12, 0x70, 0x69, 0x74, 0x63, 0x46, 0x63, 0xFB, 0xE6, 0x1F, 0x72, 0xEC, 0x43, 0x5D, 0x50, 0xFF, 0x03, 0x4F, 0x05, 0x33, 0x88, 0x36, 0x93,
-                                    0xE4, 0x72, 0xD5, 0xCC, 0x34, 0x52, 0x96, 0x15, 0xCE, 0xD0, 0x32, 0x52, 0x41, 0x4F, 0xBC, 0x2D, 0xDF, 0xC5, 0xD6, 0x7F, 0xD5, 0x74, 0xCE, 0x51, 0xDC, 0x10, 0x5E, 0xF7, 0xAA, 0x4A, 0x2D,
-                                    0x20, 0x9A, 0x17, 0xDD, 0x30, 0x89, 0x71, 0x82, 0x36, 0x50, 0x09, 0x1F, 0x7C, 0xF3, 0x12, 0xE9, 0x43, 0x10, 0x5F, 0x51, 0xBF, 0xB8, 0x45, 0xA8, 0x5A, 0x8D, 0x3F, 0x77, 0xE5, 0x96, 0x73,
-                                    0x68, 0xAB, 0x73, 0xE5, 0x4C, 0xFB, 0xE5, 0x98, 0xB9, 0xAE, 0x74, 0xEB, 0x51, 0xDB, 0x91, 0x07, 0x7B, 0x66, 0x02, 0x9B, 0x79, 0x03, 0xC5, 0x34, 0x1C, 0x58, 0x13, 0x31, 0xD2, 0x4A, 0xEC
-                                  };
-    int ret = -1;
-    int fd = -1;
-
-    fd = open ( "/sys/class/hdmirx/hdmirx0/edid", O_RDWR );
-    if ( fd < 0 ) {
-        LOGW ( "Open hdmi hdcp key error(%s)!!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    ret = write ( fd, testHdcp, 368 );
-    if ( ret < 0 ) {
-        LOGD ( "Write hdmi hdcp key error(%s)!!\n", strerror ( errno ) );
-    }
-
-    close ( fd );
-    fd = -1;
-
-    return ret;
-}
-
-int CTvin::VDIN_KeepLastFrame ( int enable __unused)
-{
-    return 0;
-    /*
-    FILE *fp = NULL;
-    fp = fopen ( "/sys/module/amvideo/parameters/keep_old_frame", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/amvideo/parameters/keep_old_frame error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", enable );
-
-    fclose ( fp );
-    fp = NULL;
-
-    return 0;
-    */
 }
 
 int CTvin::VDIN_SetVideoFreeze ( int enable )
 {
-    FILE *fp = NULL;
-
-    fp = fopen ( VDIN0_ATTR_PATH, "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/class/vdin/vdin0/attr error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    if ( enable == 1 ) {
-        fprintf ( fp, "freeze" );
-    } else {
-        fprintf ( fp, "unfreeze" );
-    }
-
-    fclose ( fp );
-    fp = NULL;
-
+    tvWriteSysfs(VDIN0_ATTR_PATH, (enable == 1)?"freeze":"unfreeze");
     return 0;
 }
 
 int CTvin::VDIN_SetDIBypasshd ( int enable )
 {
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/module/di/parameters/bypass_hd", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/bypass_hd error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", enable );
-    fclose ( fp );
-    fp = NULL;
-
+    char str[32] = {0};
+    sprintf (str, "%d", enable);
+    tvWriteSysfs("/sys/module/di/parameters/bypass_hd", str);
     return 0;
 }
 
 int CTvin::VDIN_SetDIBypassAll ( int enable )
 {
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/module/di/parameters/bypass_all", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/bypass_all error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", enable );
-    fclose ( fp );
-    fp = NULL;
+    char str[32] = {0};
+    sprintf (str, "%d", enable);
+    tvWriteSysfs("/sys/module/di/parameters/bypass_all", str);
     return 0;
 }
 
 int CTvin::VDIN_SetDIBypass_Get_Buf_Threshold ( int enable )
 {
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/module/di/parameters/bypass_get_buf_threshold", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/bypass_get_buf_threshold error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", enable );
-    fclose ( fp );
-    fp = NULL;
-
+    char str[32] = {0};
+    sprintf (str, "%d", enable);
+    tvWriteSysfs("/sys/module/di/parameters/bypass_get_buf_threshold", str);
     return 0;
-
 }
 
 int CTvin::VDIN_SetDIBypassProg ( int enable )
 {
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/module/di/parameters/bypass_prog", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/bypass_prog error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", enable );
-    fclose ( fp );
-    fp = NULL;
-
+    char str[32] = {0};
+    sprintf (str, "%d", enable);
+    tvWriteSysfs("/sys/module/di/parameters/bypass_prog", str);
     return 0;
 }
 
 int CTvin::VDIN_SetDIBypassDynamic ( int flag )
 {
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/module/di/parameters/bypass_dynamic", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/bypass_dynamic error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", flag );
-    fclose ( fp );
-    fp = NULL;
-
-    return 0;
-}
-
-int CTvin::VDIN_SetDIDet3DMode ( int value )
-{
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/module/di/parameters/det3d_mode", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/det3d_mode error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", value );
-    fclose ( fp );
-    fp = NULL;
-
-    return 0;
-}
-
-int CTvin::VDIN_SetDIBypass3D ( int enable )
-{
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/module/di/parameters/bypass_3d", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/bypass_3d error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", enable );
-    fclose ( fp );
-    fp = NULL;
-
-    return 0;
-}
-
-int CTvin::VDIN_SetDIBypassPost ( int enable )
-{
-    FILE *fp = NULL;
-
-    fp = fopen ( "/sys/module/di/parameters/bypass_post", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/di/parameters/bypass_post error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", enable );
-    fclose ( fp );
-    fp = NULL;
-
-    return 0;
-}
-
-int CTvin::VDIN_SetVdinFlag ( int flag )
-{
-    FILE *fp = NULL;
-    int freq = 1200000;
-
-    fp = fopen ( "/sys/class/vdin/memp", "w" );
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/class/vdin/memp error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", flag );
-    fclose ( fp );
-    fp = NULL;
-
+    char str[32] = {0};
+    sprintf (str, "%d", flag);
+    tvWriteSysfs("/sys/module/di/parameters/bypass_dynamic", str);
     return 0;
 }
 
 int CTvin::VDIN_EnableRDMA ( int enable )
 {
-    FILE *fp = NULL;
-    fp = fopen ( "/sys/module/rdma/parameters/enable", "w" );
-
-    if ( fp == NULL ) {
-        LOGW ( "Open /sys/module/rdma/parameters/enable error(%s)!\n", strerror ( errno ) );
-        return -1;
-    }
-
-    fprintf ( fp, "%d", enable );
-    fclose ( fp );
-    fp = NULL;
+    char str[32] = {0};
+    sprintf (str, "%d", enable);
+    tvWriteSysfs("/sys/module/rdma/parameters/enable", str);
     return 0;
 }
 

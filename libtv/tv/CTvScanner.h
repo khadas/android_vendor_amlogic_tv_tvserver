@@ -31,7 +31,6 @@ public:
     static const int AM_ATSC_ATTENNA_TYPE_CABLE_HRC = 4;
     CTvScanner();
     ~CTvScanner();
-    void setGlobalScanerObject(CTvScanner *);
     int startScan();
     int stopScan();
     int ATVManualScan(int min_freq, int max_freq, int std, int store_Type = 0, int channel_num = 0);
@@ -39,13 +38,12 @@ public:
     int autoAtvScan(int min_freq, int max_freq, int std, int search_type, int proc_mode);
     int autoDtmbScan();
     int manualDtmbScan(int beginFreq, int endFreq, int modulation = -1);
-    int autoAtscScan(int attennaType, int std);
     int manualDtmbScan(int freq);
-    int manualAtscScan(int freq, int attennaType, int std);
-    int autoTvScan();
     int unsubscribeEvent();
     int pauseScan();
     int resumeScan();
+
+	static CTvScanner *getInstance();
 
     struct ScannerLcnInfo {
 
@@ -256,8 +254,8 @@ private:
     static void storeDTV(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts);
 
 private:
+	static CTvScanner *mInstance;
 
-    //
     IObserver *mpObserver;
     //
     CTvin *mpTvin;
@@ -280,8 +278,6 @@ private:
     int mDirection;
     int mChannelID;
 
-
-
     //extern for scanner
     //int channelID; //can be used for manual scan
     /** Atv set */
@@ -301,8 +297,7 @@ private:
     int user_band;
     int ub_freq;//!< kHz
 
-    ScannerEvent mCurEv;
-    static CTvScanner *m_s_Scanner;
+    static ScannerEvent mCurEv;
 
     static service_list_t service_list_dummy;
 };

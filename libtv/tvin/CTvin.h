@@ -1052,7 +1052,7 @@ public:
     int VDIN_GetSignalInfo ( struct tvin_info_s *SignalInfo );
     int VDIN_SetVdinParam ( const struct tvin_parm_s *vdinParam );
     int VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam );
-    void VDIN_GetDisplayVFreq (int need_freq, int *last_freq, int *iSswitch, char * display_mode);
+    void VDIN_GetDisplayVFreq (int need_freq, int *iSswitch, char * display_mode);
     int VDIN_SetDisplayVFreq ( int freq, bool isFbc);
 
     int VDIN_Get_avg_luma(void);
@@ -1064,18 +1064,12 @@ public:
     int VDIN_Get3DDetc ( void );
     int VDIN_GetVscalerStatus ( void );
     int VDIN_TurnOnBlackBarDetect ( int isEnable );
-    int VDIN_LoadHdcpKey ( unsigned char *hdcpkey_buff );
-    int VDIN_KeepLastFrame ( int enable );
     int VDIN_SetVideoFreeze ( int enable );
     int VDIN_SetDIBypasshd ( int enable );
     int VDIN_SetDIBypassAll ( int enable );
     int VDIN_SetDIBypass_Get_Buf_Threshold ( int enable );
     int VDIN_SetDIBypassProg ( int enable );
     int VDIN_SetDIBypassDynamic ( int flag );
-    int VDIN_SetDIDet3DMode ( int value );
-    int VDIN_SetDIBypass3D ( int enable );
-    int VDIN_SetDIBypassPost ( int enable );
-    int VDIN_SetVdinFlag ( int flag );
     int VDIN_EnableRDMA ( int enable );
     int AFE_OpenModule ( void );
     void AFE_CloseModule ( void );
@@ -1175,7 +1169,7 @@ public:
             mpObserver = pOb;
         };
     private:
-        bool  threadLoop();
+        bool threadLoop();
         int Tv_TvinSigDetect ( int &args );
 
         //member

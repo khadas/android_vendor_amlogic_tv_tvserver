@@ -29,12 +29,12 @@ bool CSqlite::integrityCheck()
     return true;
 }
 
-int CSqlite::sqlite3_exec_callback(void *data __unused, int nColumn, char **colValues, char **colNames __unused)
+int CSqlite::sqlite3_exec_callback(void *data __unused, int nColumn, char **colValues __unused, char **colNames __unused)
 {
     LOGD("sqlite3_exec_callback, nums = %d", nColumn);
-    for (int i = 0; i < nColumn; i++) {
-        LOGD("%s\t", colValues[i]);
-    }
+    //for (int i = 0; i < nColumn; i++) {
+    //    LOGD("%s\t", colValues[i]);
+    //}
     return 0;
 }
 

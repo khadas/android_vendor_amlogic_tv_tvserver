@@ -1451,7 +1451,7 @@ TvRunStatus_t CTv::GetTvStatus()
 
 int CTv::OpenTv ( void )
 {
-    Tv_Spread_Spectrum();
+    //Tv_Spread_Spectrum();
     //reboot system by fbc setting.
     const char * value = config_get_str ( CFG_SECTION_TV, CFG_FBC_PANEL_INFO, "null" );
     LOGD("open tv, get fbc panel info:%s\n", value);
@@ -1964,13 +1964,6 @@ void CTv::Tv_SetAVOutPut_Input_gain(tv_source_input_t source_input)
     SetPGA_IN_Value(tmpAvoutBufPtr[nPgaValueIndex]);
     SetADC_Digital_Capture_Volume(tmpAvoutBufPtr[nAdcValueIndex]);
     SetDAC_Digital_PlayBack_Volume(tmpAvoutBufPtr[nDdcValueIndex]);
-}
-
-void CTv::Tv_Spread_Spectrum()
-{
-    int value = 0;
-    value = CVpp::getInstance()->FactoryGetLVDSSSC();
-    CVpp::getInstance()->FactorySetLVDSSSC(value);
 }
 
 void CTv::onSigStableToUnstable()

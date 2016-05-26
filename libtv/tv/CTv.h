@@ -542,8 +542,6 @@ protected:
     void Tv_SetAVOutPut_Input_gain(tv_source_input_t source_input);
     /*********************** Audio end **********************/
 
-    void Tv_Spread_Spectrum();
-    //
     virtual void onSigToStable();
     virtual void onSigStableToUnstable();
     virtual void onSigStableToUnSupport();

@@ -1835,10 +1835,11 @@ int CTvin::SwitchSnow(bool enable)
     int ret = -1;
 
     if ( enable ) {
-        ret = tvWriteSysfs( VDIN0_ATTR_PATH, "snowon" );
-        mDecoderStarted = true;
+        ret = AFE_DeviceIOCtl( TVIN_IOC_S_AFE_SONWON );
+        ret = VDIN_DeviceIOCtl( TVIN_IOC_SNOWON );;
     } else {
-        ret = tvWriteSysfs( VDIN0_ATTR_PATH, "snowoff" );
+        ret = AFE_DeviceIOCtl( TVIN_IOC_S_AFE_SONWOFF );
+        ret = VDIN_DeviceIOCtl( TVIN_IOC_SNOWOFF );
     }
 
     return ret;
@@ -1848,10 +1849,7 @@ int CTvin::SwitchPort (tvin_port_t source_port )
 {
     int ret = 0;
     LOGD ("%s, source_port = %x", __FUNCTION__,  source_port);
-    if ( TVIN_PORT_CVBS3 != source_port ) {
-        ret = Tvin_StopDecoder();
-    }
-
+    ret = Tvin_StopDecoder();
     if (ret < 0) {
         LOGW ( "%s,stop decoder failed.", __FUNCTION__);
         return -1;
@@ -1863,11 +1861,6 @@ int CTvin::SwitchPort (tvin_port_t source_port )
         LOGD ( "%s, OpenPort failed, source_port =%x ", __FUNCTION__,  source_port );
     }
     m_tvin_param.port = source_port;
-
-    if ( TVIN_PORT_CVBS3 == source_port ) {
-        ret = SwitchSnow( true);
-        return ret;
-    }
 
     return 0;
 }

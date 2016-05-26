@@ -824,6 +824,9 @@ typedef struct tvafe_pin_mux_s {
 #define TVIN_IOC_VF_UNREG           _IO(TVIN_IOC_MAGIC, 0x44)
 #define TVIN_IOC_FREEZE_VF          _IO(TVIN_IOC_MAGIC, 0x45)
 #define TVIN_IOC_UNFREEZE_VF        _IO(TVIN_IOC_MAGIC, 0x46)
+#define TVIN_IOC_SNOWON             _IO(TVIN_IOC_MAGIC, 0x47)
+#define TVIN_IOC_SNOWOFF            _IO(TVIN_IOC_MAGIC, 0x48)
+
 
 //TVAFE
 #define TVIN_IOC_S_AFE_ADC_CAL      _IOW(TVIN_IOC_MAGIC, 0x11, struct tvafe_adc_cal_s)
@@ -843,6 +846,9 @@ typedef struct tvafe_pin_mux_s {
 #define TVIN_IOC_G_AFE_ADC_COMP_CAL  _IOR(TVIN_IOC_MAGIC, 0x1f, struct tvafe_adc_comp_cal_s)
 #define TVIN_IOC_LOAD_REG           _IOW(TVIN_IOC_MAGIC, 0x20, struct am_regs_s)
 #define TVIN_IOC_S_AFE_ADC_DIFF     _IOW(TVIN_IOC_MAGIC, 0x21, struct tvafe_adc_cal_clamp_s)
+#define TVIN_IOC_S_AFE_SONWON       _IO(TVIN_IOC_MAGIC, 0x22)
+#define TVIN_IOC_S_AFE_SONWOFF      _IO(TVIN_IOC_MAGIC, 0x23)
+
 
 // ***************************************************************************
 // *** add more **********************************************

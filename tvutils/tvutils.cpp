@@ -134,6 +134,19 @@ int readSys(const char *path, char *buf, int count) {
         goto exit;
     }
 
+    int i , j;
+    for (i = 0, j = 0; i <= len -1; i++) {
+        //change '\0' to 0x20(spacing), otherwise the string buffer will be cut off ,if the last char is '\0' should not replace it
+        if (0x0 == buf[i] && i < len - 1) {
+            buf[i] = 0x20;
+        }
+        /* delete all the character of '\n' */
+        if (0x0a != buf[i]) {
+            buf[j++] = buf[i];
+        }
+    }
+    buf[j] = 0x0;
+
     //ALOGI("read %s, result length:%d, val:%s\n", path, len, buf);
 
 exit:

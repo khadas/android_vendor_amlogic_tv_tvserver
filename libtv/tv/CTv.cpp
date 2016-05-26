@@ -31,6 +31,7 @@
 #include <string.h>
 #include <signal.h>
 #include <hardware_legacy/power.h>
+#include <media/AudioSystem.h>
 
 
 #include <tvutils.h>
@@ -3326,6 +3327,7 @@ int CTv::SetAudioMuteForTv(int muteOrUnmute)
         mAudioMuteStatusForSystem, mAudioMuteStatusForTv, muteOrUnmute);
     ret |= SetDacMute(mAudioMuteStatusForSystem | mAudioMuteStatusForTv, CC_DAC_MUTE_TYPE_EXTERNAL | CC_DAC_MUTE_TYPE_INTERNAL);
     ret |= SetAudioI2sMute(mAudioMuteStatusForTv);
+    AudioSystem::setStreamMute(AUDIO_STREAM_MUSIC, mAudioMuteStatusForTv);
     return ret;
 }
 

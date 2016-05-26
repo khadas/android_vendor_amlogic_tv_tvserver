@@ -309,6 +309,24 @@ int CAv::setVideoScreenMode ( int value )
     return 0;
 }
 
+/**
+ * @function: set test pattern on video layer.
+ * @param r,g,b int 0~255.
+ */
+int CAv::setRGBScreen(int r, int g, int b)
+{
+    int value = ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
+    return tvWriteSysfs(VIDEO_RGB_SCREEN, value, 16);
+}
+
+int CAv::getRGBScreen()
+{
+    char value[32] = {0};
+    tvReadSysfs(VIDEO_RGB_SCREEN, value);
+    return strtol(value, NULL, 10);
+}
+
+
 int CAv::setVideoAxis ( int h, int v, int width, int height )
 {
     LOGD("%s, %d %d %d %d", __FUNCTION__, h, v, width, height);

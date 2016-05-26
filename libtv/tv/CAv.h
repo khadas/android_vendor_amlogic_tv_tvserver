@@ -11,6 +11,7 @@ static const char *PATH_FRAME_COUNT  = "/sys/module/di/parameters/frame_count";
 static const char *PATH_VIDEO_AMVIDEO = "/dev/amvideo";
 static const char *PATH_MEPG_DTMB_LOOKUP_PTS_FLAG = "/sys/module/amvdec_mpeg12/parameters/dtmb_flag";
 
+#define VIDEO_RGB_SCREEN    "/sys/class/video/rgb_screen"
 #define VIDEO_TEST_SCREEN   "/sys/class/video/test_screen"
 #define VIDEO_DISABLE_VIDEO "/sys/class/video/disable_video"
 #define VIDEO_SCREEN_MODE   "/sys/class/video/screen_mode"
@@ -110,6 +111,8 @@ public:
     int setVideoScreenMode ( int value );
     int setVideoAxis ( int h, int v, int width, int height );
     video_display_resolution_t getVideoDisplayResolution();
+    int setRGBScreen(int r, int g, int b);
+    int getRGBScreen();
 
     int setLookupPtsForDtmb(int enable);
     tvin_sig_fmt_t getVideoResolutionToFmt();

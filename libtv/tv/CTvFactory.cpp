@@ -163,6 +163,16 @@ int CTvFactory::getTestPattern ()
     return CVpp::getInstance()->FactoryGetTestPattern();
 }
 
+int CTvFactory::setRGBPattern (int r, int g, int b)
+{
+    return mAv.setRGBScreen(r, g, b);
+}
+
+int CTvFactory::getRGBPattern()
+{
+    return mAv.getRGBScreen();
+}
+
 int CTvFactory::setScreenColor ( int vdinBlendingMask, int y, int u, int v )
 {
     return mAv.SetVideoScreenColor ( vdinBlendingMask, y, u, v );

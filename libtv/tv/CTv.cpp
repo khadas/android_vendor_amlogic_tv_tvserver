@@ -3496,6 +3496,12 @@ int CTv::LoadCurAudioSPDIFMode()
 
 int CTv::SetAudioMasterVolume(int tmp_vol)
 {
+    if (GetUseAndroidVolEnable()) {
+        int master_vol;
+        master_vol =  config_get_int(CFG_SECTION_TV, CFG_AUDIO_MASTER_VOL, 150);
+        mAudioAlsa.SetExternalDacChannelVolume(0, master_vol);
+        return 0;
+    }
     mCustomAudioMasterVolume = tmp_vol;
 
     //Volume Compensation

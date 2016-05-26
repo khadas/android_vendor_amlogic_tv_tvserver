@@ -529,6 +529,15 @@ int Get2d4gHeadsetEnable()
     return 0;
 }
 
+int GetUseAndroidVolEnable()
+{
+    const char *config_value = config_get_str(CFG_SECTION_TV, "audio.android.vol.en", "null");
+    if (!strcmp(config_value, "enable")) {
+        return 1;
+    }
+    return 0;
+}
+
 const char *GetAudExtDacLibPath()
 {
     return config_get_str(CFG_SECTION_TV, "audio.external.dac.libpath", "/system/lib/libdac.so");

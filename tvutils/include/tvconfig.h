@@ -51,6 +51,7 @@
 #define CFG_AUDIO_PRE_GAIN_FOR_DTV              "audio.pre.gain.for.dtv"
 #define CFG_AUDIO_PRE_GAIN_FOR_AV               "audio.pre.gain.for.av"
 #define CFG_AUDIO_PRE_GAIN_FOR_HDMI             "audio.pre.gain.for.hdmi"
+#define CFG_AUDIO_MASTER_VOL                    "audio.master.vol"
 
 #define CFG_FBC_PANEL_INFO                      "fbc.get.panelinfo"
 #define CFG_FBC_USED                            "platform.havefbc"

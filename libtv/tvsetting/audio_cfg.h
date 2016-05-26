@@ -52,6 +52,7 @@ int GetAudioEffectAmplifierGainCfg(const char *cfg_name, int def_gain_val, int m
 int GetAudioSRSSupperBassTrubassSpeakerSizeCfg();
 //tinymix control
 int Get2d4gHeadsetEnable() ;
+int GetUseAndroidVolEnable();
 int GetAudioOutputSwapStatus(tv_source_input_t source_input);
 //hardware design
 int GetAudioArchitectureTypeCFG();

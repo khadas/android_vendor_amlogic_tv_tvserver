@@ -1026,8 +1026,8 @@ int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __u
     mFrontDev.setPara (FE_ANALOG, freq, stdAndColor, 1);
 
     mSigDetectThread.setObserver ( this );
-    //mSigDetectThread.initSigState();
-    //mSigDetectThread.resumeDetect(1000);
+    mSigDetectThread.initSigState();
+    mSigDetectThread.resumeDetect(1000);
 
     SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
     return 0;

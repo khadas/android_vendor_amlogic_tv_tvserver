@@ -102,38 +102,73 @@ static int TransToHexString(int hex_cnt, char data_buf[],
     return 2 * hex_cnt;
 }
 
+static int write_partiton_raw(const char *partition, const void *data, const int size)
+{
+    int fd = 0;
+    int len = 0;
+
+    fd = open(partition, O_WRONLY);
+    if (fd < 0) {
+        LOGE("%s, open %s failed!\n", __FUNCTION__, partition);
+        return -1;
+    }
+
+    if (write(fd, data, size) != size) {
+        LOGE("%s, write %s size:%d failed!\n", __FUNCTION__, partition, size);
+        close(fd);
+        return -1;
+    }
+
+    //debugP("write partition:%s, data:%s\n", partition, (char *)data);
+
+    close(fd);
+    return 0;
+}
+
+static int read_partiton_raw(const char *partition, char *data, const int size)
+{
+    int fd = 0;
+    int len = 0;
+
+    fd = open(partition, O_RDONLY);
+    if (fd < 0) {
+        LOGE("%s, open %s failed!\n", __FUNCTION__, partition);
+        return -1;
+    }
+
+    if (read(fd, data, size) != size) {
+        LOGE("%s, read %s size:%d failed!\n", __FUNCTION__, partition, size);
+        close(fd);
+        return -1;
+    }
+
+    //LOGD("%s, read partition:%s, data:%s\n", __FUNCTION__, partition, (char *)data);
+
+    close(fd);
+    return 0;
+}
+
 int ReadKeyData(const char *key_name, unsigned char data_buf[])
 {
-    FILE *dev_fp = NULL;
-    int i = 0, rd_cnt = 0;
+    int rc = 0;
 
-    dev_fp = fopen(CS_KEY_DATA_NAME_DEV_PATH, "w");
-    if (dev_fp == NULL) {
-        LOGE("%s, open %s ERROR(%s)!!\n", __FUNCTION__,
-             CS_KEY_DATA_NAME_DEV_PATH, strerror(errno));
-        return -1;
+    if (write_partiton_raw(CS_KEY_DATA_ATTACH_DEV_PATH, "1", strlen("1"))) {
+        LOGE("%s, attach failed!\n", __FUNCTION__);
+        return -__LINE__;
     }
 
-    fprintf(dev_fp, "%s", key_name);
-
-    fclose(dev_fp);
-    dev_fp = NULL;
-
-    dev_fp = fopen(CS_KEY_DATA_READ_DEV_PATH, "r");
-    if (dev_fp == NULL) {
-        LOGE("%s, open %s ERROR(%s)!!\n", __FUNCTION__,
-             CS_KEY_DATA_READ_DEV_PATH, strerror(errno));
-        return -1;
+    if (write_partiton_raw(CS_KEY_DATA_NAME_DEV_PATH, key_name, strlen(key_name))) {
+        LOGE("%s, name failed!\n", __FUNCTION__);
+        return -__LINE__;
     }
 
-    fscanf(dev_fp, "%s", data_buf);
+    rc = read_partiton_raw(CS_KEY_DATA_READ_DEV_PATH, (char*)data_buf, CC_HDCP_KEY_CONTENT_SIZE);
+    if ( rc ) {
+        LOGE("%s, Fail in read (%s) in len %d\n", __FUNCTION__, key_name, CC_HDCP_KEY_CONTENT_SIZE);
+        return -__LINE__;
+    }
 
-    rd_cnt = strlen((char *)data_buf);
-
-    fclose(dev_fp);
-    dev_fp = NULL;
-
-    return rd_cnt;
+    return CC_HDCP_KEY_CONTENT_SIZE;
 }
 
 int WriteKeyData(const char *key_name, int wr_size, char data_buf[])
@@ -315,24 +350,25 @@ int SSMReadHDCPKey(unsigned char hdcp_key_buf[])
 {
     int tmp_ret = 0, rd_size = 0;
     unsigned char rd_buf[CC_MAX_KEY_DATA_SIZE] = { 0 };
-    unsigned char tmp_buf[CC_MAX_KEY_DATA_SIZE] = { 0 };
+    //unsigned char tmp_buf[CC_MAX_KEY_DATA_SIZE] = { 0 };
 
     tmp_ret = GetHDCPKeyFromFile(0, CC_HDCP_KEY_TOTAL_SIZE, hdcp_key_buf);
     if (tmp_ret < 0) {
-        rd_size = ReadKeyData(CS_RX_HDCP_KEY_NAME, rd_buf);
+        rd_size = ReadKeyData(CS_RX_HDCP14_KEY_NAME, rd_buf);
         LOGD("%s, rd_size = %d\n", __FUNCTION__, rd_size);
 
-        memcpy((void *)tmp_buf, (void *)rd_buf, CC_MAX_KEY_DATA_SIZE);
-        rd_size = TransStringToHex(rd_size, (char *)rd_buf, tmp_buf);
+        //memcpy((void *)tmp_buf, (void *)rd_buf, CC_MAX_KEY_DATA_SIZE);
+        //rd_size = TransStringToHex(rd_size, (char *)rd_buf, tmp_buf);
 
-        if (rd_size == CC_HDCP_KEY_TOTAL_SIZE) {
-            memcpy(hdcp_key_buf, tmp_buf, CC_HDCP_KEY_TOTAL_SIZE);
-            return rd_size;
-        }
-
+		//LOGD("%s, after TransStringToHex rd_size = %d\n", __FUNCTION__, rd_size);
+		LOGD("%s, rd_buf = %x, %x, %x\n", __FUNCTION__, rd_buf[0], rd_buf[1], rd_buf[3]);
+		if (rd_size == CC_HDCP_KEY_CONTENT_SIZE) {
+			memcpy(hdcp_key_buf, mHDCPKeyDefHeaderBuf, CC_HDCP_KEY_HEAD_SIZE);
+			memcpy(hdcp_key_buf + CC_HDCP_KEY_HEAD_SIZE, rd_buf, CC_HDCP_KEY_CONTENT_SIZE);
+			return CC_HDCP_KEY_TOTAL_SIZE;
+		}
         return 0;
     }
-
     return CC_HDCP_KEY_TOTAL_SIZE;
 }
 

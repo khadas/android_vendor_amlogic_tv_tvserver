@@ -23,6 +23,7 @@
 #endif
 
 #if ANDROID_PLATFORM_SDK_VERSION >= 21
+#define CS_KEY_DATA_ATTACH_DEV_PATH                 "/sys/class/unifykeys/attach"
 #define CS_KEY_DATA_NAME_DEV_PATH                   "/sys/class/unifykeys/name"
 #define CS_KEY_DATA_READ_DEV_PATH                   "/sys/class/unifykeys/read"
 #define CS_KEY_DATA_WRITE_DEV_PATH                  "/sys/class/unifykeys/write"
@@ -30,6 +31,7 @@
 #define CS_MAC_KEY_NAME                             "mac"
 #define CS_BARCODE_KEY_NAME                         "usid"
 #define CS_RX_HDCP_KEY_NAME                         "hdcp2_rx"
+#define CS_RX_HDCP14_KEY_NAME                       "hdcp14_rx"
 #define CS_PROJECT_ID_KEY_NAME                      "projid"
 #endif
 

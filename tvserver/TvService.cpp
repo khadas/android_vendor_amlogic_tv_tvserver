@@ -1210,6 +1210,19 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case FACTORY_SET_RGB_PATTERN: {
+        int pr = p.readInt32();
+        int pg = p.readInt32();
+        int pb = p.readInt32();
+        int ret = mpTv->mFactoryMode.setRGBPattern(pr, pg, pb);
+        r->writeInt32(ret);
+        break;
+    }
+    case FACTORY_GET_RGB_PATTERN: {
+        int ret = mpTv->mFactoryMode.getRGBPattern();
+        r->writeInt32(ret);
+        break;
+    }
     // FACTORY END
 
     // AUDIO & AUDIO MUTE

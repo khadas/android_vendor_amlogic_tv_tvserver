@@ -185,10 +185,15 @@ int tvWriteSysfs(const char *path, const char *value) {
 #endif
 }
 
-int tvWriteSysfs(const char *path, int value)
+int tvWriteSysfs(const char *path, int value, int base)
 {
     char str_value[64] = {0};
-    sprintf(str_value, "%d", value);
+    if (base == 16) {
+        sprintf(str_value, "0x%-x", value);
+    } else {
+        sprintf(str_value, "%d", value);
+    }
+    ALOGD("tvWriteSysfs, str_value = %s", str_value);
 #ifdef USE_SYSTEM_CONTROL
     const sp<ISystemControlService> &sws = getSystemControlService();
     if (sws != 0) {

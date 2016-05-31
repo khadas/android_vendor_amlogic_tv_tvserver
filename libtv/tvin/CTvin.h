@@ -918,6 +918,11 @@ typedef enum tv_hdmi_port_id_e {
     HDMI_PORT_3,
 } tv_hdmi_port_id_t;
 
+typedef enum tv_hdmi_hdcp_version_e {
+    HDMI_HDCP_VER_14 = 0,
+    HDMI_HDCP_VER_22 ,
+} tv_hdmi_hdcp_version_t;
+
 typedef enum tv_hdmi_edid_version_e {
     HDMI_EDID_VER_14 = 0,
     HDMI_EDID_VER_20 ,

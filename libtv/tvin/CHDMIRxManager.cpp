@@ -20,18 +20,36 @@ CHDMIRxManager::~CHDMIRxManager()
 int CHDMIRxManager::HdmiRxEdidUpdate()
 {
     int m_hdmi_fd = -1;
-
     m_hdmi_fd = open(CS_HDMIRX_DEV_PATH, O_RDWR);
     if (m_hdmi_fd < 0) {
         LOGE("%s, Open file %s error: (%s)!\n", __FUNCTION__, CS_HDMIRX_DEV_PATH, strerror ( errno ));
         return -1;
     }
-
     ioctl(m_hdmi_fd, HDMI_IOC_EDID_UPDATE, NULL);
-
     close(m_hdmi_fd);
     m_hdmi_fd = -1;
+    return 0;
+}
 
+int CHDMIRxManager::HdmiRxHdcpVerSwitch(tv_hdmi_hdcp_version_t version)
+{
+    int m_hdmi_fd = -1;
+    m_hdmi_fd = open(CS_HDMIRX_DEV_PATH, O_RDWR);
+    if (m_hdmi_fd < 0) {
+        LOGE("%s, Open file %s error: (%s)!\n", __FUNCTION__, CS_HDMIRX_DEV_PATH, strerror ( errno ));
+        return -1;
+    }
+    if (HDMI_HDCP_VER_14 == version) {
+        ioctl(m_hdmi_fd, HDMI_IOC_HDCP22_FORCE14, NULL);
+    } else if (HDMI_HDCP_VER_22 == version) {
+        ioctl(m_hdmi_fd, HDMI_IOC_HDCP22_AUTO, NULL);
+    } else {
+        close(m_hdmi_fd);
+        m_hdmi_fd = -1;
+        return -1;
+    }
+    close(m_hdmi_fd);
+    m_hdmi_fd = -1;
     return 0;
 }
 
@@ -69,7 +87,7 @@ int CHDMIRxManager::GetHdmiHdcpKeyKsvInfo(struct _hdcp_ksv *msg)
         return -1;
     }
 
-    ioctl(m_hdmi_fd, HDMI_IOC_HDCP_KSV, msg);
+    ioctl(m_hdmi_fd, HDMI_IOC_HDCP_GET_KSV, msg);
 
     close(m_hdmi_fd);
     m_hdmi_fd = -1;

@@ -938,6 +938,7 @@ int CTv::playDtvProgram ( int mode, int freq, int para1, int para2,
         mAv.EnableVideoBlackout();
     else
         mAv.DisableVideoBlackout();
+    mAv.ClearVideoBuffer();
 
     mFrontDev.Open(FE_ANALOG);
     if (!(mTvAction & TV_ACTION_SCANNING))

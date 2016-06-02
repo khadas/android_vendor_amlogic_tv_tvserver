@@ -54,18 +54,18 @@ int CTvGpio::setGpioOutEdge(int edge)
 
     char direction[128] = {0};
     char value[128] = {0};
-    if (tvWriteSysfs(GPIO_EXPORT, mGpioPinNum)) {
-        GPIO_DIRECTION(direction, mGpioPinNum);
-        GPIO_VALUE(value, mGpioPinNum);
-        ALOGV("dirction path:[%s], value path:[%s]", direction, value);
+    GPIO_DIRECTION(direction, mGpioPinNum);
+    GPIO_VALUE(value, mGpioPinNum);
+    ALOGV("dirction path:[%s]", direction);
+    ALOGV("value path:[%s]", value);
 
-        tvWriteSysfs(direction, "out");
-        tvWriteSysfs(value, edge);
-        return 0;
+    if (needExportAgain(direction)) {
+        tvWriteSysfs(GPIO_EXPORT, mGpioPinNum);
     }
+    tvWriteSysfs(direction, "out");
+    tvWriteSysfs(value, edge);
 
-    ALOGE("%s, FAILED...", __FUNCTION__);
-    return -1;
+    return 0;
 }
 
 int CTvGpio::getGpioInEdge()
@@ -75,19 +75,22 @@ int CTvGpio::getGpioInEdge()
     char direction[128] = {0};
     char value[128] = {0};
     char edge[128] = {0};
-    if (tvWriteSysfs(GPIO_EXPORT, mGpioPinNum)) {
-        GPIO_DIRECTION(direction, mGpioPinNum);
-        GPIO_VALUE(value, mGpioPinNum);
-        ALOGV("dirction path:[%s], value path:[%s]", direction, value);
+    GPIO_DIRECTION(direction, mGpioPinNum);
+    GPIO_VALUE(value, mGpioPinNum);
+    ALOGV("dirction path:[%s]", direction);
+    ALOGV("value path:[%s]", value);
 
-        tvWriteSysfs(direction, "in");
-        tvReadSysfs(value, edge);
-        ALOGD("edge:[%s]", edge);
-
-        return atoi(edge);
+    if (needExportAgain(direction)) {
+        tvWriteSysfs(GPIO_EXPORT, mGpioPinNum);
     }
+    tvWriteSysfs(direction, "in");
+    tvReadSysfs(value, edge);
+    ALOGD("edge:[%s]", edge);
 
-    ALOGE("%s, FAILED...", __FUNCTION__);
-    return -1;
+    return atoi(edge);
+}
+
+bool CTvGpio::needExportAgain(char *path) {
+    return !isFileExist(path);
 }
 

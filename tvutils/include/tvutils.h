@@ -26,7 +26,7 @@ extern int Set_Fixed_NonStandard(int value);
 
 extern int TvMisc_DeleteDirFiles(const char *strPath, int flag);
 
-extern bool Tv_Utils_IsFileExist(const char *file_name);
+extern bool isFileExist(const char *file_name);
 extern int GetPlatformHaveDDFlag();
 extern int getBootEnv(const char *key, char *value, const char *def_val);
 extern void setBootEnv(const char *key, const char *value);

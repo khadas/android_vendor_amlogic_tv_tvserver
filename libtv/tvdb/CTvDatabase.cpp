@@ -57,7 +57,7 @@ int CTvDatabase::UnInitTvDb()
 int CTvDatabase::InitTvDb(const char *path)
 {
     if (path != NULL) {
-        if (Tv_Utils_IsFileExist(path) && config_get_int("TV", "tv_db_created", 0) == 1) { //exist or created
+        if (isFileExist(path) && config_get_int("TV", "tv_db_created", 0) == 1) { //exist or created
             LOGD("tv db file(%s) exist and created, open it", path);
             if (openDb(path) < 0 ) {
                 LOGD("db(%s) open fail", path);
@@ -70,7 +70,7 @@ int CTvDatabase::InitTvDb(const char *path)
                 LOGD("scan region table is NULL, so import freq XML again\n");
             }
         } else {
-            if (Tv_Utils_IsFileExist(path)) { // if just exist, create flag not set, delete it
+            if (isFileExist(path)) { // if just exist, create flag not set, delete it
                 LOGD("tv db file (%s) exist, but delete it", path);
                 if (unlink(path) != 0) {
                     LOGD("delete tv db file(%s) err=%s", path, strerror(errno));

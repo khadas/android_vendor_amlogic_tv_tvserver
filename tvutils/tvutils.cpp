@@ -480,7 +480,7 @@ int TvMisc_DeleteDirFiles(const char *strPath, int flag)
 }
 
 //check file exist or not
-bool Tv_Utils_IsFileExist(const char *file_name)
+bool isFileExist(const char *file_name)
 {
     struct stat tmp_st;
 

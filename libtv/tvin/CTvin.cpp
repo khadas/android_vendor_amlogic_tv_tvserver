@@ -126,7 +126,7 @@ int CTvin::VDIN_RmTvPath ( void )
 int CTvin::VDIN_AddVideoPath ( int selPath )
 {
     int ret = -1;
-    int Existamlvideo2 = Tv_Utils_IsFileExist ( AMLVIDEO2_DEV_PATH );
+    int Existamlvideo2 = isFileExist(AMLVIDEO2_DEV_PATH);
 
     switch ( selPath ) {
     case TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:

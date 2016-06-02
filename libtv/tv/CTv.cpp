@@ -76,8 +76,8 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     mAudioMuteStatusForSystem = CC_AUDIO_UNMUTE;
 
     //copy file to param
-    if (Tv_Utils_IsFileExist ( TV_CONFIG_FILE_SYSTEM_PATH )) {
-        if (!Tv_Utils_IsFileExist ( TV_CONFIG_FILE_PARAM_PATH )) {
+    if (isFileExist(TV_CONFIG_FILE_SYSTEM_PATH)) {
+        if (!isFileExist(TV_CONFIG_FILE_PARAM_PATH)) {
             CFile file ( TV_CONFIG_FILE_SYSTEM_PATH );
 
             if ( file.copyTo ( TV_CONFIG_FILE_PARAM_PATH ) != 0 ) {
@@ -86,8 +86,8 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
         }
     }
 
-    if (Tv_Utils_IsFileExist ( TV_CHANNEL_LIST_SYSTEM_PATH )) {
-        if (!Tv_Utils_IsFileExist ( TV_CHANNEL_LIST_PARAM_PATH )) {
+    if (isFileExist(TV_CHANNEL_LIST_SYSTEM_PATH)) {
+        if (!isFileExist(TV_CHANNEL_LIST_PARAM_PATH)) {
             CFile file ( TV_CHANNEL_LIST_SYSTEM_PATH );
 
             if ( file.copyTo ( TV_CHANNEL_LIST_PARAM_PATH ) != 0 ) {
@@ -97,8 +97,8 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     }
 
     //ssm
-    if (Tv_Utils_IsFileExist ( TV_SSM_DATA_SYSTEM_PATH )) {
-        if (!Tv_Utils_IsFileExist ( TV_SSM_DATA_PARAM_PATH )) {
+    if (isFileExist (TV_SSM_DATA_SYSTEM_PATH)) {
+        if (!isFileExist(TV_SSM_DATA_PARAM_PATH)) {
             CFile file ( TV_SSM_DATA_SYSTEM_PATH );
 
             if ( file.copyTo ( TV_SSM_DATA_PARAM_PATH ) != 0 ) {

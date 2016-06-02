@@ -23,6 +23,7 @@ public:
 private:
     int setGpioOutEdge(int edge);
     int getGpioInEdge();
+    bool needExportAgain(char *path);
 
     int mGpioPinNum;
     char mGpioName[64];

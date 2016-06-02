@@ -1833,7 +1833,13 @@ int CTvin::Tvin_StartDecoder ( tvin_info_t &info )
 int CTvin::SwitchSnow(bool enable)
 {
     int ret = -1;
+    static bool last_status = false;
 
+    if ( last_status == enable ) {
+        return 0;
+    } else {
+        last_status = enable;
+    }
     if ( enable ) {
         ret = AFE_DeviceIOCtl( TVIN_IOC_S_AFE_SONWON );
         ret = VDIN_DeviceIOCtl( TVIN_IOC_SNOWON );;

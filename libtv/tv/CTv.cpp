@@ -1893,7 +1893,6 @@ void CTv::onSigStillStable()
         if ( SOURCE_TV == m_source_input ) {
             mpTvin->Tvin_StopDecoder();
             mpTvin->SwitchSnow( false );
-            mAv.EnableVideoNow( false );
         }
         int startdec_status = mpTvin->Tvin_StartDecoder ( mSigDetectThread.getCurSigInfo() );
         if ( startdec_status == 0 ) { //showboz  codes from  start decode fun
@@ -1922,9 +1921,7 @@ void CTv::onSigStillStable()
 void CTv::onEnableVideoLater(int framecount)
 {
     LOGD("[ctv]onEnableVideoLater framecount = %d", framecount);
-    if (SOURCE_TV != m_source_input ) {
-        mAv.EnableVideoWhenVideoPlaying(2);
-    }
+    mAv.EnableVideoWhenVideoPlaying(2);
     if (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_HDMI ) {
         SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
         Tv_SetAudioInSource(m_source_input);

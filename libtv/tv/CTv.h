@@ -172,6 +172,9 @@ public:
     int getATVProgramID ( void );
     int saveDTVProgramID ( int dbID );
     int getDTVProgramID ( void );
+    int saveRadioProgramID ( int dbID );
+    int getRadioProgramID ( void );
+
     int getATVMinMaxFreq ( int *scanMinFreq, int *scanMaxFreq );
     int getAverageLuma();
     int setAutobacklightData(const char *value);

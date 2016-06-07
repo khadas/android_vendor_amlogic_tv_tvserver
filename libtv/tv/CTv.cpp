@@ -1333,6 +1333,18 @@ int CTv::getDTVProgramID ( void )
     return config_get_int ( CFG_SECTION_TV, "dtv.get.program.id", -1 );
 }
 
+int CTv::saveRadioProgramID ( int dbID )
+{
+    config_set_int ( CFG_SECTION_TV, "radio.get.program.id", dbID );
+    return 0;
+}
+
+int CTv::getRadioProgramID ( void )
+{
+    return config_get_int ( CFG_SECTION_TV, "radio.get.program.id", -1 );
+}
+
+
 int CTv::getATVMinMaxFreq ( int *scanMinFreq, int *scanMaxFreq )
 {
     const char *strDelimit = ",";

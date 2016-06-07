@@ -2235,6 +2235,32 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(retCnt);
         break;
     }
+    case SAVE_PROGRAM_ID: {
+        int type = p.readInt32();
+        int progID = p.readInt32();
+        int retCnt = 0;
+        if (type == CTvProgram::TYPE_DTV)
+            mpTv->saveDTVProgramID(progID);
+        else if (type == CTvProgram::TYPE_RADIO)
+            mpTv->saveRadioProgramID(progID);
+        else
+            mpTv->saveATVProgramID(progID);
+        r->writeInt32(retCnt);
+        break;
+    }
+    case GET_PROGRAM_ID: {
+        int type = p.readInt32();
+        int id;
+        if (type == CTvProgram::TYPE_DTV)
+            id = mpTv->getDTVProgramID();
+        else if (type == CTvProgram::TYPE_RADIO)
+            id = mpTv->getRadioProgramID();
+        else
+            id = mpTv->getATVProgramID();
+        r->writeInt32(id);
+        break;
+    }
+
     case ATV_GET_MIN_MAX_FREQ: {
         int min, max;
         int tmpRet = mpTv->getATVMinMaxFreq(&min, &max);

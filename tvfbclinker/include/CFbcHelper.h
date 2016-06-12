@@ -6,7 +6,7 @@ typedef enum COMM_DEV_TYPE_NO {
     COMM_DEV_SERIAL = 1,
 } COMM_DEV_TYPE_E;
 
-typedef enum fbc_command_e {
+enum fbc_command_t {
     VPU_CMD_NULL = 0,
     FBC_REBOOT_UPGRADE = 0x1,
     FBC_USER_SETTING_DEFAULT = 0x02,
@@ -146,7 +146,7 @@ typedef enum fbc_command_e {
     CMD_SET_AUTO_BACKLIGHT_ONFF = 0x85,
     CMD_GET_AUTO_BACKLIGHT_ONFF = 0x86,
 
-} fbc_command_t;
+};
 
 typedef enum fbc_upgrade_mode {
     CC_UPGRADE_MODE_BOOT_MAIN = 0,

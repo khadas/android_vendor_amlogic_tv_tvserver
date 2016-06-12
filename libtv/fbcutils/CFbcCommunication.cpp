@@ -26,7 +26,7 @@ CFbcCommunication::~CFbcCommunication(){}
 int CFbcCommunication::cfbcSetValueInt(COMM_DEV_TYPE_E fromDev, int cmd_id, int value, int value_count)
 {
     ALOGV("%s, cmd_id=%d, value=%d, value_count=%d", __FUNCTION__, cmd_id, value, value_count);
-    if (value_count != 1 || value_count != 4)
+    if (value_count != 1 && value_count != 4)
         return -1;
 
     unsigned char cmd_buf[7];

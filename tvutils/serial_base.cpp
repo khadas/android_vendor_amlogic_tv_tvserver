@@ -1,4 +1,5 @@
-#define LOG_TAG "serial_base"
+#define LOG_TAG "tvserver"
+#define LOG_TV_TAG "serial_base"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -10,9 +11,6 @@
 #include <pthread.h>
 #include <termios.h>
 #include <errno.h>
-
-#include <android/log.h>
-#include <cutils/log.h>
 
 #include "serial_base.h"
 #include "CTvLog.h"

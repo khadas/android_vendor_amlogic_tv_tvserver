@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "tvutils"
 
 #include <unistd.h>
 #include <stdio.h>
@@ -45,7 +46,7 @@ public:
     }
 
     void binderDied(const wp<IBinder> &who __unused) {
-        ALOGW("system_control died!");
+        LOGW("system_control died!");
 
         amSystemControlService.clear();
     }
@@ -63,7 +64,7 @@ static const sp<ISystemControlService> &getSystemControlService()
             binder = sm->getService(String16("system_control"));
             if (binder != 0)
                 break;
-            ALOGW("SystemControlService not published, waiting...");
+            LOGW("SystemControlService not published, waiting...");
             usleep(500000); // 0.5 s
         } while(true);
         if (amDeathNotifier == NULL) {
@@ -104,11 +105,11 @@ int writeSys(const char *path, const char *val) {
     int fd;
 
     if ((fd = open(path, O_RDWR)) < 0) {
-        ALOGE("writeSys, open %s error(%s)", path, strerror (errno));
+        LOGE("writeSys, open %s error(%s)", path, strerror (errno));
         return -1;
     }
 
-    //ALOGI("write %s, val:%s\n", path, val);
+    //LOGI("write %s, val:%s\n", path, val);
 
     int len = write(fd, val, strlen(val));
     close(fd);
@@ -119,18 +120,18 @@ int readSys(const char *path, char *buf, int count) {
     int fd, len;
 
     if ( NULL == buf ) {
-        ALOGE("buf is NULL");
+        LOGE("buf is NULL");
         return -1;
     }
 
     if ((fd = open(path, O_RDONLY)) < 0) {
-        ALOGE("readSys, open %s error(%s)", path, strerror (errno));
+        LOGE("readSys, open %s error(%s)", path, strerror (errno));
         return -1;
     }
 
     len = read(fd, buf, count);
     if (len < 0) {
-        ALOGE("read %s error, %s\n", path, strerror(errno));
+        LOGE("read %s error, %s\n", path, strerror(errno));
         goto exit;
     }
 
@@ -147,7 +148,7 @@ int readSys(const char *path, char *buf, int count) {
     }
     buf[j] = 0x0;
 
-    //ALOGI("read %s, result length:%d, val:%s\n", path, len, buf);
+    //LOGI("read %s, result length:%d, val:%s\n", path, len, buf);
 
 exit:
     close(fd);
@@ -193,7 +194,7 @@ int tvWriteSysfs(const char *path, int value, int base)
     } else {
         sprintf(str_value, "%d", value);
     }
-    ALOGD("tvWriteSysfs, str_value = %s", str_value);
+    LOGD("tvWriteSysfs, str_value = %s", str_value);
 #ifdef USE_SYSTEM_CONTROL
     const sp<ISystemControlService> &sws = getSystemControlService();
     if (sws != 0) {

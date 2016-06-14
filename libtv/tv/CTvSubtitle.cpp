@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CTvSubtitle"
 
 #include "CTvSubtitle.h"
 #include "am_misc.h"

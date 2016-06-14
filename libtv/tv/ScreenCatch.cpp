@@ -15,6 +15,7 @@
  */
 #define LOG_NDEBUG 1
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "ScreenCatch"
 
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/MediaDefs.h>
@@ -27,7 +28,7 @@
 #include <gui/IGraphicBufferAlloc.h>
 #include <OMX_Component.h>
 
-#include <utils/Log.h>
+#include <CTvLog.h>
 #include <utils/String8.h>
 
 #include <private/gui/ComposerService.h>
@@ -60,12 +61,12 @@ namespace android {
         ScreenCatchClient(void *user)
         {
             mUser = user;
-            ALOGE("[%s %d] user:%x", __FUNCTION__, __LINE__, user);
+            LOGE("[%s %d] user:%x", __FUNCTION__, __LINE__, user);
         }
 
         virtual void notify(int msg, int ext1, int ext2, const Parcel *obj)
         {
-            ALOGI("notify %d, %d, %d", msg, ext1, ext2);
+            LOGI("notify %d, %d, %d", msg, ext1, ext2);
         }
 
         virtual int dataCallback(const sp<IMemory> &data)
@@ -88,10 +89,10 @@ namespace android {
         mColorFormat(OMX_COLOR_Format32bitARGB8888),
         mBitSize(bitSize)
     {
-        ALOGE("ScreenCatch: %dx%d", bufferWidth, bufferHeight);
+        LOGE("ScreenCatch: %dx%d", bufferWidth, bufferHeight);
 
         if (bufferWidth <= 0 || bufferHeight <= 0 || bufferWidth > 1920 || bufferHeight > 1080) {
-            ALOGE("Invalid dimensions %dx%d", bufferWidth, bufferHeight);
+            LOGE("Invalid dimensions %dx%d", bufferWidth, bufferHeight);
         }
 
         if (bitSize != 24 || bitSize != 32)
@@ -106,14 +107,14 @@ namespace android {
 
     ScreenCatch::~ScreenCatch()
     {
-        ALOGE("~ScreenCatch");
+        LOGE("~ScreenCatch");
     }
 
     void ScreenCatch::setVideoRotation(int degree)
     {
         int angle;
 
-        ALOGI("[%s %d] setVideoRotation degree:%x", __FUNCTION__, __LINE__, degree);
+        LOGI("[%s %d] setVideoRotation degree:%x", __FUNCTION__, __LINE__, degree);
 
     }
 
@@ -224,7 +225,7 @@ namespace android {
         sp<MemoryHeapBase> newMemoryHeap = new MemoryHeapBase(mWidth * mHeight * 3 / 2);
         sp<MemoryBase> buffer = new MemoryBase(newMemoryHeap, 0, mWidth * mHeight * 3 / 2);
 
-        ALOGV("[%s %d] empty:%d", __FUNCTION__, __LINE__, mRawBufferQueue.empty());
+        LOGV("[%s %d] empty:%d", __FUNCTION__, __LINE__, mRawBufferQueue.empty());
 
         while (mStart == true) {
 
@@ -256,7 +257,7 @@ namespace android {
             mRawBufferQueue.push_back(accessUnit);
         }
 
-        ALOGE("[%s %d] thread out", __FUNCTION__, __LINE__);
+        LOGE("[%s %d] thread out", __FUNCTION__, __LINE__);
 
         mThreadOutCondition.signal();
 
@@ -273,7 +274,7 @@ namespace android {
 
     status_t ScreenCatch::start(MetaData *params)
     {
-        ALOGE("[%s %d] mWidth:%d mHeight:%d", __FUNCTION__, __LINE__, mWidth, mHeight);
+        LOGE("[%s %d] mWidth:%d mHeight:%d", __FUNCTION__, __LINE__, mWidth, mHeight);
         Mutex::Autolock autoLock(mLock);
 
         status_t status;
@@ -286,20 +287,20 @@ namespace android {
 
         sp<ScreenCatchClient> mIScreenSourceClient = new ScreenCatchClient(this);
 
-        ALOGE("[%s %d] mWidth:%d mHeight:%d", __FUNCTION__, __LINE__, mWidth, mHeight);
+        LOGE("[%s %d] mWidth:%d mHeight:%d", __FUNCTION__, __LINE__, mWidth, mHeight);
 
         mScreenMediaSourceService->registerClient(mIScreenSourceClient, mWidth, mHeight, 1, SCREENMEDIASOURC_RAWDATA_TYPE, &client_id, NULL);
 
-        ALOGE("[%s %d] client_id:%d", __FUNCTION__, __LINE__, client_id);
+        LOGE("[%s %d] client_id:%d", __FUNCTION__, __LINE__, client_id);
 
         mClientId = client_id;
 
         if (status != OK) {
-            ALOGE("setResolutionRatio fail");
+            LOGE("setResolutionRatio fail");
             return !OK;
         }
 
-        ALOGV("[%s %d] mCorpX:%d mCorpY:%d mCorpWidth:%d mCorpHeight:%d", __FUNCTION__, __LINE__,  mCorpX, mCorpY, mCorpWidth, mCorpHeight);
+        LOGV("[%s %d] mCorpX:%d mCorpY:%d mCorpWidth:%d mCorpHeight:%d", __FUNCTION__, __LINE__,  mCorpX, mCorpY, mCorpWidth, mCorpHeight);
 
         if (mCorpX != -1)
             mScreenMediaSourceService->setVideoCrop(client_id, mCorpX, mCorpY, mCorpWidth, mCorpHeight);
@@ -309,7 +310,7 @@ namespace android {
 
         if (status != OK) {
             mScreenMediaSourceService->unregisterClient(mClientId);
-            ALOGE("ScreenMediaSourceService start fail");
+            LOGE("ScreenMediaSourceService start fail");
             return !OK;
         }
 
@@ -327,22 +328,22 @@ namespace android {
 
         mStart = true;
 
-        ALOGV("[%s %d]", __FUNCTION__, __LINE__);
+        LOGV("[%s %d]", __FUNCTION__, __LINE__);
         return OK;
     }
 
     status_t ScreenCatch::stop()
     {
-        ALOGV("[%s %d]", __FUNCTION__, __LINE__);
+        LOGV("[%s %d]", __FUNCTION__, __LINE__);
         Mutex::Autolock autoLock(mLock);
         mStart = false;
 
         mThreadOutCondition.waitRelative(mLock, 1000000000000);
-        ALOGV("[%s %d]", __FUNCTION__, __LINE__);
+        LOGV("[%s %d]", __FUNCTION__, __LINE__);
 
         while (!mRawBufferQueue.empty()) {
 
-            ALOGV("[%s %d] free buffer", __FUNCTION__, __LINE__);
+            LOGV("[%s %d] free buffer", __FUNCTION__, __LINE__);
 
             MediaBuffer *rawBuffer = *mRawBufferQueue.begin();
             mRawBufferQueue.erase(mRawBufferQueue.begin());

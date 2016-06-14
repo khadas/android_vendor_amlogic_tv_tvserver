@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "fbcutils"
 
 #include "fbcutils.h"
 #include <tvconfig.h>
@@ -9,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <utils/Log.h>
+#include <CTvLog.h>
 
 
 using namespace android;
@@ -28,7 +29,7 @@ int rebootSystemByEdidInfo()
     char outputmode_prop_value[256];
     char lcd_reverse_prop_value[256];
 
-    ALOGD("get edid info from fbc!");
+    LOGD("get edid info from fbc!");
     memset(outputmode_prop_value, '\0', 256);
     memset(lcd_reverse_prop_value, '\0', 256);
     getBootEnv(UBOOTENV_OUTPUTMODE, outputmode_prop_value, "null" );
@@ -36,17 +37,17 @@ int rebootSystemByEdidInfo()
 
     fd = open("/sys/class/amhdmitx/amhdmitx0/edid_info", O_RDWR);
     if (fd < 0) {
-        ALOGE("open edid node error");
+        LOGE("open edid node error");
         return -1;
     }
     ret = read(fd, fbc_edid_info, edid_info_len);
     if (ret < 0) {
-        ALOGE("read edid node error");
+        LOGE("read edid node error");
         return -1;
     }
 
     if ((0xfb == (unsigned char)fbc_edid_info[250]) && (0x0c == (unsigned char)fbc_edid_info[251])) {
-        ALOGD("RX is FBC!");
+        LOGD("RX is FBC!");
         // set outputmode env
         ret = 0;//is Fbc
         switch (fbc_edid_info[252] & 0x0f) {
@@ -110,7 +111,7 @@ int rebootSystemByEdidInfo()
     fd = -1;
     //ret = -1;
     if (1 == env_different_as_cur) {
-        ALOGD("env change , reboot system");
+        LOGD("env change , reboot system");
         system("reboot");
     }
     return ret;
@@ -128,27 +129,27 @@ int rebootSystemByUartPanelInfo(CFbcCommunication *fbc)
     char panel_model[64] = {0};
 
     if (fbc == NULL) {
-        ALOGE("there is no fbc!!!");
+        LOGE("there is no fbc!!!");
         return -1;
     }
 
     fbc->cfbc_Get_FBC_Get_PANel_INFO(COMM_DEV_SERIAL, panel_model);
     if (0 == panel_model[0]) {
-        ALOGD("device is not fbc");
+        LOGD("device is not fbc");
         return -1;
     }
-    ALOGD("device is fbc, get panel info from fbc!");
+    LOGD("device is fbc, get panel info from fbc!");
     getBootEnv(UBOOTENV_OUTPUTMODE, outputmode_prop_value, "null" );
     getBootEnv(UBOOTENV_LCD_REVERSE, lcd_reverse_prop_value, "null" );
 
     fbc->cfbc_Get_FBC_PANEL_REVERSE(COMM_DEV_SERIAL, &panel_reverse);
     fbc->cfbc_Get_FBC_PANEL_OUTPUT(COMM_DEV_SERIAL, &panel_outputmode);
-    ALOGD("panel_reverse = %d, panel_outputmode = %d", panel_reverse, panel_outputmode);
-    ALOGD("panel_output prop = %s, panel reverse prop = %s", outputmode_prop_value, lcd_reverse_prop_value);
+    LOGD("panel_reverse = %d, panel_outputmode = %d", panel_reverse, panel_outputmode);
+    LOGD("panel_output prop = %s, panel reverse prop = %s", outputmode_prop_value, lcd_reverse_prop_value);
     switch (panel_outputmode) {
     case T_1080P50HZ:
         if (0 != strcmp(outputmode_prop_value, "1080p50hz")) {
-            ALOGD("panel_output changed to 1080p50hz");
+            LOGD("panel_output changed to 1080p50hz");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
@@ -157,7 +158,7 @@ int rebootSystemByUartPanelInfo(CFbcCommunication *fbc)
         break;
     case T_2160P50HZ420:
         if (0 != strcmp(outputmode_prop_value, "2160p50hz420")) {
-            ALOGD("panel_output changed to 2160p50hz420");
+            LOGD("panel_output changed to 2160p50hz420");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
@@ -166,7 +167,7 @@ int rebootSystemByUartPanelInfo(CFbcCommunication *fbc)
         break;
     case T_1080P50HZ44410BIT:
         if (0 != strcmp(outputmode_prop_value, "1080p50hz44410bit")) {
-            ALOGD("panel_output changed to 1080p50hz44410bit");
+            LOGD("panel_output changed to 1080p50hz44410bit");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
@@ -175,7 +176,7 @@ int rebootSystemByUartPanelInfo(CFbcCommunication *fbc)
         break;
     case T_2160P50HZ42010BIT:
         if (0 != strcmp(outputmode_prop_value, "2160p50hz42010bit")) {
-            ALOGD("panel_output changed to 2160p50hz42010bit");
+            LOGD("panel_output changed to 2160p50hz42010bit");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
@@ -184,7 +185,7 @@ int rebootSystemByUartPanelInfo(CFbcCommunication *fbc)
         break;
     case T_2160P50HZ42210BIT:
         if (0 != strcmp(outputmode_prop_value, "2160p50hz42210bit")) {
-            ALOGD("panel_output changed to 2160p50hz42210bit");
+            LOGD("panel_output changed to 2160p50hz42210bit");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
@@ -193,7 +194,7 @@ int rebootSystemByUartPanelInfo(CFbcCommunication *fbc)
         break;
     case T_2160P50HZ444:
         if (0 != strcmp(outputmode_prop_value, "2160p50hz444")) {
-            ALOGD("panel_output changed to 2160p50hz444");
+            LOGD("panel_output changed to 2160p50hz444");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
@@ -211,7 +212,7 @@ int rebootSystemByUartPanelInfo(CFbcCommunication *fbc)
     switch (panel_reverse) {
     case 0x0:
         if (0 != strcmp(lcd_reverse_prop_value, "0")) {
-            ALOGD("panel_reverse changed to 0");
+            LOGD("panel_reverse changed to 0");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
@@ -232,7 +233,7 @@ int rebootSystemByUartPanelInfo(CFbcCommunication *fbc)
 
     ret = -1;
     if (1 == env_different_as_cur) {
-        ALOGD("env change , reboot system");
+        LOGD("env change , reboot system");
         system("reboot");
     }
     return 0;
@@ -292,26 +293,26 @@ static int isProjectInfoValid(char *data_str, int chksum_head_len, int ver_len)
                 if ((tmp_buf[0] == 'v' || tmp_buf[0] == 'V') && isxdigit(tmp_buf[1]) && isxdigit(tmp_buf[2]) && isxdigit(tmp_buf[3])) {
                     tmp_ver = strtoul(tmp_buf + 1, &endp, 16);
                     if (tmp_ver <= 0) {
-                        ALOGD("%s, project_info data version error!!!", __FUNCTION__);
+                        LOGD("%s, project_info data version error!!!", __FUNCTION__);
                         return -1;
                     }
                 } else {
-                    ALOGD("%s, project_info data version error!!!", __FUNCTION__);
+                    LOGD("%s, project_info data version error!!!", __FUNCTION__);
                     return -1;
                 }
 
                 return tmp_ver;
             } else {
-                ALOGD("%s, cal_chksum = %x", __FUNCTION__, (unsigned int)cal_chksum);
-                ALOGD("%s, src_chksum = %x", __FUNCTION__, (unsigned int)src_chksum);
+                LOGD("%s, cal_chksum = %x", __FUNCTION__, (unsigned int)cal_chksum);
+                LOGD("%s, src_chksum = %x", __FUNCTION__, (unsigned int)src_chksum);
             }
         }
 
-        ALOGD("%s, project_info data error!!!", __FUNCTION__);
+        LOGD("%s, project_info data error!!!", __FUNCTION__);
         return -1;
     }
 
-    ALOGD("%s, project_info data is NULL!!!", __FUNCTION__);
+    LOGD("%s, project_info data is NULL!!!", __FUNCTION__);
     return -1;
 }
 
@@ -323,7 +324,7 @@ static int GetProjectInfoOriData(char data_str[], CFbcCommunication *fbcIns)
         //memset(data_str, '\0', sizeof(data_str));//sizeof pointer has issue
         getBootEnv(UBOOTENV_PROJECT_INFO, data_str, (char *)"null");
         if (strcmp(data_str, "null") == 0) {
-            ALOGE("%s, get project info data error!!!", __FUNCTION__);
+            LOGE("%s, get project info data error!!!", __FUNCTION__);
             return -1;
         }
 
@@ -348,7 +349,7 @@ static int GetProjectInfoOriData(char data_str[], CFbcCommunication *fbcIns)
 
             if (gFBCPrjInfoRDPass == 1) {
                 strcpy(data_str, gFBCPrjInfoBuf);
-                ALOGD("%s, rd once just return, data_str = %s", __FUNCTION__, data_str);
+                LOGD("%s, rd once just return, data_str = %s", __FUNCTION__, data_str);
                 return 0;
             }
 
@@ -363,7 +364,7 @@ static int GetProjectInfoOriData(char data_str[], CFbcCommunication *fbcIns)
                     strcat(tmp_buf, ",8o8w,0,0");
                     cal_chksum = CalCRC32(0, (unsigned char *)tmp_buf, strlen(tmp_buf));
                     sprintf(data_str, "%08x,%s", cal_chksum, tmp_buf);
-                    ALOGD("%s, data_str = %s", __FUNCTION__, data_str);
+                    LOGD("%s, data_str = %s", __FUNCTION__, data_str);
                 } else {
                     tmp_val = 0;
                     if (fbcIns->cfbc_Get_FBC_project_id(COMM_DEV_SERIAL, &tmp_val) == 0) {
@@ -371,7 +372,7 @@ static int GetProjectInfoOriData(char data_str[], CFbcCommunication *fbcIns)
                     } else {
                         tmp_rd_fail_flag = 1;
                         strcpy(build_name, "fbc_0");
-                        ALOGD("%s, get project id from fbc error!!!", __FUNCTION__);
+                        LOGD("%s, get project id from fbc error!!!", __FUNCTION__);
                     }
 
                     strcpy(tmp_buf, "v001,");
@@ -384,13 +385,13 @@ static int GetProjectInfoOriData(char data_str[], CFbcCommunication *fbcIns)
                     } else {
                         tmp_rd_fail_flag = 1;
                         strcat(tmp_buf, build_name);
-                        ALOGD("%s, get panel info from fbc error!!!", __FUNCTION__);
+                        LOGD("%s, get panel info from fbc error!!!", __FUNCTION__);
                     }
 
                     strcat(tmp_buf, ",8o8w,0,0");
                     cal_chksum = CalCRC32(0, (unsigned char *)tmp_buf, strlen(tmp_buf));
                     sprintf(data_str, "%08x,%s", cal_chksum, tmp_buf);
-                    ALOGD("%s, data_str = %s", __FUNCTION__, data_str);
+                    LOGD("%s, data_str = %s", __FUNCTION__, data_str);
 
                     if (tmp_rd_fail_flag == 0) {
                         gFBCPrjInfoRDPass = 1;

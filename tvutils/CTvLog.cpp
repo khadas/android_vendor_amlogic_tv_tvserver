@@ -1,12 +1,16 @@
 #define LOG_TAG "tvserver"
 #include "CTvLog.h"
 
-/*void CTvLog::LOGD()
+int __tv_log_print(int prio, const char *tag, const char *tv_tag, const char *fmt, ...)
 {
+    char buf[DEFAULT_LOG_BUFFER_LEN];
+    sprintf(buf, "[%s]:", tv_tag);
+    int tv_tag_len = strlen(buf);
+
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buf + tv_tag_len, DEFAULT_LOG_BUFFER_LEN - tv_tag_len, fmt, ap);
+
+    return __android_log_write(prio, tag, buf);
 }
-void CTvLog::LOGE()
-{
-}
-void CTvLog::LOGW()
-{
-}*/
+

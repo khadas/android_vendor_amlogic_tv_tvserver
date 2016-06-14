@@ -13,7 +13,6 @@
 #define _C_TV_TIME_H_
 
 #include <utils/Timers.h>
-#include "CTvLog.h"
 #include <time.h>
 //#include <cutils/tztime.h>
 #include <sys/times.h>

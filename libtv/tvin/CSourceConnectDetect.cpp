@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CSourceConnectDetect"
 
 #include "CTvin.h"
 #include <CTvLog.h>

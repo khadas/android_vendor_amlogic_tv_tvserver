@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CFbcUpgrade"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +7,7 @@
 #include <sys/prctl.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <utils/Log.h>
+#include <CTvLog.h>
 
 #include "CFbcUpgrade.h"
 
@@ -126,13 +127,13 @@ bool CFbcUpgrade::threadLoop()
         return false;
     }
 
-    ALOGD("%s, entering...\n", "TV");
+    LOGD("%s, entering...\n", "TV");
 
     prctl(PR_SET_NAME, (unsigned long)"CFbcUpgrade thread loop");
 
     mState = STATE_RUNNING;
 
-    ALOGD("%s, upgrade mode = %d\n", __FUNCTION__, mUpgradeMode);
+    LOGD("%s, upgrade mode = %d\n", __FUNCTION__, mUpgradeMode);
     if (mUpgradeMode < CC_UPGRADE_MODE_BOOT_MAIN || mUpgradeMode > CC_UPGRADE_MODE_DUMMY) {
         mState = STATE_ABORT;
         upgrade_err_code = ERR_NOT_SUPPORT_UPGRADE_MDOE;
@@ -187,7 +188,7 @@ bool CFbcUpgrade::threadLoop()
     //open upgrade source file and read it to temp buffer.
     file_handle = open(mFileName, O_RDONLY);
     if (file_handle < 0) {
-        ALOGE("%s, Can't Open file %s\n", __FUNCTION__, mFileName);
+        LOGE("%s, Can't Open file %s\n", __FUNCTION__, mFileName);
         mState = STATE_ABORT;
         upgrade_err_code = ERR_OPEN_BIN_FILE;
         mpObserver->onUpgradeStatus(mState, upgrade_err_code);
@@ -202,7 +203,7 @@ bool CFbcUpgrade::threadLoop()
     memset(mBinFileBuf, 0, mOPTotalSize);
     rw_size = read(file_handle, mBinFileBuf, mBinFileSize);
     if (rw_size != mBinFileSize || rw_size <= 0) {
-        ALOGE("%s, read file %s error(%d, %d)\n", __FUNCTION__, mFileName, mBinFileSize, rw_size);
+        LOGE("%s, read file %s error(%d, %d)\n", __FUNCTION__, mFileName, mBinFileSize, rw_size);
         mState = STATE_ABORT;
         upgrade_err_code = ERR_READ_BIN_FILE;
         mpObserver->onUpgradeStatus(mState, upgrade_err_code);
@@ -447,7 +448,7 @@ bool CFbcUpgrade::threadLoop()
 
         //send upgrade start addr and write size
         sprintf((char *)tmp_buf, "upgrade 0x%x 0x%x\n", cur_off, rw_size);
-        ALOGD("\n\n%s, %s\n", __FUNCTION__, tmp_buf);
+        LOGD("\n\n%s, %s\n", __FUNCTION__, tmp_buf);
         cmd_len = strlen((char *)tmp_buf);
         if (mCfbcIns->sendDataOneway(COMM_DEV_SERIAL, tmp_buf, cmd_len, 0) <= 0) {
             mState = STATE_ABORT;
@@ -483,21 +484,21 @@ bool CFbcUpgrade::threadLoop()
         rw_size = mCfbcIns->uartReadStream(mDataBuf, CC_UPGRADE_DATA_BUF_SIZE, 2000);
         for (i = 0; i < rw_size - 3; i++) {
             if ((0x5A == mDataBuf[i]) && (0x5A == mDataBuf[i + 1]) && (0x5A == mDataBuf[i + 2])) {
-                ALOGD("%s, fbc write data at 0x%x ok!\n", __FUNCTION__, old_off);
+                LOGD("%s, fbc write data at 0x%x ok!\n", __FUNCTION__, old_off);
                 tmp_flag = 1;
                 break;
             }
         }
 
         if (tmp_flag == 0) {
-            ALOGE("%s, fbc write data at 0x%x error! rewrite!\n", __FUNCTION__, old_off);
+            LOGE("%s, fbc write data at 0x%x error! rewrite!\n", __FUNCTION__, old_off);
             if (upgrade_try_cnt < 6) {
                 cur_off = old_off;
                 upgrade_try_cnt += 1;
 
                 mpObserver->onUpgradeStatus(mState, ERR_DATA_CRC_ERROR);
             } else {
-                ALOGE("%s, we have rewrite more than %d times, abort.\n", __FUNCTION__, upgrade_try_cnt);
+                LOGE("%s, we have rewrite more than %d times, abort.\n", __FUNCTION__, upgrade_try_cnt);
                 mState = STATE_ABORT;
                 upgrade_err_code = ERR_SERIAL_CONNECT;
                 upgrade_flag = 0;
@@ -545,7 +546,7 @@ bool CFbcUpgrade::threadLoop()
         mBinFileBuf = NULL;
     }
 
-    ALOGD("%s, exiting...\n", "TV");
+    LOGD("%s, exiting...\n", "TV");
     system("reboot");
     //return true, run again, return false,not run.
     return false;

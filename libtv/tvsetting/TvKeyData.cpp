@@ -1,5 +1,6 @@
+#define LOG_TAG "tvserver"
+#define LOG_TV_TAG "TvKeyData"
 
-#define LOG_TAG "TvKeyData"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

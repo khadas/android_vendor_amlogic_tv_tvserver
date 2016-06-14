@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CTvSettingDeviceFactory"
 //#define LOG_NDEBUG 0
 
 #include "CTvSettingDeviceFactory.h"

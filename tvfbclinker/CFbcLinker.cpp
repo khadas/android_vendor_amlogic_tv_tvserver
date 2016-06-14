@@ -1,8 +1,9 @@
 #define LOG_NDEBUG 0
 
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CFbcLinker"
 
-#include <utils/Log.h>
+#include <CTvLog.h>
 #include "CFbcLinker.h"
 
 
@@ -37,7 +38,7 @@ CFbcLinker::~CFbcLinker()
 
 int CFbcLinker::sendCommandToFBC(unsigned char *data, int count, int flag)
 {
-    ALOGV("%s, dev_type=%d, cmd_id=%d, flag=%d", __FUNCTION__, *data, *(data+1), flag);
+    LOGV("%s, dev_type=%d, cmd_id=%d, flag=%d", __FUNCTION__, *data, *(data+1), flag);
 
     if (count < 2)
         return -1;

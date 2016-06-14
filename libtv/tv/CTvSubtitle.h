@@ -11,7 +11,7 @@
 #if !defined(_CTVSUBTITLE_H)
 #define _CTVSUBTITLE_H
 #include <stdlib.h>
-#include "CTvLog.h"
+#include <CTvLog.h>
 using namespace android;
 #include "am_cc.h"
 #include "am_sub2.h"

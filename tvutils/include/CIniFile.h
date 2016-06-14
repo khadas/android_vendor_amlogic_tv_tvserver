@@ -1,9 +1,5 @@
 #ifndef INI_FILE_H_
 #define INI_FILE_H_
-/*
- *vertion 0.01, just linux 8bit byte string, write by showbo
- */
-#include <CTvLog.h>
 
 static const int MAX_INI_FILE_LINE_LEN = 512;
 

@@ -1,8 +1,9 @@
 #define LOG_NDEBUG 0
 
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CTvGpio"
 
-#include <utils/Log.h>
+#include <CTvLog.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tvutils.h>
@@ -24,7 +25,7 @@ CTvGpio::~CTvGpio()
 
 int CTvGpio::processCommand(const char *port_name, bool is_out, int edge)
 {
-    ALOGV("%s, port_name=[%s], is_out=[%d], edge=[%d], gpio_pin=[%d]", __FUNCTION__, port_name, is_out, edge, mGpioPinNum);
+    LOGV("%s, port_name=[%s], is_out=[%d], edge=[%d], gpio_pin=[%d]", __FUNCTION__, port_name, is_out, edge, mGpioPinNum);
     if (strncmp(port_name, "GPIO", 4) != 0)
         return -1;
 
@@ -34,7 +35,7 @@ int CTvGpio::processCommand(const char *port_name, bool is_out, int edge)
         tvReadSysfs(GPIO_NAME_TO_PIN, pin_value);
         mGpioPinNum = atoi(pin_value);
     }
-    ALOGV("%s, port_name=[%s], is_out=[%d], edge=[%d], gpio_pin=[%d]", __FUNCTION__, port_name, is_out, edge, mGpioPinNum);
+    LOGV("%s, port_name=[%s], is_out=[%d], edge=[%d], gpio_pin=[%d]", __FUNCTION__, port_name, is_out, edge, mGpioPinNum);
 
     int ret = -1;
     if (mGpioPinNum > 0) {
@@ -50,14 +51,14 @@ int CTvGpio::processCommand(const char *port_name, bool is_out, int edge)
 
 int CTvGpio::setGpioOutEdge(int edge)
 {
-    ALOGD("%s, gpio_pin=[%d], edge=[%d]", __FUNCTION__, mGpioPinNum, edge);
+    LOGD("%s, gpio_pin=[%d], edge=[%d]", __FUNCTION__, mGpioPinNum, edge);
 
     char direction[128] = {0};
     char value[128] = {0};
     GPIO_DIRECTION(direction, mGpioPinNum);
     GPIO_VALUE(value, mGpioPinNum);
-    ALOGV("dirction path:[%s]", direction);
-    ALOGV("value path:[%s]", value);
+    LOGV("dirction path:[%s]", direction);
+    LOGV("value path:[%s]", value);
 
     if (needExportAgain(direction)) {
         tvWriteSysfs(GPIO_EXPORT, mGpioPinNum);
@@ -70,22 +71,22 @@ int CTvGpio::setGpioOutEdge(int edge)
 
 int CTvGpio::getGpioInEdge()
 {
-    ALOGD("%s, gpio_pin=[%d]", __FUNCTION__, mGpioPinNum);
+    LOGD("%s, gpio_pin=[%d]", __FUNCTION__, mGpioPinNum);
 
     char direction[128] = {0};
     char value[128] = {0};
     char edge[128] = {0};
     GPIO_DIRECTION(direction, mGpioPinNum);
     GPIO_VALUE(value, mGpioPinNum);
-    ALOGV("dirction path:[%s]", direction);
-    ALOGV("value path:[%s]", value);
+    LOGV("dirction path:[%s]", direction);
+    LOGV("value path:[%s]", value);
 
     if (needExportAgain(direction)) {
         tvWriteSysfs(GPIO_EXPORT, mGpioPinNum);
     }
     tvWriteSysfs(direction, "in");
     tvReadSysfs(value, edge);
-    ALOGD("edge:[%s]", edge);
+    LOGD("edge:[%s]", edge);
 
     return atoi(edge);
 }

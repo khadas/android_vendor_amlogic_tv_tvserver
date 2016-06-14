@@ -1,10 +1,11 @@
 #define LOG_NDEBUG 0
 
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CFbcProtocol"
 
 #include "CFbcProtocol.h"
 #include <time.h>
-#include <utils/Log.h>
+#include <CTvLog.h>
 
 
 static CFbcProtocol *mInstace = NULL;
@@ -48,7 +49,7 @@ int CFbcProtocol::start()
     //int serial_port = config_get_int("TV", "fbc.communication.serial", SERIAL_C);
     if (mSerialPort.OpenDevice(SERIAL_C) < 0) {
     } else {
-        ALOGD("%s %d be called......\n", __FUNCTION__, __LINE__);
+        LOGD("%s %d be called......\n", __FUNCTION__, __LINE__);
         mSerialPort.setup_serial();
     }
 
@@ -86,14 +87,14 @@ void CFbcProtocol::testUart()
     write_buf[8] = 0x3c;
     write_buf[9] = 0x75;
     write_buf[10] = 0x30;
-    //ALOGD("to write ..........\n");
+    //LOGD("to write ..........\n");
     mSerialPort.writeFile(write_buf, 11);
     sleep(1);
-    //ALOGD("to read........\n");
+    //LOGD("to read........\n");
     mSerialPort.readFile(read_buf, 12);
     for (idx = 0; idx < 12; idx++)
-        ALOGD("the data is:0x%x\n", read_buf[idx]);
-    ALOGD("end....\n");
+        LOGD("the data is:0x%x\n", read_buf[idx]);
+    LOGD("end....\n");
 }
 
 void CFbcProtocol::showTime(struct timeval *_time)
@@ -107,17 +108,17 @@ void CFbcProtocol::showTime(struct timeval *_time)
         curTime.tv_usec = _time->tv_usec;
     }
     if (curTime.tv_usec > 100000) {
-        ALOGD("[%ld.%ld]", curTime.tv_sec, curTime.tv_usec);
+        LOGD("[%ld.%ld]", curTime.tv_sec, curTime.tv_usec);
     } else if (curTime.tv_usec > 10000) {
-        ALOGD("[%ld.0%ld]", curTime.tv_sec, curTime.tv_usec);
+        LOGD("[%ld.0%ld]", curTime.tv_sec, curTime.tv_usec);
     } else if (curTime.tv_usec > 1000) {
-        ALOGD("[%ld.00%ld]", curTime.tv_sec, curTime.tv_usec);
+        LOGD("[%ld.00%ld]", curTime.tv_sec, curTime.tv_usec);
     } else if (curTime.tv_usec > 100) {
-        ALOGD("[%ld.000%ld]", curTime.tv_sec, curTime.tv_usec);
+        LOGD("[%ld.000%ld]", curTime.tv_sec, curTime.tv_usec);
     } else if (curTime.tv_usec > 10) {
-        ALOGD("[%ld.0000%ld]", curTime.tv_sec, curTime.tv_usec);
+        LOGD("[%ld.0000%ld]", curTime.tv_sec, curTime.tv_usec);
     } else if (curTime.tv_usec > 1) {
-        ALOGD("[%ld.00000%ld]", curTime.tv_sec, curTime.tv_usec);
+        LOGD("[%ld.00000%ld]", curTime.tv_sec, curTime.tv_usec);
     }
 }
 
@@ -167,7 +168,7 @@ void CFbcProtocol::sendAckCmd(bool isOk)
     ackcmd[9] = (crc32value >> 8) & 0xFF;
     ackcmd[10] = (crc32value >> 16) & 0xFF;
     ackcmd[11] = (crc32value >> 24) & 0xFF;
-    ALOGD("to send ack and crc is:0x%x\n", crc32value);
+    LOGD("to send ack and crc is:0x%x\n", crc32value);
     sendDataOneway(COMM_DEV_SERIAL, ackcmd, 12, 0x00000000);
 }
 
@@ -225,11 +226,11 @@ int CFbcProtocol::sendDataAndWaitReply(int devno, int waitForDevno, int waitForC
     mReplyList.WaitTimeOut = timeout;
     mReplyList.reDataLen = 0;
     mReplyList.replyData = mpRevDataBuf;
-    ALOGD("wait dev:%d, cmd:0x%x, timeout:%d", mReplyList.WaitDevNo, mReplyList.WaitCmd, mReplyList.WaitTimeOut);
+    LOGD("wait dev:%d, cmd:0x%x, timeout:%d", mReplyList.WaitDevNo, mReplyList.WaitCmd, mReplyList.WaitTimeOut);
 
     mLock.lock();
     ret = mReplyList.WaitReplyCondition.waitRelative(mLock, timeout);//wait reply
-    ALOGD("%s, %d, wait reply return = %d", __FUNCTION__, __LINE__, ret);
+    LOGD("%s, %d, wait reply return = %d", __FUNCTION__, __LINE__, ret);
     mLock.unlock();
 
     if (mReplyList.reDataLen > 0) { //data have come in
@@ -271,7 +272,7 @@ int CFbcProtocol::uartReadStream(unsigned char *retData, int rd_max_len, int tim
             return haveRead;
         }
 
-        ALOGD("readLen = %d, haveRead = %d\n", readLen, haveRead);
+        LOGD("readLen = %d, haveRead = %d\n", readLen, haveRead);
 
         if (((clock() - start_tm) / (CLOCKS_PER_SEC / 1000)) > timeout) {
             return haveRead;
@@ -289,7 +290,7 @@ int CFbcProtocol::uartReadData(unsigned char *retData, int *retLen)
     int readLen = 0;
 
     if (retData == NULL) {
-        ALOGD("the retData is NULL");
+        LOGD("the retData is NULL");
         return 0;
     }
 
@@ -302,7 +303,7 @@ int CFbcProtocol::uartReadData(unsigned char *retData, int *retLen)
             readLen = mSerialPort.readFile(tempBuf + 1, 1);
             if (tempBuf[1] == 0x5A) {
                 bufIndex = 2;
-                ALOGD("leading code coming...");
+                LOGD("leading code coming...");
                 break;
             }
         }
@@ -323,14 +324,14 @@ int CFbcProtocol::uartReadData(unsigned char *retData, int *retLen)
     cmdLen = (tempBuf[3] << 8) + tempBuf[2];
     //cmd data cmdLen - 2  -2
     needRead = cmdLen - 4, haveRead = 0;
-    ALOGD("cmdLen is:%d\n", cmdLen);
+    LOGD("cmdLen is:%d\n", cmdLen);
 
     do {
         readLen = mSerialPort.readFile(tempBuf + bufIndex, needRead - haveRead);
         haveRead += readLen;
         bufIndex += readLen;
         if (readLen > 0) {
-            ALOGD("data readLen is:%d\n", readLen);
+            LOGD("data readLen is:%d\n", readLen);
         }
         if (haveRead == needRead) {
             break;
@@ -377,7 +378,7 @@ int CFbcProtocol::processData(COMM_DEV_TYPE_E fromDev, unsigned char *pData, int
                 if (mbSendKeyCode) {
                     if (0x14 == pData[5]) {
                         key_code =(key_code | (pData[7]<<8)) | pData[6];
-                        ALOGD("to signal wait dataLen:0x%x, cmdId:0x%x , ,key:%d\n", dataLen, pData[5],key_code);
+                        LOGD("to signal wait dataLen:0x%x, cmdId:0x%x , ,key:%d\n", dataLen, pData[5],key_code);
                         mCVirtualInput.sendVirtualkeyEvent(key_code);
                     }
                 }
@@ -427,18 +428,18 @@ bool CFbcProtocol::threadLoop()
                 } else if (fd == mSerialPort.getFd()) {
                     //seria---------------------------l
                     int cmdLen = 0, idx = 0;
-                    ALOGD("serial data come");
+                    LOGD("serial data come");
                     memset(readFrameBuf, 0, 512);
                     int ret = uartReadData(readFrameBuf, &cmdLen);
 
                     if (ret == -1) { //data error
                         sendAckCmd(false);
                     } else if (readFrameBuf[4] == 0x80) { //ack
-                        ALOGD("is ack come");
+                        LOGD("is ack come");
 #ifdef TV_RESEND_UMUTE_TO_FBC
                         if (((readFrameBuf[7] << 8) | readFrameBuf[6]) == 0x8001 &&
                                 readFrameBuf[5] == AUDIO_CMD_SET_MUTE) {
-                            ALOGD("resend unmute to 101 avoid 101 receiving unmute timeout\n");
+                            LOGD("resend unmute to 101 avoid 101 receiving unmute timeout\n");
                             Fbc_Set_Value_INT8(COMM_DEV_SERIAL, AUDIO_CMD_SET_MUTE, 1);
                         }
 #endif
@@ -458,13 +459,13 @@ bool CFbcProtocol::threadLoop()
     }
     //exit
     //return true, run again, return false,not run.
-    ALOGD("thread exited..........\n");
+    LOGD("thread exited..........\n");
     return false;
 }
 
 int CFbcProtocol::fbcSetBatchValue(COMM_DEV_TYPE_E toDev, unsigned char *cmd_buf, int count)
 {
-    ALOGV("%s, dev_type=%d, cmd_id=%d, count=%d, mUpgradeFlag=%d", __FUNCTION__, toDev, *cmd_buf, count, mUpgradeFlag);
+    LOGV("%s, dev_type=%d, cmd_id=%d, count=%d, mUpgradeFlag=%d", __FUNCTION__, toDev, *cmd_buf, count, mUpgradeFlag);
     if (mUpgradeFlag == 1) {
         return 0;
     }
@@ -514,7 +515,7 @@ int CFbcProtocol::fbcSetBatchValue(COMM_DEV_TYPE_E toDev, unsigned char *cmd_buf
 
 int CFbcProtocol::fbcGetBatchValue(COMM_DEV_TYPE_E fromDev, unsigned char *cmd_buf, int count)
 {
-    ALOGV("%s, dev_type=%d, cmd_id=%d, count=%d, mUpgradeFlag=%d", __FUNCTION__, fromDev, *cmd_buf, count, mUpgradeFlag);
+    LOGV("%s, dev_type=%d, cmd_id=%d, count=%d, mUpgradeFlag=%d", __FUNCTION__, fromDev, *cmd_buf, count, mUpgradeFlag);
     if (mUpgradeFlag == 1) {
         return 0;
     }
@@ -578,7 +579,7 @@ int CFbcProtocol::fbcGetBatchValue(COMM_DEV_TYPE_E fromDev, unsigned char *cmd_b
 
 void CFbcProtocol::CFbcMsgQueue::handleMessage ( CMessage &msg )
 {
-    ALOGD ( "%s, CFbcProtocol::CFbcMsgQueue::handleMessage type = %d", __FUNCTION__,  msg.mType );
+    LOGD ( "%s, CFbcProtocol::CFbcMsgQueue::handleMessage type = %d", __FUNCTION__,  msg.mType );
     //msg.mType is TV_MSG_COMMON or TV_MSG_SEND_KEY
 }
 

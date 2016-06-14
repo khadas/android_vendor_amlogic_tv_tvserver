@@ -1,6 +1,8 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CSqlite"
 
 #include "CSqlite.h"
+#include "CTvLog.h"
 
 using namespace android;
 

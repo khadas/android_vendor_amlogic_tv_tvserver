@@ -1,6 +1,9 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CTvTime"
 
 #include "CTvTime.h"
+#include <CTvLog.h>
+
 
 /**
  *设定当前时间

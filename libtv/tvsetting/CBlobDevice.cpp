@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CBlobDevice"
 
 #include <stdio.h>
 #include <string.h>

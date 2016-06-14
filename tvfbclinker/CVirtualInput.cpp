@@ -1,11 +1,12 @@
-#define LOG_TAG "CVirtualInput"
+#define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CVirtualInput"
 
 #include "CVirtualInput.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <utils/Log.h>
+#include <CTvLog.h>
 
 CVirtualInput::CVirtualInput()
 {
@@ -23,7 +24,7 @@ int CVirtualInput::setup_uinput_device()
     // Open the input device
     uinp_fd = open(DEV_UINPUT, O_WRONLY | O_NDELAY);
     if (uinp_fd < 0) {
-        ALOGE("Unable to open /dev/uinput!!!\n");
+        LOGE("Unable to open /dev/uinput!!!\n");
         return -1;
     }
 
@@ -42,7 +43,7 @@ int CVirtualInput::setup_uinput_device()
     /* Create input device into input sub-system */
     write(uinp_fd, &uinp, sizeof(uinp));
     if (ioctl(uinp_fd, UI_DEV_CREATE)) {
-        ALOGE("Unable to create UINPUT device.\n");
+        LOGE("Unable to create UINPUT device.\n");
         return -1;
     }
     return 1;
@@ -52,7 +53,7 @@ void CVirtualInput::sendVirtualkeyEvent(__u16 key_code)
 {
     struct input_event event;
     if (uinp_fd < 0) {
-        ALOGE("uinput not open, sendVirtualkeyEvent failed!!!\n");
+        LOGE("uinput not open, sendVirtualkeyEvent failed!!!\n");
         return;
     }
     // Report BUTTON CLICK - PRESS event

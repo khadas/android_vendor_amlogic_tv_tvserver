@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CFbcCommunication"
 #define LOG_NDEBUG 0
 
 #include "CFbcCommunication.h"
@@ -6,7 +7,7 @@
 #include <tvutils.h>
 #include <stdlib.h>
 #include <string.h>
-#include <utils/Log.h>
+#include <CTvLog.h>
 
 
 static CFbcCommunication *gSingletonFBC = NULL;
@@ -25,7 +26,7 @@ CFbcCommunication::~CFbcCommunication(){}
 
 int CFbcCommunication::cfbcSetValueInt(COMM_DEV_TYPE_E fromDev, int cmd_id, int value, int value_count)
 {
-    ALOGV("%s, cmd_id=%d, value=%d, value_count=%d", __FUNCTION__, cmd_id, value, value_count);
+    LOGV("%s, cmd_id=%d, value=%d, value_count=%d", __FUNCTION__, cmd_id, value, value_count);
     if (value_count != 1 && value_count != 4)
         return -1;
 
@@ -47,7 +48,7 @@ int CFbcCommunication::cfbcSetValueInt(COMM_DEV_TYPE_E fromDev, int cmd_id, int 
 
 int CFbcCommunication::cfbcGetValueInt(COMM_DEV_TYPE_E fromDev, int cmd_id, int *value, int value_count)
 {
-    ALOGV("%s, cmd_id=%d, value_count=%d", __FUNCTION__, cmd_id, value_count);
+    LOGV("%s, cmd_id=%d, value_count=%d", __FUNCTION__, cmd_id, value_count);
     int ret = -1;
     unsigned char cmd_buf[7];//2 + 4 + 1
     memset(cmd_buf, 0, 7);
@@ -154,7 +155,7 @@ int CFbcCommunication::cfbc_Set_ColorTemp_Mode(COMM_DEV_TYPE_E fromDev, int valu
     default:
         break;
     }
-    ALOGD("before set fbcValue = %d", fbcValue);
+    LOGD("before set fbcValue = %d", fbcValue);
 
     return cfbcSetValueInt(fromDev, VPU_CMD_COLOR_TEMPERATURE_DEF, fbcValue, 1);
 }
@@ -262,7 +263,7 @@ int CFbcCommunication::cfbc_Get_Source(COMM_DEV_TYPE_E fromDev, int *value)
 
 int CFbcCommunication::cfbc_Set_Mute(COMM_DEV_TYPE_E fromDev, int value)
 {
-    ALOGD("cfbc_Set_Mute = %d", value);
+    LOGD("cfbc_Set_Mute = %d", value);
     return cfbcSetValueInt(fromDev, AUDIO_CMD_SET_MUTE, value, 1);
 }
 
@@ -402,7 +403,7 @@ int CFbcCommunication::cfbc_Get_FBC_MAINCODE_Version(COMM_DEV_TYPE_E fromDev, ch
     strcpy(build_name, (char *)(cmd + tmp_ind));
     tmp_ind += strlen(build_name);
     tmp_ind += 1;
-    ALOGD("sw_ver=%s, buildt=%s, gitv=%s, gitb=%s,bn=%s", sw_ver, build_time, git_ver, git_branch, build_name);
+    LOGD("sw_ver=%s, buildt=%s, gitv=%s, gitb=%s,bn=%s", sw_ver, build_time, git_ver, git_branch, build_name);
     return 0;
 }
 
@@ -414,7 +415,7 @@ int CFbcCommunication::cfbc_Set_FBC_Factory_SN(COMM_DEV_TYPE_E fromDev, const ch
     cmd[1] = CMD_SET_FACTORY_SN;
     memcpy(cmd + 2, pSNval, len);
 
-    ALOGD("cmd : %s\n", cmd);
+    LOGD("cmd : %s\n", cmd);
     return sendCommandToFBC(cmd, len+2, 0);
 }
 
@@ -430,7 +431,7 @@ int CFbcCommunication::cfbc_Get_FBC_Factory_SN(COMM_DEV_TYPE_E fromDev, char Fac
     }
     strncpy(FactorySN, (char *)(cmd+2), rx_len);
 
-    ALOGD("panelModel=%s", FactorySN);
+    LOGD("panelModel=%s", FactorySN);
     return 0;
 }
 
@@ -446,7 +447,7 @@ int CFbcCommunication::cfbc_Get_FBC_Get_PANel_INFO(COMM_DEV_TYPE_E fromDev, char
     }
     strcpy(panel_model, (char *)(cmd + 2));
 
-    ALOGD("panelModel=%s", panel_model);
+    LOGD("panelModel=%s", panel_model);
     return 0;
 }
 
@@ -601,7 +602,7 @@ int CFbcCommunication::cfbc_Set_VMute(COMM_DEV_TYPE_E fromDev, unsigned char val
     cmd[0] = fromDev;
     cmd[1] = VPU_CMD_USER_VMUTE;
     cmd[2] = value;
-    ALOGD("cfbc_Set_VMute=%d", cmd[2]);
+    LOGD("cfbc_Set_VMute=%d", cmd[2]);
 
     return sendCommandToFBC(cmd, 3, 0);
 }
@@ -649,21 +650,21 @@ int CFbcCommunication::cfbc_TestPattern_Select(COMM_DEV_TYPE_E fromDev, int valu
     int ret = -1;
     unsigned char cmd[4];
 
-    ALOGD("Call vpp 63 2 1\n");
+    LOGD("Call vpp 63 2 1\n");
     cmd[0] = fromDev;
     cmd[1] = VPU_CMD_SRCIF;
     cmd[2] = 2;
     cmd[3] = 1;
     ret = sendCommandToFBC(cmd, 4, 0);//close csc0
     if (ret == 0) {
-        ALOGD("Call vpp 9 11 1\n");
+        LOGD("Call vpp 9 11 1\n");
         cmd[0] = fromDev;
         cmd[1] = VPU_CMD_ENABLE;
         cmd[2] = 11;
         cmd[3] = 1;
         ret = sendCommandToFBC(cmd, 4, 0);
         if (ret == 0) {
-            ALOGD("Call vpp 42 1-17\n");
+            LOGD("Call vpp 42 1-17\n");
             cfbcSetValueInt(fromDev, VPU_CMD_PATTEN_SEL, value, 1);
         }
     }
@@ -677,28 +678,28 @@ int CFbcCommunication::cfbc_WhiteBalance_GrayPattern_OnOff(COMM_DEV_TYPE_E fromD
     unsigned char cmd[4];
 
     if (onOff == 0) { //On
-        ALOGD("Call vpp 63 2 1");
+        LOGD("Call vpp 63 2 1");
         cmd[0] = fromDev;
         cmd[1] = VPU_CMD_SRCIF;
         cmd[2] = 2;
         cmd[3] = 1;
         ret = sendCommandToFBC(cmd, 4, 0);//close csc0
         if (ret == 0) {
-            ALOGD("Call vpp 9 9 0");
+            LOGD("Call vpp 9 9 0");
             cmd[0] = fromDev;
             cmd[1] = VPU_CMD_ENABLE;
             cmd[2] = 9;
             cmd[3] = 0;
             ret = sendCommandToFBC(cmd, 4, 0);//close csc1
             if (ret == 0) {
-                ALOGD("Call vpp 9 10 0");
+                LOGD("Call vpp 9 10 0");
                 cmd[0] = fromDev;
                 cmd[1] = VPU_CMD_ENABLE;
                 cmd[2] = 10;
                 cmd[3] = 0;
                 ret = sendCommandToFBC(cmd, 4, 0);//close dnlp
                 if (ret == 0) {
-                    ALOGD("Call vpp 9 8 0");
+                    LOGD("Call vpp 9 8 0");
                     cmd[0] = fromDev;
                     cmd[1] = VPU_CMD_ENABLE;
                     cmd[2] = 8;
@@ -708,28 +709,28 @@ int CFbcCommunication::cfbc_WhiteBalance_GrayPattern_OnOff(COMM_DEV_TYPE_E fromD
             }
         }
     } else { //Off
-        ALOGD("Call vpp 63 2 2");
+        LOGD("Call vpp 63 2 2");
         cmd[0] = fromDev;
         cmd[1] = VPU_CMD_SRCIF;
         cmd[2] = 2;
         cmd[3] = 2;
         ret = sendCommandToFBC(cmd, 4, 0);
         if (ret == 0) {
-            ALOGD("Call vpp 9 9 1");
+            LOGD("Call vpp 9 9 1");
             cmd[0] = fromDev;
             cmd[1] = VPU_CMD_ENABLE;
             cmd[2] = 9;
             cmd[3] = 1;
             ret = sendCommandToFBC(cmd, 4, 0);//open csc1
             if (ret == 0) {
-                ALOGD("Call vpp 9 10 1");
+                LOGD("Call vpp 9 10 1");
                 cmd[0] = fromDev;
                 cmd[1] = VPU_CMD_ENABLE;
                 cmd[2] = 10;
                 cmd[3] = 1;
                 ret = sendCommandToFBC(cmd, 4, 0);//open dnlp
                 if (ret == 0) {
-                    ALOGD("Call vpp 9 8 1");
+                    LOGD("Call vpp 9 8 1");
                     cmd[0] = fromDev;
                     cmd[1] = VPU_CMD_ENABLE;
                     cmd[2] = 8;
@@ -761,13 +762,13 @@ int CFbcCommunication::cfbc_Set_Auto_Backlight_OnOff(COMM_DEV_TYPE_E fromDev, un
     cmd[0] = fromDev;
     cmd[1] = CMD_SET_AUTO_BACKLIGHT_ONFF;
     cmd[2] = value;
-    ALOGD("cfbc_Set_naturelight_onoff\n");
+    LOGD("cfbc_Set_naturelight_onoff\n");
     return sendCommandToFBC(cmd, 3, 0);
 }
 
 int CFbcCommunication::cfbc_Get_Auto_Backlight_OnOff(COMM_DEV_TYPE_E fromDev, int *value)
 {
-    ALOGD("cfbc_get_naturelight_onoff\n");
+    LOGD("cfbc_get_naturelight_onoff\n");
     return cfbcGetValueInt(fromDev, CMD_GET_AUTO_BACKLIGHT_ONFF, value);
 }
 
@@ -808,13 +809,13 @@ int CFbcCommunication::cfbc_Set_LVDS_SSG_Set(COMM_DEV_TYPE_E fromDev, int value)
 
 int CFbcCommunication::cfbc_Set_AUTO_ELEC_MODE(COMM_DEV_TYPE_E fromDev, int value)
 {
-    ALOGD("%s  cmd =0x%x, value=%d", __FUNCTION__, VPU_CMD_SET_ELEC_MODE, value);
+    LOGD("%s  cmd =0x%x, value=%d", __FUNCTION__, VPU_CMD_SET_ELEC_MODE, value);
     return cfbcSetValueInt(fromDev, VPU_CMD_SET_ELEC_MODE, value, 1);
 }
 
 int CFbcCommunication::cfbc_Set_Thermal_state(COMM_DEV_TYPE_E fromDev, int value)
 {
-    ALOGD("%s  cmd =0x%x, data%d\n", __FUNCTION__, CMD_HDMI_STAT, value);
+    LOGD("%s  cmd =0x%x, data%d\n", __FUNCTION__, CMD_HDMI_STAT, value);
     return cfbcSetValueInt(fromDev, CMD_HDMI_STAT, value, 4);
 }
 
@@ -861,13 +862,13 @@ int CFbcCommunication::cfbc_Set_Led_onoff(COMM_DEV_TYPE_E fromDev, int val_1, in
 
 int CFbcCommunication::cfbc_Set_LockN_state(COMM_DEV_TYPE_E fromDev, int value)
 {
-    ALOGD("%s  cmd =0x%x, data%d\n", __FUNCTION__, CMD_SET_LOCKN_DISABLE, value);
+    LOGD("%s  cmd =0x%x, data%d\n", __FUNCTION__, CMD_SET_LOCKN_DISABLE, value);
     return cfbcSetValueInt(fromDev, CMD_SET_LOCKN_DISABLE, value, 1);
 }
 
 int CFbcCommunication::cfbc_SET_SPLIT_SCREEN_DEMO(COMM_DEV_TYPE_E fromDev, int value)
 {
-    ALOGD("%s,cmd[%#x], data[%d]\n", __FUNCTION__, CMD_SET_SPLIT_SCREEN_DEMO, value);
+    LOGD("%s,cmd[%#x], data[%d]\n", __FUNCTION__, CMD_SET_SPLIT_SCREEN_DEMO, value);
     return cfbcSetValueInt(fromDev, CMD_SET_SPLIT_SCREEN_DEMO, value, 1);
 }
 

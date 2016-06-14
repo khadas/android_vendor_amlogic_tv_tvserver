@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CTvRegion"
 
 #include "CTvRegion.h"
 #include "CTvDatabase.h"

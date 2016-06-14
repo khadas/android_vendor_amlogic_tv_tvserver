@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CIniFile"
 //#define LOG_NDEBUG 0
 
 #include <stdio.h>
@@ -6,6 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+#include <CTvLog.h>
 
 #include "CIniFile.h"
 

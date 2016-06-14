@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CTvScanner"
 
 #include "CTvScanner.h"
 #include "CTvProgram.h"
@@ -424,7 +425,7 @@ void CTvScanner::scan_extract_srv_info_from_sdt(AM_SCAN_Result_t *result, dvbpsi
 
     AM_SI_LIST_BEGIN(sdts, sdt)
     AM_SI_LIST_BEGIN(sdt->p_first_service, srv)
-    /*从SDT表中查找该service并获取信�? */
+    /*从SDT表中查找该service并获取信忿 */
     if (srv->i_service_id == srv_info->srv_id) {
         LOGD("[scanner]SDT for service %d found!", srv_info->srv_id);
         srv_info->eit_sche = (uint8_t)srv->b_eit_schedule;

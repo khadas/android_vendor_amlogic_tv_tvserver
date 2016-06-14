@@ -19,6 +19,7 @@
  *  - 1 tv factory test function
  */
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CTvFactory"
 
 #include <CTvFactory.h>
 #include <tvconfig.h>

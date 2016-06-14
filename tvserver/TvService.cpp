@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "TvService"
 
 #include <utils/Log.h>
 #include <binder/IServiceManager.h>

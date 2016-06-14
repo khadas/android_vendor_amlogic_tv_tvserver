@@ -1,27 +1,44 @@
-//
-//
-//  amlogic 2013
-//
-//  @ Project : tv
-//  @ File Name : CTvDatabase.h
-//  @ Date : 2013-11
-//  @ Author :
-//
-//
 #include <utils/Log.h>
-#if !defined(_CTVLOG_H)
-#define _CTVLOG_H
+#include <string.h>
 
-#define LOGD(...)   __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define LOGE(...)   __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
-#define LOGV(...)   __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
-#define LOGW(...)   __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
+#ifndef _C_TV_LOG_H_
+#define _C_TV_LOG_H_
 
 
-//class CTvLog{
-//  public:
-//  inline static void LOGD();
-//  inline static void LOGW();
-//  inline static void LOGE();
-//};
-#endif //
+//1024 + 128
+#define DEFAULT_LOG_BUFFER_LEN 1152
+
+extern int __tv_log_print(int prio, const char *tag, const char *tv_tag, const char *fmt, ...);
+
+#ifdef LOG_TV_TAG
+#ifndef LOGD
+#define LOGD(...) \
+    __tv_log_print(ANDROID_LOG_DEBUG, LOG_TAG, LOG_TV_TAG, __VA_ARGS__)
+#endif
+
+#ifndef LOGE
+#define LOGE(...) \
+    __tv_log_print(ANDROID_LOG_ERROR, LOG_TAG, LOG_TV_TAG, __VA_ARGS__)
+#endif
+
+#ifndef LOGW
+#define LOGW(...) \
+    __tv_log_print(ANDROID_LOG_WARN, LOG_TAG, LOG_TV_TAG, __VA_ARGS__)
+#endif
+
+#if LOG_NDEBUG
+#define LOGV(...) \
+    do {if (0) { __tv_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, LOG_TV_TAG, __VA_ARGS__);} } while(0)
+#else
+#define LOGV(...) \
+    __tv_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, LOG_TV_TAG, __VA_ARGS__)
+#endif
+
+#else
+#define LOGD(...)    ALOGD(__VA_ARGS__)
+#define LOGE(...)    ALOGE(__VA_ARGS__)
+#define LOGV(...)    ALOGV(__VA_ARGS__)
+#define LOGW(...)    ALOGW(__VA_ARGS__)
+#endif//end #ifdef LOG_TV_TAG
+
+#endif//end #ifndef _C_TV_LOG_H_

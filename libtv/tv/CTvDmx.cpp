@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CTvDmx"
 
 #include "CTvDmx.h"
 CTvDmx::CTvDmx()

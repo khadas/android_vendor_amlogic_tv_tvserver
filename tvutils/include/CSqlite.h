@@ -5,7 +5,6 @@
 #include <utils/String8.h>
 #include <utils/Vector.h>
 #include <utils/RefBase.h>
-#include "CTvLog.h"
 #include <sqlite3.h>
 using namespace android;
 class CSqlite {
@@ -68,7 +67,6 @@ public:
 
         bool moveToFirst()
         {
-            //LOGD("moveToFirst mRowNums = %d", mRowNums);
             if (mRowNums <= 0) return false;
             mCurRowIndex = 0;
             return true;

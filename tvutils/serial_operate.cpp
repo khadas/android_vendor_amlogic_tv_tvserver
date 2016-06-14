@@ -1,4 +1,5 @@
-#define LOG_TAG "serial_operate"
+#define LOG_TAG "tvserver"
+#define LOG_TV_TAG "serial_operate"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -11,13 +12,6 @@
 #include <termios.h>
 #include <errno.h>
 #include <linux/hidraw.h>
-#include <android/log.h>
-#include <cutils/log.h>
-
-//#include "../TvService.h"
-//#include "../include/tvcmd.h"
-//#include "../tvconfig/tvconfig_api.h"
-//#include "../tvconfig/tvconfig_logcfg.h"
 
 #include "serial_base.h"
 #include "serial_operate.h"

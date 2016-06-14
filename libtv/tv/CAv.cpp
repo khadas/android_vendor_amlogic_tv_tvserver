@@ -1,4 +1,5 @@
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "CAv"
 
 #include "CAv.h"
 #include <CFile.h>

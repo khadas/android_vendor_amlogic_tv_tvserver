@@ -2859,66 +2859,17 @@ int CTv::Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t ve
 {
     char edid_path[100] = {0};
     char edid_path_cfg[100] = {0};
-    char propValue[256] = {0};
 
-    getBootEnv(UBOOTENV_OUTPUTMODE, propValue, "null");
-    if (strcmp(propValue, "null") == 0) {
-        config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
+    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "customer_edid");
+    if ( HDMI_EDID_VER_14== version ) {
+        sprintf(edid_path, "/system/etc/port%d.bin", port);
     } else {
-        config_set_str ( CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, propValue);
+        sprintf(edid_path, "/system/etc/port%d_%d.bin", port,20);
     }
-
-    switch (port) {
-        case HDMI_PORT_1:
-            if (HDMI_EDID_VER_14== version) {
-                sprintf(edid_path, "/system/etc/%s_port%d.bin", propValue, port);
-                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
-                if (access(edid_path, 0) < 0) {
-                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
-                }
-            } else {
-                sprintf(edid_path, "/system/etc/%s_port%d_%d.bin", propValue, port,20);
-                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
-                if (access(edid_path, 0) < 0) {
-                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
-                }
-            }
-            break;
-        case HDMI_PORT_2:
-            if (HDMI_EDID_VER_14 == version) {
-                sprintf(edid_path, "/system/etc/%s_port%d.bin", propValue, port);
-                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
-                if (access(edid_path, 0) < 0) {
-                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
-                }
-            } else {
-                sprintf(edid_path, "/system/etc/%s_port%d_%d.bin", propValue, port,20);
-                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
-                if (access(edid_path, 0) < 0) {
-                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
-                }
-            }
-            break;
-        case HDMI_PORT_3:
-            if (HDMI_EDID_VER_14 == version) {
-                sprintf(edid_path, "/system/etc/%s_port%d.bin", propValue, port);
-                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
-                if (access(edid_path, 0) < 0) {
-                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
-                }
-            } else {
-                sprintf(edid_path, "/system/etc/%s_port%d_%d.bin", propValue, port,20);
-                sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
-                if (access(edid_path, 0) < 0) {
-                    config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
-                }
-            }
-            break;
-        default:
-            config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
-            break;
+    sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
+    if (access(edid_path, 0) < 0) {
+        config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
     }
-
     config_set_str(CFG_SECTION_TV, edid_path_cfg, edid_path);
     return 0;
 }

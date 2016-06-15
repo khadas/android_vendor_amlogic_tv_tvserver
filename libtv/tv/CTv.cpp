@@ -5066,6 +5066,7 @@ int CTv::GetHdmiAvHotplugDetectOnoff()
 
 int CTv::SetHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version)
 {
+    SetAudioMuteForTv ( CC_AUDIO_MUTE );
     Tv_HDMIEDIDFileSelect(port, version);
     SSMSetHDMIEdid(port);
     mHDMIRxManager.HdmiRxEdidUpdate();

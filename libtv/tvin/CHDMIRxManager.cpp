@@ -25,7 +25,7 @@ int CHDMIRxManager::HdmiRxEdidUpdate()
         LOGE("%s, Open file %s error: (%s)!\n", __FUNCTION__, CS_HDMIRX_DEV_PATH, strerror ( errno ));
         return -1;
     }
-    ioctl(m_hdmi_fd, HDMI_IOC_EDID_UPDATE, NULL);
+    ioctl(m_hdmi_fd, HDMI_IOC_EDID_UPDATE, 1);
     close(m_hdmi_fd);
     m_hdmi_fd = -1;
     return 0;

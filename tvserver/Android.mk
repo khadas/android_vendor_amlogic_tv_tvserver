@@ -30,22 +30,13 @@ LOCAL_SRC_FILES:= \
   TvService.cpp
 
 LOCAL_SHARED_LIBRARIES += \
-  libui \
   libutils \
   libbinder \
   libcutils \
-  libsqlite \
-  libmedia \
-  libhardware_legacy \
-  libdl \
-  libskia \
-  libtinyxml \
   libtvbinder \
   libtv
 
 LOCAL_SHARED_LIBRARIES += \
-  libzvbi \
-  libntsc_decode \
   libam_mw \
   libam_adp \
   libam_ver
@@ -57,21 +48,16 @@ LOCAL_C_INCLUDES := \
   $(LOCAL_PATH)/../libtv/include \
   $(LOCAL_PATH)/../libtv/gpio \
   $(LOCAL_PATH)/../tvfbclinker/include \
-  $(LIB_TV_UTILS)/include
+  $(LIB_TV_UTILS)/include \
+  $(LIB_SQLITE_PATH)/dist
 
 LOCAL_C_INCLUDES += \
-  $(LIB_SQLITE_PATH)/dist \
-  bionic/libc/include \
-  bionic/libc/private \
   system/extras/ext4_utils \
-  system/media/audio_effects/include \
   vendor/amlogic/frameworks/libtvbinder/include \
+  system/media/audio_effects/include \
   hardware/amlogic/audio/libTVaudio
 
 LOCAL_C_INCLUDES += \
-  $(LIB_ZVBI_PATH)/ntsc_decode/include \
-  $(LIB_ZVBI_PATH)/ntsc_decode/include/ntsc_dmx \
-  $(LIB_ZVBI_PATH)/src \
   $(DVB_PATH)/include/am_adp \
   $(DVB_PATH)/include/am_mw \
   $(DVB_PATH)/include/am_ver \

@@ -81,21 +81,16 @@ LOCAL_SHARED_LIBRARIES := \
   libnetutils \
   libsqlite \
   libmedia \
-  libtvbinder \
-  libhardware_legacy \
-  libdl \
-  libskia \
   libtinyxml \
-  libusbhost \
-  libbinder \
-  libstagefright
-
-LOCAL_SHARED_LIBRARIES += \
   libzvbi \
   libntsc_decode \
+  libbinder
+
+LOCAL_SHARED_LIBRARIES += \
   libam_mw \
   libam_adp \
   libam_ver \
+  libtvbinder \
   libsystemcontrolservice
 
 ifeq ($(strip $(BOARD_TV_AUDIO_AMAUDIO_LIB_TYPE)), external)
@@ -152,24 +147,14 @@ ifneq ($(TARGET_BUILD_VARIANT), user)
 endif
 
 LOCAL_C_INCLUDES += \
-  bionic/libc/include \
-  bionic/libc/private \
-  system/extras/ext4_utils \
+  external/tinyxml \
   vendor/amlogic/frameworks/libtvbinder/include \
   $(LIB_SQLITE_PATH)/dist \
-  system/media/audio_effects/include \
-  external/tinyalsa/include \
-  frameworks/av/include/media/stagefright \
-  frameworks/native/include/media/openmax
+  system/media/audio_effects/include
 
 ifeq ($(strip $(BOARD_TV_AUDIO_AMAUDIO_LIB_TYPE)), external)
   LOCAL_C_INCLUDES += hardware/amlogic/audio/libTVaudio
 endif
-
-LOCAL_C_INCLUDES += external/libzvbi/src \
-  bionic/libc/include \
-  $(DVB_PATH)/android/ndk/include \
-  external/tinyxml
 
 ifeq ($(strip $(BOARD_ALSA_AUDIO)),tiny)
   LOCAL_C_INCLUDES += external/tinyalsa/include
@@ -183,7 +168,6 @@ LOCAL_C_INCLUDES += \
   $(DVB_PATH)/include/am_mw \
   $(DVB_PATH)/include/am_ver \
   $(DVB_PATH)/android/ndk/include \
-  $(LOCAL_PATH)/dtv_play \
   $(LIB_ZVBI_PATH)/ntsc_decode/include \
   $(LIB_ZVBI_PATH)/ntsc_decode/include/ntsc_dmx \
   $(LIB_ZVBI_PATH)/src \
@@ -194,11 +178,7 @@ LOCAL_C_INCLUDES += \
   $(LOCAL_PATH)/tvdb \
   $(LOCAL_PATH)/tv \
   $(LOCAL_PATH)/gpio \
-  $(LOCAL_PATH)/include \
-  $(LOCAL_PATH)/../build/include \
-  $(TOP)/vendor/amlogic/frameworks/services \
-
-
+  $(LOCAL_PATH)/include
 
 LOCAL_LDLIBS  += -L$(SYSROOT)/usr/lib -llog
 

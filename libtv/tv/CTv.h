@@ -488,6 +488,7 @@ protected:
         static const int TV_MSG_HDMI_SR_CHANGED = 8;
         static const int TV_MSG_ENABLE_VIDEO_LATER = 9;
         static const int TV_MSG_SCANNING_FRAME_STABLE = 10;
+        static const int TV_MSG_VIDEO_AVAILABLE_LATER = 11;
         CTvMsgQueue(CTv *tv);
         ~CTvMsgQueue();
         //scan observer
@@ -517,6 +518,7 @@ protected:
         int m_sig_stable_nums;
     };
     void onEnableVideoLater(int framecount);
+    void onVideoAvailableLater(int framecount);
     int resetDmxAndAvSource();
     int stopScan();
     int stopPlaying(bool isShowTestScreen);

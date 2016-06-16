@@ -262,6 +262,13 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
             ev.mFmt = TVIN_SIG_FMT_NULL;
             ev.mReserved = 0;
             sendTvEvent ( ev );
+
+            CMessage msg;
+            msg.mDelayMs = 0;
+            msg.mType = CTvMsgQueue::TV_MSG_VIDEO_AVAILABLE_LATER;
+            msg.mpPara[0] = 2;
+            mTvMsgQueue.sendMsg ( msg );
+
             //if (mAv.WaittingVideoPlaying() == 0) {
             SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) ), CTvin::Tvin_SourceInputToSourceInputType(m_source_input), mAv.getVideoResolutionToFmt());
             usleep(50 * 1000);
@@ -442,6 +449,12 @@ void CTv::CTvMsgQueue::handleMessage ( CMessage &msg )
     case TV_MSG_ENABLE_VIDEO_LATER: {
         int fc = msg.mpPara[0];
         mpTv->onEnableVideoLater(fc);
+        break;
+    }
+
+    case TV_MSG_VIDEO_AVAILABLE_LATER: {
+        int fc = msg.mpPara[0];
+        mpTv->onVideoAvailableLater(fc);
         break;
     }
 
@@ -1949,6 +1962,20 @@ void CTv::onEnableVideoLater(int framecount)
     if (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_HDMI ) {
         SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
         Tv_SetAudioInSource(m_source_input);
+    }
+}
+
+void CTv::onVideoAvailableLater(int framecount)
+{
+    LOGD("[ctv]onVideoAvailableLater framecount = %d", framecount);
+    int ret = mAv.WaittingVideoPlaying(framecount);
+    if (ret == 0) { //video available
+        TvEvent::SignalInfoEvent ev;
+        ev.mStatus = TVIN_SIG_STATUS_STABLE;
+        ev.mTrans_fmt = TVIN_TFMT_2D;
+        ev.mFmt = TVIN_SIG_FMT_NULL;
+        ev.mReserved = 1;/*<< VideoAvailable flag here*/
+        sendTvEvent ( ev );
     }
 }
 

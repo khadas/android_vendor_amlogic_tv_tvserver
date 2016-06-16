@@ -7,7 +7,10 @@
 #include "CTvLog.h"
 #include "../tvin/CTvin.h"
 
-static const char *PATH_FRAME_COUNT  = "/sys/module/di/parameters/frame_count";
+static const char *PATH_FRAME_COUNT_DI  = "/sys/module/di/parameters/frame_count";
+static const char *PATH_FRAME_COUNT_VIDEO = "/sys/module/amvideo/parameters/new_frame_count";
+static const char *PATH_FRAME_COUNT = PATH_FRAME_COUNT_VIDEO;
+
 static const char *PATH_VIDEO_AMVIDEO = "/dev/amvideo";
 static const char *PATH_MEPG_DTMB_LOOKUP_PTS_FLAG = "/sys/module/amvdec_mpeg12/parameters/dtmb_flag";
 

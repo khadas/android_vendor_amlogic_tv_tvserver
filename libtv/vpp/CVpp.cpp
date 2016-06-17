@@ -3132,14 +3132,9 @@ int CVpp::VPP_SetScalerPathSel(const unsigned int value)
 int CVpp::VPP_FBCSetColorTemperature(vpp_color_temperature_mode_t temp_mode)
 {
     int ret = -1;
-    if (CVpp::getInstance()->GetEyeProtectionMode()) {
-        tcon_rgb_ogo_t rgb_ogo;
-        VPP_FBCColorTempBatchGet(temp_mode, &rgb_ogo);
-        rgb_ogo.b_gain /= 2;
-        ret = VPP_FBCColorTempBatchSet(temp_mode, rgb_ogo);
-    } else {
-        if (fbcIns != NULL)
-            ret = fbcIns->cfbc_Set_ColorTemp_Mode(COMM_DEV_SERIAL, temp_mode);
+    if (fbcIns != NULL) {
+        ret = fbcIns->fbcSetEyeProtection(COMM_DEV_SERIAL, GetEyeProtectionMode());
+        ret |= fbcIns->cfbc_Set_ColorTemp_Mode(COMM_DEV_SERIAL, temp_mode);
     }
     return ret;
 }

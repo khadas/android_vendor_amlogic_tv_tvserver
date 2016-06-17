@@ -126,6 +126,7 @@ public:
     int fbcSetPanelStatus(COMM_DEV_TYPE_E fromDev, int value);
     int fbcGetPanelStatus(COMM_DEV_TYPE_E fromDev, int *value);
     int cfbc_Set_Fbc_Uboot_Stage(COMM_DEV_TYPE_E fromDev, int value);
+    int fbcSetEyeProtection(COMM_DEV_TYPE_E fromDev, int mode);
     int fbcSetGammaValue(COMM_DEV_TYPE_E fromDev, int gamma_curve, int is_save);
     int fbcSetGammaPattern(COMM_DEV_TYPE_E fromDev, unsigned short gamma_r, unsigned short gamma_g, unsigned short gamma_b);
     int fbcStartUpgrade(char *file_name, int mode, int blk_size);

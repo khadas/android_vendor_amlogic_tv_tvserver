@@ -543,6 +543,15 @@ int CFbcCommunication::cfbc_Get_FBC_project_id(COMM_DEV_TYPE_E fromDev, int *prj
     return cfbcGetValueInt(fromDev, CMD_GET_PROJECT_SELECT, prj_id);
 }
 
+int CFbcCommunication::fbcSetEyeProtection(COMM_DEV_TYPE_E fromDev, int mode)
+{
+    unsigned char cmd[3];
+    cmd[0] = fromDev;
+    cmd[1] = VPU_CMD_EYE_PROTECTION;
+    cmd[2] = mode;
+    return sendCommandToFBC(cmd, 3, 0);
+}
+
 int CFbcCommunication::fbcSetGammaValue(COMM_DEV_TYPE_E fromDev, int gamma_curve, int is_save)
 {
     unsigned char cmd[4];

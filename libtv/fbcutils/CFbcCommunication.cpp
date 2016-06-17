@@ -862,12 +862,12 @@ int CFbcCommunication::cfbc_SET_SPLIT_SCREEN_DEMO(COMM_DEV_TYPE_E fromDev, int v
     return cfbcSetValueInt(fromDev, CMD_SET_SPLIT_SCREEN_DEMO, value, 1);
 }
 
-int CFbcCommunication::cfbc_Set_AP_STANDBY_N310(COMM_DEV_TYPE_E fromDev, int value)
+int CFbcCommunication::fbcSetPanelStatus(COMM_DEV_TYPE_E fromDev, int value)
 {
     return cfbcSetValueInt(fromDev, CMD_PANEL_ON_OFF, value, 1);
 }
 
-int CFbcCommunication::cfbc_Get_AP_STANDBY_N310(COMM_DEV_TYPE_E fromDev, int *value)
+int CFbcCommunication::fbcGetPanelStatus(COMM_DEV_TYPE_E fromDev, int *value)
 {
     return cfbcGetValueInt(fromDev, CMD_PANEL_ON_OFF | 0x80, value);
 }

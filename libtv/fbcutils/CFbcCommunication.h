@@ -123,8 +123,8 @@ public:
     int cfbc_Set_Bluetooth_IIS_onoff(COMM_DEV_TYPE_E fromDev, int value);
     int cfbc_Get_Bluetooth_IIS_onoff(COMM_DEV_TYPE_E fromDev, int *value);
     int cfbc_Set_Led_onoff(COMM_DEV_TYPE_E fromDev, int val_1, int val_2, int val_3);
-    int cfbc_Set_AP_STANDBY_N310(COMM_DEV_TYPE_E fromDev, int value);
-    int cfbc_Get_AP_STANDBY_N310(COMM_DEV_TYPE_E fromDev, int *value);
+    int fbcSetPanelStatus(COMM_DEV_TYPE_E fromDev, int value);
+    int fbcGetPanelStatus(COMM_DEV_TYPE_E fromDev, int *value);
     int cfbc_Set_Fbc_Uboot_Stage(COMM_DEV_TYPE_E fromDev, int value);
     int fbcSetGammaValue(COMM_DEV_TYPE_E fromDev, int gamma_curve, int is_save);
     int fbcSetGammaPattern(COMM_DEV_TYPE_E fromDev, unsigned short gamma_r, unsigned short gamma_g, unsigned short gamma_b);

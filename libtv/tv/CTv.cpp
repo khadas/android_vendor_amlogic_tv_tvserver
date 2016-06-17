@@ -2705,11 +2705,14 @@ int CTv::getAutoBacklightData(int *data)
 
 int CTv::setLcdEnable(bool enable)
 {
+    int ret = -1;
     if (mHdmiOutFbc) {
-        return -1;
+        ret = fbcIns->fbcSetPanelStatus(COMM_DEV_SERIAL, enable ? 1 : 0);
+    } else {
+        ret = tvWriteSysfs(LCD_ENABLE, enable ? 1 : 0);
     }
 
-    return tvWriteSysfs(LCD_ENABLE, enable ? 1 : 0);
+    return ret;
 }
 
 /*********************** SSM  start **********************/

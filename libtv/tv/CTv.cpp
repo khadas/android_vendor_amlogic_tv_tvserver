@@ -3049,20 +3049,12 @@ int CTv::Tv_SaveSharpness ( int value, tv_source_input_type_t source_type )
 
 int CTv::Tv_SetBacklight ( int value, tv_source_input_type_t source_type, int is_save )
 {
-    if (mHdmiOutFbc) {
-        return mFactoryMode.fbcSetBacklight(value);
-    } else {
-        return CVpp::getInstance()->SetBacklight(value, (tv_source_input_type_t)source_type, is_save);
-    }
+    return CVpp::getInstance()->SetBacklight(value, (tv_source_input_type_t)source_type, is_save);
 }
 
 int CTv::Tv_GetBacklight ( tv_source_input_type_t source_type )
 {
-    if (mHdmiOutFbc) {
-        return mFactoryMode.fbcGetBacklight();
-    } else {
-        return CVpp::getInstance()->GetBacklight((tv_source_input_type_t)source_type);
-    }
+    return CVpp::getInstance()->GetBacklight((tv_source_input_type_t)source_type);
 }
 
 int CTv::Tv_SaveBacklight ( int value, tv_source_input_type_t source_type )

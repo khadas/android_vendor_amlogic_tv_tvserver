@@ -1383,24 +1383,20 @@ int CVpp::VPP_SetBackLightLevel(int value)
 
 int CVpp::SetBacklight(int value, tv_source_input_type_t source_type, int is_save)
 {
-    static const int MIN_BACKLIGHT_VALUE = 1;
-    if (value >= MIN_BACKLIGHT_VALUE) {
-        if (SetBacklightWithoutSave(value, source_type) < 0) {
-            LOGE("%s, failed !", __FUNCTION__);
-            return -1;
+    int ret = -1, backlight_value;
+    if (mHdmiOutFbc) {
+        if (fbcIns != NULL) {
+            ret = fbcIns->cfbc_Set_Backlight(COMM_DEV_SERIAL, value*255/100);
         }
+    } else {
+        ret = SetBacklightWithoutSave(value, source_type);
+    }
 
-    } else {
-        if (SetBacklightWithoutSave(MIN_BACKLIGHT_VALUE, source_type) < 0) {
-            LOGE("%s, failed !", __FUNCTION__);
-            return -1;
-        }
+    if (ret >= 0 && is_save == 1) {
+        ret = SaveBacklight(value, source_type);
     }
-    if (is_save == 1) {
-        return SaveBacklight(value, source_type);
-    } else {
-        return 0;
-    }
+
+    return ret;
 }
 
 int CVpp::GetBacklight(tv_source_input_type_t source_type)

@@ -2249,7 +2249,7 @@ void CTv::onSigDetectLoop()
 
         //m_hdmi_audio_data init is 0, not audio data , when switch to HDMI
         int hdmi_audio_data = mpTvin->TvinApi_GetHDMIAudioStatus();
-        if (m_sig_stable_nums > 0 && hdmi_audio_data != m_hdmi_audio_data && sr > 0) {
+        if (m_sig_stable_nums > 3 && hdmi_audio_data != m_hdmi_audio_data && sr > 0) {
             LOGD("[ctv]HDMI  auds_rcv_sts CHANGED = %d", hdmi_audio_data);
             m_hdmi_audio_data = hdmi_audio_data;
             onHMDIAudioStatusChanged(hdmi_audio_data);
@@ -2267,6 +2267,7 @@ void CTv::CTvDetectObserverForScanner::onSigStableToUnstable()
 {
     LOGD ( "[ctv]%s, stable to unstable\n", __FUNCTION__);
     mpTv->SetAudioMuteForTv(CC_AUDIO_MUTE);
+    m_sig_stable_nums = 0;
     const char *value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
     /*
     if ( strcmp ( value, "black" ) == 0 ) {

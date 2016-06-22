@@ -1952,7 +1952,8 @@ void CTv::onSigStillStable()
         mTvMsgQueue.sendMsg ( msg );
         m_hdmi_audio_data = 0;
     }
-    m_sig_stable_nums++;
+    if (m_sig_stable_nums <= 20)
+        m_sig_stable_nums++;
 }
 
 void CTv::onEnableVideoLater(int framecount)
@@ -2248,7 +2249,7 @@ void CTv::onSigDetectLoop()
 
         //m_hdmi_audio_data init is 0, not audio data , when switch to HDMI
         int hdmi_audio_data = mpTvin->TvinApi_GetHDMIAudioStatus();
-        if (hdmi_audio_data != m_hdmi_audio_data && sr > 0) {
+        if (m_sig_stable_nums > 0 && hdmi_audio_data != m_hdmi_audio_data && sr > 0) {
             LOGD("[ctv]HDMI  auds_rcv_sts CHANGED = %d", hdmi_audio_data);
             m_hdmi_audio_data = hdmi_audio_data;
             onHMDIAudioStatusChanged(hdmi_audio_data);

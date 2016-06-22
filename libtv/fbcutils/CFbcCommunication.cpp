@@ -156,7 +156,7 @@ int CFbcCommunication::cfbc_Set_ColorTemp_Mode(COMM_DEV_TYPE_E fromDev, int valu
     }
     ALOGD("before set fbcValue = %d", fbcValue);
 
-    return cfbcSetValueInt(fromDev, VPU_CMD_COLOR_TEMPERATURE_DEF, value, 1);
+    return cfbcSetValueInt(fromDev, VPU_CMD_COLOR_TEMPERATURE_DEF, fbcValue, 1);
 }
 
 int CFbcCommunication::cfbc_Get_ColorTemp_Mode(COMM_DEV_TYPE_E fromDev, int *value)

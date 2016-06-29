@@ -2732,6 +2732,7 @@ int CTv::Tv_SSMRestoreDefaultSetting()
     saveDTVProgramID ( -1 );
     saveATVProgramID ( -1 );
     SSMSaveStandbyMode( 0 );
+    SSMHDMIEdidRestoreDefault();
     return 0;
 }
 

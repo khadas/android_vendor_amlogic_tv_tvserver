@@ -2521,3 +2521,17 @@ int SSMReadHDMIHdcpSwitcher(void)
     return tmp_val;
 }
 
+int SSMHDMIEdidRestoreDefault(void)
+{
+    if (config_get_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, NULL) != NULL)
+        config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "");
+    if (config_get_str(CFG_SECTION_TV, CS_HDMI_PORT1_EDID_FILE_PATH_CFG, NULL) != NULL)
+        config_set_str(CFG_SECTION_TV, CS_HDMI_PORT1_EDID_FILE_PATH_CFG, "");
+    if (config_get_str(CFG_SECTION_TV, CS_HDMI_PORT2_EDID_FILE_PATH_CFG, NULL) != NULL)
+        config_set_str(CFG_SECTION_TV, CS_HDMI_PORT2_EDID_FILE_PATH_CFG, "");
+    if (config_get_str(CFG_SECTION_TV, CS_HDMI_PORT3_EDID_FILE_PATH_CFG, NULL) != NULL)
+        config_set_str(CFG_SECTION_TV, CS_HDMI_PORT3_EDID_FILE_PATH_CFG, "");
+
+    int tmp_val = HDMI_EDID_VER_14;
+    return SSMWriteNTypes(SSM_RW_CUSTOMER_DATA_START, SSM_RW_CUSTOMER_DATA_LEN, &tmp_val);
+}

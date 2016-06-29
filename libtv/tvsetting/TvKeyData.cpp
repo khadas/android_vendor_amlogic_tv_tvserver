@@ -436,7 +436,7 @@ int SSMSetHDMIEdid(int port)
     unsigned char customer_hdmi_edid_buf[CC_CUSTOMER_HDMI_EDID_TOTAL_SIZE];
     unsigned char hdmi_edid_buf[SSM_HDMI_EDID_SIZE];
 
-    if (port < 1 && port > SSM_HDMI_PORT_MAX) {
+    if (port < 1 || port > SSM_HDMI_PORT_MAX) {
         LOGD("%s, hdmi port error.%d\n", __FUNCTION__, port);
         return -1;
     }

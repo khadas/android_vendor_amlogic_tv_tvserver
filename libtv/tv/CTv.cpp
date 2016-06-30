@@ -1549,11 +1549,6 @@ int CTv::OpenTv ( void )
     mSourceConnectDetectThread.startDetect();
     ClearAnalogFrontEnd();
 
-    if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_DEFAULT) > 0) {
-        mpTvin->VDIN_AddVideoPath(TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
-    }
-    mpTvin->Tvin_RemovePath(TV_PATH_TYPE_TVIN);
-
     mTvStatus = TV_OPEN_ED;
     return 0;
 }
@@ -1648,7 +1643,6 @@ int CTv::StopTvLock ( void )
         mpTvin->SwitchSnow( false );
     }
     mpTvin->VDIN_ClosePort();
-    mpTvin->Tvin_RemovePath(TV_PATH_TYPE_TVIN);
     //stop scan  if scanning
     stopScan();
     mFrontDev.SetAnalogFrontEndTimerSwitch(0);
@@ -1673,10 +1667,6 @@ int CTv::StopTvLock ( void )
     mTvStatus = TV_STOP_ED;
     if ( Get2d4gHeadsetEnable() == 1 ) {
         property_set("audio.tv_open.flg", "0");
-    }
-
-    if (mpTvin->Tvin_RemovePath(TV_PATH_TYPE_DEFAULT) > 0) {
-        mpTvin->VDIN_AddVideoPath(TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
     }
 
     mAv.DisableVideoWithBlackColor();
@@ -1802,11 +1792,7 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
         //
         mpTvin->Tvin_StopDecoder();
         mpTvin->VDIN_ClosePort();
-        mpTvin->Tvin_RemovePath(TV_PATH_TYPE_TVIN);
 
-        if (mpTvin->Tvin_RemovePath(TV_PATH_TYPE_DEFAULT) > 0) {
-            mpTvin->VDIN_AddVideoPath(TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
-        }
         //double confirm we set the main volume lut buffer to mpeg
         RefreshAudioMasterVolume ( SOURCE_MPEG );
         RefreshSrsEffectAndDacGain();
@@ -1818,10 +1804,6 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
     } else {
         mpTvin->setMpeg2Vdin(0);
         mAv.setLookupPtsForDtmb(0);
-        mpTvin->Tvin_RemovePath(TV_PATH_TYPE_DEFAULT);
-        if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_TVIN) > 0) {
-            mpTvin->VDIN_AddVideoPath(TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
-        }
     }
 
     cur_port = mpTvin->Tvin_GetSourcePortBySourceInput ( source_input );

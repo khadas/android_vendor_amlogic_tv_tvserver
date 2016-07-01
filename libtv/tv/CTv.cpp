@@ -112,6 +112,7 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     mpObserver = NULL;
     fbcIns = NULL;
     mAutoSetDisplayFreq = false;
+    mPreviewEnabled = false;
 
     mpTvin = CTvin::getInstance();
     mTvScanner = CTvScanner::getInstance();
@@ -253,7 +254,7 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
                 mAv.setVideoScreenMode ( CAv::VIDEO_WIDEOPTION_FULL_STRETCH );
             }
 
-            if ( mAutoSetDisplayFreq) {
+            if ( mAutoSetDisplayFreq && !mPreviewEnabled) {
                 mpTvin->VDIN_SetDisplayVFreq (50, mHdmiOutFbc);
             }
             TvEvent::SignalInfoEvent ev;
@@ -1883,7 +1884,7 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
 
 void CTv::onSigToStable()
 {
-    if (mAutoSetDisplayFreq) {
+    if (mAutoSetDisplayFreq && !mPreviewEnabled) {
         int freq = 60;
         if (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_HDMI ) {
             int fps = getHDMIFrameRate();
@@ -2195,7 +2196,7 @@ void CTv::onSigStillNull()
 
 void CTv::onStableSigFmtChange()
 {
-    if ( mAutoSetDisplayFreq) {
+    if ( mAutoSetDisplayFreq && !mPreviewEnabled) {
         if (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_HDMI ) {
             int fps = getHDMIFrameRate();
             LOGD("onSigToStable HDMI fps get = %d", fps);
@@ -2449,6 +2450,12 @@ int CTv::SetCVD2Values ()
         return -1;
     }
 
+    return 0;
+}
+
+int CTv::setPreviewWindowMode(bool mode)
+{
+    mPreviewEnabled = mode;
     return 0;
 }
 

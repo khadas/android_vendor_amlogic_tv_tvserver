@@ -700,7 +700,12 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
-
+    case SET_PREVIEW_WINDOW_MODE: {
+        bool mode = (p.readInt32() == 1);
+        int ret = mpTv->setPreviewWindowMode(mode);
+        r->writeInt32(ret);
+        break;
+    }
     case SET_PREVIEW_WINDOW: {
         tvin_window_pos_t win_pos;
         win_pos.x1 = p.readInt32();

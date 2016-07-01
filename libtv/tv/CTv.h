@@ -119,6 +119,7 @@ public:
     virtual int SetSourceSwitchInput (tv_source_input_t source_input );
     virtual tv_source_input_t GetCurrentSourceInputLock ( void );
     virtual tvin_info_t GetCurrentSignalInfo ( void );
+    int setPreviewWindowMode(bool mode);
     virtual int SetPreviewWindow ( tvin_window_pos_t pos );
     virtual int dtvAutoScan();
     virtual int dtvManualScan (int beginFreq, int endFreq, int modulation = -1);
@@ -615,6 +616,8 @@ protected:
 
     CTvin *mpTvin;
     CTvGpio *pGpio;
+
+    bool mPreviewEnabled;
 };
 
 #endif  //_CDTV_H

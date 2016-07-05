@@ -274,6 +274,8 @@ int SSMSaveHDMIEdidMode(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t rw_val);
 tv_hdmi_edid_version_t SSMReadHDMIEdidMode(tv_hdmi_port_id_t port);
 int SSMSaveHDMIHdcpSwitcher(int rw_val);
 int SSMReadHDMIHdcpSwitcher(void);
+int SSMHDMIEdidRestoreDefault(void);
+
 #ifdef __cplusplus
 }
 #endif

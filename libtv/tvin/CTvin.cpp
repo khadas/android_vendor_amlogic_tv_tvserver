@@ -77,6 +77,7 @@ CTvin::CTvin()
     mSourceInputToPortMap[SOURCE_MPEG] = TVIN_PORT_MPEG0;
     mSourceInputToPortMap[SOURCE_DTV] = TVIN_PORT_DTV;
     mSourceInputToPortMap[SOURCE_IPTV] = TVIN_PORT_BT656;
+    mSourceInputToPortMap[SOURCE_SPDIF] = TVIN_PORT_CVBS3;
 }
 
 CTvin::~CTvin()
@@ -1461,25 +1462,42 @@ int CTvin::TvinApi_LoadCVD2Values ( am_regs_t regs )
 
 tv_source_input_type_t CTvin::Tvin_SourceInputToSourceInputType ( tv_source_input_t source_input )
 {
-    if (source_input == SOURCE_TV) {
-        return SOURCE_TYPE_TV;
-    } else if (source_input == SOURCE_AV1 || source_input == SOURCE_AV2) {
-        return SOURCE_TYPE_AV;
-    } else if (source_input == SOURCE_YPBPR1 || source_input == SOURCE_YPBPR2) {
-        return SOURCE_TYPE_COMPONENT;
-    } else if (source_input == SOURCE_VGA) {
-        return SOURCE_TYPE_VGA;
-    } else if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3) {
-        return SOURCE_TYPE_HDMI;
-    } else if (source_input == SOURCE_DTV) {
-        return SOURCE_TYPE_DTV;
-    } else if (source_input == SOURCE_IPTV) {
-        return SOURCE_TYPE_IPTV;
-    } else if (source_input == SOURCE_MPEG) {
-        return SOURCE_TYPE_MPEG;
+    tv_source_input_type_t ret = SOURCE_TYPE_MPEG;
+    switch (source_input) {
+        case SOURCE_TV:
+            ret = SOURCE_TYPE_TV;
+            break;
+        case SOURCE_AV1:
+        case SOURCE_AV2:
+            ret = SOURCE_TYPE_AV;
+            break;
+        case SOURCE_YPBPR1:
+        case SOURCE_YPBPR2:
+            ret = SOURCE_TYPE_COMPONENT;
+            break;
+        case SOURCE_VGA:
+            ret = SOURCE_TYPE_VGA;
+            break;
+        case SOURCE_HDMI1:
+        case SOURCE_HDMI2:
+        case SOURCE_HDMI3:
+            ret = SOURCE_TYPE_HDMI;
+            break;
+        case SOURCE_DTV:
+            ret = SOURCE_TYPE_DTV;
+            break;
+        case SOURCE_IPTV:
+            ret = SOURCE_TYPE_IPTV;
+            break;
+        case SOURCE_SPDIF:
+            ret = SOURCE_TYPE_SPDIF;
+            break;
+        default:
+            ret = SOURCE_TYPE_MPEG;
+            break;
     }
 
-    return SOURCE_TYPE_MPEG;
+    return ret;
 }
 
 tv_source_input_type_t CTvin::Tvin_SourcePortToSourceInputType ( tvin_port_t source_port )
@@ -1491,36 +1509,39 @@ tv_source_input_type_t CTvin::Tvin_SourcePortToSourceInputType ( tvin_port_t sou
 tvin_port_t CTvin::Tvin_GetSourcePortBySourceType ( tv_source_input_type_t source_type )
 {
     tvin_port_t source_port;
+    tv_source_input_t source_input;
 
-    switch ( source_type ) {
-    case SOURCE_TYPE_TV:
-        source_port = Tvin_GetSourcePortBySourceInput(SOURCE_TV);
-        break;
-    case SOURCE_TYPE_AV:
-        source_port = Tvin_GetSourcePortBySourceInput(SOURCE_AV1);
-        break;
-    case SOURCE_TYPE_COMPONENT:
-        source_port = Tvin_GetSourcePortBySourceInput(SOURCE_YPBPR1);
-        break;
-    case SOURCE_TYPE_VGA:
-        source_port = Tvin_GetSourcePortBySourceInput(SOURCE_VGA);
-        break;
-    case SOURCE_TYPE_HDMI:
-        source_port = TVIN_PORT_HDMI0;
-        break;
-    case SOURCE_TYPE_IPTV:
-        source_port = Tvin_GetSourcePortBySourceInput(SOURCE_IPTV);
-        break;
-    case SOURCE_TYPE_DTV:
-        source_port = Tvin_GetSourcePortBySourceInput(SOURCE_DTV);
-        break;
-    case SOURCE_TYPE_MPEG:
-    default:
-        source_port = Tvin_GetSourcePortBySourceInput(SOURCE_MPEG);
-        break;
+    switch (source_type) {
+        case SOURCE_TYPE_TV:
+            source_input = SOURCE_TV;
+            break;
+        case SOURCE_TYPE_AV:
+            source_input = SOURCE_AV1;
+            break;
+        case SOURCE_TYPE_COMPONENT:
+            source_input = SOURCE_YPBPR1;
+            break;
+        case SOURCE_TYPE_VGA:
+            source_input = SOURCE_VGA;
+            break;
+        case SOURCE_TYPE_HDMI:
+            source_input = SOURCE_HDMI1;
+            break;
+        case SOURCE_TYPE_IPTV:
+            source_input = SOURCE_IPTV;
+            break;
+        case SOURCE_TYPE_DTV:
+            source_input = SOURCE_DTV;
+            break;
+        case SOURCE_TYPE_SPDIF:
+            source_input = SOURCE_SPDIF;
+            break;
+        default:
+            source_input = SOURCE_MPEG;
+            break;
     }
 
-    return source_port;
+    return Tvin_GetSourcePortBySourceInput(source_input);
 }
 
 tvin_port_t CTvin::Tvin_GetSourcePortBySourceInput ( tv_source_input_t source_input )
@@ -1662,21 +1683,28 @@ tv_audio_channel_t CTvin::Tvin_GetInputSourceAudioChannelIndex ( tv_source_input
 tv_audio_in_source_type_t CTvin::Tvin_GetAudioInSourceType ( tv_source_input_t source_input )
 {
     const char *config_value = NULL;
-
-    if (source_input == SOURCE_TV) {
-        config_value = config_get_str(CFG_SECTION_TV, "tvin.aud.insource.atv", "TV_AUDIO_IN_SOURCE_TYPE_LINEIN");
-        if (strcasecmp(config_value, "TV_AUDIO_IN_SOURCE_TYPE_ATV") == 0) {
-            return TV_AUDIO_IN_SOURCE_TYPE_ATV;
-        }
-    } else if (source_input == SOURCE_AV1 || source_input == SOURCE_AV2) {
-        return TV_AUDIO_IN_SOURCE_TYPE_LINEIN;
-    } else if (source_input == SOURCE_YPBPR1 || source_input == SOURCE_YPBPR2 || source_input == SOURCE_VGA) {
-        return TV_AUDIO_IN_SOURCE_TYPE_LINEIN;
-    } else if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3) {
-        return TV_AUDIO_IN_SOURCE_TYPE_HDMI;
+    tv_audio_in_source_type_t ret = TV_AUDIO_IN_SOURCE_TYPE_LINEIN;
+    switch (source_input) {
+        case SOURCE_TV:
+            config_value = config_get_str(CFG_SECTION_TV, "tvin.aud.insource.atv", "TV_AUDIO_IN_SOURCE_TYPE_LINEIN");
+            if (strcasecmp(config_value, "TV_AUDIO_IN_SOURCE_TYPE_ATV") == 0) {
+                ret = TV_AUDIO_IN_SOURCE_TYPE_ATV;
+            }
+            break;
+        case SOURCE_HDMI1:
+        case SOURCE_HDMI2:
+        case SOURCE_HDMI3:
+            ret = TV_AUDIO_IN_SOURCE_TYPE_HDMI;
+            break;
+        case SOURCE_SPDIF:
+            ret = TV_AUDIO_IN_SOURCE_TYPE_SPDIF;
+            break;
+        default:
+            ret = TV_AUDIO_IN_SOURCE_TYPE_LINEIN;
+            break;
     }
 
-    return TV_AUDIO_IN_SOURCE_TYPE_LINEIN;
+    return ret;
 }
 
 int CTvin::isVgaFmtInHdmi ( tvin_sig_fmt_t fmt )

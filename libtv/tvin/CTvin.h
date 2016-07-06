@@ -885,6 +885,7 @@ typedef enum tv_source_input_e {
     SOURCE_SVIDEO,
     SOURCE_IPTV,
     SOURCE_DUMMY,
+    SOURCE_SPDIF,
     SOURCE_MAX,
 } tv_source_input_t;
 
@@ -898,6 +899,7 @@ typedef enum tv_source_input_type_e {
     SOURCE_TYPE_DTV,
     SOURCE_TYPE_SVIDEO,
     SOURCE_TYPE_IPTV,
+    SOURCE_TYPE_SPDIF,
     SOURCE_TYPE_MAX,
 } tv_source_input_type_t;
 
@@ -992,6 +994,7 @@ typedef enum tv_audio_in_source_type_e {
     TV_AUDIO_IN_SOURCE_TYPE_LINEIN,
     TV_AUDIO_IN_SOURCE_TYPE_ATV,
     TV_AUDIO_IN_SOURCE_TYPE_HDMI,
+    TV_AUDIO_IN_SOURCE_TYPE_SPDIF,
     TV_AUDIO_IN_SOURCE_TYPE_MAX,
 } tv_audio_in_source_type_t;
 

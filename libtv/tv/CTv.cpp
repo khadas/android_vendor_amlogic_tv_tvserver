@@ -1809,11 +1809,18 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
     cur_port = mpTvin->Tvin_GetSourcePortBySourceInput ( source_input );
     Tv_MiscSetBySource ( source_input );
 
-    if ( source_input != SOURCE_DTV ) {
+    if (source_input == SOURCE_SPDIF) {
+        UnInitTvAudio();
+        Tv_SetAudioInSource(source_input);
+        InitTvAudio(48000, CC_IN_USE_SPDIF_DEVICE);
+        HanldeAudioInputSr(-1);
+        usleep(1000000);
+        SetAudioMuteForTv(CC_AUDIO_UNMUTE);
+    } else if ( source_input != SOURCE_DTV ) {
         // Uninit data
         UnInitTvAudio();
         if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3 ||
-                source_input == SOURCE_MPEG || source_input == SOURCE_DTV ) {
+                source_input == SOURCE_MPEG || source_input == SOURCE_DTV) {
             SwitchAVOutBypass(0);
         } else {
             SwitchAVOutBypass(1);
@@ -1827,7 +1834,7 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
             m_hdmi_sampling_rate = 0;
             m_hdmi_audio_data = 0;
         } else {
-            InitTvAudio ( 48000, CC_IN_USE_I2S_DEVICE);
+            InitTvAudio(48000, CC_IN_USE_I2S_DEVICE);
             HanldeAudioInputSr(-1);
         }
 
@@ -2514,36 +2521,37 @@ void CTv::RefreshAudioMasterVolume ( tv_source_input_t source_input )
 int CTv::Tv_SetAudioInSource (tv_source_input_t source_input)
 {
     int vol = 255;
-    if (source_input == SOURCE_TV) {
+    switch (source_input) {
+    case SOURCE_TV:
         if (mpTvin->Tvin_GetAudioInSourceType(source_input) == TV_AUDIO_IN_SOURCE_TYPE_ATV) {
             AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_ATV);
             vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_ATV);
-            LOGD("%s, atv DAC_Digital_PlayBack_Volume = %d\n", __FUNCTION__, vol);
         } else {
-            LOGD("%s, dtv DAC_Digital_PlayBack_Volume = %d\n", __FUNCTION__, vol);
             AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_LINEIN);
             vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_LINEIN);
         }
-    } else if (source_input == SOURCE_AV1 || source_input == SOURCE_AV2) {
+        break;
+    case SOURCE_SPDIF:
+    case SOURCE_AV1:
+    case SOURCE_AV2:
+    case SOURCE_YPBPR1:
+    case SOURCE_YPBPR2:
+    case SOURCE_VGA:
         AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_LINEIN);
         vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_LINEIN);
-    } else if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3) {
+        break;
+    case SOURCE_HDMI1:
+    case SOURCE_HDMI2:
+    case SOURCE_HDMI3:
+    case SOURCE_MPEG:
+    case SOURCE_DTV:
         AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_HDMI);
         vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_HDMI);
-    } else if (source_input == SOURCE_YPBPR1 || source_input == SOURCE_YPBPR2 ||
-               source_input == SOURCE_VGA) {
-        AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_LINEIN);
-        vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_LINEIN);
-    } else if (source_input == SOURCE_MPEG) {
-        AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_HDMI);
-        vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_HDMI);
-    } else if (source_input == SOURCE_DTV) {
-        AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_HDMI);
-        vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_HDMI);
-        LOGD("%s, dtv DAC_Digital_PlayBack_Volume = %d\n", __FUNCTION__, vol);
+        break;
+    default:
+        break;
     }
-    LOGD("%s, we have read SetDAC_Digital_PlayBack_Volume = %d\n", __FUNCTION__, vol);
-
+    LOGD("%s, we have read SetDAC_Digital_PlayBack_Volume = %d of source [%d].\n", __FUNCTION__, vol, source_input);
     return 0;
 }
 

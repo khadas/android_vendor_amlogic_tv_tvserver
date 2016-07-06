@@ -3241,6 +3241,11 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case GET_ALL_TV_DEVICES: {
+        const char *value = config_get_str(CFG_SECTION_TV, CGF_DEFAULT_INPUT_IDS, "null");
+        r->writeCString(value);
+        break;
+    }
     // EXTAR END
     default:
         LOGD("default");

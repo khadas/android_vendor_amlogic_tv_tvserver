@@ -233,7 +233,7 @@ int CVpp::Vpp_GetVppConfig(void)
     if (strcmp(config_value, "enable") == 0) {
         mbVppCfg_colortemp_by_source = true;
     } else {
-        mbVppCfg_colortemp_by_source = true;
+        mbVppCfg_colortemp_by_source = false;
     }
 
     config_value = config_get_str(CFG_SECTION_TV, "vpp.panoroma.switch", "null");
@@ -1244,30 +1244,14 @@ int CVpp::SetColorTempWithoutSave(vpp_color_temperature_mode_t Tempmode,
 
 }
 
-int CVpp::SaveColorTemp(vpp_color_temperature_mode_t Tempmode, tv_source_input_type_t source_type)
+int CVpp::SaveColorTemp(vpp_color_temperature_mode_t temp_mode, tv_source_input_type_t source_type)
 {
     int ret = -1;
-    int tmp_temp_mode = 0;
-    tcon_rgb_ogo_t rgbogo;
-
-    if (mbVppCfg_whitebalance_sameparam) {
-        source_type = SOURCE_TYPE_TV; //set all source share to use one group
-    }
-
-    GetColorTemperatureParams(Tempmode, &rgbogo);
-
-    if (Tempmode < VPP_COLOR_TEMPERATURE_MODE_USER) {
-        ret = SSMSaveRGBGainRStart(0, rgbogo.r_gain);
-        ret |= SSMSaveRGBGainGStart(0, rgbogo.g_gain);
-        ret |= SSMSaveRGBGainBStart(0, rgbogo.b_gain);
-    }
-
-    tmp_temp_mode = (int) Tempmode;
 
     if (mbVppCfg_colortemp_by_source) {
-        ret |= SSMSaveColorTemperature((int) source_type, tmp_temp_mode);
+        ret = SSMSaveColorTemperature((int) source_type, temp_mode);
     } else {
-        ret |= SSMSaveColorTemperature(0, tmp_temp_mode);
+        ret = SSMSaveColorTemperature(0, temp_mode);
     }
 
     return ret;
@@ -1277,10 +1261,8 @@ int CVpp::SetColorTemperature(vpp_color_temperature_mode_t temp_mode,
                               tv_source_input_type_t source_type, int is_save)
 {
     if (mHdmiOutFbc) {
-        return VPP_FBCSetColorTemperature(temp_mode);
-    }
-
-    if (temp_mode == VPP_COLOR_TEMPERATURE_MODE_USER) {
+        VPP_FBCSetColorTemperature(temp_mode);
+    } else if (temp_mode == VPP_COLOR_TEMPERATURE_MODE_USER) {
         if (Vpp_SetColorTemperatureUser(temp_mode, source_type) < 0) {
             LOGE("%s, Vpp_SetColorTemperatureUser failed.", __FUNCTION__);
             return -1;

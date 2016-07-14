@@ -3079,11 +3079,7 @@ int CTv::Tv_SetColorTemperature ( vpp_color_temperature_mode_t mode, tv_source_i
 
 vpp_color_temperature_mode_t CTv::Tv_GetColorTemperature ( tv_source_input_type_t source_type )
 {
-    if (mHdmiOutFbc) {
-        return (vpp_color_temperature_mode_t)mFactoryMode.fbcColorTempModeGet();
-    } else {
-        return CVpp::getInstance()->GetColorTemperature((tv_source_input_type_t)source_type);
-    }
+    return CVpp::getInstance()->GetColorTemperature((tv_source_input_type_t)source_type);
 }
 
 int CTv::Tv_SaveColorTemperature ( vpp_color_temperature_mode_t mode, tv_source_input_type_t source_type )

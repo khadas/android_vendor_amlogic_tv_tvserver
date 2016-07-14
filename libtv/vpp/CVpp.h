@@ -265,7 +265,7 @@ public:
     int SetColorTemperature ( vpp_color_temperature_mode_t temp_mode, tv_source_input_type_t source_type, int is_save );
     vpp_color_temperature_mode_t GetColorTemperature ( tv_source_input_type_t source_type );
     int SetColorTempWithoutSave ( vpp_color_temperature_mode_t Tempmode, tv_source_input_type_t source_type );
-    int SaveColorTemp ( vpp_color_temperature_mode_t Tempmode, tv_source_input_type_t source_type );
+    int SaveColorTemp ( vpp_color_temperature_mode_t temp_mode, tv_source_input_type_t source_type );
     int SetBrightness ( int value, tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
     int GetBrightness ( tv_source_input_type_t source_type );
     int SetContrast ( int value, tv_source_input_type_t source_type,  tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );

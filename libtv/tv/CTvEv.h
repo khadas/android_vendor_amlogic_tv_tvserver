@@ -105,6 +105,7 @@ namespace  TvEvent {
         static const int EVENT_AV_PLAYBACK_RESUME       = 2;
         static const int EVENT_AV_SCAMBLED              = 3;
         static const int EVENT_AV_UNSUPPORT             = 4;
+        static const int EVENT_AV_VIDEO_AVAILABLE       = 5;
 
         int mMsgType;
         int mProgramId;

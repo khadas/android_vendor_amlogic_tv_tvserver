@@ -249,14 +249,6 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
     //前端事件响应处理
     if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_HAS_SIG ) { //作为信号稳定
         if (/*m_source_input == SOURCE_TV || */m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //atv and other tvin source    not to use it, and if not playing, not use have sig
-            if ( m_win_mode == PREVIEW_WONDOW ) {
-                //mAv.setVideoAxis(m_win_pos.x1, m_win_pos.y1, m_win_pos.x2, m_win_pos.y2);
-                mAv.setVideoScreenMode ( CAv::VIDEO_WIDEOPTION_FULL_STRETCH );
-            }
-
-            if ( mAutoSetDisplayFreq && !mPreviewEnabled) {
-                mpTvin->VDIN_SetDisplayVFreq (50, mHdmiOutFbc);
-            }
             TvEvent::SignalInfoEvent ev;
             ev.mStatus = TVIN_SIG_STATUS_STABLE;
             ev.mTrans_fmt = TVIN_TFMT_2D;
@@ -269,14 +261,6 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
             msg.mType = CTvMsgQueue::TV_MSG_VIDEO_AVAILABLE_LATER;
             msg.mpPara[0] = 2;
             mTvMsgQueue.sendMsg ( msg );
-
-            //if (mAv.WaittingVideoPlaying() == 0) {
-            SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) ), CTvin::Tvin_SourceInputToSourceInputType(m_source_input), mAv.getVideoResolutionToFmt());
-            usleep(50 * 1000);
-            mAv.EnableVideoNow( true );
-            SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
-            //}
-            Tv_SetAudioInSource(SOURCE_DTV);
         }
     } else if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_NO_SIG ) { //作为信号消失
         if (/*m_source_input == SOURCE_TV || */m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //just playing
@@ -351,18 +335,10 @@ void CTv::onEvent(const CAv::AVEvent &ev)
         if ((feState & FE_HAS_LOCK) != FE_HAS_LOCK) {
             break;
         }
-        //if (mAv.WaittingVideoPlaying() == 0) {
-        SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) ),
-                         CTvin::Tvin_SourceInputToSourceInputType(m_source_input),
-                         mAv.getVideoResolutionToFmt());
-        usleep(50 * 1000);
-        mAv.EnableVideoNow( true );
-        SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
-        //}
         TvEvent::AVPlaybackEvent AvPlayBackEvt;
         AvPlayBackEvt.mMsgType = TvEvent::AVPlaybackEvent::EVENT_AV_PLAYBACK_RESUME;
-        AvPlayBackEvt.mProgramId = ( int ) ev.param;
-        sendTvEvent(AvPlayBackEvt );
+        AvPlayBackEvt.mProgramId = (int)ev.param;
+        sendTvEvent(AvPlayBackEvt);
         break;
     }
 
@@ -375,11 +351,33 @@ void CTv::onEvent(const CAv::AVEvent &ev)
         }
         TvEvent::AVPlaybackEvent AvPlayBackEvt;
         AvPlayBackEvt.mMsgType = TvEvent::AVPlaybackEvent::EVENT_AV_SCAMBLED;
-        AvPlayBackEvt.mProgramId = ( int ) ev.param;
-        sendTvEvent(AvPlayBackEvt );
+        AvPlayBackEvt.mProgramId = (int)ev.param;
+        sendTvEvent(AvPlayBackEvt);
         break;
     }
-
+    case CAv::AVEvent::EVENT_AV_VIDEO_AVAILABLE: {
+        LOGD("EVENT_AV_VIDEO_AVAILABLE");
+        if (m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //atv and other tvin source    not to use it, and if not playing, not use have sig
+            if ( m_win_mode == PREVIEW_WONDOW ) {
+                mAv.setVideoScreenMode ( CAv::VIDEO_WIDEOPTION_FULL_STRETCH );
+            }
+            if (mAutoSetDisplayFreq && !mPreviewEnabled) {
+                mpTvin->VDIN_SetDisplayVFreq(50, mHdmiOutFbc);
+            }
+            SetDisplayMode(CVpp::getInstance()->GetDisplayMode(CTvin::Tvin_SourceInputToSourceInputType(m_source_input) ),
+                CTvin::Tvin_SourceInputToSourceInputType(m_source_input),
+                mAv.getVideoResolutionToFmt());
+            usleep(50 * 1000);
+            mAv.EnableVideoNow(true);
+            SetAudioMuteForTv(CC_AUDIO_UNMUTE);
+            Tv_SetAudioInSource(SOURCE_DTV);
+        }
+        TvEvent::AVPlaybackEvent AvPlayBackEvt;
+        AvPlayBackEvt.mMsgType = TvEvent::AVPlaybackEvent::EVENT_AV_VIDEO_AVAILABLE;
+        AvPlayBackEvt.mProgramId = (int)ev.param;
+        sendTvEvent(AvPlayBackEvt);
+        break;
+    }
     case CAv::AVEvent::EVENT_AV_UNSUPPORT: {
         LOGD("To AVS or AVS+ format");//just avs format,  not unsupport, and avs avs+
         break;
@@ -1572,7 +1570,8 @@ int CTv::StartTvLock ()
 
     Mutex::Autolock _l ( mLock );
     mTvAction |= TV_ACTION_STARTING;
-    mAv.ClearVideoBuffer();
+    //mAv.ClearVideoBuffer();
+    mAv.SetVideoLayerDisable(1);
     SwitchAVOutBypass(0);
     InitSetTvAudioCard();
     SetAudioMuteForTv(CC_AUDIO_MUTE);

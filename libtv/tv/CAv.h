@@ -59,10 +59,11 @@ public:
         };
         ~AVEvent()
         {};
-        static const int EVENT_AV_STOP            = 1;
+        static const int EVENT_AV_STOP             = 1;
         static const int EVENT_AV_RESUEM           = 2;
-        static const int EVENT_AV_SCAMBLED      = 3;
-        static const int EVENT_AV_UNSUPPORT  = 4;
+        static const int EVENT_AV_SCAMBLED         = 3;
+        static const int EVENT_AV_UNSUPPORT        = 4;
+        static const int EVENT_AV_VIDEO_AVAILABLE  = 5;
         int type;
         int param;
     };

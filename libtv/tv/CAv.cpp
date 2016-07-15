@@ -59,6 +59,7 @@ int CAv::Open()
     AM_EVT_Subscribe ( mTvPlayDevId, AM_AV_EVT_VIDEO_SCAMBLED, av_evt_callback, this );
     AM_EVT_Subscribe ( mTvPlayDevId, AM_AV_EVT_AUDIO_SCAMBLED, av_evt_callback, this );
     AM_EVT_Subscribe ( mTvPlayDevId, AM_AV_EVT_VIDEO_NOT_SUPPORT, av_evt_callback, this );
+    AM_EVT_Subscribe ( mTvPlayDevId, AM_AV_EVT_VIDEO_AVAILABLE, av_evt_callback, this );
 
     return rt;
 }
@@ -389,6 +390,12 @@ void CAv::av_evt_callback ( long dev_no, int event_type, void *param, void *user
         break;
     case AM_AV_EVT_VIDEO_NOT_SUPPORT: {
         pAv->mCurAvEvent.type = AVEvent::EVENT_AV_UNSUPPORT;
+        pAv->mCurAvEvent.param = ( int )param;
+        pAv->mpObserver->onEvent(pAv->mCurAvEvent);
+        break;
+    }
+    case AM_AV_EVT_VIDEO_AVAILABLE: {
+        pAv->mCurAvEvent.type = AVEvent::EVENT_AV_VIDEO_AVAILABLE;
         pAv->mCurAvEvent.param = ( int )param;
         pAv->mpObserver->onEvent(pAv->mCurAvEvent);
         break;

@@ -262,7 +262,7 @@ int CFbcProtocol::SetUpgradeFlag(int flag)
 int CFbcProtocol::uartReadStream(unsigned char *retData, int rd_max_len, int timeout)
 {
     int readLen = 0, bufIndex = 0, haveRead = 0;
-    clock_t start_tm = clock();
+    long startTime = getTime();
 
     do {
         readLen = mSerialPort.readFile(retData + bufIndex, rd_max_len - haveRead);
@@ -274,9 +274,8 @@ int CFbcProtocol::uartReadStream(unsigned char *retData, int rd_max_len, int tim
 
         LOGD("readLen = %d, haveRead = %d\n", readLen, haveRead);
 
-        if (((clock() - start_tm) / (CLOCKS_PER_SEC / 1000)) > timeout) {
+        if (getTime() - startTime > timeout)
             return haveRead;
-        }
     } while (true);
 
     return haveRead;

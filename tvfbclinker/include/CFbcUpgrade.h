@@ -4,58 +4,11 @@
 #include "CFbcHelper.h"
 #include "CFbcProtocol.h"
 #include "CThread.h"
-
-#define CC_FBC_V01_00_VAL                             (0x10000000)
-#define CC_FBC_V02_00_VAL                             (0x20000000)
-#define CC_FBC_V02_01_VAL                             (0x20000001)
-#define CC_FBC_V03_00_VAL                             (0x30000000)
-#define CC_FBC_V03_01_VAL                             (0x30000001)
-
-#define CC_FBC_V01_FILE_SIZE                          (655360)
-#define CC_FBC_V02_FILE_SIZE                          (786432)
-#define CC_FBC_V02_CUR_PQ_BIN_FILE_SIZE               (0xB000)
-#define CC_FBC_V03_FILE_SIZE                          (2097152)
-#define CC_FBC_V03_CUR_PQ_BIN_FILE_SIZE               (0xB000)
+#include <list>
+#include <string>
 
 #define CC_UPGRADE_MAX_BLOCK_LEN                      (0x10000)
 #define CC_UPGRADE_DATA_BUF_SIZE                      (CC_UPGRADE_MAX_BLOCK_LEN + 4)
-
-#define CC_UPGRADE_V01_BOOT_OFFSET                    (0x0)
-#define CC_UPGRADE_V01_BOOT_LEN                       (0x20000)
-#define CC_UPGRADE_V01_MAIN_OFFSET                    (0x20000)
-#define CC_UPGRADE_V01_MAIN_LEN                       (CC_FBC_V01_FILE_SIZE - CC_UPGRADE_V01_MAIN_OFFSET)
-#define CC_UPGRADE_V01_ALL_LENGTH                     (CC_FBC_V01_FILE_SIZE)
-
-#define CC_UPGRADE_V02_COMPACT_BOOT_OFFSET            (0x0)
-#define CC_UPGRADE_V02_COMPACT_BOOT_LEN               (0x10000)
-#define CC_UPGRADE_V02_BOOT_OFFSET                    (0x10000)
-#define CC_UPGRADE_V02_BOOT_LEN                       (0x30000)
-#define CC_UPGRADE_V02_MAIN_OFFSET                    (0x40000)
-#define CC_UPGRADE_V02_MAIN_LEN                       (0x80000)
-#define CC_UPGRADE_V02_BOOT_BAK_OFFSET                (0xC0000)
-#define CC_UPGRADE_V02_BOOT_BAK_LEN                   (0x30000)
-#define CC_UPGRADE_V02_MAIN_BAK_OFFSET                (0xF0000)
-#define CC_UPGRADE_V02_MAIN_BAK_LEN                   (0x80000)
-#define CC_UPGRADE_V02_ALL_LENGTH                     (0x170000)
-
-#define CC_UPGRADE_V02_CUR_PQ_OFFSET                  (0xAF000)
-
-#define CC_UPGRADE_V03_COMPACT_BOOT_OFFSET            (CC_UPGRADE_V02_COMPACT_BOOT_OFFSET)
-#define CC_UPGRADE_V03_COMPACT_BOOT_LEN               (CC_UPGRADE_V02_COMPACT_BOOT_LEN)
-#define CC_UPGRADE_V03_BOOT_OFFSET                    (CC_UPGRADE_V02_BOOT_OFFSET)
-#define CC_UPGRADE_V03_BOOT_LEN                       (CC_UPGRADE_V02_BOOT_LEN)
-#define CC_UPGRADE_V03_MAIN_OFFSET                    (CC_UPGRADE_V02_MAIN_OFFSET)
-#define CC_UPGRADE_V03_MAIN_LEN                       (CC_UPGRADE_V02_MAIN_LEN)
-#define CC_UPGRADE_V03_BOOT_BAK_OFFSET                (CC_UPGRADE_V02_BOOT_BAK_OFFSET)
-#define CC_UPGRADE_V03_BOOT_BAK_LEN                   (CC_UPGRADE_V02_BOOT_BAK_LEN)
-#define CC_UPGRADE_V03_MAIN_BAK_OFFSET                (CC_UPGRADE_V02_MAIN_BAK_OFFSET)
-#define CC_UPGRADE_V03_MAIN_BAK_LEN                   (CC_UPGRADE_V02_MAIN_BAK_LEN)
-#define CC_UPGRADE_V03_PROTECT_DATA_START             (0x1FF000)
-#define CC_UPGRADE_V03_PROTECT_DATA_LEN               (0x1000)
-#define CC_UPGRADE_V03_ALL_LENGTH                     (CC_UPGRADE_V03_PROTECT_DATA_START)
-
-#define CC_UPGRADE_V03_CUR_PQ_OFFSET                  (CC_UPGRADE_V02_CUR_PQ_OFFSET)
-
 
 class CFbcUpgrade: public CThread {
 public:
@@ -64,9 +17,7 @@ public:
 
     int start();
     int stop();
-    int GetUpgradeFBCProgress();
     int SetUpgradeFileName(char *file_name);
-    int SetUpgradeFileSize(int file_size);
     int SetUpgradeBlockSize(int block_size);
     int SetUpgradeMode(int mode);
 
@@ -75,10 +26,76 @@ public:
         mpObserver = pOb;
     };
 
+
+    enum
+    {
+        SECTION_0 = 0,
+        SECTION_1,
+        SECTION_NUM,
+    };
+
+    enum
+    {
+        PARTITION_FIRST_BOOT = 0,
+        PARTITION_SECOND_BOOT,
+        PARTITION_SUSPEND,
+        PARTITION_UPDATE,
+        PARTITION_MAIN,
+        PARTITION_PQ,
+        PARTITION_USER,
+        //PARTITION_FACTORY,
+        PARTITION_NUM,
+    };
+
+    struct partition_info_t
+    {
+    public:
+        unsigned code_offset;
+        unsigned code_size;
+        unsigned data_offset;
+        unsigned data_size;
+        unsigned bss_offset;
+        unsigned bss_size;
+        unsigned readonly_offset;
+        unsigned readonly_size;
+        unsigned char signature[256];
+        unsigned spi_code_offset;
+        unsigned spi_code_size;
+        unsigned audio_param_offset;
+        unsigned audio_param_size;
+        unsigned sys_param_offset;
+        unsigned sys_param_size;
+        unsigned crc;
+        unsigned char sha[32];
+    } ;
+
+    class sectionInfo
+    {
+    public:
+        int start;
+        int length;
+        std::string name;
+        bool checkAble;
+
+        sectionInfo(int start = 0, int length = 0, std::string name = "", bool checkAble = false)
+        {
+            this->start = start;
+            this->length = length;
+            this->name = name;
+            this->checkAble = checkAble;
+        }
+    };
+
 private:
     bool threadLoop();
-
+    bool parseUpgradeInfo(const int section, const int partition, int &start, int &length);
+    bool initBlocksInfo(std::list<sectionInfo> &mList);
+    bool sendUpgradeCmd(int &ret_code);
+    bool checkUpgradeConfigure(int &ret_code);
+    bool loadUpgradeFile(int &ret_code, std::list<sectionInfo> &partitionList);
+	bool check_partition(unsigned char *fileBuff, partition_info_t *info);
     int AddCRCToDataBuf(unsigned char data_buf[], int data_len);
+    partition_info_t* getPartitionInfoUpgFile(int section, int partition);
 
     int mState;
     int mUpgradeMode;
@@ -90,6 +107,24 @@ private:
     unsigned char mDataBuf[CC_UPGRADE_DATA_BUF_SIZE];
     IUpgradeFBCObserver *mpObserver;
     CFbcProtocol *mCfbcIns;
+
+    const int delayAfterRebootUs = 20000 * 1000;
+
+    const int LAYOUT_VERSION_OFFSET = 0x40000;
+    const int LAYOUT_VERSION_SIZE = 0x1000;
+    const int KEY_OFFSET = 0x0;
+    const int KEY_SIZE = 0x41000;
+    const int PARTITION_INFO_SIZE = 0x200;
+    const int FIRST_BOOT_INFO_OFFSET = 0x41000;
+    const int FIRST_BOOT_INFO_SIZE = 0x1000;
+    const int SECTION_INFO_SIZE = 0x1000;
+    const int SECTION_0_INFO_OFFSET = 0x42000;
+    const int SECTION_1_INFO_OFFSET = 0x43000;
+    const int FIRST_BOOT_OFFSET = 0x44000;
+    const int FIRST_BOOT_SIZE = 0x5000;
+    const int SECTION_SIZE = 0xAD000;
+    const int SECTION_0_OFFSET = 0x49000;
+    const int SECTION_1_OFFSET = 0xF6000;
 
     enum UpgradeState {
         STATE_STOPED = 0,

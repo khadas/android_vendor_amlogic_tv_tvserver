@@ -889,7 +889,7 @@ int CFbcCommunication::cfbc_Set_Fbc_Uboot_Stage(COMM_DEV_TYPE_E fromDev, int val
 
 int CFbcCommunication::fbcStartUpgrade(char *file_name, int mode, int upgrade_blk_size)
 {
-    return startFBCUpgrade(file_name, mode, upgrade_blk_size);
+    return startFBCUpgrade(file_name, upgrade_blk_size, mode);
 }
 
 int CFbcCommunication::fbcRelease()

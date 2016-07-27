@@ -436,6 +436,7 @@ private:
     int SetSPDIFMode(int mode_val);
     int setAudioPreGain(tv_source_input_t source_input);
     float getAudioPreGain(tv_source_input_t source_input);
+    void resumeSpdifStatus();
 
     CAudioAlsa mAudioAlsa;
     CAudioEffect mAudioEffect;

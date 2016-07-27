@@ -1808,14 +1808,7 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
     cur_port = mpTvin->Tvin_GetSourcePortBySourceInput ( source_input );
     Tv_MiscSetBySource ( source_input );
 
-    if (source_input == SOURCE_SPDIF) {
-        UnInitTvAudio();
-        Tv_SetAudioInSource(source_input);
-        InitTvAudio(48000, CC_IN_USE_SPDIF_DEVICE);
-        HanldeAudioInputSr(-1);
-        usleep(1000000);
-        SetAudioMuteForTv(CC_AUDIO_UNMUTE);
-    } else if ( source_input != SOURCE_DTV ) {
+    if (source_input != SOURCE_DTV) {
         // Uninit data
         UnInitTvAudio();
         if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3 ||
@@ -1832,12 +1825,15 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
         if ( source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3 ) {
             m_hdmi_sampling_rate = 0;
             m_hdmi_audio_data = 0;
+        } else if (source_input == SOURCE_SPDIF) {
+            InitTvAudio(48000, CC_IN_USE_SPDIF_DEVICE);
+            HanldeAudioInputSr(-1);
         } else {
             InitTvAudio(48000, CC_IN_USE_I2S_DEVICE);
             HanldeAudioInputSr(-1);
         }
 
-        if ( mpTvin->SwitchPort ( cur_port ) == 0 ) { //ok
+        if (source_input != SOURCE_SPDIF && mpTvin->SwitchPort ( cur_port ) == 0) { //ok
             unsigned char std;
             SSMReadCVBSStd(&std);
             int fmt = CFrontEnd::stdEnumToCvbsFmt (std, CC_ATV_AUDIO_STD_AUTO);
@@ -1861,6 +1857,8 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
         }
     }
 
+    resumeSpdifStatus();
+
     Tv_SetAudioSourceType(source_input);
     RefreshAudioMasterVolume(source_input);
     Tv_SetAudioOutputSwap_Type(source_input);
@@ -1868,6 +1866,20 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
 
     mTvAction &= ~ TV_ACTION_SOURCE_SWITCHING;
     return 0;
+}
+
+void CTv::resumeSpdifStatus()
+{
+    usleep(1000 * 1000);
+
+    TvEvent::SignalInfoEvent ev;
+    ev.mStatus = TVIN_SIG_STATUS_NULL;
+    ev.mTrans_fmt = TVIN_TFMT_2D;
+    ev.mTrans_fmt = TVIN_TFMT_2D;
+    ev.mReserved = 1;
+    sendTvEvent(ev);
+
+    SetAudioMuteForTv(CC_AUDIO_UNMUTE);
 }
 
 void CTv::onSigToStable()

@@ -1857,7 +1857,8 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
         }
     }
 
-    resumeSpdifStatus();
+    if (source_input == SOURCE_SPDIF)
+        resumeSpdifStatus();
 
     Tv_SetAudioSourceType(source_input);
     RefreshAudioMasterVolume(source_input);

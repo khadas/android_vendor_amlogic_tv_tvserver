@@ -30,6 +30,8 @@ CFbcUpgrade::CFbcUpgrade()
     mBinFileSize = 0;
     mBinFileBuf = NULL;
     mUpgradeBlockSize = 0x10000;
+    //mNewBaudRate = 115200*2;//Default AdjustUpgradeSpeed baudRate
+    mNewBaudRate = 0;
 
     mpObserver = NULL;
     mState = STATE_STOPED;
@@ -65,6 +67,11 @@ int CFbcUpgrade::stop()
     mState = STATE_STOPED;
 
     return 0;
+}
+
+void CFbcUpgrade::SetUpgradeBaudRate(unsigned int baudRate)
+{
+    mNewBaudRate = baudRate;
 }
 
 int CFbcUpgrade::SetUpgradeFileName(char *file_name)
@@ -204,24 +211,38 @@ bool CFbcUpgrade::initBlocksInfo(std::list<sectionInfo> &mList)
 
 bool CFbcUpgrade::sendUpgradeCmd(int &ret_code)
 {
-    int cmd_len = 10;
+    int cmdLen;
     bool ret = true;
+    unsigned int cmd;
+
+    if (mNewBaudRate != 0) {
+        cmd = FBC_REBOOT_UPGRADE_AUTO_SPEED;
+        cmdLen = 14;
+    }
+    else {
+        cmd = FBC_REBOOT_UPGRADE;
+        cmdLen = 10;
+    }
 
     mDataBuf[0] = 0x5A;
     mDataBuf[1] = 0x5A;
-    mDataBuf[2] = cmd_len + 4;
+    mDataBuf[2] = cmdLen + 4;
     mDataBuf[3] = 0x00;
     mDataBuf[4] = 0x00;
-    mDataBuf[5] = 0x01;
+    mDataBuf[5] = cmd;
     mDataBuf[6] = 0x88;
     mDataBuf[7] = 0x88;
     mDataBuf[8] = 0x88;
     mDataBuf[9] = 0x88;
 
-    AddCRCToDataBuf(mDataBuf, cmd_len);
+    if (mNewBaudRate != 0)
+        memcpy (mDataBuf + 10, &mNewBaudRate, 4);
 
-    if (mCfbcIns->sendDataOneway(COMM_DEV_SERIAL, mDataBuf, cmd_len + 4, 0)
+    AddCRCToDataBuf(mDataBuf, cmdLen);
+
+    if (mCfbcIns->sendDataOneway(COMM_DEV_SERIAL, mDataBuf, cmdLen + 4, 0)
         <= 0) {
+        LOGD ("sendUpgradeCmd failure!!!\n");
         ret_code = ERR_SERIAL_CONNECT;
         ret = false;
     }
@@ -341,6 +362,33 @@ bool CFbcUpgrade::loadUpgradeFile(int &ret_code,
     return ret;
 }
 
+bool CFbcUpgrade::AdjustUpgradeSpeed()
+{
+    bool ret = true;
+
+    LOGD ("%s:%d Use baudRate:%d\n", __func__, __LINE__, mNewBaudRate);
+
+    if (mNewBaudRate) {
+        mCfbcIns = GetFbcProtocolInstance();
+
+        if (mCfbcIns != NULL) {
+            ResetFbcProtocolInstance();
+
+            mCfbcIns = GetFbcProtocolInstance(mNewBaudRate);
+
+            if (mCfbcIns != NULL)
+                mCfbcIns->SetUpgradeFlag(1);
+            else
+                ret = false;
+        }
+        else {
+            ret = false;
+        }
+    }
+
+    return ret;
+}
+
 bool CFbcUpgrade::threadLoop()
 {
     unsigned char tmp_buf[128] = { 0 };
@@ -369,9 +417,17 @@ bool CFbcUpgrade::threadLoop()
     LOGD("%s(), line:%d, upgradeFileName:%s, blkSize:%d\n", __func__, __LINE__,
          mFileName, mUpgradeBlockSize);
 
+    if (mNewBaudRate != 0) {
+        if (ret && !AdjustUpgradeSpeed()) {
+            LOGD ("AdjustUpgradeSpeed failure\n");
+            ret_code = ERR_SERIAL_CONNECT;
+            ret = false;
+        }
+    }
+
     if (ret) {
-        usleep(delayAfterRebootUs);
         prepare_success = true;
+        usleep(delayAfterRebootUs);
 
         for (std::list<sectionInfo>::iterator itor = partitionList.begin();
              !exitPending() && itor != partitionList.end(); *itor++) {
@@ -444,13 +500,13 @@ bool CFbcUpgrade::threadLoop()
                     if (0 == tmp_flag) {
                         reSendTimes++;
 
-                        mpObserver->onUpgradeStatus(mState, ERR_DATA_CRC_ERROR);
+                        mpObserver->onUpgradeStatus(mState, ERR_SERIAL_CONNECT);
                         LOGE("%s, fbc write data at 0x%x error! rewrite!\n",
                              __FUNCTION__, start);
 
                         if (reSendTimes > 3) {
                             mState = STATE_ABORT;
-                            ret_code = ERR_DATA_CRC_ERROR;
+                            ret_code = ERR_SERIAL_CONNECT;
                             requestExit();
                             LOGE("%s, we have rewrite more than %d times, abort.\n",
                                  __FUNCTION__, 3);
@@ -483,22 +539,24 @@ bool CFbcUpgrade::threadLoop()
 
     LOGD("%s, exiting...\n", "TV");
 
+    //Avoid upgrade not start, but get this instance to upgrade again.
+    mState = STATE_STOPED;
+    mCfbcIns->SetUpgradeFlag(0);
+    mpObserver->onUpgradeStatus(mState, ret_code);
+
     if (prepare_success) {
         sprintf((char *) tmp_buf, "reboot\n");
         cmd_len = strlen((char *) tmp_buf);
 
-        mCfbcIns->sendDataOneway(COMM_DEV_SERIAL, tmp_buf, cmd_len, 0);
+		if (ret_code != ERR_SERIAL_CONNECT)
+            mCfbcIns->sendDataOneway(COMM_DEV_SERIAL, tmp_buf, cmd_len, 0);
 
         usleep(500 * 1000);
         mState = STATE_FINISHED;
 
         system("reboot");
+        LOGD ("Reboot system...\n");
     }
-
-    //Avoid upgrade not start, but get this instance to upgrade again.
-    mState = STATE_STOPED;
-    mCfbcIns->SetUpgradeFlag(0);
-    mpObserver->onUpgradeStatus(mState, ret_code);
 
     return false;
 }

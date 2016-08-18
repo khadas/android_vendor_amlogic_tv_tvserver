@@ -9,14 +9,30 @@
 
 
 static CFbcProtocol *mInstace = NULL;
-CFbcProtocol *GetFbcProtocolInstance()
+CFbcProtocol *GetFbcProtocolInstance(unsigned int baud_rate)
 {
     if (mInstace == NULL) {
         mInstace = new CFbcProtocol();
-        mInstace->start();
+        if (NULL == mInstace || (-1 == mInstace->start(baud_rate))) {
+
+            if (mInstace)
+                delete mInstace;
+
+            mInstace = NULL;
+
+            LOGD ("Create FbcProtocolInstance Failure!");
+        }
     }
 
     return mInstace;
+}
+
+void ResetFbcProtocolInstance()
+{
+    if (mInstace)
+        delete mInstace;
+
+    mInstace = NULL;
 }
 
 CFbcProtocol::CFbcProtocol()
@@ -44,13 +60,13 @@ CFbcProtocol::~CFbcProtocol()
     delete[] mpRevDataBuf;
 }
 
-int CFbcProtocol::start()
+int CFbcProtocol::start(unsigned int baud_rate)
 {
     //int serial_port = config_get_int("TV", "fbc.communication.serial", SERIAL_C);
     if (mSerialPort.OpenDevice(SERIAL_C) < 0) {
     } else {
         LOGD("%s %d be called......\n", __FUNCTION__, __LINE__);
-        mSerialPort.setup_serial();
+        mSerialPort.setup_serial(baud_rate);
     }
 
     if (mEpoll.create() < 0) {
@@ -507,6 +523,7 @@ int CFbcProtocol::fbcSetBatchValue(COMM_DEV_TYPE_E toDev, unsigned char *cmd_buf
         write_buf[count + 6] = (crc32value >> 8) & 0xFF;
         write_buf[count + 7] = (crc32value >> 16) & 0xFF;
         write_buf[count + 8] = (crc32value >> 24) & 0xFF;
+
         sendDataOneway(COMM_DEV_SERIAL, write_buf, count + 9, 0);
     }
     return 0;

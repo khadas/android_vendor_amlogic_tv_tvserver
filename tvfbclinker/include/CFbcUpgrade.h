@@ -17,6 +17,7 @@ public:
 
     int start();
     int stop();
+    void SetUpgradeBaudRate(unsigned int baudRate);
     int SetUpgradeFileName(char *file_name);
     int SetUpgradeBlockSize(int block_size);
     int SetUpgradeMode(int mode);
@@ -88,6 +89,7 @@ public:
 
 private:
     bool threadLoop();
+    bool AdjustUpgradeSpeed();
     bool parseUpgradeInfo(const int section, const int partition, int &start, int &length);
     bool initBlocksInfo(std::list<sectionInfo> &mList);
     bool sendUpgradeCmd(int &ret_code);
@@ -103,6 +105,7 @@ private:
     int mBinFileSize;
     int mUpgradeBlockSize;
     unsigned char *mBinFileBuf;
+	unsigned int mNewBaudRate;
     char mFileName[256];
     unsigned char mDataBuf[CC_UPGRADE_DATA_BUF_SIZE];
     IUpgradeFBCObserver *mpObserver;

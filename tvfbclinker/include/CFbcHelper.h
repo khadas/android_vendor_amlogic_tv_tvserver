@@ -7,7 +7,7 @@ typedef enum COMM_DEV_TYPE_NO {
 } COMM_DEV_TYPE_E;
 
 enum fbc_command_t {
-    VPU_CMD_NULL = 0,
+    FBC_REBOOT_UPGRADE_AUTO_SPEED = 0,
     FBC_REBOOT_UPGRADE = 0x1,
     FBC_USER_SETTING_DEFAULT = 0x02,
     FBC_USER_SETTING_SET,

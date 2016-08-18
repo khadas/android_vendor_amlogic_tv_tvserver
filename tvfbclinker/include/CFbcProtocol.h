@@ -33,7 +33,7 @@ public:
     };
     CFbcProtocol();
     ~CFbcProtocol();
-    int start();
+    int start(unsigned int baud_rate);
     //---------------------------------------------
 
     //---------------------------------------------
@@ -78,6 +78,7 @@ private:
     nsecs_t mFbcEnterKeyDownTime;
 };
 
-extern CFbcProtocol *GetFbcProtocolInstance();
+extern CFbcProtocol *GetFbcProtocolInstance(unsigned int baud_rate = 115200);
+extern void ResetFbcProtocolInstance();
 
 #endif

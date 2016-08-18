@@ -13,8 +13,8 @@
 #include <errno.h>
 
 
-static const int speed_arr[] = {B115200, B38400, B19200, B9600, B4800, B2400, B1200, B300, B38400, B19200, B9600, B4800, B2400, B1200, B300};
-static const int name_arr[] = { 115200, 38400, 19200, 9600, 4800, 2400, 1200, 300, 38400, 19200, 9600, 4800, 2400, 1200, 300};
+static const int speed_arr[] = {B230400, B115200, B38400, B19200, B9600, B4800, B2400, B1200, B300, B38400, B19200, B9600, B4800, B2400, B1200, B300};
+static const int name_arr[] = { 230400, 115200, 38400, 19200, 9600, 4800, 2400, 1200, 300, 38400, 19200, 9600, 4800, 2400, 1200, 300};
 static const char *DEV_PATH_S0 = "/dev/ttyS0";
 static const char *DEV_PATH_S1 = "/dev/ttyS1";
 static const char *DEV_PATH_S2 = "/dev/ttyS2";
@@ -36,7 +36,7 @@ public:
     int writeFile(const unsigned char *pData, unsigned int uLen);
     int readFile(unsigned char *pBuf, unsigned int uLen);
     int set_opt(int speed, int db, int sb, char pb, int overtime, bool raw_mode);
-    int setup_serial();
+    int setup_serial(unsigned int baud_rate);
     int getDevId()
     {
         return mDevId;

@@ -226,9 +226,9 @@ int CSerialPort::set_Parity (int fd, int databits, int stopbits, int parity)
     return (1);
 }
 
-int CSerialPort::setup_serial()
+int CSerialPort::setup_serial(unsigned int baud_rate)
 {
-    set_speed(mFd, 115200);
+    set_speed(mFd, baud_rate);
     set_Parity(mFd, 8, 1, 'N');
     return 0;
 }

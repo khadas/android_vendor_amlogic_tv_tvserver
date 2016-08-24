@@ -2077,7 +2077,7 @@ int CTvin::CTvinSigDetect::initSigState()
     m_cur_sig_info.reserved = 0;
     m_pre_sig_info = m_cur_sig_info;
     mKeepNosigTime = 0;
-    m_is_nosig_checktimes_once_valid = false;
+    mIsNosig = false;
     mResumeLaterTime = 0;
     return 0;
 }
@@ -2102,6 +2102,10 @@ int CTvin::CTvinSigDetect::requestAndWaitPauseDetect()
 {
     CMutex::Autolock _l ( mLock );
     LOGD ( "requestAndWaitPauseDetect()" );
+
+    mKeepNosigTime = 0;
+    mIsNosig = false;
+
     m_request_pause_detect = true;
 
     if ( mDetectState == STATE_RUNNING ) {
@@ -2121,37 +2125,28 @@ int CTvin::CTvinSigDetect::resumeDetect(int later)//ms
     return 0;
 }
 
-void CTvin::CTvinSigDetect::setVdinNoSigCheckKeepTimes(int times, bool isOnce)
+void CTvin::CTvinSigDetect::setVdinNoSigCheckKeepTimes(int times, bool isOnce __unused)
 {
     LOGD("setVdinNoSigCheckKeepTimes mKeepNosigTime = %d, times = %d", mKeepNosigTime, times);
     mKeepNosigTime = times;
-    m_is_nosig_checktimes_once_valid = isOnce;
 }
 
 int CTvin::CTvinSigDetect::Tv_TvinSigDetect ( int &sleeptime )
 {
     CTvin::getInstance()->VDIN_GetSignalInfo ( &m_cur_sig_info ); //get info
-    //set no sig check times
-    static long long sNosigKeepTime = 0;
-    //LOGD("stime=%d status=%d, fmt = %d sNosigKeepTime = %lld, mKeepNosigTime = %d",
-    //    sleeptime, m_cur_sig_info.status, m_cur_sig_info.fmt, sNosigKeepTime, mKeepNosigTime);
-    if ( m_cur_sig_info.status == TVIN_SIG_STATUS_NOSIG  || m_cur_sig_info.status == TVIN_SIG_STATUS_NULL ) {
-        sNosigKeepTime += sleeptime;
-        if ( sNosigKeepTime > mKeepNosigTime ) { //real no sig
-            //cur is no sig
-            if ( m_is_nosig_checktimes_once_valid ) { //just once change,is nosig, and default it
-                m_is_nosig_checktimes_once_valid = false;
-                mKeepNosigTime = 0;
-            }
-        } else {//not
-            m_cur_sig_info.status = m_pre_sig_info.status;
+
+    LOGD("Tv_TvinSigDetect, m_cur_sig_info.status = %d, mKeepNosigTime=%d, mIsNoSig=%d",
+        m_cur_sig_info.status, mKeepNosigTime, mIsNosig);
+
+    if (m_cur_sig_info.status == TVIN_SIG_STATUS_NOSIG
+        || m_cur_sig_info.status == TVIN_SIG_STATUS_NULL) {
+        if (mKeepNosigTime < 20) {
+            mKeepNosigTime++;
         }
+        mIsNosig = true;
     } else {
-        sNosigKeepTime = 0;
-        if ( m_is_nosig_checktimes_once_valid ) { //just once change,not nosig,default is
-            m_is_nosig_checktimes_once_valid = false;
-            mKeepNosigTime = 0;
-        }
+        mKeepNosigTime = 0;
+        mIsNosig = false;
     }
 
     //if state change
@@ -2199,7 +2194,12 @@ int CTvin::CTvinSigDetect::Tv_TvinSigDetect ( int &sleeptime )
             break;
 
         case TVIN_SIG_STATUS_NOSIG:
-            mpObserver->onSigStillNosig();
+            LOGD("Tv_TvinSigDetect, m_cur_sig_info.status = %d, mKeepNosigTime=%d, mIsNoSig=%d",
+                m_cur_sig_info.status, mKeepNosigTime, mIsNosig);
+            if (mKeepNosigTime == 20 && mIsNosig) {
+                mpObserver->onSigStillNosig();
+                mKeepNosigTime++;
+            }
             break;
 
         case TVIN_SIG_STATUS_NULL:

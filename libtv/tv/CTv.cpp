@@ -2138,30 +2138,6 @@ void CTv::onSigUnStableToNoSig()
 
 void CTv::onSigNullToNoSig()
 {
-    SetAudioMuteForTv(CC_AUDIO_MUTE);
-    if ( SOURCE_TV != m_source_input ) {
-        const char *value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-        if ( strcmp ( value, "black" ) == 0 ) {
-            mAv.DisableVideoWithBlackColor();
-        } else {
-            mAv.DisableVideoWithBlueColor();
-        }
-        mpTvin->Tvin_StopDecoder();
-    } else {
-        mpTvin->SwitchSnow( true );;
-        mpTvin->Tvin_StartDecoder ( mSigDetectThread.getCurSigInfo() );
-        mAv.EnableVideoNow( false );
-    }
-
-    tvin_info_t info = mSigDetectThread.getCurSigInfo();
-
-    TvEvent::SignalInfoEvent ev;
-    ev.mTrans_fmt = info.trans_fmt;
-    ev.mFmt = info.fmt;
-    ev.mStatus = info.status;
-    ev.mReserved = info.reserved;
-    sendTvEvent ( ev );
-    LOGD ( "%s, Enable bluescreen for signal change in NullToNoSig!", __FUNCTION__);
 }
 
 void CTv::onSigNoSigToUnstable()
@@ -2184,6 +2160,30 @@ void CTv::onSigStillUnstable()
 
 void CTv::onSigStillNosig()
 {
+    LOGD("onSigStillNosig");
+    SetAudioMuteForTv(CC_AUDIO_MUTE);
+    if (SOURCE_TV != m_source_input) {
+        const char *value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
+        if (strcmp(value, "black") == 0) {
+            mAv.DisableVideoWithBlackColor();
+        } else {
+            mAv.DisableVideoWithBlueColor();
+        }
+        mpTvin->Tvin_StopDecoder();
+    } else {
+        mpTvin->SwitchSnow( true );;
+        mpTvin->Tvin_StartDecoder ( mSigDetectThread.getCurSigInfo() );
+        mAv.EnableVideoNow( false );
+    }
+
+    tvin_info_t info = mSigDetectThread.getCurSigInfo();
+
+    TvEvent::SignalInfoEvent ev;
+    ev.mTrans_fmt = info.trans_fmt;
+    ev.mFmt = info.fmt;
+    ev.mStatus = info.status;
+    ev.mReserved = info.reserved;
+    sendTvEvent ( ev );
 }
 
 void CTv::onSigStillNoSupport()

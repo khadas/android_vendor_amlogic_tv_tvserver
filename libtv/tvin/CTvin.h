@@ -1190,7 +1190,7 @@ public:
         tvin_info_t m_cur_sig_info;
         tvin_info_t m_pre_sig_info;
         int mKeepNosigTime;
-        bool m_is_nosig_checktimes_once_valid;
+        bool mIsNosig;
         mutable CMutex           mLock;
         CCondition       mDetectPauseCondition;
         CCondition       mRequestPauseCondition;

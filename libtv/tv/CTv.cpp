@@ -1496,6 +1496,10 @@ int CTv::OpenTv ( void )
 {
     //Tv_Spread_Spectrum();
     //reboot system by fbc setting.
+    if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_TVIN) > 0) {
+        mpTvin->VDIN_AddVideoPath(TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
+    }
+
     const char * value = config_get_str ( CFG_SECTION_TV, CFG_FBC_PANEL_INFO, "null" );
     LOGD("open tv, get fbc panel info:%s\n", value);
     if (strcmp(value, "edid") == 0 ) {
@@ -1725,7 +1729,8 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
         LOGW ( "[ctv]%s,same input change display mode", __FUNCTION__ );
         return 0;
     }
-
+    stopPlaying(false);
+    KillMediaServerClient();
     //if HDMI, need to set EDID of each port
     if (mSetHdmiEdid) {
         int tmp_ret = 0;
@@ -1791,6 +1796,7 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
         //
         mpTvin->Tvin_StopDecoder();
         mpTvin->VDIN_ClosePort();
+        mpTvin->Tvin_WaitPathInactive ( TV_PATH_TYPE_TVIN );
 
         //double confirm we set the main volume lut buffer to mpeg
         RefreshAudioMasterVolume ( SOURCE_MPEG );
@@ -1846,14 +1852,8 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
             m_sig_stable_nums = 0;
             mSigDetectThread.setObserver ( this );
             mSigDetectThread.initSigState();
-            int resumeLater = 0;
-            if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3) {
-                resumeLater = 1000;
-            } else {
-                resumeLater = 1500;
-            }
             mSigDetectThread.setVdinNoSigCheckKeepTimes(150, true);
-            mSigDetectThread.resumeDetect(resumeLater);
+            mSigDetectThread.resumeDetect(0);
         }
     }
 
@@ -5128,6 +5128,22 @@ int CTv::SetVideoAxis(int x, int y, int width, int heigth)
 int CTv::handleGPIO(const char *port_name, bool is_out, int edge)
 {
     return pGpio->processCommand(port_name, is_out, edge);
+}
+
+int CTv::KillMediaServerClient()
+{
+    char buf[PROPERTY_VALUE_MAX] = {0};
+    int len = property_get("media.player.pid", buf, "");
+    if (len > 0) {
+        char* end;
+        int pid = strtol(buf, &end, 0);
+        if (end != buf) {
+            LOGD("[ctv] %s, remove video path, but video decorder has used, kill it:%d\n", __FUNCTION__, pid);
+            kill(pid, SIGKILL);
+            property_set("media.player.pid", "");
+        }
+    }
+    return 0;
 }
 
 void CTv::dump(String8 &result)

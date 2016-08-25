@@ -1047,7 +1047,7 @@ public:
     int get_hdmi_sampling_rate();
     int SwitchPort (tvin_port_t source_port );
     int SwitchSnow(bool enable);
-
+    int Tvin_WaitPathInactive ( tv_path_type_t pathtype );
     int VDIN_AddPath ( const char *videopath );
     int VDIN_RmDefPath ( void );
     int VDIN_RmTvPath ( void );

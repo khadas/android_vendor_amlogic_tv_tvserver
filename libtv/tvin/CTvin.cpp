@@ -1891,6 +1891,7 @@ int CTvin::SwitchPort (tvin_port_t source_port )
     }
 
     VDIN_ClosePort();
+    Tvin_WaitPathInactive ( TV_PATH_TYPE_DEFAULT );
     // Open Port
     if ( VDIN_OpenPort ( source_port ) < 0 ) {
         LOGD ( "%s, OpenPort failed, source_port =%x ", __FUNCTION__,  source_port );
@@ -1926,12 +1927,12 @@ int CTvin::uninit_vdin ( void )
     return 0;
 }
 
-int CTvin::Tvin_RemovePath ( tv_path_type_t pathtype )
+int CTvin::Tvin_WaitPathInactive ( tv_path_type_t pathtype )
 {
     int ret = -1;
-    int i = 0, dly = 10;
+    int i = 0, dly = 100;
 
-    for ( i = 0; i<500; i++ ) {
+    for ( i = 0; i<50; i++ ) {
         ret = Tvin_CheckPathActive ( pathtype );
         if ( ret == TV_PATH_STATUS_INACTIVE ) {
             LOGD ( "%s, check path is inactive, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
@@ -1944,7 +1945,15 @@ int CTvin::Tvin_RemovePath ( tv_path_type_t pathtype )
     if ( i == 500 ) {
         LOGE ( "%s, check path active faild, %d ms gone.\n", "TV", ( dly * i ) );
     }
+    return 0;
+}
 
+int CTvin::Tvin_RemovePath ( tv_path_type_t pathtype )
+{
+    int ret = -1;
+    int i = 0, dly = 10;
+
+    Tvin_WaitPathInactive(pathtype);
     if ( pathtype == TV_PATH_TYPE_DEFAULT ) {
         for ( i = 0; i < 50; i++ ) {
             ret = VDIN_RmDefPath();

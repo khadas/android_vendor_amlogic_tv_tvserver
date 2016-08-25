@@ -437,6 +437,7 @@ private:
     int setAudioPreGain(tv_source_input_t source_input);
     float getAudioPreGain(tv_source_input_t source_input);
     void resumeSpdifStatus();
+    int KillMediaServerClient();
 
     CAudioAlsa mAudioAlsa;
     CAudioEffect mAudioEffect;

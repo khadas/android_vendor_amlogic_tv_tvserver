@@ -69,6 +69,7 @@
 #define PROP_AUDIO_CARD_NUM                     "snd.card.totle.num"
 
 #define UBOOTENV_OUTPUTMODE                     "ubootenv.var.outputmode"
+#define UBOOTENV_HDMIMODE                  "ubootenv.var.hdmimode"
 #define UBOOTENV_LCD_REVERSE                    "ubootenv.var.lcd_reverse"
 #define UBOOTENV_CONSOLE                        "ubootenv.var.console"
 #define UBOOTENV_PROJECT_INFO                   "ubootenv.var.project_info"

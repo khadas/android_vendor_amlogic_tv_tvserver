@@ -148,57 +148,63 @@ int rebootSystemByUartPanelInfo(CFbcCommunication *fbc)
     LOGD("panel_output prop = %s, panel reverse prop = %s", outputmode_prop_value, lcd_reverse_prop_value);
     switch (panel_outputmode) {
     case T_1080P50HZ:
-        if (0 != strcmp(outputmode_prop_value, "1080p50hz")) {
+        if ( NULL ==strstr (outputmode_prop_value, "1080p") ) {
             LOGD("panel_output changed to 1080p50hz");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
             setBootEnv(UBOOTENV_OUTPUTMODE, "1080p50hz");
+            setBootEnv(UBOOTENV_HDMIMODE, "1080p50hz");
         }
         break;
     case T_2160P50HZ420:
-        if (0 != strcmp(outputmode_prop_value, "2160p50hz420")) {
+        if ( (NULL == strstr(outputmode_prop_value, "2160p")) || (NULL == strstr(outputmode_prop_value, "420")) ) {
             LOGD("panel_output changed to 2160p50hz420");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
             setBootEnv(UBOOTENV_OUTPUTMODE, "2160p50hz420");
+            setBootEnv(UBOOTENV_HDMIMODE, "2160p50hz420");
         }
         break;
     case T_1080P50HZ44410BIT:
-        if (0 != strcmp(outputmode_prop_value, "1080p50hz44410bit")) {
+        if ( (NULL == strstr(outputmode_prop_value, "1080p")) || (NULL == strstr(outputmode_prop_value, "44410bit")) ) {
             LOGD("panel_output changed to 1080p50hz44410bit");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
             setBootEnv(UBOOTENV_OUTPUTMODE, "1080p50hz44410bit");
+            setBootEnv(UBOOTENV_HDMIMODE, "1080p50hz44410bit");
         }
         break;
     case T_2160P50HZ42010BIT:
-        if (0 != strcmp(outputmode_prop_value, "2160p50hz42010bit")) {
+        if ( (NULL == strstr(outputmode_prop_value, "2160p")) || (NULL == strstr(outputmode_prop_value, "42010bit")) ) {
             LOGD("panel_output changed to 2160p50hz42010bit");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
             setBootEnv(UBOOTENV_OUTPUTMODE, "2160p50hz42010bit");
+            setBootEnv(UBOOTENV_HDMIMODE, "2160p50hz42010bit");
         }
         break;
     case T_2160P50HZ42210BIT:
-        if (0 != strcmp(outputmode_prop_value, "2160p50hz42210bit")) {
+        if ( (NULL == strstr(outputmode_prop_value, "2160p")) || (NULL == strstr(outputmode_prop_value, "42210bit")) ) {
             LOGD("panel_output changed to 2160p50hz42210bit");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
             setBootEnv(UBOOTENV_OUTPUTMODE, "2160p50hz42210bit");
+            setBootEnv(UBOOTENV_HDMIMODE, "2160p50hz42210bit");
         }
         break;
     case T_2160P50HZ444:
-        if (0 != strcmp(outputmode_prop_value, "2160p50hz444")) {
+        if ( (NULL == strstr(outputmode_prop_value, "2160p")) || (NULL == strstr(outputmode_prop_value, "444")) ) {
             LOGD("panel_output changed to 2160p50hz444");
             if (0 == env_different_as_cur) {
                 env_different_as_cur = 1;
             }
             setBootEnv(UBOOTENV_OUTPUTMODE, "2160p50hz444");
+            setBootEnv(UBOOTENV_HDMIMODE, "2160p50hz444");
         }
         break;
     default:

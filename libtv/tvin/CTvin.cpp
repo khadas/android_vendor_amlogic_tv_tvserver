@@ -1891,7 +1891,7 @@ int CTvin::SwitchPort (tvin_port_t source_port )
     }
 
     VDIN_ClosePort();
-    Tvin_WaitPathInactive ( TV_PATH_TYPE_DEFAULT );
+    Tvin_WaitPathInactive ( TV_PATH_TYPE_TVIN );
     // Open Port
     if ( VDIN_OpenPort ( source_port ) < 0 ) {
         LOGD ( "%s, OpenPort failed, source_port =%x ", __FUNCTION__,  source_port );
@@ -2144,9 +2144,6 @@ int CTvin::CTvinSigDetect::Tv_TvinSigDetect ( int &sleeptime )
 {
     CTvin::getInstance()->VDIN_GetSignalInfo ( &m_cur_sig_info ); //get info
 
-    LOGD("Tv_TvinSigDetect, m_cur_sig_info.status = %d, mKeepNosigTime=%d, mIsNoSig=%d",
-        m_cur_sig_info.status, mKeepNosigTime, mIsNosig);
-
     if (m_cur_sig_info.status == TVIN_SIG_STATUS_NOSIG
         || m_cur_sig_info.status == TVIN_SIG_STATUS_NULL) {
         if (mKeepNosigTime < 20) {
@@ -2203,8 +2200,6 @@ int CTvin::CTvinSigDetect::Tv_TvinSigDetect ( int &sleeptime )
             break;
 
         case TVIN_SIG_STATUS_NOSIG:
-            LOGD("Tv_TvinSigDetect, m_cur_sig_info.status = %d, mKeepNosigTime=%d, mIsNoSig=%d",
-                m_cur_sig_info.status, mKeepNosigTime, mIsNosig);
             if (mKeepNosigTime == 20 && mIsNosig) {
                 mpObserver->onSigStillNosig();
                 mKeepNosigTime++;

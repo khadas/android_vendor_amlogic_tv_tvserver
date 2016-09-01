@@ -32,6 +32,7 @@
 #include <signal.h>
 #include <hardware_legacy/power.h>
 #include <media/AudioSystem.h>
+#include <sys/wait.h>
 
 
 #include <tvutils.h>
@@ -1796,7 +1797,7 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
         //
         mpTvin->Tvin_StopDecoder();
         mpTvin->VDIN_ClosePort();
-        mpTvin->Tvin_WaitPathInactive ( TV_PATH_TYPE_TVIN );
+        mpTvin->Tvin_WaitPathInactive ( TV_PATH_TYPE_DEFAULT );
 
         //double confirm we set the main volume lut buffer to mpeg
         RefreshAudioMasterVolume ( SOURCE_MPEG );
@@ -5132,6 +5133,7 @@ int CTv::handleGPIO(const char *port_name, bool is_out, int edge)
 
 int CTv::KillMediaServerClient()
 {
+    int retval,status;
     char buf[PROPERTY_VALUE_MAX] = {0};
     int len = property_get("media.player.pid", buf, "");
     if (len > 0) {
@@ -5139,8 +5141,16 @@ int CTv::KillMediaServerClient()
         int pid = strtol(buf, &end, 0);
         if (end != buf) {
             LOGD("[ctv] %s, remove video path, but video decorder has used, kill it:%d\n", __FUNCTION__, pid);
-            kill(pid, SIGKILL);
-            property_set("media.player.pid", "");
+            if ( 0 == (waitpid( pid, &status, WNOHANG ))) {
+                retval = kill( pid,SIGKILL );
+                if ( retval )  {
+                    LOGD("[ctv] %s, kill it:%d failed!\n", __FUNCTION__, pid);
+                    waitpid( pid, &status, 0 );
+                } else  {
+                    LOGD("[ctv] %s, kill it:%d successfully !\n", __FUNCTION__, pid);
+                }
+                property_set("media.player.pid", "");
+            }
         }
     }
     return 0;

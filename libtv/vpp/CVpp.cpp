@@ -86,6 +86,13 @@ int CVpp::Vpp_Init(const char *pq_db_path)
         Set_Fixed_NonStandard(2); //open
     }
 
+    if (LoadVppLdimRegs()) {
+        LOGD ("Load local dimming regs success.\n");
+    }
+    else {
+        LOGD ("Load local dimming regs failure!!!\n");
+    }
+
     LoadVppSettings(SOURCE_TYPE_MPEG, TVIN_SIG_FMT_NULL, INDEX_2D, TVIN_TFMT_2D);
     return ret;
 }
@@ -168,6 +175,44 @@ int CVpp::Vpp_LoadRegs(am_regs_t regs)
     }
 
     return rt;
+}
+
+bool CVpp::LoadVppLdimRegs()
+{
+    bool ret = true;
+    int ldFd = -1;
+
+    if (NULL == mpPqData)
+        ret = false;
+
+    if (ret) {
+        ldFd = open(LDIM_PATH, O_RDWR);
+
+        if (ldFd < 0) {
+            LOGE("Open ldim module, error(%s)!\n", strerror(errno));
+            ret = false;
+        }
+    }
+
+    if (ret) {
+
+        vpu_ldim_param_s *ldim_param_temp = new vpu_ldim_param_s();
+
+        if (ldim_param_temp) {
+
+            if (!mpPqData->PQ_GetLDIM_Regs(ldim_param_temp) || ioctl(ldFd, LDIM_IOC_PARA, ldim_param_temp) < 0)
+                ret = false;
+
+            delete ldim_param_temp;
+        }
+        else {
+            ret = false;
+        }
+
+        close (ldFd);
+    }
+
+    return ret;
 }
 
 int CVpp::LoadVppSettings(tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt,

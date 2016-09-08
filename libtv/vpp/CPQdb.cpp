@@ -2122,3 +2122,44 @@ int CPqData::PQ_GetPhaseArray(am_phase_t *am_phase)
     return nums;
 }
 
+bool CPqData::PQ_GetLDIM_Regs(vpu_ldim_param_s *vpu_ldim_param)
+{
+    CSqlite::Cursor c;
+    bool ret = true;
+    int i = 0;
+    int ldimMemsSize = sizeof (vpu_ldim_param_s) / sizeof (int);
+
+    LOGD ("%s, entering...\n", __func__);
+    LOGD ("ldimMemsSize = %d\n", ldimMemsSize);
+
+    if (vpu_ldim_param != NULL) {
+        int* temp = reinterpret_cast<int*>(vpu_ldim_param);
+
+        if (this->select("select value from LDIM_1; ", c) != -1 ) {
+            int retNums = c.getCount();
+
+            LOGD ("retNums = %d\n", retNums);
+
+            if ( retNums > 0 && retNums == ldimMemsSize ) {
+                do {
+
+                    temp[i] = c.getUInt(0);
+                    LOGD ("%d - %d\n", i + 1, temp[i]);
+
+                    i++;
+                }while (c.moveToNext());
+            }
+            else {
+                LOGW ("DataBase not match vpu_ldim_param_s\n");
+                ret = false;
+            }
+        }
+        else {
+            LOGW ("select value from LDIM_1; failure\n");
+            ret = false;
+        }
+    }
+
+    return ret;
+}
+

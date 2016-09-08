@@ -161,6 +161,7 @@ public:
     void transferFixTable();
     int replacePQDb(const char *newFilePath);
     int getSharpnessFlag();
+    bool PQ_GetLDIM_Regs(vpu_ldim_param_s *vpu_ldim_param);
 
 private:
     void initDB();

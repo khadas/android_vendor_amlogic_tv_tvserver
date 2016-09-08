@@ -4,6 +4,7 @@
 #include "ve.h"
 #include "cm.h"
 #include "amstream.h"
+#include "ldim.h"
 
 
 //struct ve_dnlp_s          video_ve_dnlp;
@@ -63,6 +64,10 @@
 #define AMVECM_IOC_GAMMA_TABLE_B  _IOW(AMVECM_IOC_MAGIC, 0x44, struct tcon_gamma_table_s)
 #define AMVECM_IOC_S_RGB_OGO      _IOW(AMVECM_IOC_MAGIC, 0x45, struct tcon_rgb_ogo_s)
 #define AMVECM_IOC_G_RGB_OGO      _IOR(AMVECM_IOC_MAGIC, 0x46, struct tcon_rgb_ogo_s)
+
+// VPP.Local dimming command list
+#define LDIM_IOC_PARA        _IOW(AMVECM_IOC_MAGIC, 0x50, struct vpu_ldim_param_s)
+
 
 #endif /* __AMVECM_H */
 

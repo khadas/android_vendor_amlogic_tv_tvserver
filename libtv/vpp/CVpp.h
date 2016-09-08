@@ -6,6 +6,7 @@
 #include "pqdata.h"
 #include "../tvin/CTvin.h"
 #include "fbcutils/CFbcCommunication.h"
+#include "ldim.h"
 
 #define GLOBAL_OGO_FORMAT_FLAG  0x6688
 #define RGB_FORMAT          0
@@ -18,6 +19,8 @@
 #define VPP_3D_DEV_PATH    "/dev/amvideo"
 #define VPP_PANEL_BACKLIGHT_DEV_PATH   "/sys/class/aml_bl/power"
 #define BACKLIGHT_BRIGHTNESS "/sys/class/backlight/aml-bl/brightness"
+
+#define LDIM_PATH    "/dev/aml_ldim"
 
 #define MODE_VPP_3D_DISABLE     0x00000000
 #define MODE_VPP_3D_ENABLE      0x00000001
@@ -408,6 +411,8 @@ private:
     int VPP_FBCColorTempBatchGet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t *);
     int VPP_FBCColorTempBatchSet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t);
     int VPP_FBCSetColorTemperature(vpp_color_temperature_mode_t);
+
+    bool LoadVppLdimRegs();
 
     static CVpp *mInstance;
     bool mHdmiOutFbc;

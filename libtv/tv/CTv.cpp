@@ -256,12 +256,6 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
             ev.mFmt = TVIN_SIG_FMT_NULL;
             ev.mReserved = 0;
             sendTvEvent ( ev );
-
-            CMessage msg;
-            msg.mDelayMs = 0;
-            msg.mType = CTvMsgQueue::TV_MSG_VIDEO_AVAILABLE_LATER;
-            msg.mpPara[0] = 2;
-            mTvMsgQueue.sendMsg ( msg );
         }
     } else if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_NO_SIG ) { //作为信号消失
         if (/*m_source_input == SOURCE_TV || */m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //just playing
@@ -332,10 +326,6 @@ void CTv::onEvent(const CAv::AVEvent &ev)
     }
 
     case CAv::AVEvent::EVENT_AV_RESUEM: {
-        int feState = mFrontDev.getStatus();
-        if ((feState & FE_HAS_LOCK) != FE_HAS_LOCK) {
-            break;
-        }
         TvEvent::AVPlaybackEvent AvPlayBackEvt;
         AvPlayBackEvt.mMsgType = TvEvent::AVPlaybackEvent::EVENT_AV_PLAYBACK_RESUME;
         AvPlayBackEvt.mProgramId = (int)ev.param;
@@ -1187,12 +1177,9 @@ int CTv::stopPlaying(bool isShowTestScreen)
         SetAudioMuteForTv(CC_AUDIO_MUTE);
         ClearAnalogFrontEnd();
     } else if (m_source_input ==  SOURCE_DTV) {
-        //mFrontDev.setPara(FE_DTMB, 51000000, 0, 0);
         mSigDetectThread.requestAndWaitPauseDetect();
         mAv.EnableVideoBlackout();
         mAv.StopTS ();
-        //mTvEpg.leaveChannel();
-        //mTvEpg.leaveProgram();
     }
 
     if ( SOURCE_TV != m_source_input ) {
@@ -3349,6 +3336,11 @@ int CTv::SetAudioMuteForTv(int muteOrUnmute)
     ret |= SetAudioI2sMute(mAudioMuteStatusForTv);
     AudioSystem::setStreamMute(AUDIO_STREAM_MUSIC, mAudioMuteStatusForTv);
     return ret;
+}
+
+int CTv::GetAudioMuteForTv()
+{
+    return mAudioMuteStatusForTv;
 }
 
 int CTv::SetAudioSPDIFSwitch(int tmp_val)

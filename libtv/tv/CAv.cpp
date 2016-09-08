@@ -260,7 +260,6 @@ tvin_sig_fmt_t CAv::getVideoResolutionToFmt()
 
     tvReadSysfs(SYS_VIDEO_FRAME_HEIGHT, buf);
     int height = atoi(buf);
-    LOGD("getVideoResolutionToFmt height = %d", height);
     if (height <= 576) {
         sig_fmt = TVIN_SIG_FMT_HDMI_720X480P_60HZ;
     } else if (height > 576 && height <= 1088) {

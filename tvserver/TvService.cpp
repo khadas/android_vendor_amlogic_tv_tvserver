@@ -1232,6 +1232,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     // FACTORY END
 
     // AUDIO & AUDIO MUTE
+    case SET_AUDIO_MUTE_FOR_TV: {
+        if (mpTv->GetAudioMuteForTv()) {
+            int status = p.readInt32();
+            int ret = mpTv->SetAudioMuteForTv(status);
+            r->writeInt32(ret);
+        }
+        break;
+    }
     case SET_AUDIO_MUTEKEY_STATUS: {
         int status = p.readInt32();
         int ret = mpTv->SetAudioMuteForSystem(status);

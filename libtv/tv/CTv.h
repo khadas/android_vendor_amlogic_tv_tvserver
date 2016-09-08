@@ -277,6 +277,7 @@ public:
     virtual int SetAudioMuteForSystem(int muteOrUnmute);
     virtual int GetAudioMuteForSystem();
     virtual int SetAudioMuteForTv(int muteOrUnmute);
+    virtual int GetAudioMuteForTv();
     int SetAudioAVOutMute(int muteStatus);
     int GetAudioAVOutMute();
     int SetAudioSPDIFMute(int muteStatus);

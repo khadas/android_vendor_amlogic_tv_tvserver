@@ -91,6 +91,11 @@ int CAv::ResetAudioDecoder()
     return AM_AV_ResetAudioDecoder ( mTvPlayDevId );
 }
 
+int CAv::SetADAudio(uint enable, int apid, AM_AV_AFormat_t afmt)
+{
+    return AM_AV_SetAudioAd(mTvPlayDevId, enable, apid, afmt);
+}
+
 int CAv::SetTSSource(AM_AV_TSSource_t ts_source)
 {
     return AM_AV_SetTSSource ( mTvPlayDevId, ts_source );

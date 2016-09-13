@@ -576,6 +576,7 @@ void CTvScanner::scan_store_dvb_ts_evt_service(SCAN_ServiceInfo_t *srv)
         mCurEv.mAfmt[i] = srv->aud_info.audios[i].fmt;
         strncpy(mCurEv.mAlang[i], srv->aud_info.audios[i].lang, 10);
         mCurEv.mAtype[i] = srv->aud_info.audios[i].audio_type;
+        mCurEv.mAExt[i] = srv->aud_info.audios[i].audio_exten;
     }
     mCurEv.mPcr = srv->pcr_pid;
     mCurEv.mScnt = srv->sub_info.subtitle_count;

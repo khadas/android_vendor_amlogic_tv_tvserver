@@ -137,6 +137,7 @@ public:
         int mAfmt[32];
         char mAlang[32][10];
         int mAtype[32];
+        int mAExt[32];
         int mPcr;
 
         int mScnt;

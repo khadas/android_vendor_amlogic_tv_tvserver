@@ -959,6 +959,19 @@ int CTv::ResetAudioDecoderForPCMOutput()
     return iOutRet;
 }
 
+int CTv::setAudioAD (int enable, int aPid, int aFmt)
+{
+    int iOutRet = 0;
+    if ( aPid < 0 || aFmt < 0 ) {
+        return iOutRet;
+    }
+
+    iOutRet = mAv.SetADAudio (enable, ( uint16_t ) aPid, ( AM_AV_AFormat_t ) aFmt );
+    LOGD ("%s, iOutRet = %d (%d,%d,%d)\n", __FUNCTION__,  iOutRet, enable, aPid, aFmt );
+
+    return iOutRet;
+}
+
 int CTv::playDtvProgram ( int mode, int freq, int para1, int para2,
                           int vpid, int vfmt, int apid, int afmt, int pcr, int audioCompetation)
 {
@@ -1960,7 +1973,7 @@ void CTv::onSigStillStable()
 void CTv::onEnableVideoLater(int framecount)
 {
     LOGD("onEnableVideoLater framecount = %d", framecount);
-    mAv.EnableVideoWhenVideoPlaying(2);
+    mAv.EnableVideoWhenVideoPlaying(framecount);
     if (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_HDMI ) {
         SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
         Tv_SetAudioInSource(m_source_input);

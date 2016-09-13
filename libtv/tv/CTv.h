@@ -156,6 +156,7 @@ public:
     int getAudioInfoByIndex ( int progId, int idx, int *pAFmt, String8 &lang );
     int switchAudioTrack ( int progId, int idx );
     int switchAudioTrack ( int aPid, int aFmt, int aParam );
+    int setAudioAD(int enable, int aPid, int aFmt);
     int getVideoFormatInfo ( int *pWidth, int *pHeight, int *pFPS, int *pInterlace );
     int ResetAudioDecoderForPCMOutput();
     int  setAudioChannel ( int channelIdx );

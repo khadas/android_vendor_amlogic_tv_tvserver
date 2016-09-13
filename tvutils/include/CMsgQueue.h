@@ -17,7 +17,7 @@ public:
     nsecs_t mWhenMs;//when, the msg will handle
     int mType;
     void *mpData;
-    unsigned char mpPara[3072];
+    unsigned char mpPara[3382];
 };
 
 class CMsgQueueThread: public CThread {

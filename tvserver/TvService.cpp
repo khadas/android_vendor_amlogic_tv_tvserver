@@ -125,6 +125,8 @@ void TvService::onTvEvent(const CTvEv &ev)
                     p.writeString16(String16(pScannerEv->mAlang[i]));
                 for (int i = 0; i < pScannerEv->mAcnt; i++)
                     p.writeInt32(pScannerEv->mAtype[i]);
+                for (int i = 0; i < pScannerEv->mAcnt; i++)
+                    p.writeInt32(pScannerEv->mAExt[i]);
                 p.writeInt32(pScannerEv->mPcr);
                 p.writeInt32(pScannerEv->mScnt);
                 for (int i = 0; i < pScannerEv->mScnt; i++)
@@ -2941,6 +2943,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int aFmt = p.readInt32();
         int aParam = p.readInt32();
         int ret = mpTv->switchAudioTrack(aPid, aFmt, aParam);
+        r->writeInt32(ret);
+        break;
+    }
+    case DTV_SET_AUDIO_AD: {
+        int aEnable = p.readInt32();
+        int aPid = p.readInt32();
+        int aFmt = p.readInt32();
+        int ret = mpTv->setAudioAD(aEnable, aPid, aFmt);
         r->writeInt32(ret);
         break;
     }

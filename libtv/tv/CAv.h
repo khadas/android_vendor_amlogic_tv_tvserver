@@ -91,6 +91,7 @@ public:
     int GetVideoStatus(AM_AV_VideoStatus_t *status);
     int SwitchTSAudio(int apid, AM_AV_AFormat_t afmt);
     int ResetAudioDecoder();
+    int SetADAudio(uint enable, int apid, AM_AV_AFormat_t afmt);
     int SetTSSource(AM_AV_TSSource_t ts_source);
     int StartTS(uint16_t vpid, uint16_t apid, uint16_t pcrid, AM_AV_VFormat_t vfmt, AM_AV_AFormat_t afmt);
     int StopTS();

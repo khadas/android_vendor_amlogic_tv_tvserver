@@ -1,5 +1,6 @@
 #define LOG_TAG "tvserver"
 #define LOG_TV_TAG "CTv"
+#define UNUSED(x) (void)x
 
 #include <stdio.h>
 #include <unistd.h>
@@ -67,7 +68,8 @@ static const int WALL_EFFECT_VALUE[CC_BAND_ITEM_CNT] = { 0, 0, 1, 2, 2, 0 };
 // Called each time a message is logged.
 static void sqliteLogCallback(void *data, int iErrCode, const char *zMsg)
 {
-    data = data;
+	//TODO
+    UNUSED(data);
     LOGD( "showbo sqlite (%d) %s\n", iErrCode, zMsg);
 }
 
@@ -458,7 +460,7 @@ void CTv::CTvMsgQueue::onEvent ( const CTvScanner::ScannerEvent &ev )
     CMessage msg;
     msg.mDelayMs = 0;
     msg.mType = CTvMsgQueue::TV_MSG_SCAN_EVENT;
-    memcpy(msg.mpPara, &ev, sizeof(ev));
+    memcpy(msg.mpPara, (void*)&ev, sizeof(ev));
     this->sendMsg ( msg );
 }
 
@@ -467,7 +469,7 @@ void CTv::CTvMsgQueue::onEvent ( const CFrontEnd::FEEvent &ev )
     CMessage msg;
     msg.mDelayMs = 0;
     msg.mType = CTvMsgQueue::TV_MSG_FE_EVENT;
-    memcpy(msg.mpPara, &ev, sizeof(ev));
+    memcpy(msg.mpPara, (void*)&ev, sizeof(ev));
     this->sendMsg ( msg );
 }
 
@@ -476,7 +478,7 @@ void CTv::CTvMsgQueue::onEvent ( const CTvEpg::EpgEvent &ev )
     CMessage msg;
     msg.mDelayMs = 0;
     msg.mType = CTvMsgQueue::TV_MSG_EPG_EVENT;
-    memcpy(msg.mpPara, &ev, sizeof(ev));
+    memcpy(msg.mpPara, (void*)&ev, sizeof(ev));
     this->sendMsg ( msg );
 }
 
@@ -485,7 +487,7 @@ void CTv::CTvMsgQueue::onEvent(const CAv::AVEvent &ev)
     CMessage msg;
     msg.mDelayMs = 0;
     msg.mType = CTvMsgQueue::TV_MSG_AV_EVENT;
-    memcpy(msg.mpPara, &ev, sizeof(ev));
+    memcpy(msg.mpPara, (void*)&ev, sizeof(ev));
     this->sendMsg ( msg );
 }
 

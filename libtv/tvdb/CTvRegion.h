@@ -36,7 +36,7 @@ public:
     Vector<String8> getAllCountry();
     // 取得该Region的信号源频率参数列表
     // @return 返回信号源频率参数列表
-    CTvChannel getChannels();
+    //CTvChannel getChannels();
 };
 
 #endif  //_CTVREGION_H

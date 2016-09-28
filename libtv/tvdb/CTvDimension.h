@@ -18,6 +18,8 @@
 
 #include "CTvLog.h"
 
+#include <vector>
+
 // TV ATSC rating dimension
 class CTvDimension {
 public:
@@ -53,7 +55,7 @@ public:
     //int* getLockStatus();
     int getLockStatus(int valueIndex);
     void getLockStatus(String8 abbrevs[], int lock[], int *array_len);
-    int getAbbrev(String8 abb[]);
+    int getAbbrev(std::vector<String8> abb);
     String8 getAbbrev(int valueIndex);
     int getText(String8 tx[]);
     String8 getText(int valueIndex);

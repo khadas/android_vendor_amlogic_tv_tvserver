@@ -1,5 +1,6 @@
 #define LOG_TAG "tvserver"
 #define LOG_TV_TAG "CTvSubtitle"
+#define UNUSED(x) (void)x
 
 #include "CTvSubtitle.h"
 #include "am_misc.h"
@@ -631,12 +632,12 @@ void CTvSubtitle::close_caption_callback(char *str, int cnt, int data_buf[], int
 
     pSub->mpObser->onEvent(pSub->mCurCCEv);
     */
-
-    str = str;
-    cnt = cnt;
-    data_buf = data_buf;
-    cmd_buf = cmd_buf;
-    user_data = user_data;
+    //TODO
+    UNUSED(str);
+    UNUSED(cnt);
+    UNUSED(data_buf);
+    UNUSED(cmd_buf);
+    UNUSED(user_data);
 }
 
 void CTvSubtitle::atv_vchip_callback(int Is_chg,  void *user_data)

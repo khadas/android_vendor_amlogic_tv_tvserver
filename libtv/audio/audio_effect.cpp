@@ -1,5 +1,6 @@
 #define LOG_TAG "tvserver"
 #define LOG_TV_TAG "CAudioEffect"
+#define UNUSED(x) (void)x
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -120,9 +121,10 @@ int CAudioEffect::SetSrsTrubassSpeakerSize(int set_val)
 
 int CAudioEffect::DbxTv_SetMode(int mode __unused, int son_value, int vol_value, int sur_value)
 {
-    son_value = son_value;
-    vol_value = vol_value;
-    sur_value = sur_value;
+	//TODO
+    UNUSED(son_value);
+    UNUSED(vol_value);
+    UNUSED(sur_value);
 
     int ret = 0;
 #ifdef TV_AUDIO_USE_DBX_TV

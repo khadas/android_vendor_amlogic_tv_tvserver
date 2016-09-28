@@ -1,6 +1,15 @@
 #define LOG_TAG "tvserver"
 #define LOG_TV_TAG "CTvChannel"
 
+#ifdef UNUSED
+#elif defined(__GNUC__)
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#elif defined(__LCLINT__)
+# define UNUSED(x) /*@unused@*/ x
+#else
+# define UNUSED(x) x
+#endif
+
 #include "CTvChannel.h"
 
 void CTvChannel::createFromCursor(CTvDatabase::Cursor &c)
@@ -133,6 +142,15 @@ CTvChannel::CTvChannel(int dbID, int mode, int freq, int bw, int mod, int symb, 
 
 CTvChannel::~CTvChannel()
 {
+}
+
+CTvChannel::CTvChannel(const CTvChannel& UNUSED(channel))
+{
+}
+//TODO
+CTvChannel& CTvChannel::operator= (const CTvChannel& UNUSED(channel))
+{
+    return *this;
 }
 
 Vector<CTvChannel> CTvChannel::tvChannelList(int sat_id __unused)

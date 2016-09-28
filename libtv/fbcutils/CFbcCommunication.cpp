@@ -37,10 +37,10 @@ int CFbcCommunication::cfbcSetValueInt(COMM_DEV_TYPE_E fromDev, int cmd_id, int 
     if (value_count == 1) {
         cmd_buf[2] = value;
     } else {
-        cmd_buf[2] = (value >> 0) && 0xFF;
-        cmd_buf[3] = (value >> 8) && 0xFF;
-        cmd_buf[4] = (value >> 16) && 0xFF;
-        cmd_buf[5] = (value >> 24) && 0xFF;
+        cmd_buf[2] = (value >> 0) & 0xFF;
+        cmd_buf[3] = (value >> 8) & 0xFF;
+        cmd_buf[4] = (value >> 16) & 0xFF;
+        cmd_buf[5] = (value >> 24) & 0xFF;
     }
 
     return sendCommandToFBC(cmd_buf, value_count+2, 0);

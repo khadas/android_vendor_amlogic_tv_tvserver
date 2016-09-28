@@ -1,6 +1,5 @@
 #define LOG_TAG "tvserver"
 #define LOG_TV_TAG "CPQdb"
-
 #include "CPQdb.h"
 #include "fbcutils/fbcutils.h"
 
@@ -41,6 +40,7 @@ using namespace std;
 #define FORMAT              "Format"
 
 #define CC_LINE_MAX_LEN             (1024)
+
 
 
 /*int get_pq_from_file(const char *file_name, const char *screen_size, char *key_str_buf[]) {
@@ -1447,8 +1447,8 @@ int CPqData::PQ_GetGammaTable(int panel_id, tvin_port_t source_port, tvin_sig_fm
     CSqlite::Cursor c;
     char sqlmaster[256];
     int rval = -1;
-
-    panel_id = panel_id;
+    //TODO
+    UNUSED(panel_id);
 
     getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralGammaTable where "
                  "TVIN_PORT = %d and "
@@ -1822,7 +1822,7 @@ int CPqData::LoadPQData(tvpq_data_type_t data_type, tvin_port_t source_port,
     tvpq_data_t *pq_data = NULL;
     int *pq_nodes = NULL;
 
-    trans_fmt = trans_fmt;
+    UNUSED(trans_fmt);
     switch (data_type) {
     case TVPQ_DATA_BRIGHTNESS:
         getSqlParams(__FUNCTION__, sqlmaster,

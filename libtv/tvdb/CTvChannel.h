@@ -187,6 +187,8 @@ public:
     CTvChannel();
     CTvChannel(int dbID, int mode, int freq, int bw, int mod, int sym, int ofdm, int channelNum);
     ~CTvChannel();
+    CTvChannel(const CTvChannel&);
+    CTvChannel& operator= (const CTvChannel& cTvChannel);
     // 根据TVChannelParams,向数据库添加一个Channel
 
     // *创建当前卫星所有通道
@@ -257,7 +259,7 @@ public:
     void setATVAfcData();
     //
 private:
-
+    friend class LightRefBase<CTvChannel>;
     void createFromCursor(CTvDatabase::Cursor &c);
 
     //

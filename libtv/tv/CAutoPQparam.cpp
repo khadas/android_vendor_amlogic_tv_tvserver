@@ -1,6 +1,7 @@
 #define LOG_TAG "tvserver"
 #define LOG_TV_TAG "CAutoPQparam"
 
+#include "../vpp/CVpp.h"
 #include "CAutoPQparam.h"
 #include "../tvsetting/CTvSetting.h"
 #include <tvconfig.h>
@@ -17,6 +18,7 @@
 #include <linux/fb.h>
 #include <stdlib.h>
 #include <cutils/properties.h>
+
 
 CAutoPQparam::CAutoPQparam()
 {

@@ -412,6 +412,8 @@ public:
     CTvProgram(int channelID, int type);
 
     CTvProgram();
+    CTvProgram(const CTvProgram&);
+    CTvProgram& operator= (const CTvProgram& cTvProgram);
 
 
     int getCurrentAudio(String8 defaultLang);
@@ -507,6 +509,7 @@ public:
         return mvSubtitles;
     }
 private:
+    friend class LightRefBase<CTvProgram>;
     int CreateFromCursor(CTvDatabase::Cursor &c);
     int selectProgramInChannelByNumber(int channelID, int num, CTvDatabase::Cursor &c);
     int selectProgramInChannelByNumber(int channelID, int major, int minor, CTvDatabase::Cursor &c);

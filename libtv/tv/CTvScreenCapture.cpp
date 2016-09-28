@@ -1,6 +1,8 @@
 #define LOG_TAG "tvserver"
 #define LOG_TV_TAG "CTvScreenCapture"
 
+#define UNUSED(x) (void)x
+
 #include <stdlib.h>
 #include <fcntl.h>
 #include <strings.h>
@@ -46,10 +48,10 @@ int CTvScreenCapture::xioctl(int fd, int request, void *arg)
 
     return r;*/
 
-    //for warning
-    fd = fd;
-    request = request;
-    arg = arg;
+    //TODO
+    UNUSED(fd);
+    UNUSED(request);
+    UNUSED(arg);
     return 0;
 }
 
@@ -82,8 +84,8 @@ int CTvScreenCapture::OpenCamera(struct camera *pCameraDev)
 
     return iOutRet;*/
 
-    //for warning
-    pCameraDev = pCameraDev;
+    //TODO
+    UNUSED(pCameraDev);
     return 0;
 }
 
@@ -102,8 +104,8 @@ int CTvScreenCapture::InitVCap(sp<IMemory> Mem)
 
     return iOutRet;*/
 
-    //for warning
-    Mem = Mem;
+    //TODO
+    Mem = 0;
     return 0;
 }
 
@@ -175,8 +177,8 @@ int CTvScreenCapture::InitMmap(struct camera *cam)
 IS_ERROR:
     return iOutRet;*/
 
-    //for warning
-    cam = cam;
+    //TODO
+    UNUSED(cam);
     return 0;
 }
 
@@ -262,8 +264,8 @@ int CTvScreenCapture::InitCamera(struct camera *cam)
     return iOutRet;
     */
 
-    //for warning
-    cam = cam;
+    //TODO
+    UNUSED(cam);
     return 0;
 }
 
@@ -299,10 +301,10 @@ int CTvScreenCapture::SetVideoParameter(int width, int height, int frame)
 
    return iOutRet ;*/
 
-    //for warning
-    width = width;
-    height = height;
-    frame = frame;
+    //TODO
+    UNUSED(width);
+    UNUSED(height);
+    UNUSED(frame);
     return 0;
 }
 
@@ -341,8 +343,8 @@ int CTvScreenCapture::StartCapturing(struct camera *cam)
 IS_ERROR:
     return iOutRet;*/
 
-    //for warning
-    cam = cam;
+    //TODO
+    UNUSED(cam);
     return 0;
 }
 
@@ -388,11 +390,11 @@ void CTvScreenCapture::yuv_to_rgb32(unsigned char y, unsigned char u, unsigned c
     rgb++;
     *rgb = 0xff;*/
 
-    //for warning
-    y = y;
-    u = u;
-    v = v;
-    rgb = rgb;
+    //TODO
+    UNUSED(y);
+    UNUSED(u);
+    UNUSED(v);
+    UNUSED(rgb);
 }
 
 void CTvScreenCapture::nv21_to_rgb32(unsigned char *buf, unsigned char *rgb, int width, int height, int *len)
@@ -420,12 +422,12 @@ void CTvScreenCapture::nv21_to_rgb32(unsigned char *buf, unsigned char *rgb, int
     *len = z;
     */
 
-    //for warning
-    buf = buf;
-    rgb = rgb;
-    width = width;
-    height = height;
-    len = len;
+    //TODO
+    UNUSED(buf);
+    UNUSED(rgb);
+    UNUSED(width);
+    UNUSED(height);
+    UNUSED(len);
 }
 
 int CTvScreenCapture::GetVideoData(int *length)
@@ -496,8 +498,8 @@ int CTvScreenCapture::GetVideoData(int *length)
 
     return iOutRet;*/
 
-    //for warning
-    length = length;
+    //TODO
+    UNUSED(length);
     return 0;
 }
 
@@ -518,8 +520,8 @@ int CTvScreenCapture::StopCapturing(struct camera *cam)
     } while (FALSE);
     return iOutRet;*/
 
-    //for warning
-    cam = cam;
+    //TODO
+    UNUSED(cam);
     return 0;
 }
 
@@ -553,8 +555,8 @@ int CTvScreenCapture::UninitCamera(struct camera *cam)
     cam->buffers = NULL;
     return SUCCEED;*/
 
-    //for warning
-    cam = cam;
+    //TODO
+    UNUSED(cam);
     return 0;
 }
 
@@ -577,8 +579,8 @@ int CTvScreenCapture::CloseCamera(struct camera *cam)
 
     return iOutRet;*/
 
-    //for warning
-    cam = cam;
+    //TODO
+    UNUSED(cam);
     return 0;
 }
 
@@ -651,12 +653,12 @@ int CTvScreenCapture::AmvideocapCapFrame(char *buf, int size, int *w, int *h, in
     close(iDevFd);
     return iOutRet;*/
 
-    //for warning
-    buf = buf;
-    size = size;
-    w = w;
-    h = h;
-    ret_size = ret_size;
+    //TODO
+    UNUSED(buf);
+    UNUSED(size);
+    UNUSED(w);
+    UNUSED(h);
+    UNUSED(ret_size);
     return 0;
 }
 
@@ -729,9 +731,9 @@ int CTvScreenCapture::CapOsdAndVideoLayer(int width, int height)
     buffer = NULL;
     return iOutRet;*/
 
-    //for warning
-    width = width;
-    height = height;
+    //TODO
+    UNUSED(width);
+    UNUSED(height);
     return 0;
 }
 
@@ -775,9 +777,9 @@ int CTvScreenCapture::CapMediaPlayerVideoLayerOnly(int width, int height)
 
     return iOutRet;*/
 
-    //for warning
-    width = width;
-    height = height;
+    //TODO
+    UNUSED(width);
+    UNUSED(height);
     return 0;
 }
 

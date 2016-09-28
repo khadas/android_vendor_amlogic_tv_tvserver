@@ -175,9 +175,9 @@ static const int VPP_DATA_POS_RGB_GAIN_R_START              = (VPP_DATA_POS_BACK
 //RGB_Gain_G 4byte
 static const int VPP_DATA_POS_RGB_GAIN_G_START              = (VPP_DATA_POS_RGB_GAIN_R_START + sizeof(int));
 //RGB_Gain_B 4byte
-static const int VPP_DATA_POS_RGB_GAIN_B_START              = (VPP_DATA_POS_RGB_GAIN_B_START + sizeof(int));
+static const int VPP_DATA_POS_RGB_GAIN_B_START              = (VPP_DATA_POS_RGB_GAIN_G_START + sizeof(int));
 //RGB_Post_Offset_R 4byte
-static const int VPP_DATA_POS_RGB_POST_OFFSET_R_START       = (VPP_DATA_POS_RGB_POST_OFFSET_R_START + sizeof(int));
+static const int VPP_DATA_POS_RGB_POST_OFFSET_R_START       = (VPP_DATA_POS_RGB_GAIN_B_START + sizeof(int));
 //RGB_Post_Offset_G 4byte
 static const int VPP_DATA_POS_RGB_POST_OFFSET_G_START       = (VPP_DATA_POS_RGB_POST_OFFSET_R_START + sizeof(int));
 //RGB_Post_Offset_B 4byte

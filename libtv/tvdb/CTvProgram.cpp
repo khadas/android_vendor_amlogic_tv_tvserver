@@ -1,6 +1,15 @@
 #define LOG_TAG "tvserver"
 #define LOG_TV_TAG "CTvProgram"
 
+#ifdef UNUSED
+#elif defined(__GNUC__)
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#elif defined(__LCLINT__)
+# define UNUSED(x) /*@unused@*/ x
+#else
+# define UNUSED(x) x
+#endif
+
 #include "CTvProgram.h"
 #include "CTvDatabase.h"
 #include "CTvChannel.h"
@@ -38,6 +47,15 @@ CTvProgram::CTvProgram(int channelID __unused, int type __unused)
 CTvProgram::CTvProgram()
 {
     mpVideo = NULL;
+}
+
+CTvProgram::CTvProgram(const CTvProgram& UNUSED(cTvProgram))
+{
+}
+//TODO
+CTvProgram& CTvProgram::operator= (const CTvProgram& UNUSED(cTvProgram))
+{
+    return *this;
 }
 
 int CTvProgram::CreateFromCursor(CTvDatabase::Cursor &c)
@@ -725,9 +743,9 @@ Vector<CTvProgram> CTvProgram::selectByName(int name __unused)
     return vProg;
 }
 
-void CTvProgram::tvProgramDelByChannelID(int channelID)
+void CTvProgram::tvProgramDelByChannelID(int UNUSED(channelID))
 {
-    channelID = channelID;
+    //TODO
 }
 
 String8 CTvProgram::getName()

@@ -133,11 +133,11 @@ Vector<String8> CTvRegion::getAllCountry()
     return vStr;
 }
 
-CTvChannel CTvRegion::getChannels()
-{
-    CTvChannel p;
-    return p;
-}
+//CTvChannel CTvRegion::getChannels()
+//{
+//    CTvChannel p;
+//    return p;
+//}
 
 int CTvRegion::getLogicNumByNameAndfreq(char *name, int freq)
 {

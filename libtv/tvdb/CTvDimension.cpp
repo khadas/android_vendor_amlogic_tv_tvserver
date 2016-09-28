@@ -7,6 +7,8 @@
 #include "CTvEvent.h"
 #include <tvconfig.h>
 
+#include <vector>
+
 /**
  *TV ATSC rating dimension
  */
@@ -82,12 +84,14 @@ CTvDimension::~CTvDimension()
 /* 'All' is a very special case, it links to dimension0 & dimension5 */
 int CTvDimension::getUSPGAllLockStatus(String8 abbrev)
 {
+//TODO
     int len = 0;
     CTvDimension dm5;
     int j = 0;
     selectByIndex(dm5, CTvDimension::REGION_US, 5);
     len = dm5.getDefinedValue();
-    String8 dm5Abbrev[len - 1];
+
+    std::vector<String8> dm5Abbrev(len - 1);
     dm5.getAbbrev(dm5Abbrev);
     for (j = 0; j < len - 1; j++) {
         if (dm5Abbrev[j] == abbrev) {
@@ -97,7 +101,7 @@ int CTvDimension::getUSPGAllLockStatus(String8 abbrev)
     CTvDimension dm0;
     selectByIndex(dm0, CTvDimension::REGION_US, 0);
     len = dm0.getDefinedValue();
-    String8 dm0Abbrev[len - 1];
+    std::vector<String8> dm0Abbrev(len - 1);
     dm0.getAbbrev(dm0Abbrev);
     for (j = 0; j < len - 1; j++) {
         if (dm0Abbrev[j] == abbrev) {
@@ -117,7 +121,7 @@ void CTvDimension::setUSPGAllLockStatus(String8 abbrev, int lock)
 
     selectByIndex(dm5, REGION_US, 5);
     len = dm5.getDefinedValue();
-    String8 dm5Abbrev[len - 1];
+    std::vector<String8> dm5Abbrev(len - 1);
     dm5.getAbbrev(dm5Abbrev);
 
     for (j = 0; j < len - 1; j++) {
@@ -130,7 +134,7 @@ void CTvDimension::setUSPGAllLockStatus(String8 abbrev, int lock)
     CTvDimension dm0;
     selectByIndex(dm0, REGION_US, 0);
     len = dm0.getDefinedValue();
-    String8 dm0Abbrev[len - 1];
+    std::vector<String8> dm0Abbrev(len - 1);
     dm0.getAbbrev(dm0Abbrev);
 
     for (j = 0; j < len - 1; j++) {
@@ -139,6 +143,7 @@ void CTvDimension::setUSPGAllLockStatus(String8 abbrev, int lock)
             return;
         }
     }
+
     return;
 }
 
@@ -379,7 +384,7 @@ void CTvDimension::getLockStatus(String8 abbrevs[], int lock[], int *array_len)
  *取得该dimension的所有values的abbrev text
  *@return 返回所有values的abbrev text
  */
-int CTvDimension::getAbbrev(String8 abb[])
+int CTvDimension::getAbbrev(std::vector<String8> abb)
 {
     /* the first rating_value must be not visible to user */
     int len = getDefinedValue();

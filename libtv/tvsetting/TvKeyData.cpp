@@ -15,7 +15,7 @@
 #include <netinet/if_ether.h>
 
 #include <netutils/ifc.h>
-#include <netutils/dhcp.h>
+//#include <netutils/dhcp.h>
 
 #include <tvconfig.h>
 #include "CTvSettingCfg.h"

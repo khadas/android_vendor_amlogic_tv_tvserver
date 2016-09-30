@@ -903,67 +903,133 @@ void CTvScanner::dtv_scan_store(AM_SCAN_Result_t *result)
     service_list.clear();
 }
 
-int CTvScanner::manualDtmbScan(int beginFreq, int endFreq, int modulation)
+const char *CTvScanner::getDtvScanListName(int mode)
+{
+    char *list_name = NULL;
+
+    /*
+            mode:0xaabbccdd
+            aa - reserved
+            bb - scanlist/contury etc.
+            cc - t/t2 s/s2 c/c2 identifier
+            dd - femode FE_XXXX
+    */
+    int mode_ext = (mode & 0xff0000) >> 8;
+    int mode_fe = mode & 0xff;
+
+    switch (mode_fe) {
+        case FE_DTMB:
+            list_name = (char *)"CHINA,Default DTMB ALL";
+            break;
+        case FE_QAM:
+            list_name = (char *)"China,DVB-C allband";
+            break;
+        case FE_OFDM:
+            list_name = (char *)"UK,Default DVB-T";
+        case FE_ATSC:
+            if (mode_ext == 1)
+                list_name = (char *)"U.S.,ATSC Cable Standard";
+            else if (mode_ext == 2)
+                list_name = (char *)"U.S.,ATSC Cable IRC";
+            else if (mode_ext == 3)
+                list_name = (char *)"U.S.,ATSC Cable HRC";
+            else
+                list_name = (char *)"U.S.,ATSC Air";
+            break;
+        default:
+            LOGD("unknown autoscan mode %d, break", mode);
+            list_name = (char *)"CHINA,Default DTMB ALL";
+            break;
+    }
+    return list_name;
+}
+
+int CTvScanner::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2)
 {
     stopScan();
 
     if (mbScanStart) {
-        LOGW("[scanner]manual dtmb scan is scanning, need first stop it");
+        LOGW("scan is scanning, need first stop it");
         return -1;
     }
-
     AM_SCAN_CreatePara_t para;
     AM_DMX_OpenPara_t dmx_para;
     AM_SCAN_Handle_t handle = 0;
     int i;
     // Create the scan
     memset(&para, 0, sizeof(para));
-
     para.fend_dev_id = 0;//default
     para.mode = AM_SCAN_MODE_DTV_ATV;//DTV
     para.atv_para.mode = AM_SCAN_ATVMODE_NONE;
-    para.dtv_para.mode = AM_SCAN_DTVMODE_MANUAL;
-    para.dtv_para.source = FE_DTMB;//fe_type
+    para.dtv_para.mode = scan_mode;
+    para.dtv_para.source = mode & 0xFF;
     para.dtv_para.dmx_dev_id = 0;//default 0
+    para.dtv_para.standard = AM_SCAN_DTV_STD_DVB;
+    if (mode == FE_ATSC)
+        para.dtv_para.standard = AM_SCAN_DTV_STD_ATSC;
+    else if (mode == FE_ISDBT)
+        para.dtv_para.standard = AM_SCAN_DTV_STD_ISDB;
 
+    const char *list_name = getDtvScanListName(mode);
     Vector<sp<CTvChannel> > vcp;
-    CTvRegion::getChannelListByNameAndFreqRange((char *)"CHINA,Default DTMB ALL", beginFreq, endFreq, vcp);
-    int size = vcp.size();
 
-    //@author:hao.fu
+    if (scan_mode == AM_SCAN_DTVMODE_ALLBAND) {
+        CTvRegion::getChannelListByName((char *)list_name, vcp);
+    } else {
+        CTvRegion::getChannelListByNameAndFreqRange((char *)list_name, beginFreq, endFreq, vcp);
+    }
+    int size = vcp.size();
+    LOGD("channel list size = %d", size);
+
     if (size == 0) {
-        return -1;
+        if (scan_mode != AM_SCAN_DTVMODE_ALLBAND) {
+            LOGD("frequncy: %d not found in channel list [%s], break", beginFreq, list_name);
+            return -1;
+        }
+        CTvDatabase::GetTvDb()->importXmlToDB("/etc/tv_default.xml");
+        CTvRegion::getChannelListByName((char *)list_name, vcp);
+        size = vcp.size();
     }
 
     if (!(para.dtv_para.fe_paras = static_cast<AM_FENDCTRL_DVBFrontendParameters_t *>(calloc(size, sizeof(AM_FENDCTRL_DVBFrontendParameters_t)))))
         return -1;
 
     for (i = 0; i < size; i++) {
-        para.dtv_para.fe_paras[i].m_type = 5;//MODE_DTMB
-        para.dtv_para.fe_paras[i].dtmb.para.frequency = vcp[i]->getFrequency();
-        para.dtv_para.fe_paras[i].dtmb.para.inversion = INVERSION_OFF;
-        para.dtv_para.fe_paras[i].dtmb.para.u.ofdm.bandwidth = (fe_bandwidth_t)(vcp[i]->getBandwidth());
-        if (modulation == -1)
-            para.dtv_para.fe_paras[i].cable.para.u.qam.modulation = (fe_modulation_t)(vcp[i]->getModulation());
-        else
-            para.dtv_para.fe_paras[i].cable.para.u.qam.modulation = (fe_modulation_t)modulation;
+        para.dtv_para.fe_paras[i].m_type = mode;
+        switch (mode) {
+            case FE_DTMB:
+                para.dtv_para.fe_paras[i].dtmb.para.frequency = vcp[i]->getFrequency();
+                para.dtv_para.fe_paras[i].dtmb.para.inversion = INVERSION_OFF;
+                para.dtv_para.fe_paras[i].dtmb.para.u.ofdm.bandwidth = (fe_bandwidth_t)(vcp[i]->getBandwidth());
+                if (para1 != -1)
+                    para.dtv_para.fe_paras[i].dtmb.para.u.ofdm.bandwidth = (fe_bandwidth_t)para1;
+                break;
+            case FE_QAM:
+                para.dtv_para.fe_paras[i].cable.para.frequency = vcp[i]->getFrequency();
+                para.dtv_para.fe_paras[i].cable.para.inversion = INVERSION_OFF;
+                para.dtv_para.fe_paras[i].cable.para.u.qam.symbol_rate = vcp[i]->getSymbolRate();
+                para.dtv_para.fe_paras[i].cable.para.u.qam.modulation = (fe_modulation_t)vcp[i]->getModulation();
+                if (para1 != -1)
+                    para.dtv_para.fe_paras[i].cable.para.u.qam.modulation = (fe_modulation_t)para1;
+                if (para2 != -1)
+                    para.dtv_para.fe_paras[i].cable.para.u.qam.symbol_rate = para2;
+                break;
+            case FE_OFDM:
+                para.dtv_para.fe_paras[i].terrestrial.para.frequency = vcp[i]->getFrequency();
+                para.dtv_para.fe_paras[i].terrestrial.para.inversion = INVERSION_OFF;
+                para.dtv_para.fe_paras[i].terrestrial.para.u.ofdm.bandwidth = (fe_bandwidth_t)(vcp[i]->getBandwidth());
+                if (para1 != -1)
+                    para.dtv_para.fe_paras[i].dtmb.para.u.ofdm.bandwidth = (fe_bandwidth_t)para1;
+                if (para2 != -1)
+                    para.dtv_para.fe_paras[i].dtmb.para.u.ofdm.ofdm_mode = (fe_ofdm_mode_t)para2;
+                break;
+        }
     }
 
     para.dtv_para.fe_cnt = size;
     para.dtv_para.resort_all = AM_FALSE;
-
-    const char *sort_mode = config_get_str ( CFG_SECTION_TV, CFG_DTV_SCAN_SORT_MODE, "null");
-    if (!strcmp(sort_mode, "lcn"))
-        para.dtv_para.sort_method = AM_SCAN_SORT_BY_LCN;
-    else
-        para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
-
-    const char *db_mode = config_get_str ( CFG_SECTION_TV, SYS_SCAN_TO_PRIVATE_DB, "false");
-    if (!strcmp(db_mode, "true")) {
-        para.store_cb = NULL;
-    } else {
-        para.store_cb = dtv_scan_store;
-    }
+    para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
+    para.store_cb = dtv_scan_store;
 
     memset(&dmx_para, 0, sizeof(dmx_para));
     AM_DMX_Open(para.dtv_para.dmx_dev_id, &dmx_para);
@@ -1001,112 +1067,26 @@ int CTvScanner::manualDtmbScan(int beginFreq, int endFreq, int modulation)
     return 0;
 }
 
+int CTvScanner::dtvAutoScan(int mode)
+{
+    return dtvScan(mode, AM_SCAN_DTVMODE_ALLBAND, 0, 0, -1, -1);
+}
+
+int CTvScanner::dtvManualScan(int mode, int beginFreq, int endFreq, int para1, int para2)
+{
+    return dtvScan(mode, AM_SCAN_DTVMODE_MANUAL, beginFreq, endFreq, para1, para2);
+}
+
+int CTvScanner::manualDtmbScan(int beginFreq, int endFreq, int modulation)
+{
+    return dtvManualScan(FE_DTMB, beginFreq, endFreq, modulation, -1);
+}
+
+
 //only test for dtv allbland auto
 int CTvScanner::autoDtmbScan()
 {
-    stopScan();
-
-    if (mbScanStart) {
-        LOGW("[scanner]auto dtmb scan is scanning, need first stop it");
-        return -1;
-    }
-
-    AM_SCAN_CreatePara_t para;
-    AM_DMX_OpenPara_t dmx_para;
-    AM_SCAN_Handle_t handle = 0;
-    // Create the scan
-    memset(&para, 0, sizeof(para));
-
-    //strcpy(para.default_text_lang,"eng");//config
-    //strcpy(para.text_langs, "local eng zho chi chs first");//config
-    para.fend_dev_id = 0;//default
-    para.mode = AM_SCAN_MODE_DTV_ATV;//DTV
-    para.atv_para.mode = AM_SCAN_ATVMODE_NONE;
-    para.dtv_para.mode = AM_SCAN_DTVMODE_ALLBAND;//DTV_MODE_ALLBAND
-    //para.dtv_para.mode |= (*env)->GetIntField(env, para, doptions);//忽略
-    para.dtv_para.source = FE_DTMB;//fe_type
-    para.dtv_para.dmx_dev_id = 0;//default 0
-    Vector<sp<CTvChannel> > vcp;
-    //CTvDatabase::getChannelParaList("/data/tv_default.xml", vcp);//channel list from xml or db
-    CTvRegion::getChannelListByName((char *)"CHINA,Default DTMB ALL", vcp);
-
-    int size = vcp.size();
-    LOGD("[scanner]channel list size = %d", size);
-    //showboz
-    if (size == 0) {
-        CTvDatabase::GetTvDb()->importXmlToDB("/etc/tv_default.xml");
-        CTvRegion::getChannelListByName((char *)"CHINA,Default DTMB ALL", vcp);
-        size = vcp.size();
-    }
-
-    if (!(para.dtv_para.fe_paras = static_cast<AM_FENDCTRL_DVBFrontendParameters_t *>(calloc(size, sizeof(AM_FENDCTRL_DVBFrontendParameters_t)))))
-        return -1;
-
-    //memset(pfp, 0, size * sizeof(AM_FENDCTRL_DVBFrontendParameters_t));
-
-    for (int i = 0; i < size; i++) {
-        para.dtv_para.fe_paras[i].m_type = 5;//MODE_DTMB
-        para.dtv_para.fe_paras[i].dtmb.para.frequency = vcp[i]->getFrequency();
-        para.dtv_para.fe_paras[i].dtmb.para.inversion = INVERSION_OFF;
-        para.dtv_para.fe_paras[i].dtmb.para.u.ofdm.bandwidth = (fe_bandwidth_t)(vcp[i]->getBandwidth());
-    }
-    //allband
-    para.dtv_para.fe_cnt = size;
-
-    para.dtv_para.resort_all = AM_FALSE;
-
-    const char *sort_mode = config_get_str ( CFG_SECTION_TV, CFG_DTV_SCAN_SORT_MODE, "null");
-    if (!strcmp(sort_mode, "lcn"))
-        para.dtv_para.sort_method = AM_SCAN_SORT_BY_LCN;
-    else
-        para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
-
-    const char *db_mode = config_get_str ( CFG_SECTION_TV, SYS_SCAN_TO_PRIVATE_DB, "false");
-    if (!strcmp(db_mode, "true")) {
-        para.store_cb = NULL;
-    } else {
-        para.store_cb = dtv_scan_store;
-    }
-
-    memset(&dmx_para, 0, sizeof(dmx_para));
-    AM_DMX_Open(para.dtv_para.dmx_dev_id, &dmx_para);
-
-    if ((para.dtv_para.mode & 0x07) != AM_SCAN_DTVMODE_NONE) {
-        AM_FEND_SetMode(para.fend_dev_id, para.dtv_para.source);
-        tv_scan_reconnect_dmx_to_fend(para.dtv_para.dmx_dev_id, para.fend_dev_id);
-    }
-
-    //    prog->dmx_id = para.dtv_para.dmx_dev_id;
-    //    prog->fend_id = para.fend_dev_id;
-    //    prog->mode = para.dtv_para.mode;
-    // Start Scan
-    if (AM_SCAN_Create(&para, &handle) != AM_SUCCESS) {
-    LOGD("[scanner]scan create fail");
-        handle = NULL;
-    } else {
-        mScanHandle = handle;
-        AM_SCAN_SetUserData(handle, (void *)this);
-        //注册搜索事件
-        AM_EVT_Subscribe((long)handle, AM_SCAN_EVT_PROGRESS, tv_scan_evt_callback, NULL);
-        //注册信号质量通知事件
-        AM_EVT_Subscribe((long)handle, AM_SCAN_EVT_SIGNAL, tv_scan_evt_callback, NULL);
-        if (AM_SCAN_Start(handle) != AM_SUCCESS) {
-            AM_SCAN_Destroy(handle, AM_FALSE);
-            AM_EVT_Unsubscribe((long)handle, AM_SCAN_EVT_PROGRESS, tv_scan_evt_callback, NULL);
-            AM_EVT_Unsubscribe((long)handle, AM_SCAN_EVT_SIGNAL, tv_scan_evt_callback, NULL);
-            handle = NULL;
-        }
-    }
-    if (para.atv_para.fe_paras != NULL)
-        free(para.atv_para.fe_paras);
-    if (para.dtv_para.fe_paras != NULL)
-        free(para.dtv_para.fe_paras);
-
-    if (handle == NULL) {
-        return -1;
-    }
-    mbScanStart = true;//start call ok
-    return 0;
+    return dtvAutoScan(FE_DTMB);
 }
 
 int CTvScanner::stopScan()

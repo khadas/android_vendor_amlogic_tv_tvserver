@@ -548,28 +548,51 @@ int CTv::ClearAnalogFrontEnd()
     return mFrontDev.ClearAnalogFrontEnd ();
 }
 
+int CTv::clearFrontEnd(int para)
+{
+    return mFrontDev.setPara(para, 470000000, 0, 0);
+}
+int CTv::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2) {
+    AutoMutex lock(mLock);
+    mTvAction = mTvAction | TV_ACTION_SCANNING;
+    LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
+    LOGD("mode[%#x], scan_mode[%#x], freq[%d-%d], para[%d,%d] %s",
+        mode, scan_mode, beginFreq, endFreq, para1, para2, __FUNCTION__);
+    //mTvEpg.leaveChannel();
+    mAv.StopTS();
+    mAv.DisableVideoWithBlueColor();
+    if (scan_mode == AM_SCAN_DTVMODE_MANUAL) {
+        CTvChannel::DeleteBetweenFreq(beginFreq, endFreq);
+    } else {
+        CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_DTV );
+        CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_RADIO );
+        CTvEvent::CleanAllEvent();
+    }
+    mTvScanner->setObserver(&mTvMsgQueue);
+    mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
+    mFrontDev.Open(mode & 0xff);
+    mFrontDev.setMode(mode & 0xff);
+
+    return mTvScanner->dtvScan(mode, scan_mode, beginFreq, endFreq, para1, para2);
+}
+
+int CTv::dtvMode(const char *mode)
+{
+    if ( strcmp ( mode, "dtmb" ) == 0 )
+        return (FE_DTMB);
+    else if ( strcmp ( mode, "dvbc" ) == 0 )
+        return (FE_QAM);
+    else if ( strcmp ( mode, "dvbs" ) == 0 )
+        return (FE_QPSK);
+    else if ( strcmp ( mode, "atsc" ) == 0 )
+        return (FE_ATSC);
+    return FE_DTMB;
+}
+
 int CTv::dtvAutoScan()
 {
-    const char *config_value = NULL;
-    AutoMutex lock ( mLock );
-    mTvAction |= TV_ACTION_SCANNING;
-    LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
-    //mTvEpg.leaveChannel();
-    mAv.StopTS ();
-    config_value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-    if ( strcmp ( config_value, "black" ) == 0 ) {
-        mAv.DisableVideoWithBlackColor();
-    } else {
-        mAv.DisableVideoWithBlueColor();
-    }
-    CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_DTV );
-    CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_RADIO );
-    CTvEvent::CleanAllEvent();
-    mTvScanner->setObserver ( &mTvMsgQueue );
-    mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
-    mFrontDev.Open(FE_DTMB);
-    mTvScanner->autoDtmbScan();//dtmb
-    return 0;
+    const char *dtv_mode = config_get_str ( CFG_SECTION_TV, CFG_DTV_MODE, "dtmb");
+    return dtvScan(dtvMode(dtv_mode), AM_SCAN_DTVMODE_ALLBAND, 0, 0, -1, -1);
 }
 
 int CTv::dtvCleanProgramByFreq ( int freq )
@@ -587,23 +610,9 @@ int CTv::dtvCleanProgramByFreq ( int freq )
 
 int CTv::dtvManualScan (int beginFreq, int endFreq, int modulation)
 {
-    const char *config_value = NULL;
-    AutoMutex lock ( mLock );
-    mTvAction |= TV_ACTION_SCANNING;
-    //mTvEpg.leaveChannel();
-    mAv.StopTS ();
-    config_value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-    if ( strcmp ( config_value, "black" ) == 0 ) {
-        mAv.DisableVideoWithBlackColor();
-    } else {
-        mAv.DisableVideoWithBlueColor();
-    }
-    CTvChannel::DeleteBetweenFreq(beginFreq, endFreq);
-    mTvScanner->setObserver ( &mTvMsgQueue );
-    mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
-    mFrontDev.Open(FE_DTMB);
-    int iOutRet = mTvScanner->manualDtmbScan (beginFreq, endFreq, modulation); //dtmb
-    return iOutRet;
+    const char *dtv_mode = config_get_str ( CFG_SECTION_TV, CFG_DTV_MODE, "dtmb");
+    return dtvScan(dtvMode(dtv_mode), AM_SCAN_DTVMODE_MANUAL, beginFreq, endFreq, modulation, -1);
+
 }
 
 //searchType 0:not 256 1:is 256 Program

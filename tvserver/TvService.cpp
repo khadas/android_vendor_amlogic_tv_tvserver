@@ -2294,6 +2294,18 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(tmpRet);
         break;
     }
+    case DTV_GET_SCAN_FREQUENCY_LIST_MODE: {
+        int mode = p.readInt32();
+        Vector<sp<CTvChannel> > out;
+        int tmpRet = CTvRegion::getChannelListByName((char *)CTvScanner::getDtvScanListName(mode), out);
+        r->writeInt32(out.size());
+        for (int i = 0; i < (int)out.size(); i++) {
+            r->writeInt32(out[i]->getID());
+            r->writeInt32(out[i]->getFrequency());
+        }
+        r->writeInt32(tmpRet);
+        break;
+    }
     case DTV_GET_CHANNEL_INFO: {
         int dbID = p.readInt32();
         channel_info_t chan_info;
@@ -2357,6 +2369,17 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     case DTV_SCAN_AUTO: {
         int tmpRet = mpTv->dtvAutoScan();
+        mTvService->mpScannerClient = this;
+        r->writeInt32(tmpRet);
+        break;
+    }
+    case DTV_SCAN: {
+        int mode = p.readInt32();
+        int scanmode = p.readInt32();
+        int freq = p.readInt32();
+        int para1 = p.readInt32();
+        int para2 = p.readInt32();
+        int tmpRet = mpTv->dtvScan(mode, scanmode, freq, freq, para1, para2);
         mTvService->mpScannerClient = this;
         r->writeInt32(tmpRet);
         break;
@@ -3252,6 +3275,12 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     case GET_ALL_TV_DEVICES: {
         const char *value = config_get_str(CFG_SECTION_TV, CGF_DEFAULT_INPUT_IDS, "null");
         r->writeCString(value);
+        break;
+    }
+    case TV_CLEAR_FRONTEND: {
+        int para = p.readInt32();
+        int tmpRet = mpTv->clearFrontEnd(para);
+        r->writeInt32(tmpRet);
         break;
     }
     // EXTAR END

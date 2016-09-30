@@ -125,6 +125,9 @@ public:
     virtual int dtvManualScan (int beginFreq, int endFreq, int modulation = -1);
     virtual int atvAutoScan(int videoStd, int audioStd, int searchType);
     virtual int atvAutoScan(int videoStd, int audioStd, int searchType, int procMode);
+    virtual int dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2);
+    virtual int dtvMode(const char *mode);
+    virtual int clearFrontEnd(int para);
     virtual int pauseScan();
     virtual int resumeScan();
     virtual void setDvbTextCoding(char *coding);

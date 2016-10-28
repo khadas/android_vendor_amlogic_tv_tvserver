@@ -1028,8 +1028,19 @@ int CTvScanner::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int
 
     para.dtv_para.fe_cnt = size;
     para.dtv_para.resort_all = AM_FALSE;
-    para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
-    para.store_cb = dtv_scan_store;
+
+    const char *sort_mode = config_get_str ( CFG_SECTION_TV, CFG_DTV_SCAN_SORT_MODE, "null");
+    if (!strcmp(sort_mode, "lcn"))
+        para.dtv_para.sort_method = AM_SCAN_SORT_BY_LCN;
+    else
+        para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
+
+    const char *db_mode = config_get_str ( CFG_SECTION_TV, SYS_SCAN_TO_PRIVATE_DB, "false");
+    if (!strcmp(db_mode, "true")) {
+        para.store_cb = NULL;
+    } else {
+        para.store_cb = dtv_scan_store;
+    }
 
     memset(&dmx_para, 0, sizeof(dmx_para));
     AM_DMX_Open(para.dtv_para.dmx_dev_id, &dmx_para);

@@ -57,6 +57,11 @@ static const char *TV_SSM_DATA_PARAM_PATH = "/param/ssm_data";
 #define DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN "/sys/class/tsync/av_threshold_min"
 #define AV_THRESHOLD_MIN_MS "540000" //6S = 6*90000
 
+#define DTV_DTMB_MODE        "dtmb"
+#define DTV_DVBC_MODE        "dvbc"
+#define DTV_DVBS_MODE        "dvbs"
+#define DTV_ATSC_MODE        "atsc"
+
 typedef enum tv_window_mode_e {
     NORMAL_WONDOW,
     PREVIEW_WONDOW,

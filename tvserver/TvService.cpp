@@ -396,7 +396,9 @@ sp<ITv> TvService::connect(const sp<ITvClient> &tvClient)
     int callingPid = getCallingPid();
     LOGD("TvService::connect (pid %d, client %p)", callingPid, IInterface::asBinder(tvClient).get());
 
-    Mutex::Autolock lock(mLock);
+    Mutex::Autolock lock(mServiceLock);
+    sp<Client> newclient;
+    bool haveclient = false;
 
     int clientSize = mClients.size();
     for (int i = 0; i < clientSize; i++) {
@@ -407,7 +409,8 @@ sp<ITv> TvService::connect(const sp<ITvClient> &tvClient)
                 sp<ITvClient> currentTvClient(currentClient->getTvClient());
                 if (IInterface::asBinder(tvClient) == IInterface::asBinder(currentTvClient)) {
                     LOGD("TvService::connect (pid %d, same client %p) is reconnecting...", callingPid, IInterface::asBinder(tvClient).get());
-                    return currentClient;
+                    newclient = currentClient;
+                    haveclient = true;
                 }
             } else {
                 LOGE("TvService::connect client (pid %d) not exist", callingPid);
@@ -418,7 +421,11 @@ sp<ITv> TvService::connect(const sp<ITvClient> &tvClient)
         }
     }
 
-    sp<Client> newclient = new Client(this, tvClient, callingPid, mpTv);
+    if ( haveclient ) {
+        return newclient;
+    }
+
+    newclient = new Client(this, tvClient, callingPid, mpTv);
     mClients.add(newclient);
     return newclient;
 }
@@ -427,7 +434,7 @@ void TvService::removeClient(const sp<ITvClient> &tvClient)
 {
     int callingPid = getCallingPid();
 
-    Mutex::Autolock lock(mLock);
+    Mutex::Autolock lock(mServiceLock);
 
     int clientSize = mClients.size();
     for (int i = 0; i < clientSize; i++) {
@@ -485,8 +492,9 @@ TvService::Client::~Client()
     // tear down client
     LOGD("Client::~Client(pid %d, client %p)", callingPid, IInterface::asBinder(getTvClient()).get());
     // make sure we tear down the hardware
-    mClientPid = callingPid;
-    disconnect();
+    //mClientPid = callingPid;
+    //disconnect();
+    mTvService->decUsers();
 }
 
 status_t TvService::Client::checkPid()
@@ -3320,7 +3328,7 @@ status_t TvService::dump(int fd, const Vector<String16>& args)
                 IPCThreadState::self()->getCallingUid());
         result.append(buffer);
     } else {
-        Mutex::Autolock lock(mLock);
+        Mutex::Autolock lock(mServiceLock);
 
         if (args.size() > 0) {
             for (int i = 0; i < (int)args.size(); i ++) {

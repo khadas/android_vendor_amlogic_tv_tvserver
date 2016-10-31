@@ -71,7 +71,7 @@ private:
     volatile int32_t mUsers;
     CTv *mpTv;
     CTvScreenCapture mCapVidFrame;
-    mutable Mutex mLock;
+    mutable Mutex mServiceLock;
 };
 
 #endif

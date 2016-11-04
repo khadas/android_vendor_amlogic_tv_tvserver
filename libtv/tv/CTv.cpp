@@ -1513,6 +1513,7 @@ TvRunStatus_t CTv::GetTvStatus()
     return mTvStatus;
 }
 
+#include "tvsetting/SSMHandler.h"
 int CTv::OpenTv ( void )
 {
     //Tv_Spread_Spectrum();
@@ -1531,11 +1532,28 @@ int CTv::OpenTv ( void )
 
     mpTvin->Tvin_LoadSourceInputToPortMap();
 
+    extern CBlobDevice *mpCurDevice;
+    SSMHandler::mSSMHeaderFile = mpCurDevice;
+    SSMHandler* handler = SSMHandler::GetSingletonInstance();
+    SSM_status_t SSM_status = SSM_HEADER_INVALID;
+
+    if (handler) {
+        SSM_status = handler->SSMVerify();
+        LOGD ("Verify SSMHeader, status= %d\n", SSM_status);
+    }
+
+    if (handler && SSM_HEADER_INVALID == SSM_status)
+        handler->SSMRecreateHeader();
+
     SSMHandlePreCopying();
-    if ( SSMDeviceMarkCheck() < 0 ) {
+    if ( SSMDeviceMarkCheck() < 0 || SSM_HEADER_INVALID == SSM_status) {
+        LOGD ("Restore SSMData file");
         SSMRestoreDeviceMarkValues();
         Tv_SSMRestoreDefaultSetting();
+    }else if (handler && SSM_HEADER_STRUCT_CHANGE == SSM_status) {
+        handler->SSMRecovery();
     }
+
     mpTvin->OpenTvin();
     mpTvin->init_vdin();
     mpTvin->Tv_init_afe();
@@ -2752,7 +2770,7 @@ int CTv::Tv_SSMRestoreDefaultSetting()
 {
     SSMRestoreDeviceMarkValues();
     AudioSSMRestoreDefaultSetting();
-    CVpp::getInstance()->VPPSSMRestoreDefault();
+    SSMHandler::GetSingletonInstance()->VPPSSMRestoreDefault();
     MiscSSMRestoreDefault();
     ReservedSSMRestoreDefault();
     SSMSaveCVBSStd ( 0 );

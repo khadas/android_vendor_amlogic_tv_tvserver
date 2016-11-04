@@ -63,8 +63,12 @@ int CTvSettingdoResume()
 {
     return mpCurDevice->OpenDevice();
 }
+
+#include "SSMHandler.h"
+SSMHandler* handler = SSMHandler::GetSingletonInstance();
+
 template<typename T>
-static int SSMWriteNTypes(int offset, int data_len, T *data_buf)
+static int SSMWriteNTypes(int id, int data_len, T *data_buf, int offset = 0)
 {
     pthread_mutex_lock(&ssm_r_w_op_mutex);
 
@@ -82,7 +86,11 @@ static int SSMWriteNTypes(int offset, int data_len, T *data_buf)
         return -1;
     }
 
-    if (mpCurDevice->WriteBytes(offset, data_len * sizeof(T),
+    //LOGD ("Id - %d", id);
+    unsigned int actualAddr = handler->SSMGetActualAddr(id) + offset;
+    //LOGD ("actualAddr - %d", actualAddr);
+
+    if (mpCurDevice->WriteBytes(actualAddr, data_len * sizeof(T),
                                 (unsigned char *) data_buf) < 0) {
         LOGE("%s, device WriteNBytes error.\n", CFG_SECTION_TV);
 
@@ -95,7 +103,7 @@ static int SSMWriteNTypes(int offset, int data_len, T *data_buf)
 }
 
 template<typename T>
-static int SSMReadNTypes(int offset, int data_len, T *data_buf)
+static int SSMReadNTypes(int id, int data_len, T *data_buf, int offset = 0)
 {
     pthread_mutex_lock(&ssm_r_w_op_mutex);
 
@@ -113,7 +121,11 @@ static int SSMReadNTypes(int offset, int data_len, T *data_buf)
         return -1;
     }
 
-    if (mpCurDevice->ReadBytes(offset, data_len * sizeof(T),
+    //LOGD ("Id - %d", id);
+    unsigned int actualAddr = handler->SSMGetActualAddr(id) + offset;
+    //LOGD ("actualAddr - %d", actualAddr);
+
+    if (mpCurDevice->ReadBytes(actualAddr, data_len * sizeof(T),
                                (unsigned char *) data_buf) < 0) {
         LOGE("%s, device ReadNBytes error.\n", CFG_SECTION_TV);
         pthread_mutex_unlock(&ssm_r_w_op_mutex);
@@ -780,32 +792,40 @@ int SSMReadParentalControlSwitch()
 
 int SSMGetCustomerDataStart()
 {
-    return SSM_RW_CUSTOMER_DATA_START;
+    return handler->SSMGetActualAddr(CUSTOMER_DATA_POS_HDMI1_EDID_START);
 }
 
 int SSMGetCustomerDataLen()
 {
-    return SSM_RW_CUSTOMER_DATA_LEN;
+    int LastAddr = handler->SSMGetActualAddr(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START);
+    int LastSize = handler->SSMGetActualSize(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START);
+    int len = LastAddr - SSMGetCustomerDataStart() + LastSize;
+
+    return len;
 }
 
 int SSMGetATVDataStart()
 {
-    return SSM_RW_ATV_START;
+    return 0;
 }
 
 int SSMGetATVDataLen()
 {
-    return SSM_RW_ATV_LEN;
+    return 0;
 }
 
 int SSMGetVPPDataStart()
 {
-    return SSM_RW_VPP_START;
+    return handler->SSMGetActualAddr(VPP_DATA_POS_COLOR_DEMO_MODE_START);
 }
 
 int SSMGetVPPDataLen()
 {
-    return SSM_RW_VPP_LEN;
+    int LastAddr = handler->SSMGetActualAddr(SSM_RSV3);
+    int LastSize = handler->SSMGetActualSize(SSM_RSV3);
+    int len = LastAddr - SSMGetVPPDataStart() + LastSize;
+
+    return len;
 }
 
 int SSMSaveSearchNavigateFlag(int rw_val)
@@ -1218,6 +1238,11 @@ int SSMReadGlobalOgoEnable()
     return tmp_val;
 }
 
+//Mark r/w values
+static const int SSM_MARK_01_VALUE = 0xDD;
+static const int SSM_MARK_02_VALUE = 0x88;
+static const int SSM_MARK_03_VALUE = 0xCC;
+
 int SSMDeviceMarkCheck()
 {
     int i = 0, failed_count = 0;
@@ -1501,7 +1526,7 @@ int SSMSaveBrightness(int offset, int rw_val)
 {
     unsigned char tmp_val = rw_val;
 
-    return SSMWriteNTypes(VPP_DATA_POS_BRIGHTNESS_START + offset, 1, &tmp_val);
+    return SSMWriteNTypes(VPP_DATA_POS_BRIGHTNESS_START, 1, &tmp_val, offset);
 }
 
 int SSMReadBrightness(int offset, int *rw_val)
@@ -1509,8 +1534,8 @@ int SSMReadBrightness(int offset, int *rw_val)
     int tmp_ret = 0;
     unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_BRIGHTNESS_START + offset, 1,
-                            &tmp_val);
+    tmp_ret = SSMReadNTypes(VPP_DATA_POS_BRIGHTNESS_START, 1,
+                            &tmp_val, offset);
     *rw_val = tmp_val;
 
     return tmp_ret;
@@ -1520,7 +1545,7 @@ int SSMSaveContrast(int offset, int rw_val)
 {
     unsigned char tmp_val = rw_val;
 
-    return SSMWriteNTypes(VPP_DATA_POS_CONTRAST_START + offset, 1, &tmp_val);
+    return SSMWriteNTypes(VPP_DATA_POS_CONTRAST_START, 1, &tmp_val, offset);
 }
 
 int SSMReadContrast(int offset, int *rw_val)
@@ -1528,7 +1553,7 @@ int SSMReadContrast(int offset, int *rw_val)
     int tmp_ret = 0;
     unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_CONTRAST_START + offset, 1, &tmp_val);
+    tmp_ret = SSMReadNTypes(VPP_DATA_POS_CONTRAST_START, 1, &tmp_val, offset);
     *rw_val = tmp_val;
 
     return tmp_ret;
@@ -1538,7 +1563,7 @@ int SSMSaveSaturation(int offset, int rw_val)
 {
     unsigned char tmp_val = rw_val;
 
-    return SSMWriteNTypes(VPP_DATA_POS_SATURATION_START + offset, 1, &tmp_val);
+    return SSMWriteNTypes(VPP_DATA_POS_SATURATION_START, 1, &tmp_val, offset);
 }
 
 int SSMReadSaturation(int offset, int *rw_val)
@@ -1546,8 +1571,8 @@ int SSMReadSaturation(int offset, int *rw_val)
     int tmp_ret = 0;
     unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_SATURATION_START + offset, 1,
-                            &tmp_val);
+    tmp_ret = SSMReadNTypes(VPP_DATA_POS_SATURATION_START, 1,
+                            &tmp_val, offset);
     *rw_val = tmp_val;
 
     return tmp_ret;
@@ -1557,7 +1582,7 @@ int SSMSaveHue(int offset, int rw_val)
 {
     unsigned char tmp_val = rw_val;
 
-    return SSMWriteNTypes(VPP_DATA_POS_HUE_START + offset, 1, &tmp_val);
+    return SSMWriteNTypes(VPP_DATA_POS_HUE_START, 1, &tmp_val, offset);
 }
 
 int SSMReadHue(int offset, int *rw_val)
@@ -1565,7 +1590,7 @@ int SSMReadHue(int offset, int *rw_val)
     int tmp_ret = 0;
     unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_HUE_START + offset, 1, &tmp_val);
+    tmp_ret = SSMReadNTypes(VPP_DATA_POS_HUE_START, 1, &tmp_val, offset);
     *rw_val = tmp_val;
 
     return tmp_ret;
@@ -1575,7 +1600,7 @@ int SSMSaveSharpness(int offset, int rw_val)
 {
     unsigned char tmp_val = rw_val;
 
-    return SSMWriteNTypes(VPP_DATA_POS_SHARPNESS_START + offset, 1, &tmp_val);
+    return SSMWriteNTypes(VPP_DATA_POS_SHARPNESS_START, 1, &tmp_val, offset);
 }
 
 int SSMReadSharpness(int offset, int *rw_val)
@@ -1583,7 +1608,7 @@ int SSMReadSharpness(int offset, int *rw_val)
     int tmp_ret = 0;
     unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_SHARPNESS_START + offset, 1, &tmp_val);
+    tmp_ret = SSMReadNTypes(VPP_DATA_POS_SHARPNESS_START, 1, &tmp_val, offset);
     *rw_val = tmp_val;
 
     return tmp_ret;
@@ -1611,7 +1636,7 @@ int SSMSavePictureMode(int offset, int rw_val)
 {
     unsigned char tmp_val = rw_val;
 
-    return SSMWriteNTypes(VPP_DATA_POS_PICTURE_MODE_START + offset, 1, &tmp_val);
+    return SSMWriteNTypes(VPP_DATA_POS_PICTURE_MODE_START, 1, &tmp_val, offset);
 }
 
 int SSMReadPictureMode(int offset, int *rw_val)
@@ -1619,8 +1644,8 @@ int SSMReadPictureMode(int offset, int *rw_val)
     int tmp_ret = 0;
     unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_PICTURE_MODE_START + offset, 1,
-                            &tmp_val);
+    tmp_ret = SSMReadNTypes(VPP_DATA_POS_PICTURE_MODE_START, 1,
+                            &tmp_val, offset);
     *rw_val = tmp_val;
 
     return tmp_ret;
@@ -1630,7 +1655,7 @@ int SSMSaveColorTemperature(int offset, int rw_val)
 {
     unsigned char tmp_val = rw_val;
 
-    return SSMWriteNTypes(VPP_DATA_POS_COLOR_TEMP_START + offset, 1, &tmp_val);
+    return SSMWriteNTypes(VPP_DATA_POS_COLOR_TEMP_START, 1, &tmp_val, offset);
 }
 
 int SSMReadColorTemperature(int offset, int *rw_val)
@@ -1638,8 +1663,8 @@ int SSMReadColorTemperature(int offset, int *rw_val)
     int tmp_ret = 0;
     unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_COLOR_TEMP_START + offset, 1,
-                            &tmp_val);
+    tmp_ret = SSMReadNTypes(VPP_DATA_POS_COLOR_TEMP_START, 1,
+                            &tmp_val, offset);
     *rw_val = tmp_val;
 
     return tmp_ret;
@@ -1649,8 +1674,8 @@ int SSMSaveNoiseReduction(int offset, int rw_val)
 {
     unsigned char tmp_val = rw_val;
 
-    return SSMWriteNTypes(VPP_DATA_POS_NOISE_REDUCTION_START + offset, 1,
-                          &tmp_val);
+    return SSMWriteNTypes(VPP_DATA_POS_NOISE_REDUCTION_START, 1,
+                          &tmp_val, offset);
 }
 
 int SSMReadNoiseReduction(int offset, int *rw_val)
@@ -1658,8 +1683,8 @@ int SSMReadNoiseReduction(int offset, int *rw_val)
     int tmp_ret = 0;
     unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_NOISE_REDUCTION_START + offset, 1,
-                            &tmp_val);
+    tmp_ret = SSMReadNTypes(VPP_DATA_POS_NOISE_REDUCTION_START, 1,
+                            &tmp_val, offset);
     *rw_val = tmp_val;
 
     return tmp_ret;
@@ -1669,7 +1694,7 @@ int SSMSaveDisplayMode(int offset, int rw_val)
 {
     unsigned char tmp_val = rw_val;
 
-    return SSMWriteNTypes(VPP_DATA_POS_DISPLAY_MODE_START + offset, 1, &tmp_val);
+    return SSMWriteNTypes(VPP_DATA_POS_DISPLAY_MODE_START, 1, &tmp_val, offset);
 }
 
 int SSMReadDisplayMode(int offset, int *rw_val)
@@ -1677,8 +1702,8 @@ int SSMReadDisplayMode(int offset, int *rw_val)
     int tmp_ret = 0;
     unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_DISPLAY_MODE_START + offset, 1,
-                            &tmp_val);
+    tmp_ret = SSMReadNTypes(VPP_DATA_POS_DISPLAY_MODE_START, 1,
+                            &tmp_val, offset);
     *rw_val = tmp_val;
 
     return tmp_ret;
@@ -1705,7 +1730,7 @@ int SSMSaveBackLightVal(int offset, int rw_val)
 {
     unsigned char tmp_val = rw_val;
 
-    return SSMWriteNTypes(VPP_DATA_POS_BACKLIGHT_START + offset, 1, &tmp_val);
+    return SSMWriteNTypes(VPP_DATA_POS_BACKLIGHT_START, 1, &tmp_val, offset);
 }
 
 int SSMReadBackLightVal(int offset, int *rw_val)
@@ -1713,7 +1738,14 @@ int SSMReadBackLightVal(int offset, int *rw_val)
     int tmp_ret = 0;
     unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_BACKLIGHT_START + offset, 1, &tmp_val);
+    tmp_ret = SSMReadNTypes(VPP_DATA_POS_BACKLIGHT_START, 1, &tmp_val, offset);
+
+    //TODO
+    if (tmp_ret < 0 || tmp_ret > 100) {
+        handler->SSMResetX(VPP_DATA_POS_BACKLIGHT_START);
+        tmp_ret = 50;
+    }
+
     *rw_val = tmp_val;
 
     return tmp_ret;
@@ -1796,78 +1828,78 @@ int SSMReadColorBaseMode(unsigned char *rw_val)
 
 int SSMSaveRGBGainRStart(int offset, unsigned int rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_GAIN_R_START + offset, 1, &rw_val);
+    return SSMWriteNTypes(VPP_DATA_POS_RGB_GAIN_R_START, 1, &rw_val, offset);
 }
 
 int SSMReadRGBGainRStart(int offset, unsigned int *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_RGB_GAIN_R_START + offset, 1, rw_val);
+    return SSMReadNTypes(VPP_DATA_POS_RGB_GAIN_R_START, 1, rw_val, offset);
 }
 
 int SSMSaveRGBGainGStart(int offset, unsigned int rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_GAIN_G_START + offset, 1, &rw_val);
+    return SSMWriteNTypes(VPP_DATA_POS_RGB_GAIN_G_START, 1, &rw_val, offset);
 }
 
 int SSMReadRGBGainGStart(int offset, unsigned int *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_RGB_GAIN_G_START + offset, 1, rw_val);
+    return SSMReadNTypes(VPP_DATA_POS_RGB_GAIN_G_START, 1, rw_val, offset);
 }
 
 int SSMSaveRGBGainBStart(int offset, unsigned int rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_GAIN_B_START + offset, 1, &rw_val);
+    return SSMWriteNTypes(VPP_DATA_POS_RGB_GAIN_B_START, 1, &rw_val, offset);
 }
 
 int SSMReadRGBGainBStart(int offset, unsigned int *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_RGB_GAIN_B_START + offset, 1, rw_val);
+    return SSMReadNTypes(VPP_DATA_POS_RGB_GAIN_B_START, 1, rw_val, offset);
 }
 
 int SSMSaveRGBPostOffsetRStart(int offset, int rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_POST_OFFSET_R_START + offset, 1,
-                          &rw_val);
+    return SSMWriteNTypes(VPP_DATA_POS_RGB_POST_OFFSET_R_START, 1,
+                          &rw_val, offset);
 }
 
 int SSMReadRGBPostOffsetRStart(int offset, int *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_RGB_POST_OFFSET_R_START + offset, 1,
-                         rw_val);
+    return SSMReadNTypes(VPP_DATA_POS_RGB_POST_OFFSET_R_START, 1,
+                         rw_val, offset);
 }
 
 int SSMSaveRGBPostOffsetGStart(int offset, int rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_POST_OFFSET_G_START + offset, 1,
-                          &rw_val);
+    return SSMWriteNTypes(VPP_DATA_POS_RGB_POST_OFFSET_G_START, 1,
+                          &rw_val, offset);
 }
 
 int SSMReadRGBPostOffsetGStart(int offset, int *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_RGB_POST_OFFSET_G_START + offset, 1,
-                         rw_val);
+    return SSMReadNTypes(VPP_DATA_POS_RGB_POST_OFFSET_G_START, 1,
+                         rw_val, offset);
 }
 
 int SSMSaveRGBPostOffsetBStart(int offset, int rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_POST_OFFSET_B_START + offset, 1,
-                          &rw_val);
+    return SSMWriteNTypes(VPP_DATA_POS_RGB_POST_OFFSET_B_START, 1,
+                          &rw_val, offset);
 }
 
 int SSMReadRGBPostOffsetBStart(int offset, int *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_RGB_POST_OFFSET_B_START + offset, 1,
-                         rw_val);
+    return SSMReadNTypes(VPP_DATA_POS_RGB_POST_OFFSET_B_START, 1,
+                         rw_val, offset);
 }
 
 int SSMSaveRGBValueStart(int offset, int8_t rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_RGB_START + offset, 1, &rw_val);
+    return SSMWriteNTypes(VPP_DATA_RGB_START, 1, &rw_val, offset);
 }
 
 int SSMReadRGBValueStart(int offset, int8_t *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_RGB_START + offset, 1, &rw_val);
+    return SSMReadNTypes(VPP_DATA_RGB_START, 1, &rw_val, offset);
 }
 
 int SSMSaveDBCStart(unsigned char rw_val)
@@ -1902,12 +1934,12 @@ int SSMReadDnlpStart(unsigned char *rw_val)
 
 int SSMSavePanoramaStart(int offset, unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_PANORAMA_START + offset, 1, &rw_val);
+    return SSMWriteNTypes(VPP_DATA_POS_PANORAMA_START, 1, &rw_val, offset);
 }
 
 int SSMReadPanoramaStart(int offset, unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_PANORAMA_START + offset, 1, rw_val);
+    return SSMReadNTypes(VPP_DATA_POS_PANORAMA_START, 1, rw_val, offset);
 }
 
 int SSMSaveTestPattern(unsigned char rw_val)
@@ -2223,7 +2255,7 @@ int SSMReadAudioEQModeVal(int8_t *rw_val)
 
 int SSMSaveAudioEQGain(int offset, int size, int8_t tmp_buf[])
 {
-    return SSMWriteNTypes(SSM_AUD_EQ_GAIN + offset, size, tmp_buf);
+    return SSMWriteNTypes(SSM_AUD_EQ_GAIN, size, tmp_buf, offset);
 }
 
 int SSMReadAudioEQGain(int offset __unused, int size, int8_t tmp_buf[])
@@ -2534,5 +2566,5 @@ int SSMHDMIEdidRestoreDefault(void)
         config_set_str(CFG_SECTION_TV, CS_HDMI_PORT3_EDID_FILE_PATH_CFG, "");
 
     int tmp_val = HDMI_EDID_VER_14;
-    return SSMWriteNTypes(SSM_RW_CUSTOMER_DATA_START, SSM_RW_CUSTOMER_DATA_LEN, &tmp_val);
+    return SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, SSMGetCustomerDataLen(), &tmp_val);
 }

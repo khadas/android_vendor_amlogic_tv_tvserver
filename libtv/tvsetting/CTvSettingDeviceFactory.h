@@ -10,6 +10,7 @@
 #include <tvconfig.h>
 
 #include "CTvSettingCfg.h"
+#include "../tvin/CTvin.h"
 
 class CTvSettingDeviceFactory {
 public:

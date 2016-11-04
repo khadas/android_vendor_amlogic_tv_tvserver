@@ -48,6 +48,9 @@ int CBlobDeviceFile::ReadBytes(int offset, int size, unsigned char *buf)
 }
 int CBlobDeviceFile::EraseAllData()
 {
+    ftruncate(m_dev_fd, 0);
+    lseek (m_dev_fd, 0, SEEK_SET);
+
     return 0;
 }
 int CBlobDeviceFile::InitCheck()

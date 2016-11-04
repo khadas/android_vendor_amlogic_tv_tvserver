@@ -4,6 +4,15 @@ include $(CLEAR_VARS)
 #first delete prebuilt file
 $(shell rm -r vendor/amlogic/prebuilt/tv)
 
+CSV_RET=$(shell ($(LOCAL_PATH)/tvsetting/csvAnalyze.sh > /dev/zero;echo $$?))
+ifeq ($(CSV_RET), 1)
+  $(error "Csv file or common.h file is not exist!!!!")
+else ifeq ($(CSV_RET), 2)
+  $(error "Csv file's Id must be integer")
+else ifeq ($(CSV_RET), 3)
+  $(error "Csv file's Size must be integer or defined in common.h")
+endif
+
 DVB_PATH := $(wildcard external/dvb)
 LIB_TV_UTILS := $(LOCAL_PATH)/../tvutils
 
@@ -63,6 +72,8 @@ LOCAL_SRC_FILES := \
   tvsetting/CTvSetting.cpp  \
   tvsetting/CTvSettingDeviceFactory.cpp  \
   tvsetting/TvKeyData.cpp \
+  tvsetting/SSMHeader.cpp \
+  tvsetting/SSMHandler.cpp \
   version/version.cpp \
   tvdb/CTvChannel.cpp \
   tvdb/CTvDatabase.cpp \

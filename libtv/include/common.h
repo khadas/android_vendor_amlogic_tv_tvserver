@@ -1,0 +1,39 @@
+
+
+#ifndef __COMMON_H__
+#define __COMMON_H__
+
+//CVpp.h
+typedef enum vpp_picture_mode_e {
+    VPP_PICTURE_MODE_STANDARD,
+    VPP_PICTURE_MODE_BRIGHT,
+    VPP_PICTURE_MODE_SOFT,
+    VPP_PICTURE_MODE_USER,
+    VPP_PICTURE_MODE_MOVIE,
+    VPP_PICTURE_MODE_COLORFUL,
+    VPP_PICTURE_MODE_MONITOR,
+    VPP_PICTURE_MODE_GAME,
+    VPP_PICTURE_MODE_SPORTS,
+    VPP_PICTURE_MODE_SONY,
+    VPP_PICTURE_MODE_SAMSUNG,
+    VPP_PICTURE_MODE_SHARP,
+    VPP_PICTURE_MODE_MAX,
+} vpp_picture_mode_t;
+
+//CTvin.h
+typedef enum tv_source_input_type_e {
+    SOURCE_TYPE_TV,
+    SOURCE_TYPE_AV,
+    SOURCE_TYPE_COMPONENT,
+    SOURCE_TYPE_HDMI,
+    SOURCE_TYPE_VGA,
+    SOURCE_TYPE_MPEG,
+    SOURCE_TYPE_DTV,
+    SOURCE_TYPE_SVIDEO,
+    SOURCE_TYPE_IPTV,
+    SOURCE_TYPE_SPDIF,
+    SOURCE_TYPE_MAX,
+} tv_source_input_type_t;
+
+
+#endif

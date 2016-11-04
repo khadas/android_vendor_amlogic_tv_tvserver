@@ -22,6 +22,9 @@
 #include <tvconfig.h>
 #include "CAv.h"
 
+#include "../tvsetting/SSMHandler.h"
+
+
 #define PI 3.14159265358979
 
 CVpp *CVpp::mInstance;
@@ -2727,90 +2730,9 @@ int CVpp::FactorySetGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g
     return ret;
 }
 
-int CVpp::VPPSSMRestoreDefault()
-{
-    int i = 0, tmp_val = 0;
-    int tmp_panorama_nor = 0, tmp_panorama_full = 0;
-    int offset_r = 0, offset_g = 0, offset_b = 0, gain_r = 1024, gain_g = 1024, gain_b = 1024;
-    int8_t std_buf[6] = { 0, 0, 0, 0, 0, 0 };
-    int8_t warm_buf[6] = { 0, 0, -8, 0, 0, 0 };
-    int8_t cold_buf[6] = { -8, 0, 0, 0, 0, 0 };
-    unsigned char tmp[2] = {0, 0};
-
-    SSMSaveColorDemoMode ( VPP_COLOR_DEMO_MODE_ALLON);
-    SSMSaveColorBaseMode ( VPP_COLOR_BASE_MODE_OPTIMIZE);
-    SSMSaveRGBGainRStart(0, gain_r);
-    SSMSaveRGBGainGStart(0, gain_g);
-    SSMSaveRGBGainBStart(0, gain_b);
-    SSMSaveRGBPostOffsetRStart(0, offset_r);
-    SSMSaveRGBPostOffsetGStart(0, offset_g);
-    SSMSaveRGBPostOffsetBStart(0, offset_b);
-    SSMSaveUserNatureLightSwitch(1);
-    SSMSaveGammaValue(0);
-    SSMSaveGraphyBacklight(100);
-    SSMSaveDBCStart(0);
-    SSMSaveDnlpStart(0); //0: ON,1: OFF,default is on
-    SSMSaveAPL(30);
-    SSMSaveAPL2(30);
-    SSMSaveBD(30);
-    SSMSaveBP(30);
-
-    SSMSaveFBCELECmodeVal(11);
-    SSMSaveFBCN360BackLightVal(10);
-    SSMSaveFBCN360ColorTempVal(1); // standard colortemp
-
-    SSMSaveFBCN310ColorTempVal(0);
-    SSMSaveFBCN310LightsensorVal(0);
-    SSMSaveFBCN310Dream_PanelVal(1);
-    SSMSaveFBCN310MULT_PQVal(1);
-    SSMSaveFBCN310MEMCVal(2);
-    SSMSaveFBCN310BackLightVal(254);
-    for (i = 0; i < 6; i++) {
-        SSMSaveRGBValueStart(i + VPP_COLOR_TEMPERATURE_MODE_STANDARD * 6, std_buf[i]); //0~5
-        SSMSaveRGBValueStart(i + VPP_COLOR_TEMPERATURE_MODE_WARM * 6, warm_buf[i]); //6~11
-        SSMSaveRGBValueStart(i + VPP_COLOR_TEMPERATURE_MODE_COLD * 6, cold_buf[i]); //12~17
-    }
-
-    for (i = 0; i < SOURCE_TYPE_MAX; i++) {
-        if (i == SOURCE_TYPE_HDMI) {
-            SSMSaveColorSpaceStart ( VPP_COLOR_SPACE_AUTO);
-        }
-
-        tmp_val = VPP_COLOR_TEMPERATURE_MODE_STANDARD;
-        tmp_panorama_nor = VPP_PANORAMA_MODE_NORMAL;
-        tmp_panorama_full = VPP_PANORAMA_MODE_FULL;
-
-        if (i == SOURCE_TYPE_HDMI) {
-            SSMSavePanoramaStart(i, tmp_panorama_full);
-        } else {
-            SSMSavePanoramaStart(i, tmp_panorama_nor);
-        }
-
-        SSMSaveColorTemperature(i, tmp_val);
-        tmp_val = 50;
-        SSMSaveBrightness(i, tmp_val);
-        SSMSaveContrast(i, tmp_val);
-        SSMSaveSaturation(i, tmp_val);
-        SSMSaveHue(i, tmp_val);
-        SSMSaveSharpness(i, tmp_val);
-        tmp_val = VPP_PICTURE_MODE_STANDARD;
-        SSMSavePictureMode(i, tmp_val);
-        tmp_val = VPP_DISPLAY_MODE_169;
-        SSMSaveDisplayMode(i, tmp_val);
-        tmp_val = VPP_NOISE_REDUCTION_MODE_AUTO;
-        SSMSaveNoiseReduction(i, tmp_val);
-        tmp_val = 100;
-        SSMSaveBackLightVal(i, tmp_val);
-    }
-
-    SSMSaveDDRSSC(0);
-    SSMSaveLVDSSSC(tmp);
-    return 0;
-}
-
 int CVpp::VPPSSMFacRestoreDefault()
 {
-    return VPPSSMRestoreDefault();
+    return SSMHandler::GetSingletonInstance()->VPPSSMRestoreDefault();
 }
 
 void CVpp::video_set_saturation_hue(signed char saturation, signed char hue, signed long *mab)

@@ -7,6 +7,7 @@
 #include "../tvin/CTvin.h"
 #include "fbcutils/CFbcCommunication.h"
 #include "ldim.h"
+#include <common.h>
 
 #define GLOBAL_OGO_FORMAT_FLAG  0x6688
 #define RGB_FORMAT          0
@@ -136,22 +137,6 @@ typedef enum vpp_mcdi_mode_e {
     VPP_MCDI_MODE_ENHANCE,
     VPP_MCDI_MODE_MAX,
 } vpp_mcdi_mode_t;
-
-typedef enum vpp_picture_mode_e {
-    VPP_PICTURE_MODE_STANDARD,
-    VPP_PICTURE_MODE_BRIGHT,
-    VPP_PICTURE_MODE_SOFT,
-    VPP_PICTURE_MODE_USER,
-    VPP_PICTURE_MODE_MOVIE,
-    VPP_PICTURE_MODE_COLORFUL,
-    VPP_PICTURE_MODE_MONITOR,
-    VPP_PICTURE_MODE_GAME,
-    VPP_PICTURE_MODE_SPORTS,
-    VPP_PICTURE_MODE_SONY,
-    VPP_PICTURE_MODE_SAMSUNG,
-    VPP_PICTURE_MODE_SHARP,
-    VPP_PICTURE_MODE_MAX,
-} vpp_picture_mode_t;
 
 typedef enum vpp_color_temperature_mode_e {
     VPP_COLOR_TEMPERATURE_MODE_STANDARD,
@@ -339,7 +324,6 @@ public:
     tvin_cutwin_t FactoryGetOverscan ( int source_type, int fmt, is_3d_type_t is3d, int trans_fmt );
     int FactorySetGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b);
 
-    int VPPSSMRestoreDefault();
     int VPPSSMFacRestoreDefault();
 
 

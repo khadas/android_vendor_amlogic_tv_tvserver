@@ -21,6 +21,7 @@
 #include <ve.h>
 #include <CThread.h>
 #include "../tv/CFrontEnd.h"
+#include <common.h>
 
 #define SYS_DISPLAY_MODE_PATH       "/sys/class/display/mode"
 #define DEPTH_LEVEL_2DTO3D 33
@@ -888,20 +889,6 @@ typedef enum tv_source_input_e {
     SOURCE_SPDIF,
     SOURCE_MAX,
 } tv_source_input_t;
-
-typedef enum tv_source_input_type_e {
-    SOURCE_TYPE_TV,
-    SOURCE_TYPE_AV,
-    SOURCE_TYPE_COMPONENT,
-    SOURCE_TYPE_HDMI,
-    SOURCE_TYPE_VGA,
-    SOURCE_TYPE_MPEG,
-    SOURCE_TYPE_DTV,
-    SOURCE_TYPE_SVIDEO,
-    SOURCE_TYPE_IPTV,
-    SOURCE_TYPE_SPDIF,
-    SOURCE_TYPE_MAX,
-} tv_source_input_type_t;
 
 typedef enum adc_cal_type_e {
     CAL_YPBPR = 0,

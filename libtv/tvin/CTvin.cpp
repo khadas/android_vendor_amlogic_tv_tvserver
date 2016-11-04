@@ -133,7 +133,7 @@ int CTvin::VDIN_AddVideoPath ( int selPath )
     switch ( selPath ) {
     case TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:
         if (Existamlvideo2) {
-            ret = VDIN_AddPath ( "add tvpath vdin0 amlvideo2 ppmgr deinterlace amvideo" );
+            ret = VDIN_AddPath ( "add tvpath vdin0 amlvideo2.0 ppmgr deinterlace amvideo" );
         }
         else {
             ret = VDIN_AddPath ( "add tvpath vdin0 ppmgr deinterlace amvideo" );
@@ -142,7 +142,7 @@ int CTvin::VDIN_AddVideoPath ( int selPath )
 
     case TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:
         if (Existamlvideo2) {
-            ret = VDIN_AddPath ( "add default decoder amlvideo2 ppmgr deinterlace amvideo" );
+            ret = VDIN_AddPath ( "add default decoder amlvideo2.0 ppmgr deinterlace amvideo" );
         }
         else {
             ret = VDIN_AddPath ( "add default decoder ppmgr deinterlace amvideo" );

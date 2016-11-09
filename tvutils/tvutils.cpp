@@ -28,6 +28,9 @@
 #include "tvutils.h"
 #include "CTvLog.h"
 
+#include <vector>
+#include <map>
+#include <string>
 using namespace android;
 
 static pthread_mutex_t file_attr_control_flag_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -531,4 +534,145 @@ int GetFileAttrIntValue(const char *fp, int flag)
     return -1;
 }
 
+
+
+/*
+void split(const std::string &s, std::vector<std::string> &v, const std::string &c)
+{
+    std::string::size_type pos1, pos2;
+    pos2 = s.find(c);
+    pos1 = 0;
+    while (std::string::npos != pos2)
+    {
+        v.push_back(s.substr(pos1, pos2-pos1));
+
+        pos1 = pos2 + c.size();
+        pos2 = s.find(c, pos1);
+    }
+    if (pos1 != s.length())
+        v.push_back(s.substr(pos1));
+}
+void stringToMap(std::map<std::string, std::string> &m, const std::string &s)
+{
+    std::vector<std::string> nvpairs;
+    split(s, nvpairs, "&");
+    for (std::vector<std::string>::iterator it = nvpairs.begin(); it != nvpairs.end(); it++) {
+        std::vector<std::string> nv;
+        split(*it, nv, "=");
+        if (nv.size() == 2)
+            m.insert(std::map<std::string, std::string>::value_type(nv[0], nv[1]));
+    }
+}
+
+void mapToString(std::string &s, const std::map<std::string, std::string> &m)
+{
+    for (std::map<std::string, std::string>::const_iterator it = m.begin(); it != m.end(); ++it) {
+        if (!s.empty())
+            s.append("&");
+        s.append(it->first);
+        s.append("=");
+        s.append(it->second);
+    }
+}
+*/
+
+#include "json/json.h"
+
+void jsonToMap(STR_MAP &m, const std::string &j)
+{
+    Json::Reader reader;
+    Json::Value root;
+    Json::FastWriter writer;
+
+    if (!reader.parse(j, root))
+        return;
+
+    for (Json::Value::iterator it = root.begin(); it != root.end(); it++) {
+        std::string v(writer.write(*it));
+        if (v.compare(v.size()-1, 1, "\n") == 0)
+            v.erase(v.size()-1);
+        if (v[0] == '\"')
+            m.insert(STR_MAP::value_type(it.key().asString(), v.substr(1, v.size()-2)));
+        else
+            m.insert(STR_MAP::value_type(it.key().asString(), v));
+    }
+}
+
+void mapToJson(std::string &j, const STR_MAP &m)
+{
+    int has_member = 0;
+
+    if (m.empty())
+        return;
+
+    j.append("{");
+    for (STR_MAP::const_iterator it = m.begin(); it != m.end(); ++it) {
+        if (has_member)
+            j.append(",");
+        j.append("\"").append(it->first).append("\":").append(it->second);
+        has_member = 1;
+    }
+    j.append("}");
+}
+
+void mapToJson(std::string &j, const STR_MAP &m, const std::string &k)
+{
+    if (m.empty())
+        return;
+
+    if (k.size())
+        j.append("\"").append(k).append("\":");
+
+    mapToJson(j, m);
+}
+
+void mapToJsonAppend(std::string &j, const STR_MAP &m, const std::string &k)
+{
+    if (m.empty())
+        return;
+
+    int append = 0;
+
+    if (!j.empty()) {
+        append = 1;
+        j.replace(j.size()-1, 1, 1, ',');
+    }
+
+    mapToJson(j, m, k);
+
+    if (append)
+        j.append("}");
+}
+
+Paras Paras::operator + (const Paras &p)
+{
+    Paras pnew(*this);
+    for (STR_MAP::const_iterator it = p.mparas.begin(); it != p.mparas.end(); ++it)
+        pnew.mparas.insert(*it);
+    return pnew;
+}
+
+int Paras::getInt(const char *key, int def) const
+{
+    STR_MAP::const_iterator  it = mparas.find(std::string(key));
+    if (it == mparas.end())
+        return def;
+    return atoi(it->second.c_str());
+}
+
+void Paras::setInt(const char *key, int v)
+{
+    char cs[64];
+    sprintf(cs, "%d", v);
+    STR_MAP::iterator it = mparas.find(std::string(key));
+    if (it != mparas.end()) {
+        it->second.assign(cs);
+    } else {
+        std::pair<std::map<std::string, std::string>::iterator, bool> ret;
+        ret = mparas.insert(std::pair<std::string, std::string>(std::string(key), std::string(cs)));
+        if (ret.second == false) {
+            LOGE("error: map can not insert");
+        }
+    }
+}
 

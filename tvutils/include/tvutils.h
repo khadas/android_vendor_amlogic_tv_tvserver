@@ -5,6 +5,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <string>
+#include <map>
+
 #define SYS_STR_LEN                         1024
 
 int tvReadSysfs(const char *path, char *value);
@@ -49,5 +52,35 @@ int ArrayCopy(T1 dst_buf[], T2 src_buf[], int copy_size)
 
     return 0;
 };
+
+
+typedef std::map<std::string, std::string> STR_MAP;
+
+extern void jsonToMap(STR_MAP &m, const std::string &j);
+extern void mapToJson(std::string &j, const STR_MAP &m);
+extern void mapToJson(std::string &j, const STR_MAP &m, const std::string &k);
+extern void mapToJsonAppend(std::string &j, const STR_MAP &m, const std::string &k);
+
+class Paras {
+protected:
+    STR_MAP mparas;
+
+public:
+    Paras() {}
+    Paras(const Paras &paras):mparas(paras.mparas) {}
+    Paras(const char *paras) { jsonToMap(mparas, std::string(paras)); }
+    Paras(const STR_MAP &paras):mparas(paras) {}
+
+    void clear() { mparas.clear(); }
+
+    int getInt (const char *key, int def) const;
+    void setInt(const char *key, int v);
+
+    const std::string toString() { std::string s; mapToJson(s, mparas); return s; }
+
+    Paras operator + (const Paras &p);
+    Paras& operator = (const Paras &p) { mparas = p.mparas; return *this; };
+};
+
 
 #endif  //__TV_MISC_H__

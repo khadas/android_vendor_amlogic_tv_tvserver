@@ -22,10 +22,14 @@ LOCAL_SRC_FILES := \
 LOCAL_C_INCLUDES += \
   $(LOCAL_PATH)/include \
   $(LIB_SQLITE_PATH)/dist \
-  $(LIB_VENDOR)/frameworks/services
+  $(LIB_VENDOR)/frameworks/services \
+  external/jsoncpp/include
 
 LOCAL_SHARED_LIBRARIES += \
   libsystemcontrolservice
+
+LOCAL_STATIC_LIBRARIES += \
+  libjsoncpp
 
 LOCAL_MODULE:= libtv_utils
 

@@ -94,11 +94,11 @@ void TvService::onTvEvent(const CTvEv &ev)
                 p.writeInt32(pScannerEv->mPercent);
                 p.writeInt32(pScannerEv->mTotalChannelCount);
                 p.writeInt32(pScannerEv->mLockedStatus);
-                p.writeInt32(pScannerEv->mChannelNumber);
+                p.writeInt32(pScannerEv->mChannelIndex);
                 p.writeInt32(pScannerEv->mFrequency);
                 p.writeString16(String16(pScannerEv->mProgramName));
                 p.writeInt32(pScannerEv->mprogramType);
-                p.writeString16(String16(pScannerEv->mMSG));
+                p.writeString16(String16(pScannerEv->mParas));
                 p.writeInt32(pScannerEv->mStrength);
                 p.writeInt32(pScannerEv->mSnr);
                 //ATV
@@ -110,7 +110,7 @@ void TvService::onTvEvent(const CTvEv &ev)
                 p.writeInt32(pScannerEv->mSymbolRate);
                 p.writeInt32(pScannerEv->mModulation);
                 p.writeInt32(pScannerEv->mBandwidth);
-                p.writeInt32(pScannerEv->mOfdm_mode);
+                p.writeInt32(pScannerEv->mReserved);
                 p.writeInt32(pScannerEv->mTsId);
                 p.writeInt32(pScannerEv->mONetId);
                 p.writeInt32(pScannerEv->mServiceId);
@@ -155,6 +155,13 @@ void TvService::onTvEvent(const CTvEv &ev)
                     p.writeInt32(pScannerEv->mLcnInfo.lcn[i]);
                     p.writeInt32(pScannerEv->mLcnInfo.valid[i]);
                 }
+                p.writeInt32(pScannerEv->mMajorChannelNumber);
+                p.writeInt32(pScannerEv->mMinorChannelNumber);
+                p.writeInt32(pScannerEv->mSourceId);
+                p.writeInt32(pScannerEv->mAccessControlled);
+                p.writeInt32(pScannerEv->mHidden);
+                p.writeInt32(pScannerEv->mHideGuide);
+
                 ScannerClient->notifyCallback(SCAN_EVENT_CALLBACK, p);
             }
         }
@@ -3357,6 +3364,25 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int para = p.readInt32();
         int tmpRet = mpTv->clearFrontEnd(para);
         r->writeInt32(tmpRet);
+        break;
+    }
+    case PLAY_PROGRAM_2: {
+        String8 feparas(p.readString16());
+        int vid = p.readInt32();
+        int vfmt = p.readInt32();
+        int aid = p.readInt32();
+        int afmt = p.readInt32();
+        int pcr = p.readInt32();
+        int audioCompetation = p.readInt32();
+        mpTv->playDtvProgram(feparas.string(), vid, vfmt, aid, afmt, pcr, audioCompetation);
+        break;
+    }
+    case TV_SCAN_2: {
+        String8 feparas(p.readString16());
+        String8 scanparas(p.readString16());
+        int ret = mpTv->Scan(feparas.string(), scanparas.string());
+        mTvService->mpScannerClient = this;
+        r->writeInt32(ret);
         break;
     }
     // EXTAR END

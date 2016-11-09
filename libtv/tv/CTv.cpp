@@ -150,6 +150,7 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     mAutoSetDisplayFreq = false;
     mPreviewEnabled = false;
 
+    mFrontDev = CFrontEnd::getInstance();
     mpTvin = CTvin::getInstance();
     mTvScanner = CTvScanner::getInstance();
     tv_config_load (TV_CONFIG_FILE_PATH);
@@ -180,7 +181,7 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     m_hdmi_audio_data = 0;
     mSigDetectThread.setObserver ( this );
     mSourceConnectDetectThread.setObserver ( this );
-    mFrontDev.setObserver ( &mTvMsgQueue );
+    mFrontDev->setObserver ( &mTvMsgQueue );
     if (mHdmiOutFbc) {
         fbcIns = GetSingletonFBC();
         setUpgradeFbcObserver(this);
@@ -242,7 +243,7 @@ CTv::~CTv()
     tv_config_unload();
     mAv.Close();
     mTvStatus = TV_INIT_ED;
-    mFrontDev.Close();
+    mFrontDev->Close();
 
     if (fbcIns != NULL) {
         fbcIns->fbcRelease();
@@ -437,7 +438,7 @@ void CTv::CTvMsgQueue::handleMessage ( CMessage &msg )
         break;
 
     case TV_MSG_CHECK_FE_DELAY: {
-        mpTv->mFrontDev.checkStatusOnce();
+        mpTv->mFrontDev->checkStatusOnce();
         break;
     }
 
@@ -575,13 +576,47 @@ void CTv::sendTvEvent ( const CTvEv &ev )
 
 int CTv::ClearAnalogFrontEnd()
 {
-    return mFrontDev.ClearAnalogFrontEnd ();
+    return mFrontDev->ClearAnalogFrontEnd ();
 }
 
 int CTv::clearFrontEnd(int para)
 {
-    return mFrontDev.setPara(para, 470000000, 0, 0);
+    return mFrontDev->setPara(para, 470000000, 0, 0);
 }
+
+int CTv::Scan(const char *feparas, const char *scanparas) {
+    AutoMutex lock(mLock);
+    mTvAction = mTvAction | TV_ACTION_SCANNING;
+    LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
+    LOGD("fe[%s], scan[%s] %s", feparas, scanparas, __FUNCTION__);
+
+    mAv.StopTS();
+
+    if ( iSBlackPattern ) {
+        mAv.DisableVideoWithBlackColor();
+    } else {
+        mAv.DisableVideoWithBlueColor();
+    }
+
+    CTvScanner::ScanParas sp(scanparas);
+    CFrontEnd::FEParas fp(feparas);
+
+    if (sp.getAtvMode() & AM_SCAN_ATVMODE_AUTO)
+        CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_ATV );
+    if (sp.getDtvMode() & AM_SCAN_DTVMODE_MANUAL) {
+        CTvChannel::DeleteBetweenFreq(sp.getDtvFrequency1(), sp.getDtvFrequency2());
+    } else {
+        CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_DTV );
+        CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_RADIO );
+        CTvEvent::CleanAllEvent();
+    }
+
+    mTvScanner->setObserver(&mTvMsgQueue);
+    mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
+
+    return mTvScanner->Scan(fp, sp);
+}
+
 int CTv::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2) {
     AutoMutex lock(mLock);
     mTvAction = mTvAction | TV_ACTION_SCANNING;
@@ -606,8 +641,6 @@ int CTv::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1,
     }
     mTvScanner->setObserver(&mTvMsgQueue);
     mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
-    mFrontDev.Open(mode & 0xff);
-    mFrontDev.setMode(mode & 0xff);
 
     return mTvScanner->dtvScan(mode, scan_mode, beginFreq, endFreq, para1, para2);
 }
@@ -681,7 +714,7 @@ int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchTyp
     aStd = CC_ATV_AUDIO_STD_DK;
     tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceInput(SOURCE_TV);
     mpTvin->VDIN_OpenPort ( source_port );
-    v4l2_std_id stdAndColor = mFrontDev.enumToStdAndColor(vStd, aStd);
+    v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor(vStd, aStd);
 
     int fmt = CFrontEnd::stdEnumToCvbsFmt (vStd, aStd);
     mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) TVIN_SIG_FMT_NULL );
@@ -690,10 +723,10 @@ int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchTyp
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_ATV );
     } else if (searchType == 1) { //type for skyworth, and insert 256 prog, and just update ts table
     }
-    minScanFreq = mFrontDev.formatATVFreq ( minScanFreq );
-    maxScanFreq = mFrontDev.formatATVFreq ( maxScanFreq );
+    minScanFreq = mFrontDev->formatATVFreq ( minScanFreq );
+    maxScanFreq = mFrontDev->formatATVFreq ( maxScanFreq );
     LOGD("%s, atv auto scan vstd=%d, astd=%d stdandcolor=%lld", __FUNCTION__, vStd, aStd, stdAndColor);
-    mFrontDev.Open(FE_ANALOG);
+
     mSigDetectThread.initSigState();
     mSigDetectThread.resumeDetect();
     mTvScanner->autoAtvScan ( minScanFreq, maxScanFreq, stdAndColor, searchType, procMode);
@@ -719,8 +752,8 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
 {
     int minScanFreq, maxScanFreq, vStd, aStd;
 
-    minScanFreq = mFrontDev.formatATVFreq ( startFreq );
-    maxScanFreq = mFrontDev.formatATVFreq ( endFreq );
+    minScanFreq = mFrontDev->formatATVFreq ( startFreq );
+    maxScanFreq = mFrontDev->formatATVFreq ( endFreq );
     if ( minScanFreq == 0 || maxScanFreq == 0 ) {
         LOGE ( "%s, munual scan  freq set is error min=%d, max=%d", __FUNCTION__, minScanFreq, maxScanFreq );
         return -1;
@@ -742,7 +775,7 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
     mTvScanner->setObserver ( &mTvMsgQueue );
 
     SetAudioMuteForTv ( CC_AUDIO_MUTE );
-    v4l2_std_id stdAndColor = mFrontDev.enumToStdAndColor(vStd, aStd);
+    v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor(vStd, aStd);
 
     tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceInput(SOURCE_TV);
     mpTvin->VDIN_OpenPort ( source_port );
@@ -750,7 +783,7 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
     int fmt = CFrontEnd::stdEnumToCvbsFmt (vStd, aStd);
     mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) TVIN_SIG_FMT_NULL );
     LOGD("%s, atv manual scan vstd=%d, astd=%d stdandcolor=%lld", __FUNCTION__, vStd, aStd, stdAndColor);
-    mFrontDev.Open(FE_ANALOG);
+
     return mTvScanner->ATVManualScan ( minScanFreq, maxScanFreq, stdAndColor, store_Type, channel_num);
 }
 
@@ -859,7 +892,7 @@ int CTv::stopScan()
     mSigDetectThread.setObserver(this);
     //mTvEpg.leaveChannel();
     mTvScanner->stopScan();
-    mFrontDev.Close();
+    mFrontDev->Close();
     mTvAction &= ~TV_ACTION_SCANNING;
     return 0;
 }
@@ -916,7 +949,7 @@ int CTv::playDvbcProgram ( int progId )
     CTvChannel channel;
     prog.getChannel ( channel );
 
-    mFrontDev.setPara ( channel.getMode(), channel.getFrequency(), channel.getSymbolRate(), channel.getModulation() );
+    mFrontDev->setPara ( channel.getMode(), channel.getFrequency(), channel.getSymbolRate(), channel.getModulation() );
 
     int vpid = 0x1fff, apid = 0x1fff, vfmt = -1, afmt = -1;
 
@@ -1028,10 +1061,10 @@ int CTv::switchAudioTrack ( int progId, int idx )
         if ( 0 != iOutRet ) {
             break;
         }
-        if (prog.getAudioTrackSize() <= 1) {
+        /*if (prog.getAudioTrackSize() <= 1) {
             LOGD("%s, just one audio track, not to switch", __FUNCTION__);
             break;
-        }
+        }*/
         if ( idx >= prog.getAudioTrackSize() ) {
             break;
         }
@@ -1074,10 +1107,14 @@ int CTv::setAudioAD (int enable, int aPid, int aFmt)
     return iOutRet;
 }
 
-int CTv::playDtvProgram ( int mode, int freq, int para1, int para2,
+int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int para2,
                           int vpid, int vfmt, int apid, int afmt, int pcr, int audioCompetation)
 {
     AutoMutex lock ( mLock );
+
+    if (m_virtual)
+        SetSourceSwitchInput(m_source_input_virtual, SOURCE_DTV);
+
     mTvAction |= TV_ACTION_PLAYING;
     if (mBlackoutEnable)
         mAv.EnableVideoBlackout();
@@ -1085,9 +1122,13 @@ int CTv::playDtvProgram ( int mode, int freq, int para1, int para2,
         mAv.DisableVideoBlackout();
     //mAv.ClearVideoBuffer();
 
-    mFrontDev.Open(FE_ANALOG);
-    if (!(mTvAction & TV_ACTION_SCANNING))
-        mFrontDev.setPara ( mode, freq, para1, para2);
+    mFrontDev->Open(FE_AUTO);
+    if (!(mTvAction & TV_ACTION_SCANNING)) {
+        if (!feparas)
+            mFrontDev->setPara ( mode, freq, para1, para2);
+        else
+            mFrontDev->setPara(feparas);
+    }
     mTvAction |= TV_ACTION_PLAYING;
     startPlayTv ( SOURCE_DTV, vpid, apid, pcr, vfmt, afmt );
 
@@ -1097,6 +1138,16 @@ int CTv::playDtvProgram ( int mode, int freq, int para1, int para2,
     mTvMsgQueue.sendMsg ( msg );
     SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
     return 0;
+}
+
+int CTv::playDtvProgram(int mode, int freq, int para1, int para2, int vpid, int vfmt, int apid,
+        int afmt, int pcr, int audioCompetation) {
+    return playDtvProgram(NULL, mode, freq, para1, para2, vpid, vfmt, apid, afmt, pcr, audioCompetation);
+}
+
+int CTv::playDtvProgram(const char* feparas, int vpid, int vfmt, int apid,
+        int afmt, int pcr, int audioCompetation) {
+    return playDtvProgram(feparas, 0, 0, 0, 0, vpid, vfmt, apid, afmt, pcr, audioCompetation);
 }
 
 int CTv::playDtmbProgram ( int progId )
@@ -1117,7 +1168,7 @@ int CTv::playDtmbProgram ( int progId )
     chanVolCompValue = GetAudioVolumeCompensationVal(progId);
     SetCurProgramAudioVolumeCompensationVal ( chanVolCompValue );
 
-    mFrontDev.setPara ( channel.getMode(), channel.getFrequency(), channel.getBandwidth(), 0 );
+    mFrontDev->setPara ( channel.getMode(), channel.getFrequency(), channel.getBandwidth(), 0 );
 
     pV = prog.getVideo();
     if ( pV != NULL ) {
@@ -1151,6 +1202,9 @@ int CTv::playDtmbProgram ( int progId )
 
 int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __unused, int audioCompetation)
 {
+    if (m_virtual)
+        SetSourceSwitchInput(m_source_input_virtual, SOURCE_TV);
+
     mTvAction |= TV_ACTION_PLAYING;
     if ( mBlackoutEnable ) {
         mAv.EnableVideoBlackout();
@@ -1162,14 +1216,14 @@ int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __u
     //image selecting channel
     mSigDetectThread.requestAndWaitPauseDetect();
     mpTvin->Tvin_StopDecoder();
-    mFrontDev.Open(FE_ANALOG);
+    mFrontDev->Open(FE_ANALOG);
     //set CVBS
     int fmt = CFrontEnd::stdEnumToCvbsFmt (videoStd, audioStd);
     mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
 
-    v4l2_std_id stdAndColor = mFrontDev.enumToStdAndColor (videoStd, audioStd);
+    v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor (videoStd, audioStd);
     //set TUNER
-    mFrontDev.setPara (FE_ANALOG, freq, stdAndColor, 1);
+    mFrontDev->setPara (FE_ANALOG, freq, stdAndColor, 1);
 
     mSigDetectThread.setObserver ( this );
     mSigDetectThread.initSigState();
@@ -1193,7 +1247,7 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
         int mode = feParms.mode;
 
         //get tunerStd from videoStd and audioStd
-        v4l2_std_id stdAndColor = mFrontDev.enumToStdAndColor (feParms.videoStd, feParms.audioStd);
+        v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor (feParms.videoStd, feParms.audioStd);
 
         LOGD("%s, resetFrontEndPara- vstd=%d astd=%d stdandcolor=%lld", __FUNCTION__, feParms.videoStd, feParms.audioStd, stdAndColor);
 
@@ -1207,18 +1261,18 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 
         //set TUNER
         usleep(400 * 1000);
-        mFrontDev.Open(FE_ANALOG);
-        mFrontDev.setPara ( FE_ANALOG, tmpFreq, stdAndColor, 1 );
+        mFrontDev->Open(FE_ANALOG);
+        mFrontDev->setPara ( FE_ANALOG, tmpFreq, stdAndColor, 1 );
         usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
-            mFrontDev.fineTune ( tmpfineFreq / 1000 );
+            mFrontDev->fineTune ( tmpfineFreq / 1000 );
         }
 
         mSigDetectThread.initSigState();
         mSigDetectThread.resumeDetect();
-    } else if ( feParms.mode == FE_DTMB ) {
-        mFrontDev.Open(FE_ANALOG);
-        mFrontDev.setPara ( FE_DTMB, feParms.freq, feParms.para1, feParms.para2 );
+    } else {
+        mFrontDev->Open(feParms.mode);
+        mFrontDev->setPara ( feParms.mode, feParms.freq, feParms.para1, feParms.para2 );
     }
 
     return 0;
@@ -1227,7 +1281,7 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 int CTv::resetDmxAndAvSource()
 {
     AM_DMX_Source_t curdmxSource;
-    mFrontDev.GetTSSource ( &curdmxSource );
+    mFrontDev->GetTSSource ( &curdmxSource );
     LOGD ( "%s, AM_FEND_GetTSSource %d", __FUNCTION__, curdmxSource );
     mTvDmx.Close();
     AM_DMX_OpenPara_t para;
@@ -1360,17 +1414,17 @@ int CTv::setAudioChannel ( int channelIdx )
 
 int CTv::getFrontendSignalStrength()
 {
-    return mFrontDev.getStrength();
+    return mFrontDev->getStrength();
 }
 
 int CTv::getFrontendSNR()
 {
-    return mFrontDev.getSNR();
+    return mFrontDev->getSNR();
 }
 
 int CTv::getFrontendBER()
 {
-    return mFrontDev.getBER();
+    return mFrontDev->getBER();
 }
 
 int CTv::getChannelInfoBydbID ( int dbID, channel_info_t &chan_info )
@@ -1689,12 +1743,12 @@ int CTv::OpenTv ( void )
     SSMReadBlackoutEnable(&enable);
     mBlackoutEnable = ((enable==1)?true:false);
 
-    mFrontDev.Open(FE_ANALOG);
+    mFrontDev->Open(FE_AUTO);
     mAv.Open();
     resetDmxAndAvSource();
     mSourceConnectDetectThread.startDetect();
     ClearAnalogFrontEnd();
-    //mFrontDev.Close();
+    //mFrontDev->Close();
 
     mTvStatus = TV_OPEN_ED;
     return 0;
@@ -1719,13 +1773,16 @@ int CTv::StartTvLock ()
 
     Mutex::Autolock _l ( mLock );
     mTvAction |= TV_ACTION_STARTING;
+
+    //tvWriteSysfs("/sys/power/wake_lock", "tvserver.run");
+
     //mAv.ClearVideoBuffer();
     mAv.SetVideoLayerDisable(1);
     SwitchAVOutBypass(0);
     InitSetTvAudioCard();
     SetAudioMuteForTv(CC_AUDIO_MUTE);
-    mFrontDev.Open(FE_ANALOG);
-    mFrontDev.autoLoadFE();
+    mFrontDev->Open(FE_AUTO);
+    mFrontDev->autoLoadFE();
     mSigDetectThread.startDetect();
     mTvMsgQueue.startMsgQueue();
     resetDmxAndAvSource();
@@ -1793,7 +1850,7 @@ int CTv::StopTvLock ( void )
     mpTvin->VDIN_ClosePort();
     //stop scan  if scanning
     stopScan();
-    mFrontDev.SetAnalogFrontEndTimerSwitch(0);
+    mFrontDev->SetAnalogFrontEndTimerSwitch(0);
     //first stop play(if playing)
     stopPlaying(false);
     //
@@ -1810,7 +1867,7 @@ int CTv::StopTvLock ( void )
     RefreshAudioMasterVolume ( SOURCE_MPEG );
     m_last_source_input = SOURCE_INVALID;
     m_source_input = SOURCE_INVALID;
-    mFrontDev.Close();
+    mFrontDev->Close();
     mTvAction &= ~TV_ACTION_STOPING;
     mTvStatus = TV_STOP_ED;
     if ( Get2d4gHeadsetEnable() == 1 ) {
@@ -1821,6 +1878,9 @@ int CTv::StopTvLock ( void )
     mAv.ClearVideoBuffer();
     mAv.EnableVideoBlackout();
     SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
+
+    //tvWriteSysfs("/sys/power/wake_unlock", "tvserver.run");
+
     return 0;
 }
 
@@ -1863,10 +1923,29 @@ int CTv::Tv_MiscSetBySource ( tv_source_input_t source_input )
     return ret;
 }
 
+
 int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
 {
     Mutex::Autolock _l ( mLock );
     LOGD ( "%s, source input = %d", __FUNCTION__, source_input );
+
+    int ret = 0;
+    m_source_input_virtual = source_input;
+
+    switch (source_input) {
+        case SOURCE_ADTV:
+            m_virtual = true;
+            return 0;// wait for real source setting.
+        default:
+            m_virtual = false;
+            break;
+    }
+
+    return SetSourceSwitchInput(m_source_input_virtual, source_input);
+}
+
+int CTv::SetSourceSwitchInput(tv_source_input_t virtual_input __unused, tv_source_input_t source_input)
+{
     tvin_port_t cur_port;
 
     Tv_SetDDDRCMode(source_input);
@@ -1905,16 +1984,16 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
     mAv.EnableVideoBlackout();
     //set front dev mode
     if ( source_input == SOURCE_TV ) {
-        mFrontDev.Close();
-        mFrontDev.Open(FE_ANALOG);
-        mFrontDev.SetAnalogFrontEndTimerSwitch(1);
+        mFrontDev->Close();
+        mFrontDev->Open(FE_ANALOG);
+        mFrontDev->SetAnalogFrontEndTimerSwitch(1);
     } else if ( source_input == SOURCE_DTV ) {
-        mFrontDev.Close();
-        mFrontDev.Open(FE_ANALOG);
-        mFrontDev.SetAnalogFrontEndTimerSwitch(0);
+        mFrontDev->Close();
+        mFrontDev->Open(FE_AUTO);
+        mFrontDev->SetAnalogFrontEndTimerSwitch(0);
     } else {
-        mFrontDev.Close();
-        mFrontDev.SetAnalogFrontEndTimerSwitch(0);
+        mFrontDev->Close();
+        mFrontDev->SetAnalogFrontEndTimerSwitch(0);
     }
 
     //ok
@@ -2544,7 +2623,7 @@ tvin_info_t CTv::GetCurrentSignalInfo ( void )
     tvin_sig_status_t signalState = TVIN_SIG_STATUS_NULL;
     tvin_info_t signal_info = mSigDetectThread.getCurSigInfo();
 
-    int feState = mFrontDev.getStatus();
+    int feState = mFrontDev->getStatus();
     if ( (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_DTV ) ) {
         det_fmt = mpTvin->TvinApi_Get3DDectMode();
         if ((feState & FE_HAS_LOCK) == FE_HAS_LOCK) {

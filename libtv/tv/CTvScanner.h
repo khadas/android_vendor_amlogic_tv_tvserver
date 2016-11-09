@@ -31,8 +31,8 @@ public:
     static const int AM_ATSC_ATTENNA_TYPE_CABLE_HRC = 4;
     CTvScanner();
     ~CTvScanner();
-    int startScan();
-    int stopScan();
+
+    /*deprecated{{*/
     int ATVManualScan(int min_freq, int max_freq, int std, int store_Type = 0, int channel_num = 0);
     int autoAtvScan(int min_freq, int max_freq, int std, int search_type);
     int autoAtvScan(int min_freq, int max_freq, int std, int search_type, int proc_mode);
@@ -40,12 +40,18 @@ public:
     int manualDtmbScan(int beginFreq, int endFreq, int modulation = -1);
     int manualDtmbScan(int freq);
     int unsubscribeEvent();
-    int pauseScan();
-    int resumeScan();
-    int getScanStatus(int *status);
     int dtvAutoScan(int mode);
     int dtvManualScan(int mode, int beginFreq, int endFreq, int para1, int para2);
     int dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2);
+    int dtvScan(char *feparas, int scan_mode, int beginFreq, int endFreq);
+    /*}}deprecated*/
+
+    int Scan(char *feparas, char *scanparas);
+    int stopScan();
+    int pauseScan();
+    int resumeScan();
+    int getScanStatus(int *status);
+
     static const char *getDtvScanListName(int mode);
     static CTvScanner *getInstance();
 
@@ -81,17 +87,25 @@ public:
 
         ScannerEvent(): CTvEv(CTvEv::TV_EVENT_SCANNER)
         {
+            reset();
+        }
+        void reset()
+        {
             clear();
+            mFEParas.clear();
         }
         void clear()
         {
             mType = -1;
             mProgramName[0] = '\0';
-            mMSG[0] = '\0';
+            mParas[0] = '\0';
             mAcnt = 0;
             mScnt = 0;
 
             memset(&mLcnInfo, 0, sizeof(ScannerLcnInfo));
+
+            mMajorChannelNumber = -1;
+            mMinorChannelNumber = -1;
         }
         ~ScannerEvent()
         {
@@ -102,30 +116,27 @@ public:
         int mPercent;
         int mTotalChannelCount;
         int mLockedStatus;
-        int mChannelNumber;
-        //CTvChannel mChannel;
+        int mChannelIndex;
+
         int mMode;
         long mFrequency;
         int mSymbolRate;
         int mModulation;
         int mBandwidth;
-        int mOfdm_mode;
+        int mReserved;
 
-        int mAudio;
-        int mStandard;
         int mSat_polarisation;
-        //
         int mStrength;
         int mSnr;
+
         char mProgramName[1024];
         int mprogramType;
-        char mMSG[128];
+        char mParas[128];
+
         //for atv
         int mVideoStd;
         int mAudioStd;
-        int mIsAutoStd;//1 is true
-        int mAfcData;
-
+        int mIsAutoStd;
 
         //for DTV
         int mTsId;
@@ -159,9 +170,15 @@ public:
         int mSortMode;
 
         ScannerLcnInfo  mLcnInfo;
-        //      ScannerEvent(int type){
-        //          this->mType = type;
-        //      }
+
+        CFrontEnd::FEParas mFEParas;
+
+        int mMajorChannelNumber;
+        int mMinorChannelNumber;
+        int mSourceId;
+        char mAccessControlled;
+        char mHidden;
+        char mHideGuide;
     };
 
     class IObserver {
@@ -170,25 +187,65 @@ public:
         virtual ~IObserver() {};
         virtual void onEvent(const ScannerEvent &ev) = 0;
     };
-    //1 VS n
+    // 1 VS n
     //int addObserver(IObserver* ob);
     //int removeObserver(IObserver* ob);
 
-    //1 VS 1
+    // 1 VS 1
     int setObserver(IObserver *ob)
     {
         mpObserver = ob;
         return 0;
     }
 
-private:
-    static AM_Bool_t s_atv_cvbs_lock_check(void *);
-    AM_Bool_t atv_cvbs_lock_check(v4l2_std_id  *colorStd);
-    static void tv_scan_evt_callback(long dev_no, int event_type, void *param, void *data);
-    static void storeATV(AM_SCAN_Result_t *result);
-    static void storeATVTs(AM_SCAN_TS_t *ts);
+    class ScanParas : public Paras {
 
-    void tv_scan_reconnect_dmx_to_fend(int dmx_no, int fend_no);
+    public:
+        ScanParas() : Paras() { }
+        ScanParas(const ScanParas &sp) : Paras(sp.mparas) { }
+        ScanParas(const char *paras) : Paras(paras) { }
+        ScanParas& operator = (const ScanParas &spp);
+
+        int getMode() const { return getInt(SCP_MODE, 0); }
+        ScanParas& setMode(int m) { setInt(SCP_MODE, m); return *this; }
+        int getAtvMode() const { return getInt(SCP_ATVMODE, 0); }
+        ScanParas& setAtvMode(int a) { setInt(SCP_ATVMODE, a); return *this; }
+        int getDtvMode() const { return getInt(SCP_DTVMODE, 0); }
+        ScanParas& setDtvMode(int d) { setInt(SCP_DTVMODE, d); return *this; }
+        ScanParas& setAtvFrequency1(int f) { setInt(SCP_ATVFREQ1, f); return *this; }
+        int getAtvFrequency1() const { return getInt(SCP_ATVFREQ1, 0); }
+        ScanParas& setAtvFrequency2(int f) { setInt(SCP_ATVFREQ2, f); return *this; }
+        int getAtvFrequency2() const { return getInt(SCP_ATVFREQ2, 0); }
+        ScanParas& setDtvFrequency1(int f) { setInt(SCP_DTVFREQ1, f); return *this; }
+        int getDtvFrequency1() const { return getInt(SCP_DTVFREQ1, 0); }
+        ScanParas& setDtvFrequency2(int f) { setInt(SCP_DTVFREQ2, f); return *this; }
+        int getDtvFrequency2() const { return getInt(SCP_DTVFREQ2, 0); }
+        ScanParas& setProc(int p) { setInt(SCP_PROC, p); return *this; }
+        int getProc() const { return getInt(SCP_PROC, 0); }
+        ScanParas& setDtvStandard(int s) { setInt(SCP_DTVSTD, s); return *this; }
+        int getDtvStandard() const { return getInt(SCP_DTVSTD, -1); }
+
+    public:
+        static const char* SCP_MODE;
+        static const char* SCP_ATVMODE;
+        static const char* SCP_DTVMODE;
+        static const char* SCP_ATVFREQ1;
+        static const char* SCP_ATVFREQ2;
+        static const char* SCP_DTVFREQ1;
+        static const char* SCP_DTVFREQ2;
+        static const char* SCP_PROC;
+        static const char* SCP_DTVSTD;
+    };
+
+    int Scan(CFrontEnd::FEParas &fp, ScanParas &sp);
+
+private:
+    AM_Bool_t checkAtvCvbsLock(v4l2_std_id  *colorStd);
+    static AM_Bool_t checkAtvCvbsLockHelper(void *);
+
+    static void evtCallback(long dev_no, int event_type, void *param, void *data);
+
+    void reconnectDmxToFend(int dmx_no, int fend_no);
     int getAtscChannelPara(int attennaType, Vector<sp<CTvChannel> > &vcp);
     void sendEvent(ScannerEvent &evt);
     //
@@ -224,42 +281,70 @@ private:
     static const int TYPE_DTV_CC = 4;
     static const int TYPE_ATV_CC = 5;
 
+    typedef struct {
+        int nid;
+        int tsid;
+        CFrontEnd::FEParas fe;
+        int dtvstd;
+    } SCAN_TsInfo_t;
+
+    typedef std::list<SCAN_TsInfo_t*> ts_list_t;
+
 #define AM_SCAN_MAX_SRV_NAME_LANG 4
 
     typedef struct {
-        uint8_t srv_type, eit_sche, eit_pf, rs, free_ca, access_controlled, hidden, hide_guide, plp_id;
-        int vid, aid1, aid2, srv_id, pmt_pid, pcr_pid;
-        int vfmt, chan_num, afmt_tmp, vfmt_tmp, scrambled_flag, major_chan_num, minor_chan_num, source_id;
-        int src, srv_dbid, satpara_dbid;
+        uint8_t srv_type, eit_sche, eit_pf, rs, free_ca;
+        uint8_t access_controlled, hidden, hide_guide;
+        uint8_t plp_id;
+        int vid, vfmt, srv_id, pmt_pid, pcr_pid, src;
+        int chan_num, scrambled_flag;
+        int major_chan_num, minor_chan_num, source_id;
         char name[(AM_DB_MAX_SRV_NAME_LEN + 4)*AM_SCAN_MAX_SRV_NAME_LANG + 1];
-        char *default_text_lang;
-        char *text_langs;
         AM_SI_AudioInfo_t aud_info;
         AM_SI_SubtitleInfo_t sub_info;
         AM_SI_TeletextInfo_t ttx_info;
         int sdt_version;
+        SCAN_TsInfo_t *tsinfo;
     } SCAN_ServiceInfo_t;
 
     typedef std::list<SCAN_ServiceInfo_t*> service_list_t;
 
-    static dvbpsi_pat_t *get_valid_pats(AM_SCAN_TS_t *ts);
-    static void scan_process_ts_info(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, ScannerEvent *evt);
-    static void scan_init_service_info(SCAN_ServiceInfo_t *srv_info);
-    static int get_pmt_pid(dvbpsi_pat_t *pats, int program_number);
-    static void scan_extract_ca_scrambled_flag(dvbpsi_descriptor_t *p_first_descriptor, int *flag);
-    static void scan_extract_srv_info_from_sdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *sdts, SCAN_ServiceInfo_t *srv_info);
-    static void scan_update_service_info(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t *srv_info);
-    static void scan_store_dvb_ts_evt_service(SCAN_ServiceInfo_t *srv);
-    static void scan_store_dvb_ts(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts);
-    static void dtv_scan_store(AM_SCAN_Result_t *result);
-    static void scan_store_dvb_ts(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist=CTvScanner::service_list_dummy);
-    static void scan_get_lcn_info(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, lcn_list_t &llist);
-    static void scan_store_dvb_ts_evt_lcn(ScannerLcnInfo *lcn);
-    static int scan_insert_lcn(lcn_list_t &llist, ScannerLcnInfo *lcn, int idx);
-    static void storeDTV(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts);
+    dvbpsi_pat_t *getValidPats(AM_SCAN_TS_t *ts);
+    int getPmtPid(dvbpsi_pat_t *pats, int pn);
+    SCAN_ServiceInfo_t* getServiceInfo();
+    void extractCaScrambledFlag(dvbpsi_descriptor_t *p_first_descriptor, int *flag);
+    void extractSrvInfoFromSdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *sdts, SCAN_ServiceInfo_t *service);
+    void extractSrvInfoFromVct(AM_SCAN_Result_t *result, vct_channel_info_t *vcinfo, SCAN_ServiceInfo_t *service);
+    void updateServiceInfo(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t *service);
+    void notifyService(SCAN_ServiceInfo_t *service);
+    void getLcnInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, lcn_list_t &llist);
+    void notifyLcn(ScannerLcnInfo *lcn);
+    int insertLcnList(lcn_list_t &llist, ScannerLcnInfo *lcn, int idx);
+
+    void processDvbTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist);
+    void processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist);
+    void processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist);
+
+    void processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *info);
+
+    void storeNewDvb(AM_SCAN_Result_t *result, AM_SCAN_TS_t *newts);
+    void storeNewAnalog(AM_SCAN_Result_t *result, AM_SCAN_TS_t *newts);
+    void storeNewAtsc(AM_SCAN_Result_t *result, AM_SCAN_TS_t *newts);
+
+    void storeScan(AM_SCAN_Result_t *result, AM_SCAN_TS_t *curr_ts);
+
+    int createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEParas &fp, ScanParas &sp);
+    int freeAtvParas(AM_SCAN_ATVCreatePara_t &atv_para);
+    int createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEParas &fp, ScanParas &sp);
+    int freeDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para);
+
+    int FETypeHelperCB(int id, void *para, void *user);
+
+    static void storeScanHelper(AM_SCAN_Result_t *result);
+    static int FETypeHelperCBHelper(int id, void *para, void *user);
 
 private:
-	static CTvScanner *mInstance;
+    static CTvScanner *mInstance;
 
     IObserver *mpObserver;
     //
@@ -301,6 +386,11 @@ private:
     /** Dtv-Sx set Unicable settings*/
     int user_band;
     int ub_freq;//!< kHz
+
+    CFrontEnd::FEParas mFEParas;
+    ScanParas mScanParas;
+
+    int mFEType;
 
     static ScannerEvent mCurEv;
 

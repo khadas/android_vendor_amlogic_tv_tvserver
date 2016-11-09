@@ -115,7 +115,8 @@ endif
 
 LOCAL_STATIC_LIBRARIES += \
   libz \
-  libtv_utils
+  libtv_utils \
+  libjsoncpp
 
 LOCAL_C_INCLUDES += \
   $(LOCAL_PATH)/../tvfbclinker/include \
@@ -188,7 +189,8 @@ LOCAL_C_INCLUDES += \
   $(LOCAL_PATH)/tvdb \
   $(LOCAL_PATH)/tv \
   $(LOCAL_PATH)/gpio \
-  $(LOCAL_PATH)/include
+  $(LOCAL_PATH)/include \
+  external/jsoncpp/include
 
 LOCAL_LDLIBS  += -L$(SYSROOT)/usr/lib -llog
 

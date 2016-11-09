@@ -123,6 +123,7 @@ public:
     virtual int ClearAnalogFrontEnd();
     virtual tv_source_input_t GetLastSourceInput (void);
     virtual int SetSourceSwitchInput (tv_source_input_t source_input );
+    virtual int SetSourceSwitchInput(tv_source_input_t virtual_input, tv_source_input_t source_input);
     virtual tv_source_input_t GetCurrentSourceInputLock ( void );
     virtual tvin_info_t GetCurrentSignalInfo ( void );
     int setPreviewWindowMode(bool mode);
@@ -138,6 +139,7 @@ public:
     virtual int resumeScan();
     virtual int getScanStatus();
     virtual void setDvbTextCoding(char *coding);
+    virtual int Scan(const char *feparas, const char *scanparas);
 
     virtual int clearAllProgram(int arg0);
     virtual int clearDbAllProgramInfoTable();
@@ -151,6 +153,8 @@ public:
     virtual int playDtmbProgram ( int progId );
     virtual int playAtvProgram ( int, int, int, int, int);
     virtual int playDtvProgram ( int, int, int, int, int, int, int, int, int, int);
+    virtual int playDtvProgram(const char *, int, int, int, int, int, int, int, int, int, int);
+    virtual int playDtvProgram(const char *, int, int, int, int, int, int);
     virtual int stopPlayingLock();
     virtual int resetFrontEndPara ( frontend_para_set_t feParms );
     virtual int SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt );
@@ -605,7 +609,7 @@ protected:
     mutable Mutex mLock;
     CTvTime mTvTime;
     CTvRecord mTvRec;
-    CFrontEnd mFrontDev;
+    CFrontEnd *mFrontDev;
     CTvDimension mTvVchip;
     CTvSubtitle mTvSub;
     CAv mAv;
@@ -618,6 +622,8 @@ protected:
     volatile TvRunStatus_t mTvStatus;
     volatile tv_source_input_t m_source_input;
     volatile tv_source_input_t m_last_source_input;
+    volatile tv_source_input_t m_source_input_virtual;
+    bool m_virtual;
     /* for tvin window mode and pos*/
     tvin_window_pos_t m_win_pos;
     tv_window_mode_t m_win_mode;

@@ -2,6 +2,7 @@
 #define LOG_TV_TAG "CTvScanner"
 
 #include "CTvScanner.h"
+#include "CTvChannel.h"
 #include "CTvProgram.h"
 #include "CTvRegion.h"
 #include "CFrontEnd.h"
@@ -36,274 +37,392 @@ CTvScanner::CTvScanner()
 
 CTvScanner::~CTvScanner()
 {
-    AM_EVT_Unsubscribe((long)mScanHandle, AM_SCAN_EVT_PROGRESS, tv_scan_evt_callback, NULL);
-    AM_EVT_Unsubscribe((long)mScanHandle, AM_SCAN_EVT_SIGNAL, tv_scan_evt_callback, NULL);
+    AM_EVT_Unsubscribe((long)mScanHandle, AM_SCAN_EVT_PROGRESS, evtCallback, NULL);
+    AM_EVT_Unsubscribe((long)mScanHandle, AM_SCAN_EVT_SIGNAL, evtCallback, NULL);
 }
 
-AM_Bool_t CTvScanner::atv_cvbs_lock_check(v4l2_std_id  *colorStd)
-{
-    tvafe_cvbs_video_t cvbs_lock_status;
-    int ret, i = 0;
-
-    *colorStd = 0;
-    while (i < 20) {
-        ret = CTvin::getInstance()->AFE_GetCVBSLockStatus(&cvbs_lock_status);
-
-        if (cvbs_lock_status == TVAFE_CVBS_VIDEO_HV_LOCKED)
-            /*||cvbs_lock_status == TVAFE_CVBS_VIDEO_V_LOCKED
-            ||cvbs_lock_status == TVAFE_CVBS_VIDEO_H_LOCKED)*/ {
-            usleep(2000 * 1000);
-            tvin_info_t info;
-            CTvin::getInstance()->VDIN_GetSignalInfo(&info);
-            *colorStd = CTvin::CvbsFtmToV4l2ColorStd(info.fmt);
-            LOGD("[scanner]atv_cvbs_lock_check locked and cvbs fmt = %d std = 0x%p", info.fmt, colorStd);
-            return true;
-        }
-        usleep(50 * 1000);
-        i++;
-    }
-    return false;
+int CTvScanner::Scan(char *feparas, char *scanparas) {
+    CFrontEnd::FEParas fe(feparas);
+    ScanParas sp(scanparas);
+    return Scan(fe, sp);
 }
 
-AM_Bool_t CTvScanner::s_atv_cvbs_lock_check(void *data)
-{
-    if (data == NULL) return false;
-    AM_SCAN_ATV_LOCK_PARA_t *pAtvPara = (AM_SCAN_ATV_LOCK_PARA_t *)data;
-    CTvScanner *pScan = (CTvScanner *)(pAtvPara->pData);
-    v4l2_std_id std;
-    AM_Bool_t isLock = pScan->atv_cvbs_lock_check(&std);
-    pAtvPara->pOutColorSTD = std;
-    return isLock;
-}
-
-int CTvScanner::ATVManualScan(int min_freq, int max_freq, int std, int store_Type, int channel_num)
-{
+int CTvScanner::Scan(CFrontEnd::FEParas &fp, ScanParas &sp) {
     stopScan();
-    if (min_freq <= 0 || max_freq <= 0 || min_freq == max_freq) {
-        LOGW("[scanner]atv manual scan freq error start = %d end = %d",  min_freq,  max_freq);
-        return -1;
-    }
-    int direction = (max_freq >= min_freq) ? 1 : 0;
 
     if (mbScanStart) {
-        LOGW("[scanner]atv manual scan is scanning, need first stop it");
+        LOGW("scan is scanning, need first stop it");
         return -1;
     }
 
-    mCurScanStartFreq = min_freq;
-    mCurScanEndFreq = max_freq;
     AM_SCAN_CreatePara_t para;
     AM_DMX_OpenPara_t dmx_para;
     AM_SCAN_Handle_t handle = 0;
+    int i;
+
+    LOGD("Scan fe[%s] scan[%s]", fp.toString().c_str(), sp.toString().c_str());
+
+    mFEParas = fp;
+    mScanParas = sp;
+
+    /*for convenient use*/
+    mCurScanStartFreq = sp.getAtvFrequency1();
+    mCurScanEndFreq = sp.getAtvFrequency2();
+
+    //reset scanner status
+    mCurEv.reset();
+    mFEType = -1;
 
     // Create the scan
     memset(&para, 0, sizeof(para));
     para.fend_dev_id = 0;//default
-    para.mode = AM_SCAN_MODE_ATV_DTV;//
-    para.atv_para.mode = AM_SCAN_ATVMODE_MANUAL;
-    para.atv_para.storeMode = store_Type;
-    para.dtv_para.mode = AM_SCAN_DTVMODE_NONE;
-
-    para.atv_para.am_scan_atv_cvbs_lock =  s_atv_cvbs_lock_check;
-
-    para.atv_para.fe_cnt = 3;
-    para.atv_para.fe_paras = static_cast<AM_FENDCTRL_DVBFrontendParameters_t *>(calloc(3, sizeof(AM_FENDCTRL_DVBFrontendParameters_t)));
-    if (para.atv_para.fe_paras != NULL) {
-        memset(para.atv_para.fe_paras, 0, 3 * sizeof(AM_FENDCTRL_DVBFrontendParameters_t));
-        para.atv_para.fe_paras[0].m_type = FE_ANALOG;
-        para.atv_para.fe_paras[0].analog.para.frequency = min_freq;
-        para.atv_para.fe_paras[1].m_type = FE_ANALOG;
-        para.atv_para.fe_paras[1].analog.para.frequency = max_freq;
-        para.atv_para.fe_paras[2].m_type = FE_ANALOG;
-        para.atv_para.fe_paras[2].analog.para.frequency = min_freq;
+    para.mode = sp.getMode();
+    para.proc_mode = sp.getProc();
+    if (createAtvParas(para.atv_para, fp, sp) != 0)
+        return -1;
+    if (createDtvParas(para.dtv_para, fp, sp) != 0) {
+        freeAtvParas(para.atv_para);
+        return -1;
     }
-    para.atv_para.direction = direction;
-    para.atv_para.default_std = std;
-
-    para.atv_para.channel_id = -1;
-    para.atv_para.cvbs_unlocked_step = 1000000;
-    para.atv_para.cvbs_locked_step = 3000000;
-    para.atv_para.afc_range = 2000000;
-
-    para.dtv_para.resort_all = AM_FALSE;
-    para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
     const char *db_mode = config_get_str ( CFG_SECTION_TV, SYS_SCAN_TO_PRIVATE_DB, "false");
     if (!strcmp(db_mode, "true")) {
         para.store_cb = NULL;
     } else {
-        para.store_cb = storeATV;
+        para.store_cb = storeScanHelper;
     }
-    para.atv_para.channel_num = channel_num;
 
+    // Start Scan
     memset(&dmx_para, 0, sizeof(dmx_para));
     AM_DMX_Open(para.dtv_para.dmx_dev_id, &dmx_para);
-
-    if ((para.dtv_para.mode & 0x07) != AM_SCAN_DTVMODE_NONE) {
-        AM_FEND_SetMode(para.fend_dev_id, para.dtv_para.source);
-        tv_scan_reconnect_dmx_to_fend(para.dtv_para.dmx_dev_id, para.fend_dev_id);
-    }
-
-    LOGD("[scanner]atv manual scan mode = %d", para.dtv_para.mode);
-    // Start Scan
     if (AM_SCAN_Create(&para, &handle) != AM_SUCCESS) {
-    LOGW("[scanner]scan create fail");
+        LOGD("SCAN CREATE fail");
         handle = NULL;
     } else {
+        AM_SCAN_Helper_t ts_type_helper;
+        ts_type_helper.id = AM_SCAN_HELPER_ID_FE_TYPE_CHANGE;
+        ts_type_helper.user = (void*)this;
+        ts_type_helper.cb = FETypeHelperCBHelper;
+        AM_SCAN_SetHelper(handle, &ts_type_helper);
         mScanHandle = handle;
         AM_SCAN_SetUserData(handle, (void *)this);
-        AM_EVT_Subscribe((long)handle, AM_SCAN_EVT_PROGRESS, tv_scan_evt_callback, NULL);
-        AM_EVT_Subscribe((long)handle, AM_SCAN_EVT_SIGNAL, tv_scan_evt_callback, NULL);
+        AM_EVT_Subscribe((long)handle, AM_SCAN_EVT_PROGRESS, evtCallback, NULL);
+        AM_EVT_Subscribe((long)handle, AM_SCAN_EVT_SIGNAL, evtCallback, NULL);
         if (AM_SCAN_Start(handle) != AM_SUCCESS) {
             AM_SCAN_Destroy(handle, AM_FALSE);
-            AM_EVT_Unsubscribe((long)handle, AM_SCAN_EVT_PROGRESS, tv_scan_evt_callback, NULL);
-            AM_EVT_Unsubscribe((long)handle, AM_SCAN_EVT_SIGNAL, tv_scan_evt_callback, NULL);
+            AM_EVT_Unsubscribe((long)handle, AM_SCAN_EVT_PROGRESS, evtCallback, NULL);
+            AM_EVT_Unsubscribe((long)handle, AM_SCAN_EVT_SIGNAL, evtCallback, NULL);
             handle = NULL;
         }
     }
-    if (para.atv_para.fe_paras != NULL)
-        free(para.atv_para.fe_paras);
-    if (para.dtv_para.fe_paras != NULL)
-        free(para.dtv_para.fe_paras);
+
+    freeAtvParas(para.atv_para);
+    freeDtvParas(para.dtv_para);
 
     if (handle == NULL) {
         return -1;
     }
     mbScanStart = true;//start call ok
     return 0;
+
 }
 
-void CTvScanner::storeATV(AM_SCAN_Result_t *result)
+int CTvScanner::pauseScan()
 {
-    AM_SCAN_TS_t *ts;
-
-    for (ts = result->tses; ts != NULL; ts = ts->p_next)
-        storeATVTs(ts);
+    LOGD("pauseScan scan started:%d", mbScanStart);
+    if (mbScanStart) { //if start ok and not stop
+        int ret = AM_SCAN_Pause(mScanHandle);
+        LOGD("pauseScan , ret=%d", ret);
+        return ret;
+    }
+    return 0;
 }
 
-void CTvScanner::storeATVTs(AM_SCAN_TS_t *ts)
+int CTvScanner::resumeScan()
+{
+    LOGD("resumeScan scan started:%d", mbScanStart);
+    if (mbScanStart) { //if start ok and not stop
+        int ret = AM_SCAN_Resume(mScanHandle);
+        LOGD("resumeScan , ret=%d", ret);
+        return ret;
+    }
+    return 0;
+}
+
+int CTvScanner::stopScan()
+{
+    LOGD("StopScan is started:%d", mbScanStart);
+    //requestExit();
+    if (mbScanStart) { //if start ok and not stop
+        int ret = AM_SCAN_Destroy(mScanHandle, AM_TRUE);
+        AM_EVT_Unsubscribe((long)mScanHandle, AM_SCAN_EVT_PROGRESS, evtCallback, NULL);
+        AM_EVT_Unsubscribe((long)mScanHandle, AM_SCAN_EVT_SIGNAL, evtCallback, NULL);
+        AM_SEC_Cache_Reset(0);
+        //stop loop
+        mbScanStart = false;//stop ok
+    }
+    return 0;
+}
+
+int CTvScanner::getScanStatus(int *status)
+{
+    LOGD("getScanStatus scan started:%d", mbScanStart);
+    if (mbScanStart && status) { //if start ok and not stop
+        int ret = AM_SCAN_GetStatus(mScanHandle, status);
+        LOGD("getScanStatus = [%d], ret=%d", *status, ret);
+        return ret;
+    }
+    return 0;
+}
+
+
+
+
+
+int CTvScanner::insertLcnList(lcn_list_t &llist, ScannerLcnInfo *lcn, int idx)
+{
+    int found = 0;
+
+    for (lcn_list_t::iterator p=llist.begin(); p != llist.end(); p++) {
+        ScannerLcnInfo *pl = *p;
+        //LOGD("list size:%d, pl:%#x", llist.size(), pl);
+
+        if ((pl->net_id == lcn->net_id)
+               && (pl->ts_id == lcn->ts_id)
+               && (pl->service_id == lcn->service_id)) {
+            pl->lcn[idx] = lcn->lcn[idx];
+            pl->visible[idx] = lcn->visible[idx];
+            pl->valid[idx] = lcn->valid[idx];
+            found = 1;
+        }
+    }
+    if (!found) {
+        llist.push_back(lcn);
+    }
+    return found ? 1 : 0; //found = insert fail.
+}
+
+void CTvScanner::getLcnInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *sts, lcn_list_t &llist)
+{
+    dvbpsi_nit_t *nits = ((sts->type == AM_SCAN_TS_ANALOG) || (result->start_para->dtv_para.standard == AM_SCAN_DTV_STD_ATSC)) ?
+            NULL : sts->digital.nits;
+    dvbpsi_nit_ts_t *ts;
+    dvbpsi_descriptor_t *dr;
+    dvbpsi_nit_t *nit;
+    ScannerLcnInfo *plcninfo;
+
+    UNUSED(result);
+
+    AM_SI_LIST_BEGIN(nits, nit)
+        AM_SI_LIST_BEGIN(nit->p_first_ts, ts)
+            AM_SI_LIST_BEGIN(ts->p_first_descriptor, dr)
+                if (dr->p_decoded && (dr->i_tag == AM_SI_DESCR_LCN_83)) {
+                dvbpsi_logical_channel_number_83_dr_t *lcn_dr = (dvbpsi_logical_channel_number_83_dr_t*)dr->p_decoded;
+                dvbpsi_logical_channel_number_83_t *lcn = lcn_dr->p_logical_channel_number;
+                int j;
+                for (j=0; j<lcn_dr->i_logical_channel_numbers_number; j++) {
+                        plcninfo = (ScannerLcnInfo*)calloc(sizeof(ScannerLcnInfo),1);
+                        plcninfo->net_id = ts->i_orig_network_id;
+                        plcninfo->ts_id = ts->i_ts_id;
+                        plcninfo->service_id = lcn->i_service_id;
+                        plcninfo->lcn[0] = lcn->i_logical_channel_number;
+                        plcninfo->visible[0] = lcn->i_visible_service_flag;
+                        plcninfo->valid[0] = 1;
+                        LOGD("sd lcn for service [%d:%d:%d] ---> l:%d v:%d",
+                                plcninfo->net_id, plcninfo->ts_id, plcninfo->service_id,
+                                plcninfo->lcn[0], plcninfo->visible[0]);
+                        if (insertLcnList(llist, plcninfo, 0)) {
+                            free(plcninfo);
+                            LOGD("lcn exists 0.");
+                        }
+                        lcn++;
+                    }
+                } else if (dr->p_decoded && dr->i_tag==AM_SI_DESCR_LCN_88) {
+                    dvbpsi_logical_channel_number_88_dr_t *lcn_dr = (dvbpsi_logical_channel_number_88_dr_t*)dr->p_decoded;
+                    dvbpsi_logical_channel_number_88_t *lcn = lcn_dr->p_logical_channel_number;
+                    int j;
+                    for (j=0; j<lcn_dr->i_logical_channel_numbers_number; j++) {
+                        plcninfo = (ScannerLcnInfo*)calloc(sizeof(ScannerLcnInfo), 1);
+                        plcninfo->net_id = ts->i_orig_network_id;
+                        plcninfo->ts_id = ts->i_ts_id;
+                        plcninfo->service_id = lcn->i_service_id;
+                        plcninfo->lcn[1] = lcn->i_logical_channel_number;
+                        plcninfo->visible[1] = lcn->i_visible_service_flag;
+                        plcninfo->valid[1] = 1;
+                        LOGD("hd lcn for service [%d:%d:%d] ---> l:%d v:%d",
+                               plcninfo->net_id, plcninfo->ts_id, plcninfo->service_id,
+                               plcninfo->lcn[1], plcninfo->visible[1]);
+                        if (insertLcnList(llist, plcninfo, 1)) {
+                            free(plcninfo);
+                            LOGD("lcn exists 1.");
+                        }
+                        lcn++;
+                    }
+                }
+            AM_SI_LIST_END()
+        AM_SI_LIST_END()
+    AM_SI_LIST_END()
+}
+
+void CTvScanner::notifyLcn(ScannerLcnInfo *lcn)
 {
     mCurEv.clear();
-    mCurEv.mType = ScannerEvent::EVENT_ATV_PROG_DATA;
-    mCurEv.mVideoStd = CFrontEnd::stdAndColorToVideoEnum(ts->analog.std);
-    mCurEv.mAudioStd = CFrontEnd::stdAndColorToAudioEnum(ts->analog.std);
-    mCurEv.mIsAutoStd = ((ts->analog.std & V4L2_COLOR_STD_AUTO) == V4L2_COLOR_STD_AUTO) ? 1 : 0;
-    mCurEv.mFrequency = ts->analog.freq;
+    mCurEv.mType = ScannerEvent::EVENT_LCN_INFO_DATA;
+    mCurEv.mLcnInfo = *lcn;
 
     getInstance()->sendEvent(mCurEv);
-    LOGD("[scanner]ATV: > freq:%d", mCurEv.mFrequency);
 }
 
-int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type, int proc_mode)
+
+void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
 {
-    stopScan();
-    if (min_freq <= 0 || max_freq <= 0 || min_freq > max_freq)
-        return -1;
-
-    if (mbScanStart) {
-        LOGW("[scanner]auto atv scan is scanning, need first stop it");
-        return -1;
+    if (!srv->tsinfo) {
+        LOGE("service with no tsinfo.");
+        return;
     }
 
-    mCurScanStartFreq = min_freq;
-    mCurScanEndFreq = max_freq;
+    mCurEv.reset();
+    mCurEv.mFEParas = srv->tsinfo->fe;
+    mCurEv.mFrequency = mCurEv.mFEParas.getFrequency();
 
-    AM_SCAN_CreatePara_t para;
-    AM_DMX_OpenPara_t dmx_para;
-    AM_SCAN_Handle_t handle = 0, i;
-    // Create the scan
-    memset(&para, 0, sizeof(para));
-
-    para.fend_dev_id = 0;//default
-    para.mode = AM_SCAN_MODE_ATV_DTV;
-    para.atv_para.mode = AM_SCAN_ATVMODE_AUTO;
-    if (search_type == 1)
-        para.atv_para.storeMode = 1;
-    else
-        para.atv_para.storeMode = 0;
-    para.dtv_para.mode = AM_SCAN_DTVMODE_NONE;
-
-    para.atv_para.am_scan_atv_cvbs_lock =  s_atv_cvbs_lock_check;
-
-    para.atv_para.fe_cnt = 3;
-    para.atv_para.fe_paras = static_cast<AM_FENDCTRL_DVBFrontendParameters_t *>(calloc(3, sizeof(AM_FENDCTRL_DVBFrontendParameters_t)));
-    if (para.atv_para.fe_paras != NULL) {
-        memset(para.atv_para.fe_paras, 0, 3 * sizeof(AM_FENDCTRL_DVBFrontendParameters_t));
-        para.atv_para.fe_paras[0].m_type = FE_ANALOG;
-        para.atv_para.fe_paras[0].analog.para.frequency = min_freq;
-        para.atv_para.fe_paras[1].m_type = FE_ANALOG;
-        para.atv_para.fe_paras[1].analog.para.frequency = max_freq;
-        para.atv_para.fe_paras[2].m_type = FE_ANALOG;
-        para.atv_para.fe_paras[2].analog.para.frequency = 0;
-    }
-
-    para.atv_para.direction = 0;
-    para.atv_para.default_std = std;
-
-    para.atv_para.channel_id = -1;
-    para.atv_para.afc_unlocked_step = 3000000;
-    para.atv_para.cvbs_unlocked_step = 1500000;
-    para.atv_para.cvbs_locked_step = 6000000;
-    para.atv_para.afc_range = 2000000;
-
-    para.dtv_para.resort_all = AM_FALSE;
-    para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
-    const char *db_mode = config_get_str ( CFG_SECTION_TV, SYS_SCAN_TO_PRIVATE_DB, "false");
-    if (!strcmp(db_mode, "true")) {
-        para.store_cb = NULL;
-    } else {
-        para.store_cb = storeATV;
-    }
-
-    para.proc_mode = proc_mode;
-
-    memset(&dmx_para, 0, sizeof(dmx_para));
-    AM_DMX_Open(para.dtv_para.dmx_dev_id, &dmx_para);
-
-    if ((para.dtv_para.mode & 0x07) != AM_SCAN_DTVMODE_NONE) {
-        AM_FEND_SetMode(para.fend_dev_id, para.dtv_para.source);
-        tv_scan_reconnect_dmx_to_fend(para.dtv_para.dmx_dev_id, para.fend_dev_id);
-    }
-
-    //    prog->dmx_id = para.dtv_para.dmx_dev_id;
-    //    prog->fend_id = para.fend_dev_id;
-    //    prog->mode = para.dtv_para.mode;
-    LOGD("[scanner]auto atv scan mode = %d", para.dtv_para.mode);
-    // Start Scan
-    if (AM_SCAN_Create(&para, &handle) != AM_SUCCESS) {
-    LOGW("[scanner]scan create fail");
-        handle = NULL;
-    } else {
-        mScanHandle = handle;
-        AM_SCAN_SetUserData(handle, (void *)this);
-        //注册搜索事件
-        AM_EVT_Subscribe((long)handle, AM_SCAN_EVT_PROGRESS, tv_scan_evt_callback, NULL);
-        //注册信号质量通知事件
-        AM_EVT_Subscribe((long)handle, AM_SCAN_EVT_SIGNAL, tv_scan_evt_callback, NULL);
-        if (AM_SCAN_Start(handle) != AM_SUCCESS) {
-            AM_SCAN_Destroy(handle, AM_FALSE);
-            AM_EVT_Unsubscribe((long)handle, AM_SCAN_EVT_PROGRESS, tv_scan_evt_callback, NULL);
-            AM_EVT_Unsubscribe((long)handle, AM_SCAN_EVT_SIGNAL, tv_scan_evt_callback, NULL);
-            handle = NULL;
+    int feType = mCurEv.mFEParas.getFEMode().getBase();
+    if (feType != FE_ANALOG) {
+        mCurEv.mServiceId = srv->srv_id;
+        mCurEv.mONetId = srv->tsinfo->nid;
+        mCurEv.mTsId = srv->tsinfo->tsid;
+        strncpy(mCurEv.mProgramName, srv->name, 1024);
+        mCurEv.mprogramType = srv->srv_type;
+        mCurEv.mVid = srv->vid;
+        mCurEv.mVfmt = srv->vfmt;
+        mCurEv.mAcnt = srv->aud_info.audio_count;
+        for (int i = 0; i < srv->aud_info.audio_count; i++) {
+            mCurEv.mAid[i] = srv->aud_info.audios[i].pid;
+            mCurEv.mAfmt[i] = srv->aud_info.audios[i].fmt;
+            strncpy(mCurEv.mAlang[i], srv->aud_info.audios[i].lang, 10);
+            mCurEv.mAtype[i] = srv->aud_info.audios[i].audio_type;
+            mCurEv.mAExt[i] = srv->aud_info.audios[i].audio_exten;
         }
-    }
-    if (para.atv_para.fe_paras != NULL)
-        free(para.atv_para.fe_paras);
-    if (para.dtv_para.fe_paras != NULL)
-        free(para.dtv_para.fe_paras);
+        mCurEv.mPcr = srv->pcr_pid;
 
-    if (handle == NULL) {
-        return -1;
+        if (srv->tsinfo->dtvstd == AM_SCAN_DTV_STD_ATSC) {
+            mCurEv.mAccessControlled = srv->access_controlled;
+            mCurEv.mHidden = srv->hidden;
+            mCurEv.mHideGuide = srv->hide_guide;
+            mCurEv.mSourceId = srv->source_id;
+            mCurEv.mMajorChannelNumber = srv->major_chan_num;
+            mCurEv.mMinorChannelNumber = srv->minor_chan_num;
+        } else {
+            mCurEv.mScnt = srv->sub_info.subtitle_count;
+            for (int i = 0; i < srv->sub_info.subtitle_count; i++) {
+                mCurEv.mStype[i] = TYPE_DVB_SUBTITLE;
+                mCurEv.mSid[i] = srv->sub_info.subtitles[i].pid;
+                mCurEv.mSstype[i] = srv->sub_info.subtitles[i].type;
+                mCurEv.mSid1[i] = srv->sub_info.subtitles[i].comp_page_id;
+                mCurEv.mSid2[i] = srv->sub_info.subtitles[i].anci_page_id;
+                strncpy(mCurEv.mSlang[i], srv->sub_info.subtitles[i].lang, 10);
+            }
+            int scnt = mCurEv.mScnt;
+            for (int i = 0; i < srv->ttx_info.teletext_count; i++) {
+                if (srv->ttx_info.teletexts[i].type == 0x2 ||
+                        srv->ttx_info.teletexts[i].type == 0x5) {
+                    if (scnt >= (int)(sizeof(mCurEv.mStype) / sizeof(int)))
+                        break;
+                    mCurEv.mStype[scnt] = TYPE_DTV_TELETEXT;
+                    mCurEv.mSid[scnt] = srv->ttx_info.teletexts[i].pid;
+                    mCurEv.mSstype[scnt] = srv->ttx_info.teletexts[i].type;
+                    mCurEv.mSid1[scnt] = srv->ttx_info.teletexts[i].magazine_no;
+                    mCurEv.mSid2[scnt] = srv->ttx_info.teletexts[i].page_no;
+                    strncpy(mCurEv.mSlang[scnt], srv->ttx_info.teletexts[i].lang, 10);
+                    scnt++;
+                }
+            }
+            mCurEv.mScnt = scnt;
+            mCurEv.mFEParas.setPlp(srv->plp_id);
+        }
+
+        mCurEv.mFree_ca = srv->free_ca;
+        mCurEv.mScrambled = srv->scrambled_flag;
+        mCurEv.mSdtVer = srv->sdt_version;
+
+        mCurEv.mType = ScannerEvent::EVENT_DTV_PROG_DATA;
+        LOGD("notifyService freq:%d, sid:%d", mCurEv.mFrequency, srv->srv_id);
+
+    } else {//analog
+
+        mCurEv.mVideoStd = mCurEv.mFEParas.getVideoStd();
+        mCurEv.mAudioStd = mCurEv.mFEParas.getAudioStd();
+        mCurEv.mIsAutoStd = ((mCurEv.mVideoStd & V4L2_COLOR_STD_AUTO) == V4L2_COLOR_STD_AUTO) ? 1 : 0;
+
+        mCurEv.mType = ScannerEvent::EVENT_ATV_PROG_DATA;
+        LOGD("notifyService freq:%d, vstd:%x astd:%x",
+            mCurEv.mFrequency, mCurEv.mFEParas.getVideoStd(), mCurEv.mFEParas.getAudioStd());
     }
-    mbScanStart = true;//start call ok
-    return 0;
+
+    getInstance()->sendEvent(mCurEv);
 }
 
-int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type)
+void CTvScanner::sendEvent(ScannerEvent &evt)
 {
-    return autoAtvScan(min_freq, max_freq, std, search_type, 0);
+    if (mpObserver) {
+        if (evt.mType != ScannerEvent::EVENT_DTV_PROG_DATA) {
+            evt.mAcnt = 0;//avoid invalid count confused the array.
+            evt.mScnt = 0;
+        }
+
+        strncpy(mCurEv.mParas,
+            mCurEv.mFEParas.toString().c_str(),
+            sizeof(mCurEv.mParas));
+        LOGD("FEParas:%s", mCurEv.mParas);
+
+        mpObserver->onEvent(evt);
+    }
 }
 
-dvbpsi_pat_t *CTvScanner::get_valid_pats(AM_SCAN_TS_t *ts)
+void CTvScanner::processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *ts_info)
+{
+    dvbpsi_nit_t *nit;
+    dvbpsi_descriptor_t *descr;
+
+    ts_info->nid = -1;
+    ts_info->tsid = -1;
+
+    if (ts->type == AM_SCAN_TS_ANALOG) {
+        CFrontEnd::FEMode mode(mFEParas.getFEMode());
+        mode.setBase(FE_ANALOG);
+        ts_info->fe.clear();
+        ts_info->fe.setFEMode(mode).setFrequency(ts->analog.freq)
+            .setVideoStd(CFrontEnd::stdAndColorToVideoEnum(ts->analog.std))
+            .setAudioStd(CFrontEnd::stdAndColorToAudioEnum(ts->analog.std));
+    } else {
+        /*tsid*/
+       dvbpsi_pat_t *pats = getValidPats(ts);
+       if (pats != NULL && !ts->digital.use_vct_tsid) {
+            ts_info->tsid = pats->i_ts_id;
+            if (ts->digital.sdts)
+                ts_info->tsid = ts->digital.sdts->i_ts_id;
+            else if (IS_DVBT2_TS(ts->digital.fend_para) && ts->digital.dvbt2_data_plp_num > 0 && ts->digital.dvbt2_data_plps[0].sdts)
+                ts_info->tsid = ts->digital.dvbt2_data_plps[0].sdts->i_ts_id;
+        } else if (ts->digital.vcts != NULL) {
+            ts_info->tsid = ts->digital.vcts->transport_stream_id;
+        }
+
+        /*nid*/
+        if (result->start_para->dtv_para.standard != AM_SCAN_DTV_STD_ATSC ) {
+            if (ts->digital.sdts)
+                ts_info->nid = ts->digital.sdts->i_network_id;
+            else if (IS_DVBT2_TS(ts->digital.fend_para) && ts->digital.dvbt2_data_plp_num > 0 && ts->digital.dvbt2_data_plps[0].sdts)
+                ts_info->nid = ts->digital.dvbt2_data_plps[0].sdts->i_network_id;
+        }
+
+        CFrontEnd::FEMode mode(mFEParas.getFEMode());
+        mode.setBase(ts->digital.fend_para.m_type);
+        ts_info->fe.clear();
+        ts_info->fe.fromFENDCTRLParameters(mode, &ts->digital.fend_para);
+    }
+    ts_info->dtvstd = result->start_para->dtv_para.standard;
+}
+
+
+dvbpsi_pat_t *CTvScanner::getValidPats(AM_SCAN_TS_t *ts)
 {
     dvbpsi_pat_t *valid_pat = NULL;
     if (!IS_DVBT2_TS(ts->digital.fend_para)) {
@@ -333,49 +452,26 @@ dvbpsi_pat_t *CTvScanner::get_valid_pats(AM_SCAN_TS_t *ts)
     return valid_pat;
 }
 
-void CTvScanner::scan_process_ts_info(AM_SCAN_Result_t *result __unused, AM_SCAN_TS_t *ts, ScannerEvent *evt)
+CTvScanner::SCAN_ServiceInfo_t* CTvScanner::getServiceInfo()
 {
-    dvbpsi_nit_t *nit;
-    dvbpsi_descriptor_t *descr;
-
-    evt->mONetId = -1;
-    evt->mTsId = -1;
-
-    if (ts->digital.sdts)
-        evt->mONetId = ts->digital.sdts->i_network_id;
-    else if (IS_DVBT2_TS(ts->digital.fend_para) && ts->digital.dvbt2_data_plp_num > 0 && ts->digital.dvbt2_data_plps[0].sdts)
-        evt->mONetId = ts->digital.dvbt2_data_plps[0].sdts->i_network_id;
-    evt->mTsId = get_valid_pats(ts)->i_ts_id;
-    if (ts->digital.sdts)
-        evt->mTsId = ts->digital.sdts->i_ts_id;
-
-    evt->mFrequency = (int)dvb_fend_para(ts->digital.fend_para)->frequency;
-    evt->mMode = ts->digital.fend_para.m_type;
-    if (IS_DVBT2_TS(ts->digital.fend_para))
-        evt->mOfdm_mode = (int)dvb_fend_para(ts->digital.fend_para)->u.ofdm.ofdm_mode;
-    else if ((ts->digital.fend_para.m_type == FE_DTMB) || (ts->digital.fend_para.m_type == FE_OFDM))
-        evt->mBandwidth = (int)dvb_fend_para(ts->digital.fend_para)->u.ofdm.bandwidth;
-    else if (ts->digital.fend_para.m_type == FE_QAM) {
-        evt->mSymbolRate = (int)dvb_fend_para(ts->digital.fend_para)->u.qam.symbol_rate;
-        evt->mModulation = (int)dvb_fend_para(ts->digital.fend_para)->u.qam.modulation;
+    SCAN_ServiceInfo_t *srv_info = (SCAN_ServiceInfo_t*)calloc(sizeof(SCAN_ServiceInfo_t), 1);
+    if (!srv_info) {
+       LOGE("No Memory for Scanner.");
+       return NULL;
     }
-}
 
-void CTvScanner::scan_init_service_info(SCAN_ServiceInfo_t *srv_info)
-{
     memset(srv_info, 0, sizeof(SCAN_ServiceInfo_t));
     srv_info->vid = 0x1fff;
     srv_info->vfmt = -1;
     srv_info->free_ca = 1;
     srv_info->srv_id = 0xffff;
-    srv_info->srv_dbid = -1;
-    srv_info->satpara_dbid = -1;
     srv_info->pmt_pid = 0x1fff;
     srv_info->plp_id = -1;
     srv_info->sdt_version = 0xff;
+    return srv_info;
 }
 
-int CTvScanner::get_pmt_pid(dvbpsi_pat_t *pats, int program_number)
+int CTvScanner::getPmtPid(dvbpsi_pat_t *pats, int program_number)
 {
     dvbpsi_pat_t *pat;
     dvbpsi_pat_program_t *prog;
@@ -390,20 +486,20 @@ int CTvScanner::get_pmt_pid(dvbpsi_pat_t *pats, int program_number)
     return 0x1fff;
 }
 
-void CTvScanner::scan_extract_ca_scrambled_flag(dvbpsi_descriptor_t *p_first_descriptor, int *flag)
+void CTvScanner::extractCaScrambledFlag(dvbpsi_descriptor_t *p_first_descriptor, int *flag)
 {
     dvbpsi_descriptor_t *descr;
 
     AM_SI_LIST_BEGIN(p_first_descriptor, descr)
     if (descr->i_tag == AM_SI_DESCR_CA && ! *flag) {
-        LOGD( "[scanner]Found CA descr, set scrambled flag to 1");
+        LOGD( "Found CA descr, set scrambled flag to 1");
         *flag = 1;
         break;
     }
     AM_SI_LIST_END()
 }
 
-void CTvScanner::scan_extract_srv_info_from_sdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *sdts, SCAN_ServiceInfo_t *srv_info)
+void CTvScanner::extractSrvInfoFromSdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *sdts, SCAN_ServiceInfo_t *srv_info)
 {
     dvbpsi_sdt_service_t *srv;
     dvbpsi_sdt_t *sdt;
@@ -429,7 +525,7 @@ void CTvScanner::scan_extract_srv_info_from_sdt(AM_SCAN_Result_t *result, dvbpsi
     AM_SI_LIST_BEGIN(sdt->p_first_service, srv)
     /*从SDT表中查找该service并获取信忿 */
     if (srv->i_service_id == srv_info->srv_id) {
-        LOGD("[scanner]SDT for service %d found!", srv_info->srv_id);
+        LOGD("SDT for service %d found!", srv_info->srv_id);
         srv_info->eit_sche = (uint8_t)srv->b_eit_schedule;
         srv_info->eit_pf = (uint8_t)srv->b_eit_present;
         srv_info->rs = srv->i_running_status;
@@ -444,7 +540,7 @@ void CTvScanner::scan_extract_srv_info_from_sdt(AM_SCAN_Result_t *result, dvbpsi
                 AM_SI_ConvertDVBTextCode((char *)psd->i_service_name, psd->i_service_name_length, \
                                          name, AM_DB_MAX_SRV_NAME_LEN);
                 name[AM_DB_MAX_SRV_NAME_LEN] = 0;
-                LOGD("[scanner]found name [%s]", name);
+                LOGD("found name [%s]", name);
 
                 /*3bytes language code, using xxx to simulate*/
                 COPY_NAME("xxx", 3);
@@ -475,7 +571,7 @@ void CTvScanner::scan_extract_srv_info_from_sdt(AM_SCAN_Result_t *result, dvbpsi
                                          pmsnd->p_service_name[i].i_service_name_length,
                                          name, AM_DB_MAX_SRV_NAME_LEN);
                 name[AM_DB_MAX_SRV_NAME_LEN] = 0;
-                LOGD("[scanner]found name [%s]", name);
+                LOGD("found name [%s]", name);
 
                 if (curr_name_len > 0) {
                     /*extra split mark*/
@@ -502,7 +598,29 @@ void CTvScanner::scan_extract_srv_info_from_sdt(AM_SCAN_Result_t *result, dvbpsi
     AM_SI_LIST_END()
 }
 
-void CTvScanner::scan_update_service_info(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t *srv_info)
+void CTvScanner::extractSrvInfoFromVct(AM_SCAN_Result_t *result, vct_channel_info_t *vcinfo, SCAN_ServiceInfo_t *srv_info)
+{
+    UNUSED(result);
+
+    srv_info->major_chan_num = vcinfo->major_channel_number;
+    srv_info->minor_chan_num = vcinfo->minor_channel_number;
+
+    srv_info->chan_num = (vcinfo->major_channel_number<<16) | (vcinfo->minor_channel_number&0xffff);
+    srv_info->hidden = vcinfo->hidden;
+    srv_info->hide_guide = vcinfo->hide_guide;
+    srv_info->source_id = vcinfo->source_id;
+    memcpy(srv_info->name, "xxx", 3);
+    memcpy(srv_info->name+3, vcinfo->short_name, sizeof(vcinfo->short_name));
+    srv_info->name[sizeof(vcinfo->short_name)+3] = 0;
+    srv_info->srv_type = vcinfo->service_type;
+
+    LOGD("Program(%d)('%s':%d-%d) in current TSID(%d) found!",
+        srv_info->srv_id, srv_info->name,
+        srv_info->major_chan_num, srv_info->minor_chan_num,
+        vcinfo->channel_TSID);
+}
+
+void CTvScanner::updateServiceInfo(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t *srv_info)
 {
 #define str(i) (char*)(strings + i)
 
@@ -540,17 +658,17 @@ void CTvScanner::scan_update_service_info(AM_SCAN_Result_t *result, SCAN_Service
         }
         /* Skip program for FTA mode */
         if (srv_info->scrambled_flag && (mode & AM_SCAN_DTVMODE_FTA)) {
-            LOGD( "[scanner]Skip program '%s' for FTA mode", srv_info->name);
+            LOGD( "Skip program '%s' for FTA mode", srv_info->name);
             return;
         }
 
         /* Skip program for service_type mode */
         if (srv_info->srv_type == AM_SCAN_SRV_DTV && (mode & AM_SCAN_DTVMODE_NOTV)) {
-            LOGD( "[scanner]Skip program '%s' for NO-TV mode", srv_info->name);
+            LOGD( "Skip program '%s' for NO-TV mode", srv_info->name);
             return;
         }
         if (srv_info->srv_type == AM_SCAN_SRV_DRADIO && (mode & AM_SCAN_DTVMODE_NORADIO)) {
-            LOGD( "[scanner]Skip program '%s' for NO-RADIO mode", srv_info->name);
+            LOGD( "Skip program '%s' for NO-RADIO mode", srv_info->name);
             return;
         }
 
@@ -563,100 +681,24 @@ void CTvScanner::scan_update_service_info(AM_SCAN_Result_t *result, SCAN_Service
     }
 }
 
-void CTvScanner::scan_store_dvb_ts_evt_service(SCAN_ServiceInfo_t *srv)
+void CTvScanner::processDvbTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist)
 {
-    LOGD("[scanner]scan_store_dvb_ts_evt_service freq:%d, sid:%d", mCurEv.mFrequency, srv->srv_id);
-    mCurEv.clear();
-    mCurEv.mServiceId = srv->srv_id;
-    strncpy(mCurEv.mProgramName, srv->name, 1024);
-    mCurEv.mprogramType = srv->srv_type;
-    mCurEv.mVid = srv->vid;
-    mCurEv.mVfmt = srv->vfmt;
-    mCurEv.mAcnt = srv->aud_info.audio_count;
-    for (int i = 0; i < srv->aud_info.audio_count; i++) {
-        mCurEv.mAid[i] = srv->aud_info.audios[i].pid;
-        mCurEv.mAfmt[i] = srv->aud_info.audios[i].fmt;
-        strncpy(mCurEv.mAlang[i], srv->aud_info.audios[i].lang, 10);
-        mCurEv.mAtype[i] = srv->aud_info.audios[i].audio_type;
-        mCurEv.mAExt[i] = srv->aud_info.audios[i].audio_exten;
-    }
-    mCurEv.mPcr = srv->pcr_pid;
-    mCurEv.mScnt = srv->sub_info.subtitle_count;
-    for (int i = 0; i < srv->sub_info.subtitle_count; i++) {
-        mCurEv.mStype[i] = TYPE_DVB_SUBTITLE;
-        mCurEv.mSid[i] = srv->sub_info.subtitles[i].pid;
-        mCurEv.mSstype[i] = srv->sub_info.subtitles[i].type;
-        mCurEv.mSid1[i] = srv->sub_info.subtitles[i].comp_page_id;
-        mCurEv.mSid2[i] = srv->sub_info.subtitles[i].anci_page_id;
-        strncpy(mCurEv.mSlang[i], srv->sub_info.subtitles[i].lang, 10);
-    }
-    int scnt = mCurEv.mScnt;
-    for (int i = 0; i < srv->ttx_info.teletext_count; i++) {
-        if (srv->ttx_info.teletexts[i].type == 0x2 ||
-                srv->ttx_info.teletexts[i].type == 0x5) {
-            if (scnt >= (int)(sizeof(mCurEv.mStype) / sizeof(int)))
-                break;
-            mCurEv.mStype[scnt] = TYPE_DTV_TELETEXT;
-            mCurEv.mSid[scnt] = srv->ttx_info.teletexts[i].pid;
-            mCurEv.mSstype[scnt] = srv->ttx_info.teletexts[i].type;
-            mCurEv.mSid1[scnt] = srv->ttx_info.teletexts[i].magazine_no;
-            mCurEv.mSid2[scnt] = srv->ttx_info.teletexts[i].page_no;
-            strncpy(mCurEv.mSlang[scnt], srv->ttx_info.teletexts[i].lang, 10);
-            scnt++;
-        }
-    }
-    mCurEv.mScnt = scnt;
-    mCurEv.mFree_ca = srv->free_ca;
-    mCurEv.mScrambled = srv->scrambled_flag;
+    LOGD("processDvbTs");
 
-    mCurEv.mSdtVer = srv->sdt_version;
-
-    mCurEv.mMSG[0] = '\0';
-
-    mCurEv.mType = ScannerEvent::EVENT_DTV_PROG_DATA;
-    getInstance()->sendEvent(mCurEv);
-}
-
-void CTvScanner::scan_store_dvb_ts(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts)
-{
-    scan_store_dvb_ts(result, ts, service_list_dummy);
-}
-
-void CTvScanner::scan_store_dvb_ts(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist)
-{
     dvbpsi_pmt_t *pmt;
     dvbpsi_pmt_es_t *es;
-    dvbpsi_descriptor_t *descr;
     int src = result->start_para->dtv_para.source;
-    int mode = result->start_para->dtv_para.mode;
-    int net_dbid = -1, dbid = -1, orig_net_id = -1, satpara_dbid = -1;
-    char selbuf[256];
-    char insbuf[400];
-    AM_Bool_t store = AM_TRUE;
     dvbpsi_pat_t *valid_pat = NULL;
     uint8_t plp_id;
-    SCAN_ServiceInfo_t srv_info;
     SCAN_ServiceInfo_t *psrv_info;
 
-    if (slist == service_list_dummy)
-        psrv_info = &srv_info;
-    else {
-        psrv_info = (SCAN_ServiceInfo_t*)calloc(sizeof(SCAN_ServiceInfo_t), 1);
-        if (!psrv_info) {
-            LOGE("[scanner]No Memory for Scanner.");
-            return;
-        }
-    }
-
-    valid_pat = get_valid_pats(ts);
+    valid_pat = getValidPats(ts);
     if (valid_pat == NULL) {
-        LOGD("[scanner]No PAT found in ts, will not store to dbase");
+        LOGD("No PAT found in ts");
         return;
     }
 
-    LOGD("[scanner] TS: src %d", src);
-
-    scan_process_ts_info(result, ts, &mCurEv);
+    LOGD(" TS: src %d", src);
 
     if (ts->digital.pmts || (IS_DVBT2_TS(ts->digital.fend_para) && ts->digital.dvbt2_data_plp_num > 0)) {
         int loop_count, lc;
@@ -666,90 +708,77 @@ void CTvScanner::scan_store_dvb_ts(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, s
 
         /* For DVB-T2, search for each PLP, else search in current TS*/
         loop_count = IS_DVBT2_TS(ts->digital.fend_para) ? ts->digital.dvbt2_data_plp_num : 1;
-        LOGD("[scanner]plp num %d", loop_count);
+        LOGD("plp num %d", loop_count);
 
         for (lc = 0; lc < loop_count; lc++) {
             pat_list = IS_DVBT2_TS(ts->digital.fend_para) ? ts->digital.dvbt2_data_plps[lc].pats : ts->digital.pats;
             pmt_list = IS_DVBT2_TS(ts->digital.fend_para) ? ts->digital.dvbt2_data_plps[lc].pmts : ts->digital.pmts;
             sdt_list =  IS_DVBT2_TS(ts->digital.fend_para) ? ts->digital.dvbt2_data_plps[lc].sdts : ts->digital.sdts;
             plp_id = IS_DVBT2_TS(ts->digital.fend_para) ? ts->digital.dvbt2_data_plps[lc].id : -1;
-            LOGD("[scanner]plp_id %d", plp_id);
+            LOGD("plp_id %d", plp_id);
 
             AM_SI_LIST_BEGIN(pmt_list, pmt) {
-                scan_init_service_info(psrv_info);
-                psrv_info->satpara_dbid = satpara_dbid;
+                if (!(psrv_info = getServiceInfo()))
+                    return;
                 psrv_info->srv_id = pmt->i_program_number;
                 psrv_info->src = src;
-                psrv_info->pmt_pid = get_pmt_pid(pat_list, pmt->i_program_number);
+                psrv_info->pmt_pid = getPmtPid(pat_list, pmt->i_program_number);
                 psrv_info->pcr_pid = pmt->i_pcr_pid;
                 psrv_info->plp_id  = plp_id;
 
                 /* looking for CA descr */
                 if (! psrv_info->scrambled_flag) {
-                    scan_extract_ca_scrambled_flag(pmt->p_first_descriptor, &psrv_info->scrambled_flag);
+                    extractCaScrambledFlag(pmt->p_first_descriptor, &psrv_info->scrambled_flag);
                 }
 
                 AM_SI_LIST_BEGIN(pmt->p_first_es, es) {
                     AM_SI_ExtractAVFromES(es, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
-
-                    if (store) {
-                        AM_SI_ExtractDVBSubtitleFromES(es, &psrv_info->sub_info);
-                        AM_SI_ExtractDVBTeletextFromES(es, &psrv_info->ttx_info);
-                    }
-
+                    AM_SI_ExtractDVBSubtitleFromES(es, &psrv_info->sub_info);
+                    AM_SI_ExtractDVBTeletextFromES(es, &psrv_info->ttx_info);
                     if (! psrv_info->scrambled_flag)
-                        scan_extract_ca_scrambled_flag(es->p_first_descriptor, &psrv_info->scrambled_flag);
-                }
-                AM_SI_LIST_END()
+                        extractCaScrambledFlag(es->p_first_descriptor, &psrv_info->scrambled_flag);
+                } AM_SI_LIST_END()
 
-                scan_extract_srv_info_from_sdt(result, sdt_list, psrv_info);
+                extractSrvInfoFromSdt(result, sdt_list, psrv_info);
 
                 /*Store this service*/
-                scan_update_service_info(result, psrv_info);
+                updateServiceInfo(result, psrv_info);
 
-                if (slist == service_list_dummy)
-                    scan_store_dvb_ts_evt_service(psrv_info);
-                else
-                    slist.push_back(psrv_info);
-            }
-            AM_SI_LIST_END()
+                slist.push_back(psrv_info);
+            } AM_SI_LIST_END()
 
             /* All programs in PMTs added, now trying the programs in SDT but NOT in PMT */
             dvbpsi_sdt_service_t *srv;
             dvbpsi_sdt_t *sdt;
 
-            AM_SI_LIST_BEGIN(ts->digital.sdts, sdt) {
+            AM_SI_LIST_BEGIN(sdt_list, sdt) {
                 AM_SI_LIST_BEGIN(sdt->p_first_service, srv) {
                     AM_Bool_t found_in_pmt = AM_FALSE;
 
                     /* Is already added in PMT? */
-                    AM_SI_LIST_BEGIN(ts->digital.pmts, pmt)
-                    if (srv->i_service_id == pmt->i_program_number) {
-                        found_in_pmt = AM_TRUE;
-                        break;
-                    }
-                    AM_SI_LIST_END()
+                    AM_SI_LIST_BEGIN(pmt_list, pmt){
+                        if (srv->i_service_id == pmt->i_program_number) {
+                            found_in_pmt = AM_TRUE;
+                            break;
+                        }
+                    }AM_SI_LIST_END()
 
                     if (found_in_pmt)
                         continue;
 
-                    scan_init_service_info(psrv_info);
-                    psrv_info->satpara_dbid = satpara_dbid;
+                    if (!(psrv_info = getServiceInfo()))
+                        return;
                     psrv_info->srv_id = srv->i_service_id;
                     psrv_info->src = src;
 
-                    scan_extract_srv_info_from_sdt(result, sdt_list, psrv_info);
+                    extractSrvInfoFromSdt(result, sdt_list, psrv_info);
 
-                    scan_update_service_info(result, psrv_info);
+                    updateServiceInfo(result, psrv_info);
 
                     /*as no pmt for this srv, set type to data for invisible*/
                     psrv_info->srv_type = 0;
 
-                    if (slist == service_list_dummy)
-                        scan_store_dvb_ts_evt_service(psrv_info);
-                    else
-                        slist.push_back(psrv_info);
-
+                    slist.push_back(psrv_info);
                 }
                 AM_SI_LIST_END()
             }
@@ -758,119 +787,214 @@ void CTvScanner::scan_store_dvb_ts(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, s
     }
 }
 
-int CTvScanner::scan_insert_lcn(lcn_list_t &llist, ScannerLcnInfo *lcn, int idx)
+void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist)
 {
-    int found = 0;
+    LOGD("processAnalogTs");
 
-    for (lcn_list_t::iterator p=llist.begin(); p != llist.end(); p++) {
-        ScannerLcnInfo *pl = *p;
-        //LOGD("list size:%d, pl:%#x", llist.size(), pl);
+    SCAN_ServiceInfo_t *psrv_info;
 
-        if ((pl->net_id == lcn->net_id)
-               && (pl->ts_id == lcn->ts_id)
-               && (pl->service_id == lcn->service_id)) {
-            pl->lcn[idx] = lcn->lcn[idx];
-            pl->visible[idx] = lcn->visible[idx];
-            pl->valid[idx] = lcn->valid[idx];
-            found = 1;
-        }
-    }
-    if (!found) {
-        llist.push_back(lcn);
-    }
-    return found ? 1 : 0; //found = insert fail.
-}
-
-void CTvScanner::scan_get_lcn_info(AM_SCAN_Result_t *result, AM_SCAN_TS_t *sts, lcn_list_t &llist)
-{
-    dvbpsi_nit_t *nits = sts->digital.nits;
-    dvbpsi_nit_ts_t *ts;
-    dvbpsi_descriptor_t *dr;
-    dvbpsi_nit_t *nit;
-    ScannerLcnInfo *plcninfo;
-
-    UNUSED(result);
-
-    AM_SI_LIST_BEGIN(nits, nit)
-        AM_SI_LIST_BEGIN(nit->p_first_ts, ts)
-            AM_SI_LIST_BEGIN(ts->p_first_descriptor, dr)
-                if (dr->p_decoded && (dr->i_tag == AM_SI_DESCR_LCN_83)) {
-                dvbpsi_logical_channel_number_83_dr_t *lcn_dr = (dvbpsi_logical_channel_number_83_dr_t*)dr->p_decoded;
-                dvbpsi_logical_channel_number_83_t *lcn = lcn_dr->p_logical_channel_number;
-                int j;
-                for (j=0; j<lcn_dr->i_logical_channel_numbers_number; j++) {
-                        plcninfo = (ScannerLcnInfo*)calloc(sizeof(ScannerLcnInfo),1);
-                        plcninfo->net_id = ts->i_orig_network_id;
-                        plcninfo->ts_id = ts->i_ts_id;
-                        plcninfo->service_id = lcn->i_service_id;
-                        plcninfo->lcn[0] = lcn->i_logical_channel_number;
-                        plcninfo->visible[0] = lcn->i_visible_service_flag;
-                        plcninfo->valid[0] = 1;
-                        LOGD("[scanner]sd lcn for service [%d:%d:%d] ---> l:%d v:%d",
-                                plcninfo->net_id, plcninfo->ts_id, plcninfo->service_id,
-                                plcninfo->lcn[0], plcninfo->visible[0]);
-                        if (scan_insert_lcn(llist, plcninfo, 0)) {
-                            free(plcninfo);
-                            LOGD("[scanner]lcn exists 0.");
-                        }
-                        lcn++;
-                    }
-                } else if (dr->p_decoded && dr->i_tag==AM_SI_DESCR_LCN_88) {
-                    dvbpsi_logical_channel_number_88_dr_t *lcn_dr = (dvbpsi_logical_channel_number_88_dr_t*)dr->p_decoded;
-                    dvbpsi_logical_channel_number_88_t *lcn = lcn_dr->p_logical_channel_number;
-                    int j;
-                    for (j=0; j<lcn_dr->i_logical_channel_numbers_number; j++) {
-                        plcninfo = (ScannerLcnInfo*)calloc(sizeof(ScannerLcnInfo), 1);
-                        plcninfo->net_id = ts->i_orig_network_id;
-                        plcninfo->ts_id = ts->i_ts_id;
-                        plcninfo->service_id = lcn->i_service_id;
-                        plcninfo->lcn[1] = lcn->i_logical_channel_number;
-                        plcninfo->visible[1] = lcn->i_visible_service_flag;
-                        plcninfo->valid[1] = 1;
-                        LOGD("[scanner]hd lcn for service [%d:%d:%d] ---> l:%d v:%d",
-                               plcninfo->net_id, plcninfo->ts_id, plcninfo->service_id,
-                               plcninfo->lcn[1], plcninfo->visible[1]);
-                        if (scan_insert_lcn(llist, plcninfo, 1)) {
-                            free(plcninfo);
-                            LOGD("[scanner]lcn exists 1.");
-                        }
-                        lcn++;
-                    }
-                }
-            AM_SI_LIST_END()
-        AM_SI_LIST_END()
-    AM_SI_LIST_END()
-}
-
-void CTvScanner::scan_store_dvb_ts_evt_lcn(ScannerLcnInfo *lcn)
-{
-    mCurEv.clear();
-    mCurEv.mType = ScannerEvent::EVENT_LCN_INFO_DATA;
-    mCurEv.mLcnInfo = *lcn;
-
-    getInstance()->sendEvent(mCurEv);
-}
-
-void CTvScanner::storeDTV(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts)
-{
     UNUSED(ts);
 
-    LOGD("storeDTV");
-    dtv_scan_store(result);
+    if (!(psrv_info=getServiceInfo()))
+        return;
+
+    LOGD(" TS: src analog");
+
+    psrv_info->tsinfo = tsinfo;
+
+    /*if atsc, get analog major channel number from dtv info*/
+    if (result->start_para->dtv_para.mode != AM_SCAN_DTVMODE_NONE
+        && result->start_para->dtv_para.standard == AM_SCAN_DTV_STD_ATSC) {
+        for (service_list_t::iterator p = slist.begin(); p != slist.end(); p++)
+            if ((*p)->tsinfo->fe.getFrequency() == psrv_info->tsinfo->fe.getFrequency()) {
+                psrv_info->major_chan_num = (*p)->major_chan_num;
+                psrv_info->minor_chan_num = 0;
+            }
+    }
+
+    slist.push_back(psrv_info);
 }
 
-void CTvScanner::dtv_scan_store(AM_SCAN_Result_t *result)
+void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist)
+{
+    LOGD("processAtscTs");
+
+    if(ts->digital.vcts
+        && (ts->digital.vcts->transport_stream_id != ts->digital.pats->i_ts_id)
+        && (ts->digital.pats->i_ts_id == 0))
+        ts->digital.use_vct_tsid = 1;
+
+    vct_section_info_t *vct;
+    vct_channel_info_t *vcinfo;
+    dvbpsi_pmt_t *pmt;
+    dvbpsi_pmt_es_t *es;
+    int src = result->start_para->dtv_para.source;
+    AM_Bool_t stream_found_in_vct = AM_FALSE;
+    AM_Bool_t program_found_in_vct = AM_FALSE;
+    SCAN_ServiceInfo_t *psrv_info;
+
+    if (!ts->digital.pats && !ts->digital.vcts)
+    {
+        LOGD("No PAT or VCT found in ts");
+        return;
+    }
+
+    LOGD(" TS: src %d", src);
+
+    AM_SI_LIST_BEGIN(ts->digital.pmts, pmt) {
+        if (!(psrv_info = getServiceInfo()))
+            return;
+        psrv_info->srv_id = pmt->i_program_number;
+        psrv_info->src = src;
+        psrv_info->pmt_pid = getPmtPid(ts->digital.pats, pmt->i_program_number);
+        psrv_info->pcr_pid = pmt->i_pcr_pid;
+
+        /* looking for CA descr */
+        if (! psrv_info->scrambled_flag) {
+            extractCaScrambledFlag(pmt->p_first_descriptor, &psrv_info->scrambled_flag);
+        }
+
+        AM_SI_LIST_BEGIN(pmt->p_first_es, es) {
+            AM_SI_ExtractAVFromES(es, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
+            if (! psrv_info->scrambled_flag)
+                extractCaScrambledFlag(es->p_first_descriptor, &psrv_info->scrambled_flag);
+        }AM_SI_LIST_END()
+
+        program_found_in_vct = AM_FALSE;
+        AM_SI_LIST_BEGIN(ts->digital.vcts, vct){
+        AM_SI_LIST_BEGIN(vct->vct_chan_info, vcinfo){
+            /*Skip inactive program*/
+            if (vcinfo->program_number == 0  || vcinfo->program_number == 0xffff)
+                continue;
+
+            if ((ts->digital.use_vct_tsid || (vct->transport_stream_id == ts->digital.pats->i_ts_id))
+                && vcinfo->channel_TSID == vct->transport_stream_id)
+            {
+                if (vcinfo->program_number == pmt->i_program_number)
+                {
+                    AM_SI_ExtractAVFromATSCVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
+
+                    extractSrvInfoFromVct(result, vcinfo, psrv_info);
+
+                    program_found_in_vct = AM_TRUE;
+                    goto VCT_END;
+                }
+            } else {
+                AM_DEBUG(1, "Program(%d ts:%d) in VCT(ts:%d) found, current (ts:%d)",
+                    vcinfo->program_number, vcinfo->channel_TSID,
+                    vct->transport_stream_id, ts->digital.pats->i_ts_id);
+                continue;
+            }
+        } AM_SI_LIST_END()
+        } AM_SI_LIST_END()
+VCT_END:
+        /*Store this service*/
+        updateServiceInfo(result, psrv_info);
+
+        slist.push_back(psrv_info);
+
+    } AM_SI_LIST_END()
+
+    /* All programs in PMTs added, now trying the programs in VCT but NOT in PMT */
+    AM_SI_LIST_BEGIN(ts->digital.vcts, vct) {
+    AM_SI_LIST_BEGIN(vct->vct_chan_info, vcinfo) {
+        AM_Bool_t found_in_pmt = AM_FALSE;
+
+        if (!(psrv_info = getServiceInfo()))
+            return;
+        psrv_info->srv_id = vcinfo->program_number;
+        psrv_info->src = src;
+
+        /*Skip inactive program*/
+        if (vcinfo->program_number == 0  || vcinfo->program_number == 0xffff)
+            continue;
+
+        /* Is already added in PMT? */
+        AM_SI_LIST_BEGIN(ts->digital.pmts, pmt) {
+            if (vcinfo->program_number == pmt->i_program_number) {
+                found_in_pmt = AM_TRUE;
+                break;
+            }
+        } AM_SI_LIST_END()
+
+        if (found_in_pmt)
+            continue;
+
+        if (vcinfo->channel_TSID == vct->transport_stream_id) {
+            AM_SI_ExtractAVFromATSCVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
+            extractSrvInfoFromVct(result, vcinfo, psrv_info);
+            updateServiceInfo(result, psrv_info);
+
+            slist.push_back(psrv_info);
+
+        } else {
+            AM_DEBUG(1, "Program(%d ts:%d) in VCT(ts:%d) found",
+                vcinfo->program_number, vcinfo->channel_TSID,
+                vct->transport_stream_id);
+            continue;
+        }
+    } AM_SI_LIST_END()
+    } AM_SI_LIST_END()
+
+}
+
+void CTvScanner::storeScanHelper(AM_SCAN_Result_t *result)
+{
+    if (mInstance)
+        mInstance->storeScan(result, NULL);
+    else
+        LOGE("no Scanner running, ignore");
+}
+
+void CTvScanner::storeScan(AM_SCAN_Result_t *result, AM_SCAN_TS_t *curr_ts)
 {
     AM_SCAN_TS_t *ts;
     service_list_t service_list;
+    ts_list_t ts_list;
 
-    LOGD("[scanner]Storing tses ...");
+    LOGD("Storing tses ...");
+
+    UNUSED(curr_ts);
+
+    service_list_t slist;
+    AM_SI_LIST_BEGIN(result->tses, ts) {
+        if (ts->type == AM_SCAN_TS_DIGITAL) {
+            SCAN_TsInfo_t *tsinfo = (SCAN_TsInfo_t*)calloc(sizeof(SCAN_TsInfo_t), 1);
+            if (!tsinfo) {
+                LOGE("No Memory for Scanner.");
+                return;
+            }
+            processTsInfo(result, ts, tsinfo);
+            ts_list.push_back(tsinfo);
+
+            if (result->start_para->dtv_para.standard == AM_SCAN_DTV_STD_ATSC)
+                processAtscTs(result, ts, slist);
+            else
+                processDvbTs(result, ts, slist);
+            for (service_list_t::iterator p=slist.begin(); p != slist.end(); p++) {
+                (*p)->tsinfo = tsinfo;
+            }
+            service_list.merge(slist);
+            slist.clear();
+        }
+    }
+    AM_SI_LIST_END()
 
     AM_SI_LIST_BEGIN(result->tses, ts) {
-        service_list_t slist;
-        scan_store_dvb_ts(result, ts, slist);
-        service_list.merge(slist);
-        slist.clear();
+        if (ts->type == AM_SCAN_TS_ANALOG) {
+            SCAN_TsInfo_t *tsinfo = (SCAN_TsInfo_t*)calloc(sizeof(SCAN_TsInfo_t), 1);
+            if (!tsinfo) {
+                LOGE("No memory for Scanner");
+                return;
+            }
+            processTsInfo(result, ts, tsinfo);
+            ts_list.push_back(tsinfo);
+
+            service_list_t slist;
+            processAnalogTs(result, ts, tsinfo, slist);
+            service_list.merge(slist);
+            slist.clear();
+        }
     }
     AM_SI_LIST_END()
 
@@ -878,16 +1002,16 @@ void CTvScanner::dtv_scan_store(AM_SCAN_Result_t *result)
         lcn_list_t lcn_list;
         AM_SI_LIST_BEGIN(result->tses, ts) {
             lcn_list_t llist;
-            scan_get_lcn_info(result, ts, llist);
+            getLcnInfo(result, ts, llist);
             lcn_list.merge(llist);
             llist.clear();
         }
         AM_SI_LIST_END()
 
         /*notify lcn info*/
-        LOGD("[scanner]notify lcn info.");
+        LOGD("notify lcn info.");
         for (lcn_list_t::iterator p=lcn_list.begin(); p != lcn_list.end(); p++)
-            scan_store_dvb_ts_evt_lcn(*p);
+            notifyLcn(*p);
 
         /*free lcn list*/
         for (lcn_list_t::iterator p=lcn_list.begin(); p != lcn_list.end(); p++)
@@ -896,31 +1020,30 @@ void CTvScanner::dtv_scan_store(AM_SCAN_Result_t *result)
     }
 
     /*notify services info*/
-    LOGD("[scanner]notify service info.");
+    LOGD("notify service info.");
     for (service_list_t::iterator p=service_list.begin(); p != service_list.end(); p++)
-        scan_store_dvb_ts_evt_service(*p);
+        notifyService(*p);
 
     /*free services in list*/
     for (service_list_t::iterator p=service_list.begin(); p != service_list.end(); p++)
         free(*p);
     service_list.clear();
+
+    /*free ts in list*/
+    for (ts_list_t::iterator p=ts_list.begin(); p != ts_list.end(); p++)
+        free(*p);
+    ts_list.clear();
 }
+
 
 const char *CTvScanner::getDtvScanListName(int mode)
 {
     char *list_name = NULL;
+    CFrontEnd::FEMode feMode(mode);
+    int base = feMode.getBase();
+    int list = feMode.getList();
 
-    /*
-            mode:0xaabbccdd
-            aa - reserved
-            bb - scanlist/contury etc.
-            cc - t/t2 s/s2 c/c2 identifier
-            dd - femode FE_XXXX
-    */
-    int mode_ext = (mode & 0xff0000) >> 8;
-    int mode_fe = mode & 0xff;
-
-    switch (mode_fe) {
+    switch (base) {
         case FE_DTMB:
             list_name = (char *)"CHINA,Default DTMB ALL";
             break;
@@ -929,64 +1052,156 @@ const char *CTvScanner::getDtvScanListName(int mode)
             break;
         case FE_OFDM:
             list_name = (char *)"UK,Default DVB-T";
+            break;
         case FE_ATSC:
-            if (mode_ext == 1)
+            if (list == 1)
                 list_name = (char *)"U.S.,ATSC Cable Standard";
-            else if (mode_ext == 2)
+            else if (list == 2)
                 list_name = (char *)"U.S.,ATSC Cable IRC";
-            else if (mode_ext == 3)
+            else if (list == 3)
                 list_name = (char *)"U.S.,ATSC Cable HRC";
             else
                 list_name = (char *)"U.S.,ATSC Air";
             break;
         default:
-            LOGD("unknown autoscan mode %d, break", mode);
             list_name = (char *)"CHINA,Default DTMB ALL";
+            LOGD("unknown scan mode %d, using default[%s]", mode, list_name);
             break;
     }
     return list_name;
 }
 
-int CTvScanner::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2)
+AM_Bool_t CTvScanner::checkAtvCvbsLock(v4l2_std_id  *colorStd)
 {
-    stopScan();
+    tvafe_cvbs_video_t cvbs_lock_status;
+    int ret, i = 0;
 
-    if (mbScanStart) {
-        LOGW("scan is scanning, need first stop it");
+    *colorStd = 0;
+    while (i < 20) {
+        ret = CTvin::getInstance()->AFE_GetCVBSLockStatus(&cvbs_lock_status);
+
+        if (cvbs_lock_status == TVAFE_CVBS_VIDEO_HV_LOCKED)
+            /*||cvbs_lock_status == TVAFE_CVBS_VIDEO_V_LOCKED
+            ||cvbs_lock_status == TVAFE_CVBS_VIDEO_H_LOCKED)*/ {
+            usleep(2000 * 1000);
+            tvin_info_t info;
+            CTvin::getInstance()->VDIN_GetSignalInfo(&info);
+            *colorStd = CTvin::CvbsFtmToV4l2ColorStd(info.fmt);
+            LOGD("checkAtvCvbsLock locked and cvbs fmt = %d std = 0x%p", info.fmt, colorStd);
+            return true;
+        }
+        usleep(50 * 1000);
+        i++;
+    }
+    return false;
+}
+
+AM_Bool_t CTvScanner::checkAtvCvbsLockHelper(void *data)
+{
+    if (data == NULL) return false;
+    AM_SCAN_ATV_LOCK_PARA_t *pAtvPara = (AM_SCAN_ATV_LOCK_PARA_t *)data;
+    CTvScanner *pScan = (CTvScanner *)(pAtvPara->pData);
+    if (mInstance != pScan)
+        return AM_FALSE;
+    v4l2_std_id std;
+    AM_Bool_t isLock = pScan->checkAtvCvbsLock(&std);
+    pAtvPara->pOutColorSTD = std;
+    return isLock;
+}
+
+
+int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEParas &fp, ScanParas &sp) {
+    atv_para.mode = sp.getAtvMode();
+    if (atv_para.mode == AM_SCAN_ATVMODE_NONE)
+        return 0;
+
+    int freq1, freq2;
+    freq1 = sp.getAtvFrequency1();
+    freq2 = sp.getAtvFrequency2();
+    if (freq1 <= 0 || freq2 <= 0
+            || (atv_para.mode == AM_SCAN_ATVMODE_MANUAL && freq1 == freq2)
+            || (atv_para.mode == AM_SCAN_ATVMODE_AUTO && freq1 > freq2)) {
+        LOGW(" freq error start = %d end = %d",  freq1,  freq2);
         return -1;
     }
-    AM_SCAN_CreatePara_t para;
-    AM_DMX_OpenPara_t dmx_para;
-    AM_SCAN_Handle_t handle = 0;
-    int i;
-    // Create the scan
-    memset(&para, 0, sizeof(para));
-    para.fend_dev_id = 0;//default
-    para.mode = AM_SCAN_MODE_DTV_ATV;//DTV
-    para.atv_para.mode = AM_SCAN_ATVMODE_NONE;
-    para.dtv_para.mode = scan_mode;
-    para.dtv_para.source = mode & 0xFF;
-    para.dtv_para.dmx_dev_id = 0;//default 0
-    para.dtv_para.standard = AM_SCAN_DTV_STD_DVB;
-    if (mode == FE_ATSC)
-        para.dtv_para.standard = AM_SCAN_DTV_STD_ATSC;
-    else if (mode == FE_ISDBT)
-        para.dtv_para.standard = AM_SCAN_DTV_STD_ISDB;
 
-    const char *list_name = getDtvScanListName(mode);
-    Vector<sp<CTvChannel> > vcp;
+    atv_para.am_scan_atv_cvbs_lock =  &checkAtvCvbsLockHelper;
+    atv_para.fe_paras = static_cast<AM_FENDCTRL_DVBFrontendParameters_t *>(calloc(3, sizeof(AM_FENDCTRL_DVBFrontendParameters_t)));
+    if (atv_para.fe_paras != NULL) {
+        memset(atv_para.fe_paras, 0, 3 * sizeof(AM_FENDCTRL_DVBFrontendParameters_t));
+        atv_para.fe_paras[0].m_type = FE_ANALOG;
+        atv_para.fe_paras[0].analog.para.frequency = sp.getAtvFrequency1();
+        atv_para.fe_paras[1].m_type = FE_ANALOG;
+        atv_para.fe_paras[1].analog.para.frequency = sp.getAtvFrequency2();
+        atv_para.fe_paras[2].m_type = FE_ANALOG;
+        atv_para.fe_paras[2].analog.para.frequency = (atv_para.mode == AM_SCAN_ATVMODE_AUTO)? 0 : sp.getAtvFrequency1();
+    }
+    atv_para.fe_cnt = 3;
+    atv_para.default_std = CFrontEnd::getInstance()->enumToStdAndColor(fp.getVideoStd(), fp.getAudioStd());
+    atv_para.channel_id = -1;
+    atv_para.afc_range = 2000000;
+    if (atv_para.mode == AM_SCAN_ATVMODE_AUTO) {
+        atv_para.afc_unlocked_step = 3000000;
+        atv_para.cvbs_unlocked_step = 1500000;
+        atv_para.cvbs_locked_step = 6000000;
+    } else {
+        atv_para.direction = (atv_para.fe_paras[1].analog.para.frequency >= atv_para.fe_paras[0].analog.para.frequency)? 1 : 0;
+        atv_para.cvbs_unlocked_step = 1000000;
+        atv_para.cvbs_locked_step = 3000000;
+    }
+    return 0;
+}
+int CTvScanner::freeAtvParas(AM_SCAN_ATVCreatePara_t &atv_para) {
+    if (atv_para.fe_paras != NULL)
+        free(atv_para.fe_paras);
+    return 0;
+}
 
-    if (scan_mode == AM_SCAN_DTVMODE_ALLBAND) {
+int CTvScanner::createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEParas &fp, ScanParas &scp) {
+
+    dtv_para.mode = scp.getDtvMode();
+    if (dtv_para.mode == AM_SCAN_DTVMODE_NONE)
+        return 0;
+
+    dtv_para.source = fp.getFEMode().getBase();
+    dtv_para.dmx_dev_id = 0;//default 0
+    dtv_para.standard = AM_SCAN_DTV_STD_DVB;
+    if (dtv_para.source == FE_ATSC)
+        dtv_para.standard = AM_SCAN_DTV_STD_ATSC;
+    else if (dtv_para.source == FE_ISDBT)
+        dtv_para.standard = AM_SCAN_DTV_STD_ISDB;
+
+    int forceDtvStd = scp.getDtvStandard();
+
+    const char *dtvStd = config_get_str ( CFG_SECTION_TV, "dtv.scan.std.force", "null");
+    if (!strcmp(dtvStd, "atsc"))
+        forceDtvStd = AM_SCAN_DTV_STD_ATSC;
+    else if (!strcmp(dtvStd, "dvb"))
+        forceDtvStd = AM_SCAN_DTV_STD_DVB;
+    else if (!strcmp(dtvStd, "isdb"))
+        forceDtvStd = AM_SCAN_DTV_STD_ISDB;
+
+    if (forceDtvStd != -1) {
+        dtv_para.standard = (AM_SCAN_DTVStandard_t)forceDtvStd;
+        LOGD("force dtv std: %d", forceDtvStd);
+    }
+
+    const char *list_name = getDtvScanListName(fp.getFEMode().getMode());
+    LOGD("Using Region List [%s]", list_name);
+
+    Vector<sp<CTvChannel>> vcp;
+
+    if (scp.getDtvMode() == AM_SCAN_DTVMODE_ALLBAND) {
         CTvRegion::getChannelListByName((char *)list_name, vcp);
     } else {
-        CTvRegion::getChannelListByNameAndFreqRange((char *)list_name, beginFreq, endFreq, vcp);
+        CTvRegion::getChannelListByNameAndFreqRange((char *)list_name, scp.getDtvFrequency1(), scp.getDtvFrequency2(), vcp);
     }
     int size = vcp.size();
     LOGD("channel list size = %d", size);
 
     if (size == 0) {
-        if (scan_mode != AM_SCAN_DTVMODE_ALLBAND) {
-            LOGD("frequncy: %d not found in channel list [%s], break", beginFreq, list_name);
+        if (scp.getMode() != AM_SCAN_DTVMODE_ALLBAND) {
+            LOGD("frequncy: %d not found in channel list [%s], break", scp.getDtvFrequency1(), list_name);
             return -1;
         }
         CTvDatabase::GetTvDb()->importXmlToDB("/etc/tv_default.xml");
@@ -994,187 +1209,184 @@ int CTvScanner::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int
         size = vcp.size();
     }
 
-    if (!(para.dtv_para.fe_paras = static_cast<AM_FENDCTRL_DVBFrontendParameters_t *>(calloc(size, sizeof(AM_FENDCTRL_DVBFrontendParameters_t)))))
+    if (!(dtv_para.fe_paras = static_cast<AM_FENDCTRL_DVBFrontendParameters_t *>(calloc(size, sizeof(AM_FENDCTRL_DVBFrontendParameters_t)))))
         return -1;
 
+    int i;
     for (i = 0; i < size; i++) {
-        para.dtv_para.fe_paras[i].m_type = mode;
-        switch (mode) {
+        dtv_para.fe_paras[i].m_type = dtv_para.source;
+        switch (dtv_para.fe_paras[i].m_type) {
             case FE_DTMB:
-                para.dtv_para.fe_paras[i].dtmb.para.frequency = vcp[i]->getFrequency();
-                para.dtv_para.fe_paras[i].dtmb.para.inversion = INVERSION_OFF;
-                para.dtv_para.fe_paras[i].dtmb.para.u.ofdm.bandwidth = (fe_bandwidth_t)(vcp[i]->getBandwidth());
-                if (para1 != -1)
-                    para.dtv_para.fe_paras[i].dtmb.para.u.ofdm.bandwidth = (fe_bandwidth_t)para1;
+                dtv_para.fe_paras[i].dtmb.para.frequency = vcp[i]->getFrequency();
+                dtv_para.fe_paras[i].dtmb.para.inversion = INVERSION_OFF;
+                dtv_para.fe_paras[i].dtmb.para.u.ofdm.bandwidth = (fe_bandwidth_t)(vcp[i]->getBandwidth());
+                if (fp.getBandwidth() != -1)
+                    dtv_para.fe_paras[i].dtmb.para.u.ofdm.bandwidth = (fe_bandwidth_t)fp.getBandwidth();
                 break;
             case FE_QAM:
-                para.dtv_para.fe_paras[i].cable.para.frequency = vcp[i]->getFrequency();
-                para.dtv_para.fe_paras[i].cable.para.inversion = INVERSION_OFF;
-                para.dtv_para.fe_paras[i].cable.para.u.qam.symbol_rate = vcp[i]->getSymbolRate();
-                para.dtv_para.fe_paras[i].cable.para.u.qam.modulation = (fe_modulation_t)vcp[i]->getModulation();
-                if (para1 != -1)
-                    para.dtv_para.fe_paras[i].cable.para.u.qam.modulation = (fe_modulation_t)para1;
-                if (para2 != -1)
-                    para.dtv_para.fe_paras[i].cable.para.u.qam.symbol_rate = para2;
+                dtv_para.fe_paras[i].cable.para.frequency = vcp[i]->getFrequency();
+                dtv_para.fe_paras[i].cable.para.inversion = INVERSION_OFF;
+                dtv_para.fe_paras[i].cable.para.u.qam.symbol_rate = vcp[i]->getSymbolRate();
+                dtv_para.fe_paras[i].cable.para.u.qam.modulation = (fe_modulation_t)vcp[i]->getModulation();
+                if (fp.getSymbolrate() != -1)
+                    dtv_para.fe_paras[i].cable.para.u.qam.symbol_rate = fp.getSymbolrate();
+                if (fp.getModulation() != -1)
+                    dtv_para.fe_paras[i].cable.para.u.qam.modulation = (fe_modulation_t)fp.getModulation();
                 break;
             case FE_OFDM:
-                para.dtv_para.fe_paras[i].terrestrial.para.frequency = vcp[i]->getFrequency();
-                para.dtv_para.fe_paras[i].terrestrial.para.inversion = INVERSION_OFF;
-                para.dtv_para.fe_paras[i].terrestrial.para.u.ofdm.bandwidth = (fe_bandwidth_t)(vcp[i]->getBandwidth());
-                if (para1 != -1)
-                    para.dtv_para.fe_paras[i].dtmb.para.u.ofdm.bandwidth = (fe_bandwidth_t)para1;
-                if (para2 != -1)
-                    para.dtv_para.fe_paras[i].dtmb.para.u.ofdm.ofdm_mode = (fe_ofdm_mode_t)para2;
+                dtv_para.fe_paras[i].terrestrial.para.frequency = vcp[i]->getFrequency();
+                dtv_para.fe_paras[i].terrestrial.para.inversion = INVERSION_OFF;
+                dtv_para.fe_paras[i].terrestrial.para.u.ofdm.bandwidth = (fe_bandwidth_t)(vcp[i]->getBandwidth());
+                dtv_para.fe_paras[i].terrestrial.para.u.ofdm.ofdm_mode = (fe_ofdm_mode_t)fp.getFEMode().getGen();
+                if (fp.getBandwidth() != -1)
+                    dtv_para.fe_paras[i].terrestrial.para.u.ofdm.bandwidth = (fe_bandwidth_t)fp.getBandwidth();
+                break;
+            case FE_ATSC:
+                dtv_para.fe_paras[i].atsc.para.frequency = vcp[i]->getFrequency();
+                dtv_para.fe_paras[i].atsc.para.inversion = INVERSION_OFF;
+                dtv_para.fe_paras[i].atsc.para.u.vsb.modulation = (fe_modulation_t)(vcp[i]->getModulation());
+                if (fp.getModulation() != -1)
+                    dtv_para.fe_paras[i].atsc.para.u.vsb.modulation = (fe_modulation_t)(fe_modulation_t)fp.getModulation();
                 break;
         }
     }
 
-    para.dtv_para.fe_cnt = size;
-    para.dtv_para.resort_all = AM_FALSE;
+    dtv_para.fe_cnt = size;
+    dtv_para.resort_all = AM_FALSE;
 
     const char *sort_mode = config_get_str ( CFG_SECTION_TV, CFG_DTV_SCAN_SORT_MODE, "null");
-    if (!strcmp(sort_mode, "lcn"))
-        para.dtv_para.sort_method = AM_SCAN_SORT_BY_LCN;
+    if (!strcmp(sort_mode, "lcn") && (dtv_para.standard != AM_SCAN_DTV_STD_ATSC))
+        dtv_para.sort_method = AM_SCAN_SORT_BY_LCN;
     else
-        para.dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
+        dtv_para.sort_method = AM_SCAN_SORT_BY_FREQ_SRV_ID;
 
-    const char *db_mode = config_get_str ( CFG_SECTION_TV, SYS_SCAN_TO_PRIVATE_DB, "false");
-    if (!strcmp(db_mode, "true")) {
-        para.store_cb = NULL;
+    return 0;
+}
+int CTvScanner::freeDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para) {
+    if (dtv_para.fe_paras != NULL)
+        free(dtv_para.fe_paras);
+    return 0;
+}
+
+void CTvScanner::reconnectDmxToFend(int dmx_no, int fend_no)
+{
+    AM_DMX_Source_t src;
+
+    if (AM_FEND_GetTSSource(fend_no, &src) == AM_SUCCESS) {
+        LOGD("Set demux%d source to %d", dmx_no, src);
+        AM_DMX_SetSource(dmx_no, src);
     } else {
-        para.store_cb = dtv_scan_store;
+        LOGD("Cannot get frontend ts source!!");
     }
+}
 
-    memset(&dmx_para, 0, sizeof(dmx_para));
-    AM_DMX_Open(para.dtv_para.dmx_dev_id, &dmx_para);
+int CTvScanner::FETypeHelperCBHelper(int id, void *para, void *user) {
+    if (mInstance)
+        mInstance->FETypeHelperCB(id, para, user);
+    else
+        LOGE("no scanner running, ignore");
+    return -1;
+}
 
-    if ((para.dtv_para.mode & 0x07) != AM_SCAN_DTVMODE_NONE) {
-        AM_FEND_SetMode(para.fend_dev_id, para.dtv_para.source);
-        tv_scan_reconnect_dmx_to_fend(para.dtv_para.dmx_dev_id, para.fend_dev_id);
-    }
-
-    // Start Scan
-    if (AM_SCAN_Create(&para, &handle) != AM_SUCCESS) {
-        LOGD("SCAN CREATE fail");
-        handle = NULL;
-    } else {
-        mScanHandle = handle;
-        AM_SCAN_SetUserData(handle, (void *)this);
-        AM_EVT_Subscribe((long)handle, AM_SCAN_EVT_PROGRESS, tv_scan_evt_callback, NULL);
-        AM_EVT_Subscribe((long)handle, AM_SCAN_EVT_SIGNAL, tv_scan_evt_callback, NULL);
-        if (AM_SCAN_Start(handle) != AM_SUCCESS) {
-            AM_SCAN_Destroy(handle, AM_FALSE);
-            AM_EVT_Unsubscribe((long)handle, AM_SCAN_EVT_PROGRESS, tv_scan_evt_callback, NULL);
-            AM_EVT_Unsubscribe((long)handle, AM_SCAN_EVT_SIGNAL, tv_scan_evt_callback, NULL);
-            handle = NULL;
-        }
-    }
-    if (para.atv_para.fe_paras != NULL)
-        free(para.atv_para.fe_paras);
-    if (para.dtv_para.fe_paras != NULL)
-        free(para.dtv_para.fe_paras);
-
-    if (handle == NULL) {
+int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
+    if ((id != AM_SCAN_HELPER_ID_FE_TYPE_CHANGE)
+        || (user != (void*)this))
         return -1;
-    }
-    mbScanStart = true;//start call ok
-    return 0;
-}
 
-int CTvScanner::dtvAutoScan(int mode)
-{
-    return dtvScan(mode, AM_SCAN_DTVMODE_ALLBAND, 0, 0, -1, -1);
-}
+    fe_type_t type = static_cast<fe_type_t>(reinterpret_cast<intptr_t>(para));
+    LOGD("FE set mode %d", type);
 
-int CTvScanner::dtvManualScan(int mode, int beginFreq, int endFreq, int para1, int para2)
-{
-    return dtvScan(mode, AM_SCAN_DTVMODE_MANUAL, beginFreq, endFreq, para1, para2);
-}
+    if (type == mFEType)
+        return 0;
 
-int CTvScanner::manualDtmbScan(int beginFreq, int endFreq, int modulation)
-{
-    return dtvManualScan(FE_DTMB, beginFreq, endFreq, modulation, -1);
-}
+    mFEType = type;
 
-
-//only test for dtv allbland auto
-int CTvScanner::autoDtmbScan()
-{
-    return dtvAutoScan(FE_DTMB);
-}
-
-int CTvScanner::stopScan()
-{
-    LOGD("[scanner]StopScan is started:%d", mbScanStart);
-    //requestExit();
-    if (mbScanStart) { //if start ok and not stop
-        int ret = AM_SCAN_Destroy(mScanHandle, AM_TRUE);
-        AM_EVT_Unsubscribe((long)mScanHandle, AM_SCAN_EVT_PROGRESS, tv_scan_evt_callback, NULL);
-        AM_EVT_Unsubscribe((long)mScanHandle, AM_SCAN_EVT_SIGNAL, tv_scan_evt_callback, NULL);
-        AM_SEC_Cache_Reset(0);
-        //stop loop
-        mbScanStart = false;//stop ok
+    CFrontEnd *fe = CFrontEnd::getInstance();
+    CTvin *tvin = CTvin::getInstance();
+    if (type == FE_ANALOG) {
+        fe->setMode(type);
+        //tvin->AFE_OpenModule();
+        //tvin->VDIN_OpenModule();
+        tvin->VDIN_ClosePort();
+        tvin->VDIN_OpenPort(tvin->Tvin_GetSourcePortBySourceInput(SOURCE_TV));
+    } else {
+        tvin->VDIN_ClosePort();
+        //tvin->VDIN_OpenPort(tvin->Tvin_GetSourcePortBySourceInput(SOURCE_DTV));
+        //tvin->VDIN_CloseModule();
+        //tvin->AFE_CloseModule();
+        fe->setMode(type);
+        //CTvScanner *pScanner = (CTvScanner *)user;
+        reconnectDmxToFend(0, 0);
     }
     return 0;
 }
 
-void CTvScanner::tv_scan_evt_callback(long dev_no, int event_type, void *param, void *data __unused)
+
+ void CTvScanner::evtCallback(long dev_no, int event_type, void *param, void *data __unused)
 {
     CTvScanner *pT = NULL;
     long long tmpFreq = 0;
 
-    LOGD("[scanner]evt evt:%d", event_type);
+    LOGD("evt evt:%d", event_type);
     AM_SCAN_GetUserData((AM_SCAN_Handle_t)dev_no, (void **)&pT);
     if (pT == NULL) {
         return;
     }
+    int AdtvMixed = (pT->mScanParas.getAtvMode() != AM_SCAN_ATVMODE_NONE
+        && pT->mScanParas.getDtvMode() != AM_SCAN_DTVMODE_NONE)? 1 : 0;
+    int factor =  (AdtvMixed)? 50 : 100;
+
     pT->mCurEv.clear();
     memset(pT->mCurEv.mProgramName, '\0', sizeof(pT->mCurEv.mProgramName));
-    memset(pT->mCurEv.mMSG, '\0', sizeof(pT->mCurEv.mMSG));
+    memset(pT->mCurEv.mParas, '\0', sizeof(pT->mCurEv.mParas));
     if (event_type == AM_SCAN_EVT_PROGRESS) {
         AM_SCAN_Progress_t *evt = (AM_SCAN_Progress_t *)param;
-        LOGD("[scanner]progress evt:%d", evt->evt);
+        LOGD("progress evt:%d", evt->evt);
         switch (evt->evt) {
         case AM_SCAN_PROGRESS_SCAN_BEGIN: {
-            AM_SCAN_CreatePara_t *cp = (AM_SCAN_CreatePara_t *)evt->data;
+            AM_SCAN_CreatePara_t *cp = (AM_SCAN_CreatePara_t*)evt->data;
             pT->mCurEv.mPercent = 0;
             pT->mCurEv.mScanMode = (cp->mode<<24)|((cp->atv_para.mode&0xFF)<<16)|(cp->dtv_para.mode&0xFFFF);
-            pT->mCurEv.mSortMode = (cp->dtv_para.sort_method&0xFFFF);
+            pT->mCurEv.mSortMode = (cp->dtv_para.standard<<16)|(cp->dtv_para.sort_method&0xFFFF);
             pT->mCurEv.mType = ScannerEvent::EVENT_SCAN_BEGIN;
             pT->sendEvent(pT->mCurEv);
             }
             break;
         case AM_SCAN_PROGRESS_NIT_BEGIN:
+            break;
         case AM_SCAN_PROGRESS_NIT_END:
             break;
         case AM_SCAN_PROGRESS_TS_BEGIN: {
             AM_SCAN_TSProgress_t *tp = (AM_SCAN_TSProgress_t *)evt->data;
             if (tp == NULL)
                 break;
-            pT->mCurEv.mChannelNumber = tp->index;
-            pT->mCurEv.mMode = tp->fend_para.m_type;
+            pT->mCurEv.mChannelIndex = tp->index;
+            if (pT->mFEParas.getFEMode().getBase() == tp->fend_para.m_type)
+                pT->mCurEv.mMode = pT->mFEParas.getFEMode().getMode();
+            else
+                pT->mCurEv.mMode = tp->fend_para.m_type;
             pT->mCurEv.mFrequency = ((struct dvb_frontend_parameters *)(&tp->fend_para))->frequency;
             pT->mCurEv.mSymbolRate = tp->fend_para.cable.para.u.qam.symbol_rate;
             pT->mCurEv.mModulation = tp->fend_para.cable.para.u.qam.modulation;
             pT->mCurEv.mBandwidth = tp->fend_para.terrestrial.para.u.ofdm.bandwidth;
-            pT->mCurEv.mOfdm_mode = tp->fend_para.terrestrial.para.u.ofdm.ofdm_mode;
-            pT->mCurEv.mAudio = tp->fend_para.analog.para.u.analog.audmode;
-            pT->mCurEv.mStandard = tp->fend_para.analog.para.u.analog.std;
-            pT->mCurEv.mSat_polarisation = tp->fend_para.sat.polarisation;
-            if (pT->mCurEv.mMode == FE_ANALOG) {
-                if (pT->mSource == FE_ATSC) {
-                    pT->mCurEv.mPercent = (tp->index * 100) / tp->total;
+
+            pT->mCurEv.mFEParas.fromFENDCTRLParameters(CFrontEnd::FEMode(pT->mCurEv.mMode), &tp->fend_para);
+
+
+            if (tp->fend_para.m_type == FE_ANALOG) {
+                if (pT->mFEParas.getFEMode().getExt() & 1) {//mix
+                    pT->mCurEv.mPercent = (tp->index * factor) / tp->total;
                 } else {
                     pT->mCurEv.mPercent = 0;
                 }
             } else {
-                pT->mCurEv.mPercent = (tp->index * 100) / tp->total;
+                pT->mCurEv.mPercent = (tp->index * factor) / tp->total;
             }
 
             if (pT->mCurEv.mTotalChannelCount == 0)
                 pT->mCurEv.mTotalChannelCount = tp->total;
-            if (pT->mCurEv.mPercent >= 100)
-                pT->mCurEv.mPercent = 99;
+            if (pT->mCurEv.mPercent >= factor)
+                pT->mCurEv.mPercent = factor -1;
 
             pT->mCurEv.mLockedStatus = 0;
             pT->mCurEv.mStrength = 0;
@@ -1278,12 +1490,12 @@ void CTvScanner::tv_scan_evt_callback(long dev_no, int event_type, void *param, 
                 switch (npd->newts->type) {
                     case AM_SCAN_TS_ANALOG:
                         if (npd->result->start_para->atv_para.mode == AM_SCAN_ATVMODE_AUTO)
-                            storeATVTs(npd->newts);
+                            pT->storeScan(npd->result, npd->newts);
                     break;
                     case AM_SCAN_TS_DIGITAL:
                         if ((npd->result->start_para->dtv_para.mode == AM_SCAN_DTVMODE_AUTO)
                             || (npd->result->start_para->dtv_para.mode == AM_SCAN_DTVMODE_ALLBAND))
-                            storeDTV(npd->result, npd->newts);
+                            pT->storeScan(npd->result, npd->newts);
                     break;
                     default:
                     break;
@@ -1297,18 +1509,19 @@ void CTvScanner::tv_scan_evt_callback(long dev_no, int event_type, void *param, 
             if (bs_prog) {
                 pT->mCurEv.mPercent = bs_prog->progress;
 
-                snprintf(pT->mCurEv.mMSG, sizeof(pT->mCurEv.mMSG), "%s/%s %dMHz",
+                /*snprintf(pT->mCurEv.mMSG, sizeof(pT->mCurEv.mMSG), "%s/%s %dMHz",
                          bs_prog->polar == AM_FEND_POLARISATION_H ? "H" : "V",
                          bs_prog->lo == AM_FEND_LOCALOSCILLATORFREQ_L ? "L-LOF" : "H-LOF",
                          bs_prog->freq / 1000);
-
+                */
                 pT->mCurEv.mType = ScannerEvent::EVENT_BLINDSCAN_PROGRESS;
+
                 pT->sendEvent(pT->mCurEv);
 
                 if (bs_prog->new_tp_cnt > 0) {
                     int i = 0;
                     for (i = 0; i < bs_prog->new_tp_cnt; i++) {
-                        LOGD("[scanner]New tp: %dkS/s %d====", bs_prog->new_tps[i].frequency,
+                        LOGD("New tp: %dkS/s %d====", bs_prog->new_tps[i].frequency,
                              bs_prog->new_tps[i].u.qpsk.symbol_rate);
 
                         pT->mCurEv.mFrequency = bs_prog->new_tps[i].frequency;
@@ -1352,11 +1565,16 @@ void CTvScanner::tv_scan_evt_callback(long dev_no, int event_type, void *param, 
         }
         break;
         case AM_SCAN_PROGRESS_ATV_TUNING: {
-            pT->mCurEv.mFrequency = (long)evt->data;
+            CFrontEnd::FEMode femode(FE_ANALOG);
+            pT->mCurEv.mFEParas.setFEMode(femode);
+            pT->mCurEv.mFEParas.setFrequency((int)evt->data);
+            pT->mCurEv.mFrequency = (int)evt->data;
             pT->mCurEv.mLockedStatus = 0;
             tmpFreq = (pT->mCurEv.mFrequency - pT->mCurScanStartFreq) / 1000000;
-            pT->mCurEv.mPercent = tmpFreq * 100UL / ((pT->mCurScanEndFreq - pT->mCurScanStartFreq) / 1000000);
+            pT->mCurEv.mPercent = tmpFreq * factor / ((pT->mCurScanEndFreq - pT->mCurScanStartFreq) / 1000000)
+                                                + ((factor == 50)? 50 : 0);
             pT->mCurEv.mType = ScannerEvent::EVENT_SCAN_PROGRESS;
+
             pT->sendEvent(pT->mCurEv);
         }
         break;
@@ -1368,13 +1586,14 @@ void CTvScanner::tv_scan_evt_callback(long dev_no, int event_type, void *param, 
         AM_SCAN_DTVSignalInfo_t *evt = (AM_SCAN_DTVSignalInfo_t *)param;
         //pT->mCurEv.mprogramType = 0xff;
         pT->mCurEv.mFrequency = (int)evt->frequency;
+        pT->mCurEv.mFEParas.setFrequency(evt->frequency);
         pT->mCurEv.mLockedStatus = (evt->locked ? 1 : 0);
 
-        if (pT->mCurEv.mMode == FE_ANALOG && evt->locked)//trick here for atv new prog
+        if (pT->mCurEv.mFEParas.getFEMode().getBase() == FE_ANALOG && evt->locked)//trick here for atv new prog
             pT->mCurEv.mLockedStatus |= 0x10;
 
         pT->mCurEv.mType = ScannerEvent::EVENT_SCAN_PROGRESS;
-        if (pT->mCurEv.mMode != FE_ANALOG && evt->locked) {
+        if (pT->mCurEv.mFEParas.getFEMode().getBase() != FE_ANALOG && evt->locked) {
             pT->mCurEv.mStrength = evt->strength;
             pT->mCurEv.mSnr = evt->snr;
         } else {
@@ -1388,17 +1607,23 @@ void CTvScanner::tv_scan_evt_callback(long dev_no, int event_type, void *param, 
     }
 }
 
-void CTvScanner::tv_scan_reconnect_dmx_to_fend(int dmx_no, int fend_no)
-{
-    AM_DMX_Source_t src;
 
-    if (AM_FEND_GetTSSource(fend_no, &src) == AM_SUCCESS) {
-        LOGD("[scanner]Set demux%d source to %d", dmx_no, src);
-        AM_DMX_SetSource(dmx_no, src);
-    } else {
-        LOGD("[scanner]Cannot get frontend ts source!!");
-    }
+const char* CTvScanner::ScanParas::SCP_MODE = "m";
+const char* CTvScanner::ScanParas::SCP_ATVMODE = "am";
+const char* CTvScanner::ScanParas::SCP_DTVMODE = "dm";
+const char* CTvScanner::ScanParas::SCP_ATVFREQ1 = "af1";
+const char* CTvScanner::ScanParas::SCP_ATVFREQ2 = "af2";
+const char* CTvScanner::ScanParas::SCP_DTVFREQ1 = "df1";
+const char* CTvScanner::ScanParas::SCP_DTVFREQ2 = "df2";
+const char* CTvScanner::ScanParas::SCP_PROC = "prc";
+const char* CTvScanner::ScanParas::SCP_DTVSTD = "dstd";
+
+CTvScanner::ScanParas& CTvScanner::ScanParas::operator = (const ScanParas &spp)
+{
+    this->mparas = spp.mparas;
+    return *this;
 }
+
 
 int CTvScanner::getAtscChannelPara(int attennaType, Vector<sp<CTvChannel> > &vcp)
 {
@@ -1422,47 +1647,88 @@ int CTvScanner::getAtscChannelPara(int attennaType, Vector<sp<CTvChannel> > &vcp
     return 0;
 }
 
-void CTvScanner::sendEvent(ScannerEvent &evt)
+int CTvScanner::ATVManualScan(int min_freq, int max_freq, int std, int store_Type, int channel_num)
 {
-    if (mpObserver) {
-        if (evt.mType != ScannerEvent::EVENT_DTV_PROG_DATA) {
-            evt.mAcnt = 0;//avoid invalid count confused the array.
-            evt.mScnt = 0;
-        }
-        mpObserver->onEvent(evt);
-    }
+    UNUSED(store_Type);
+    UNUSED(channel_num);
+
+    char paras[128];
+    CFrontEnd::convertParas(paras, FE_ANALOG, min_freq, max_freq, std, 0);
+
+    CFrontEnd::FEParas fe(paras);
+
+    ScanParas sp;
+    sp.setMode(AM_SCAN_MODE_ATV_DTV);
+    sp.setDtvMode(AM_SCAN_DTVMODE_NONE);
+    sp.setAtvMode(AM_SCAN_ATVMODE_MANUAL);
+    sp.setAtvFrequency1(min_freq);
+    sp.setAtvFrequency2(max_freq);
+    return Scan(fe, sp);
 }
 
-int CTvScanner::pauseScan()
+int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type, int proc_mode)
 {
-    LOGD("[scanner]pauseScan scan started:%d", mbScanStart);
-    if (mbScanStart) { //if start ok and not stop
-        int ret = AM_SCAN_Pause(mScanHandle);
-        LOGD("[scanner]pauseScan , ret=%d", ret);
-        return ret;
-    }
-    return 0;
+    UNUSED(search_type);
+
+    char paras[128];
+    CFrontEnd::convertParas(paras, FE_ANALOG, min_freq, max_freq, std, 0);
+
+    CFrontEnd::FEParas fe(paras);
+
+    ScanParas sp;
+    sp.setMode(AM_SCAN_MODE_ATV_DTV);
+    sp.setDtvMode(AM_SCAN_DTVMODE_NONE);
+    sp.setAtvMode(AM_SCAN_ATVMODE_AUTO);
+    sp.setAtvFrequency1(min_freq);
+    sp.setAtvFrequency2(max_freq);
+    sp.setProc(proc_mode);
+    return Scan(fe, sp);
 }
 
-int CTvScanner::resumeScan()
+int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type)
 {
-    LOGD("[scanner]resumeScan scan started:%d", mbScanStart);
-    if (mbScanStart) { //if start ok and not stop
-        int ret = AM_SCAN_Resume(mScanHandle);
-        LOGD("[scanner]resumeScan , ret=%d", ret);
-        return ret;
-    }
-    return 0;
+    return autoAtvScan(min_freq, max_freq, std, search_type, 0);
 }
 
-int CTvScanner::getScanStatus(int *status)
+int CTvScanner::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2)
 {
-    LOGD("[scanner]getScanStatus scan started:%d", mbScanStart);
-    if (mbScanStart && status) { //if start ok and not stop
-        int ret = AM_SCAN_GetStatus(mScanHandle, status);
-        LOGD("[scanner]getScanStatus = [%d], ret=%d", *status, ret);
-        return ret;
-    }
-    return 0;
+    char feparas[128];
+    CFrontEnd::convertParas(feparas, mode, beginFreq, endFreq, para1, para2);
+    return dtvScan(feparas, scan_mode, beginFreq, endFreq);
 }
+int CTvScanner::dtvScan(char *feparas, int scan_mode, int beginFreq, int endFreq)
+{
+    LOGE("dtvScan fe:[%s]", feparas);
+    CFrontEnd::FEParas fe(feparas);
+    ScanParas sp;
+    sp.setMode(AM_SCAN_MODE_DTV_ATV);
+    sp.setAtvMode(AM_SCAN_ATVMODE_NONE);
+    sp.setDtvMode(scan_mode);
+    sp.setDtvFrequency1(beginFreq);
+    sp.setDtvFrequency2(endFreq);
+    return Scan(fe, sp);
+}
+
+int CTvScanner::dtvAutoScan(int mode)
+{
+    return dtvScan(mode, AM_SCAN_DTVMODE_ALLBAND, 0, 0, -1, -1);
+}
+
+int CTvScanner::dtvManualScan(int mode, int beginFreq, int endFreq, int para1, int para2)
+{
+    return dtvScan(mode, AM_SCAN_DTVMODE_MANUAL, beginFreq, endFreq, para1, para2);
+}
+
+int CTvScanner::manualDtmbScan(int beginFreq, int endFreq, int modulation)
+{
+    return dtvManualScan(FE_DTMB, beginFreq, endFreq, modulation, -1);
+}
+
+
+//only test for dtv allbland auto
+int CTvScanner::autoDtmbScan()
+{
+    return dtvAutoScan(FE_DTMB);
+}
+
 

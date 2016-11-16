@@ -81,6 +81,11 @@ int CAv::GetVideoStatus(AM_AV_VideoStatus_t *status)
     return AM_AV_GetVideoStatus(mTvPlayDevId, status);
 }
 
+int CAv::GetAudioStatus(AM_AV_AudioStatus_t *status)
+{
+    return AM_AV_GetAudioStatus(mTvPlayDevId, status);
+}
+
 int CAv::SwitchTSAudio(int apid, AM_AV_AFormat_t afmt)
 {
     return AM_AV_SwitchTSAudio (mTvPlayDevId, ( uint16_t ) apid, ( AM_AV_AFormat_t ) afmt );

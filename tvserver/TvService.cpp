@@ -3263,6 +3263,37 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     break;
 
+    case DTV_GET_AUDIO_FMT_INFO: {
+        int iRet = -1;
+        int fmt[2];
+        int sample_rate[2];
+        int resolution[2];
+        int channels[2];
+        int lpepresent[2];
+        int frames;
+        int ab_size;
+        int ab_data;
+        int ab_free;
+        iRet == mpTv->getAudioFormatInfo(fmt, sample_rate, resolution, channels,
+            lpepresent, &frames, &ab_size, &ab_data, &ab_free);
+        r->writeInt32(fmt[0]);
+        r->writeInt32(fmt[1]);
+        r->writeInt32(sample_rate[0]);
+        r->writeInt32(sample_rate[1]);
+        r->writeInt32(resolution[0]);
+        r->writeInt32(resolution[1]);
+        r->writeInt32(channels[0]);
+        r->writeInt32(channels[1]);
+        r->writeInt32(lpepresent[0]);
+        r->writeInt32(lpepresent[1]);
+        r->writeInt32(frames);
+        r->writeInt32(ab_size);
+        r->writeInt32(ab_data);
+        r->writeInt32(ab_free);
+        r->writeInt32(iRet);
+    }
+    break;
+
     case DTV_START_RECORD: {
         mpTv->SetRecordFileName((char *)String8(p.readString16()).string());
         mpTv->StartToRecord();

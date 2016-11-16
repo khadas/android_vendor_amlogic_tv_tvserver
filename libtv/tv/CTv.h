@@ -163,6 +163,8 @@ public:
     int switchAudioTrack ( int aPid, int aFmt, int aParam );
     int setAudioAD(int enable, int aPid, int aFmt);
     int getVideoFormatInfo ( int *pWidth, int *pHeight, int *pFPS, int *pInterlace );
+    int getAudioFormatInfo ( int fmt[2], int sample_rate[2], int resolution[2], int channels[2],
+        int lfepresent[2], int *frames, int *ab_size, int *ab_data, int *ab_free );
     int ResetAudioDecoderForPCMOutput();
     int  setAudioChannel ( int channelIdx );
     int getAudioChannel();

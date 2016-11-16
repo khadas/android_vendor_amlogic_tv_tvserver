@@ -89,6 +89,7 @@ public:
     int Close();
     int SetVideoWindow(int x, int y, int w, int h);
     int GetVideoStatus(AM_AV_VideoStatus_t *status);
+    int GetAudioStatus(AM_AV_AudioStatus_t *status);
     int SwitchTSAudio(int apid, AM_AV_AFormat_t afmt);
     int ResetAudioDecoder();
     int SetADAudio(uint enable, int apid, AM_AV_AFormat_t afmt);

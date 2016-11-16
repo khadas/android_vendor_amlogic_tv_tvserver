@@ -746,6 +746,55 @@ int CTv::getVideoFormatInfo ( int *pWidth, int *pHeight, int *pFPS, int *pInterl
     return iOutRet;
 }
 
+int CTv::getAudioFormatInfo ( int fmt[2], int sample_rate[2], int resolution[2], int channels[2],
+    int lfepresent[2], int *frames, int *ab_size, int *ab_data, int *ab_free)
+{
+    int  iOutRet = -1;
+    AM_AV_AudioStatus_t audio_status;
+
+    do {
+
+        iOutRet = mAv.GetAudioStatus (&audio_status );
+
+        if ( AM_SUCCESS != iOutRet ) {
+            LOGD ( "%s, ERROR: Cann't Get audio format info\n", __FUNCTION__);
+            break;
+        }
+
+        if (fmt) {
+            fmt[0] = audio_status.aud_fmt;
+            fmt[1] = audio_status.aud_fmt_orig;
+        }
+        if (sample_rate) {
+            sample_rate[0] = audio_status.sample_rate;
+            sample_rate[1] = audio_status.sample_rate_orig;
+        }
+        if (resolution) {
+            resolution[0] = audio_status.resolution;
+            resolution[1] = audio_status.resolution_orig;
+        }
+        if (channels) {
+            channels[0] = audio_status.channels;
+            channels[1] = audio_status.channels_orig;
+        }
+        if (lfepresent) {
+            lfepresent[0] = audio_status.lfepresent;
+            lfepresent[1] = audio_status.lfepresent_orig;
+        }
+        if (frames)
+            *frames = audio_status.frames;
+        if (ab_size)
+            *ab_size = audio_status.ab_size;
+        if (ab_data)
+            *ab_data = audio_status.ab_data;
+        if (ab_free)
+            *ab_free = audio_status.ab_free;
+
+    } while ( false );
+
+    return iOutRet;
+}
+
 int CTv::stopScanLock()
 {
     AutoMutex lock ( mLock );

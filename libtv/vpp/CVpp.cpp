@@ -37,6 +37,7 @@ CVpp *CVpp::getInstance()
 CVpp::CVpp()
 {
     vpp_amvideo_fd = -1;
+    mIsHdrLastTime = false;
     mpPqData = new CPqData();
     fbcIns = GetSingletonFBC();
 }
@@ -224,9 +225,11 @@ int CVpp::LoadVppSettings(tv_source_input_type_t source_type, tvin_sig_fmt_t sig
     vpp_noise_reduction_mode_t nr_mode = VPP_NOISE_REDUCTION_MODE_MID;
     tvin_port_t source_port = CTvin::Tvin_GetSourcePortBySourceType(source_type);
 
+    bool hdrStatus = mpPqData->IsMatchHDRCondition(source_port);
+
     if ((vpp_setting_last_source_type == source_type) && (vpp_setting_last_sig_fmt == sig_fmt)
             /*&& ( vpp_setting_last_3d_status == status showbo mark)*/
-            && (vpp_setting_last_trans_fmt == trans_fmt)) {
+            && (vpp_setting_last_trans_fmt == trans_fmt && (hdrStatus == mIsHdrLastTime))) {
         return -1;
     }
 
@@ -258,6 +261,14 @@ int CVpp::LoadVppSettings(tv_source_input_type_t source_type, tvin_sig_fmt_t sig
     vpp_setting_last_sig_fmt = sig_fmt;
     //showbo mark vpp_setting_last_3d_status = status;
     vpp_setting_last_trans_fmt = trans_fmt;
+
+    if (hdrStatus) {
+        mIsHdrLastTime = true;
+        tvWriteSysfs(DNLP_ENABLE, "0");
+    }
+    else {
+        mIsHdrLastTime = false;
+    }
 
     return 0;
 }
@@ -371,6 +382,9 @@ int CVpp::Vpp_LoadBasicRegs(tv_source_input_type_t source_type, tvin_sig_fmt_t s
     int ret = -1, enableFlag = -1;
 
     tvin_port_t source_port = CTvin::Tvin_GetSourcePortBySourceType(source_type);
+
+    if (mpPqData->loadHdrStatus(source_port, String8("GeneralCommonTable")))
+        sig_fmt = TVIN_SIG_FMT_HDMI_HDR;
 
     if (mpPqData->getRegValues("GeneralCommonTable", source_port, sig_fmt, is3d, trans_fmt, &regs) > 0) {
         if (Vpp_LoadRegs(regs) < 0) {

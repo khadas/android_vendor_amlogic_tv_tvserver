@@ -162,7 +162,9 @@ public:
     int replacePQDb(const char *newFilePath);
     int getSharpnessFlag();
     bool PQ_GetLDIM_Regs(vpu_ldim_param_s *vpu_ldim_param);
-
+    bool isHdrTableExist(const String8&);
+    bool IsMatchHDRCondition(const tvin_port_t);
+    bool loadHdrStatus(const tvin_port_t, const String8&);
 private:
     void initDB(bool froceCopy = false);
     int CaculateLevelParam(tvpq_data_t *pq_data, int nodes, int level);

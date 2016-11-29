@@ -409,6 +409,9 @@ int CPqData::PQ_GetCM2Params(vpp_color_management2_t basemode, tvin_port_t sourc
         sig_fmt = TVIN_SIG_FMT_NULL;
     }
 
+    if (loadHdrStatus(source_port, String8("GeneralCM2Table")))
+        sig_fmt = TVIN_SIG_FMT_HDMI_HDR;
+
     getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralCM2Table where "
                  "TVIN_PORT = %d and "
                  "TVIN_SIG_FMT = %d and "
@@ -683,6 +686,9 @@ int CPqData::PQ_GetDNLPParams(tvin_port_t source_port, tvin_sig_fmt_t fmt, is_3d
     params->white = VE_DNLP_EXT_00;
 
     mode = is2dOr3d;//Check2Dor3D(status, trans_fmt);//(status << 16)|trans_fmt;
+
+    if (loadHdrStatus(source_port, String8("GeneralDNLPTable")))
+        fmt = TVIN_SIG_FMT_HDMI_HDR;
 
     getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralDNLPTable where "
                  "TVIN_PORT = %d and "
@@ -1825,62 +1831,52 @@ int CPqData::LoadPQData(tvpq_data_type_t data_type, tvin_port_t source_port,
     tvpq_data_t *pq_data = NULL;
     int *pq_nodes = NULL;
 
+    int id = 0;
+    String8 tableName[] = {String8("GeneralContrastBrightnessTable"), String8("GeneralContrastBrightnessTable"),
+                            String8("GeneralSaturationHueTable"), String8("GeneralSaturationHueTable"),
+                            String8("GeneralSharpnessG9Table")};
+
     UNUSED(trans_fmt);
     switch (data_type) {
     case TVPQ_DATA_BRIGHTNESS:
-        getSqlParams(__FUNCTION__, sqlmaster,
-                     "select TableName from GeneralContrastBrightnessTable where "
-                     "TVIN_PORT = %d and "
-                     "TVIN_SIG_FMT = %d and "
-                     "TVIN_TRANS_FMT = %d and "
-                     "%s = %d;", source_port, sig_fmt, mode, ID_FIELD, BRIGHTNESS_ID);
         pq_data = pq_bri_data;
         pq_nodes = &bri_nodes;
+        id = BRIGHTNESS_ID;
         break;
     case TVPQ_DATA_CONTRAST:
-        getSqlParams(__FUNCTION__, sqlmaster,
-                     "select TableName from GeneralContrastBrightnessTable where "
-                     "TVIN_PORT = %d and "
-                     "TVIN_SIG_FMT = %d and "
-                     "TVIN_TRANS_FMT = %d and "
-                     "%s = %d;", source_port, sig_fmt, mode, ID_FIELD, CONTRAST_ID);
         pq_data = pq_con_data;
         pq_nodes = &con_nodes;
+        id = CONTRAST_ID;
         break;
     case TVPQ_DATA_HUE:
-        getSqlParams(__FUNCTION__, sqlmaster,
-                     "select TableName from GeneralSaturationHueTable where "
-                     "TVIN_PORT = %d and "
-                     "TVIN_SIG_FMT = %d and "
-                     "TVIN_TRANS_FMT = %d and "
-                     "%s = %d;", source_port, sig_fmt, mode, ID_FIELD, HUE_ID);
         pq_data = pq_hue_data;
         pq_nodes = &hue_nodes;
+        id = HUE_ID;
         break;
     case TVPQ_DATA_SATURATION:
-        getSqlParams(__FUNCTION__, sqlmaster,
-                     "select TableName from GeneralSaturationHueTable where "
-                     "TVIN_PORT = %d and "
-                     "TVIN_SIG_FMT = %d and "
-                     "TVIN_TRANS_FMT = %d and "
-                     "%s = %d;", source_port, sig_fmt, mode, ID_FIELD, SATURATION_ID);
         pq_data = pq_sat_data;
         pq_nodes = &sat_nodes;
+        id = SATURATION_ID;
         break;
     case TVPQ_DATA_SHARPNESS:
         //sprintf(sqlmaster, "select TableName from GeneralSharpnessTable where "
-        getSqlParams(__FUNCTION__, sqlmaster,
-                     "select TableName from GeneralSharpnessG9Table where "
-                     "TVIN_PORT = %d and "
-                     "TVIN_SIG_FMT = %d and "
-                     "TVIN_TRANS_FMT = %d and "
-                     "%s = %d;", source_port, sig_fmt, mode, ID_FIELD, SHARPNESS_ID);
         pq_data = NULL;
         pq_nodes = &sha_nodes;
+        id = SHARPNESS_ID;
         break;
     default:
-        break;
+        return -1;
     }
+
+    if (loadHdrStatus(source_port, tableName[data_type]))
+        sig_fmt = TVIN_SIG_FMT_HDMI_HDR;
+
+    getSqlParams(__FUNCTION__,sqlmaster,
+                 "select TableName from %s where "
+                 "TVIN_PORT = %d and "
+                 "TVIN_SIG_FMT = %d and "
+                 "TVIN_TRANS_FMT = %d and "
+                 "%s = %d;", tableName[data_type].string(), source_port, sig_fmt, mode, ID_FIELD, id);
 
     rval = this->select(sqlmaster, c);
 
@@ -2165,4 +2161,56 @@ bool CPqData::PQ_GetLDIM_Regs(vpu_ldim_param_s *vpu_ldim_param)
 
     return ret;
 }
+
+bool CPqData::isHdrTableExist(const String8& tableName)
+{
+    char sqlmaster[256];
+    CSqlite::Cursor tempCursor;
+
+    getSqlParams(__FUNCTION__, sqlmaster,
+                 "select TableName from %s where TVIN_SIG_FMT = %d;",
+                 tableName.string(), TVIN_SIG_FMT_HDMI_HDR);
+
+    this->select(sqlmaster, tempCursor);
+
+    return tempCursor.getCount() > 0;
+}
+
+bool CPqData::IsMatchHDRCondition(const tvin_port_t source_port)
+{
+    bool ret = false;
+
+    if (TVIN_PORT_MPEG0 == source_port ||
+        (source_port >= TVIN_PORT_HDMI0 && source_port <= TVIN_PORT_HDMI7)) {
+        int cscType = GetFileAttrIntValue("/sys/module/am_vecm/parameters/cur_csc_type", O_RDONLY);
+
+        if (cscType >= 64) {
+            ret = true;
+        }
+        else {
+            LOGD ("%s, cscType = %d", __func__, cscType);
+            ret = false;
+        }
+    }
+
+    return ret;
+}
+
+bool CPqData::loadHdrStatus(const tvin_port_t source_port, const String8& tableName)
+{
+    bool ret = false;
+
+    if (IsMatchHDRCondition(source_port)) {
+        if (isHdrTableExist(tableName)) {
+            LOGD ("%s, %s have hdr table", __func__, tableName.string());
+            ret = true;
+        }
+        else {
+            LOGD ("%s, %s not have hdr table", __func__, tableName.string());
+        }
+    }
+
+    return ret;
+}
+
 

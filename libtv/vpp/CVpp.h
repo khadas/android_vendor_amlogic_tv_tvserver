@@ -20,6 +20,7 @@
 #define VPP_3D_DEV_PATH    "/dev/amvideo"
 #define VPP_PANEL_BACKLIGHT_DEV_PATH   "/sys/class/aml_bl/power"
 #define BACKLIGHT_BRIGHTNESS "/sys/class/backlight/aml-bl/brightness"
+#define DNLP_ENABLE    "/sys/module/am_vecm/parameters/dnlp_en"
 
 #define LDIM_PATH    "/dev/aml_ldim"
 
@@ -404,6 +405,7 @@ private:
     tv_source_input_type_t vpp_setting_last_source_type;
     tvin_sig_fmt_t vpp_setting_last_sig_fmt;
     tvin_trans_fmt_t vpp_setting_last_trans_fmt;
+    bool mIsHdrLastTime;
     //cfg
     bool mbVppCfg_backlight_reverse;
     bool mbVppCfg_backlight_init;

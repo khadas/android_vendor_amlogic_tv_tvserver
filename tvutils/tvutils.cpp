@@ -500,3 +500,35 @@ int GetPlatformHaveDDFlag()
     return 0;
 }
 
+int GetFileAttrIntValue(const char *fp, int flag)
+{
+    int fd = -1, ret = -1;
+    int temp = -1;
+    char temp_str[32];
+
+    memset(temp_str, 0, 32);
+
+    fd = open(fp, flag);
+
+    if (fd <= 0) {
+        LOGE("open %s ERROR(%s)!!\n", fp, strerror(errno));
+        return -1;
+    }
+
+    if (read(fd, temp_str, sizeof(temp_str)) > 0) {
+        if (sscanf(temp_str, "%d", &temp) >= 0) {
+            LOGD("%s -> get %s value =%d!\n", "TV", fp, temp);
+            close(fd);
+            return temp;
+        } else {
+            LOGE("%s -> get %s value error(%s)\n", "TV", fp, strerror(errno));
+            close(fd);
+            return -1;
+        }
+    }
+
+    close(fd);
+    return -1;
+}
+
+

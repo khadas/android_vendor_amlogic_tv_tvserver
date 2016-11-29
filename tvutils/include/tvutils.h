@@ -1,6 +1,10 @@
 #ifndef _TV_UTILS_H_
 #define _TV_UTILS_H_
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #define SYS_STR_LEN                         1024
 
 int tvReadSysfs(const char *path, char *value);
@@ -32,6 +36,7 @@ extern int getBootEnv(const char *key, char *value, const char *def_val);
 extern void setBootEnv(const char *key, const char *value);
 extern int readSysfs(const char *path, char *value);
 extern void writeSysfs(const char *path, const char *value);
+extern int GetFileAttrIntValue(const char *fp, int flag = O_RDWR);
 
 template<typename T1, typename T2>
 int ArrayCopy(T1 dst_buf[], T2 src_buf[], int copy_size)

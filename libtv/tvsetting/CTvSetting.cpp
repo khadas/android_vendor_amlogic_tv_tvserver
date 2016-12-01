@@ -86,6 +86,9 @@ static int SSMWriteNTypes(int id, int data_len, T *data_buf, int offset = 0)
         return -1;
     }
 
+    if (0 == data_len)
+        return -1;
+
     //LOGD ("Id - %d", id);
     unsigned int actualAddr = handler->SSMGetActualAddr(id) + offset;
     //LOGD ("actualAddr - %d", actualAddr);
@@ -120,6 +123,9 @@ static int SSMReadNTypes(int id, int data_len, T *data_buf, int offset = 0)
         pthread_mutex_unlock(&ssm_r_w_op_mutex);
         return -1;
     }
+
+    if (0 == data_len)
+        return -1;
 
     //LOGD ("Id - %d", id);
     unsigned int actualAddr = handler->SSMGetActualAddr(id) + offset;

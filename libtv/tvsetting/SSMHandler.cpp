@@ -199,10 +199,7 @@ SSMHandler::SSMHandler()
     for (unsigned int i = 1; i < gSSMHeader_section1.count; i++) {
         sum += gSSMHeader_section2[i-1].size;
 
-        if (gSSMHeader_section2[i-1].size != 0)
-            gSSMHeader_section2[i].addr = sum;
-        else
-            gSSMHeader_section2[i].addr = 0;
+        gSSMHeader_section2[i].addr = sum;
     }
     /*
         for (unsigned int i = 0; i < gSSMHeader_section1.count; i++) {

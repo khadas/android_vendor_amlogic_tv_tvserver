@@ -450,6 +450,7 @@ private:
     float getAudioPreGain(tv_source_input_t source_input);
     void resumeSpdifStatus();
     int KillMediaServerClient();
+    bool insertedFbcDevice();
 
     CAudioAlsa mAudioAlsa;
     CAudioEffect mAudioEffect;

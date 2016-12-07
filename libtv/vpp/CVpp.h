@@ -221,7 +221,7 @@ public:
     ~CVpp();
     int doSuspend();
     int doResume();
-    int Vpp_Init ( const char *pq_db_path );
+    int Vpp_Init ( const char *pq_db_path, bool hdmiOutFbc);
     int Vpp_Uninit ( void );
     CPqData *getPqData();
     int Vpp_ResetLastVppSettingsSourceType ( void );

@@ -73,6 +73,33 @@ static void sqliteLogCallback(void *data, int iErrCode, const char *zMsg)
     LOGD( "showbo sqlite (%d) %s\n", iErrCode, zMsg);
 }
 
+bool CTv::insertedFbcDevice()
+{
+    bool ret = false;
+
+    if (hdmiOutWithFbc()) {
+        CFbcCommunication *fbc = GetSingletonFBC();
+        char panel_model[64] = {0};
+
+        if (fbc == NULL) {
+            LOGD ("%s, there is no fbc!!!", __func__);
+        }
+        else {
+            fbc->cfbc_Get_FBC_Get_PANel_INFO(COMM_DEV_SERIAL, panel_model);
+
+            if (0 == panel_model[0]) {
+                LOGD ("%s, device is not fbc", __func__);
+            }
+            else {
+                LOGD ("%s, get panel info from fbc is %s", __func__, panel_model);
+                ret = true;
+            }
+        }
+    }
+
+    return ret;
+}
+
 CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
 {
     mAudioMuteStatusForTv = CC_AUDIO_UNMUTE;
@@ -135,11 +162,8 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
 
     mFactoryMode.init();
     mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
-    if (hdmiOutWithFbc()) {
-        mHdmiOutFbc = true;
-    } else {
-        mHdmiOutFbc = false;
-    }
+
+    mHdmiOutFbc = insertedFbcDevice();
 
     m_sig_stable_nums = 0;
     mSetHdmiEdid = false;
@@ -1608,7 +1632,7 @@ int CTv::OpenTv ( void )
     mpTvin->Tv_init_afe();
 
     const char *path = config_get_str(CFG_SECTION_TV, CFG_PQ_DB_PATH, DEF_DES_PQ_DB_PATH);
-    CVpp::getInstance()->Vpp_Init(path);
+    CVpp::getInstance()->Vpp_Init(path, mHdmiOutFbc);
     TvAudioOpen();
     SetAudioVolDigitLUTTable(SOURCE_MPEG);
 

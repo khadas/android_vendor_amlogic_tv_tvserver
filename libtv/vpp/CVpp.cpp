@@ -39,12 +39,6 @@ CVpp::CVpp()
     vpp_amvideo_fd = -1;
     mpPqData = new CPqData();
     fbcIns = GetSingletonFBC();
-    const char *value = config_get_str(CFG_SECTION_TV, CFG_FBC_USED, "true");
-    if (strcmp(value, "true") == 0) {
-        mHdmiOutFbc = true;
-    } else {
-        mHdmiOutFbc = false;
-    }
 }
 
 CVpp::~CVpp()
@@ -55,7 +49,7 @@ CVpp::~CVpp()
     }
 }
 
-int CVpp::Vpp_Init(const char *pq_db_path)
+int CVpp::Vpp_Init(const char *pq_db_path, bool hdmiOutFbc)
 {
     LOGD("Vpp_Init pq_db_path = %s", pq_db_path);
     if (mpPqData->openPqDB(pq_db_path)) {
@@ -67,6 +61,8 @@ int CVpp::Vpp_Init(const char *pq_db_path)
     int ret = -1;
     int backlight = 100;
     int offset_r = 0, offset_g = 0, offset_b = 0, gain_r = 1024, gain_g = 1024, gain_b = 1024;
+
+    mHdmiOutFbc = hdmiOutFbc;
 
     Vpp_GetVppConfig();
 

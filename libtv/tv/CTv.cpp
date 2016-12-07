@@ -106,12 +106,18 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     mAudioMuteStatusForSystem = CC_AUDIO_UNMUTE;
 
     //copy file to param
+    char buf[PROPERTY_VALUE_MAX] = {0};
+    int len = property_get("tv.tvconfig.force_copy", buf, "true");
+
     if (isFileExist(TV_CONFIG_FILE_SYSTEM_PATH)) {
-        if (!isFileExist(TV_CONFIG_FILE_PARAM_PATH)) {
+        if (!isFileExist(TV_CONFIG_FILE_PARAM_PATH) || !strcmp(buf, "true")) {
             CFile file ( TV_CONFIG_FILE_SYSTEM_PATH );
 
             if ( file.copyTo ( TV_CONFIG_FILE_PARAM_PATH ) != 0 ) {
                 LOGE ( "%s, copy file = %s , error", __FUNCTION__, TV_CONFIG_FILE_PARAM_PATH );
+            }
+            else {
+                LOGD ("%s copy from %s to %s success.", __func__, TV_CONFIG_FILE_SYSTEM_PATH, TV_CONFIG_FILE_PARAM_PATH);
             }
         }
     }

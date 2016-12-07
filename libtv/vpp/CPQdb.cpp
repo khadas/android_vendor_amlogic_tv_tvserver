@@ -150,9 +150,9 @@ CPqData::~CPqData()
 {
 }
 
-void CPqData::initDB()
+void CPqData::initDB(bool froceCopy)
 {
-    if (access(DEF_DES_PQ_DB_PATH, F_OK) && (access(DEF_SRC_PQ_DB_PATH, F_OK) == F_OK)) {
+    if ((access(DEF_DES_PQ_DB_PATH, F_OK) && (access(DEF_SRC_PQ_DB_PATH, F_OK) == F_OK)) || froceCopy) {
         CFile file(DEF_SRC_PQ_DB_PATH);
         if (file.copyTo(DEF_DES_PQ_DB_PATH) != 0) {
             LOGE("%s, copy file \"%s\" to \"%s\" error", __FUNCTION__, DEF_SRC_PQ_DB_PATH, DEF_DES_PQ_DB_PATH);
@@ -170,6 +170,9 @@ int CPqData::openPqDB(const char *db_path)
     strcpy(PQ_DB_PATH, db_path);
     strcpy(SYSTEM_PQ, DEF_SRC_PQ_DB_PATH);
 
+    char buf[PROPERTY_VALUE_MAX] = {0};
+    int len = property_get("tv.pq.force_copy", buf, "true");
+
     if (GetProjectInfo(&tmp_info) == 0) {
         strcpy(tmp_buf, "/system/etc/");
         strcat(tmp_buf, tmp_info.panel_type);
@@ -180,7 +183,7 @@ int CPqData::openPqDB(const char *db_path)
     }
 
     LOGD("openPqDB path = %s, system pq = %s", db_path, SYSTEM_PQ);
-    if (access(PQ_DB_PATH, 0) < 0) {
+    if (access(PQ_DB_PATH, 0) < 0 || !strcmp(buf, "true")) {
         CFile file(SYSTEM_PQ);
         if (file.copyTo(PQ_DB_PATH) != 0) {
             LOGE("%s, copy file \"%s\" to \"%s\" error", __FUNCTION__, SYSTEM_PQ, PQ_DB_PATH);

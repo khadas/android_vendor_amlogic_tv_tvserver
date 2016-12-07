@@ -164,7 +164,7 @@ public:
     bool PQ_GetLDIM_Regs(vpu_ldim_param_s *vpu_ldim_param);
 
 private:
-    void initDB();
+    void initDB(bool froceCopy = false);
     int CaculateLevelParam(tvpq_data_t *pq_data, int nodes, int level);
     am_regs_t CaculateLevelRegsParam(tvpq_sharpness_regs_t *pq_regs, int level, int flag);
     int GetNonlinearMapping(tvpq_data_type_t data_type, tvin_port_t source_port, int level, int *params);

@@ -346,6 +346,8 @@ void CTvScanner::scan_process_ts_info(AM_SCAN_Result_t *result __unused, AM_SCAN
     else if (IS_DVBT2_TS(ts->digital.fend_para) && ts->digital.dvbt2_data_plp_num > 0 && ts->digital.dvbt2_data_plps[0].sdts)
         evt->mONetId = ts->digital.dvbt2_data_plps[0].sdts->i_network_id;
     evt->mTsId = get_valid_pats(ts)->i_ts_id;
+    if (ts->digital.sdts)
+        evt->mTsId = ts->digital.sdts->i_ts_id;
 
     evt->mFrequency = (int)dvb_fend_para(ts->digital.fend_para)->frequency;
     evt->mMode = ts->digital.fend_para.m_type;

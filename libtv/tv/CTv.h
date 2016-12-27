@@ -489,6 +489,7 @@ private:
     int mVolumeCompensationVal;
     int mMainVolumeBalanceVal;
     //end audio
+    bool mATVDisplaySnow;
 
 protected:
     class CTvMsgQueue: public CMsgQueueThread, public CAv::IObserver, public CTvScanner::IObserver , public CTvEpg::IObserver, public CFrontEnd::IObserver {

@@ -34,6 +34,8 @@
 #define CFG_TVIN_THERMAL_THRESHOLD_VALUE        "tvin.thermal.threshold.value"
 #define CFG_TVIN_THERMAL_FBC_NORMAL_VALUE       "tvin.thermal.fbc.normal.value"
 #define CFG_TVIN_THERMAL_FBC_COLD_VALUE         "tvin.thermal.fbc.cold.value"
+#define CFG_TVIN_ATV_DISPLAY_SNOW               "tvin.atv.display.snow"
+
 
 #define CFG_AUDIO_SRS_SOURROUND_GAIN            "audio.srs.sourround.gain"
 #define CFG_AUDIO_SRS_INPUT_GAIN                "audio.srs.input.gain"
@@ -55,6 +57,7 @@
 
 #define CFG_FBC_PANEL_INFO                      "fbc.get.panelinfo"
 #define CFG_FBC_USED                            "platform.havefbc"
+
 
 #define CFG_PQ_DB_PATH                          "pq_db_path"
 //if do not exist destination db, need copy default source db firstly

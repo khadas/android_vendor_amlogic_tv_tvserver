@@ -2276,7 +2276,12 @@ void CTv::onSigNoSigToUnstable()
         mpTvin->Tvin_StartDecoder ( mSigDetectThread.getCurSigInfo() );
         mAv.EnableVideoNow( false );
     } else {
-        mAv.DisableVideoWithBlackColor();
+        const char *value = config_get_str(CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null");
+        if ( strcmp ( value, "black" ) == 0 ) {
+            mAv.DisableVideoWithBlackColor();
+        } else {
+            mAv.DisableVideoWithBlueColor();
+        }
         mpTvin->Tvin_StopDecoder();
     }
     LOGD("Enable bluescreen for signal change in NoSigToUnstable\n");

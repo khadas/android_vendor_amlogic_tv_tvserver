@@ -22,6 +22,7 @@
 #include <tvconfig.h>
 #include <tvutils.h>
 #include <CTvLog.h>
+#include "../vpp/CVpp.h"
 
 #define CC_DEF_CHARACTER_CHAR_VAL                   (0x8A)
 
@@ -1749,7 +1750,7 @@ int SSMReadBackLightVal(int offset, int *rw_val)
     //TODO
     if (tmp_ret < 0 || tmp_ret > 100) {
         handler->SSMResetX(VPP_DATA_POS_BACKLIGHT_START);
-        tmp_ret = 50;
+        tmp_ret = DEFAULT_BACKLIGHT_BRIGHTNESS;
     }
 
     *rw_val = tmp_val;

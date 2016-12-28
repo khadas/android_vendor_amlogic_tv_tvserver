@@ -369,7 +369,7 @@ int SSMHandler::VPPSSMRestoreDefault(int id, bool resetAll)
         if (resetAll || VPP_DATA_POS_NOISE_REDUCTION_START == id)
             SSMSaveNoiseReduction(i, tmp_val);
 
-        tmp_val = 100;
+        tmp_val = DEFAULT_BACKLIGHT_BRIGHTNESS;
         if (resetAll || VPP_DATA_POS_BACKLIGHT_START == id)
             SSMSaveBackLightVal(i, tmp_val);
     }

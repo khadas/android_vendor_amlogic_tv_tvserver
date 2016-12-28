@@ -60,7 +60,7 @@ int CVpp::Vpp_Init(const char *pq_db_path, bool hdmiOutFbc)
     }
 
     int ret = -1;
-    int backlight = 100;
+    int backlight = DEFAULT_BACKLIGHT_BRIGHTNESS;
     int offset_r = 0, offset_g = 0, offset_b = 0, gain_r = 1024, gain_g = 1024, gain_b = 1024;
 
     mHdmiOutFbc = hdmiOutFbc;
@@ -1460,7 +1460,7 @@ int CVpp::GetBacklight(tv_source_input_type_t source_type)
     }
 
     if (data < 0 || data > 100) {
-        data = 100;
+        data = DEFAULT_BACKLIGHT_BRIGHTNESS;
     }
 
     return data;

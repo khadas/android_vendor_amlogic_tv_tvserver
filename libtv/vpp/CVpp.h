@@ -22,6 +22,9 @@
 #define BACKLIGHT_BRIGHTNESS "/sys/class/backlight/aml-bl/brightness"
 #define DNLP_ENABLE    "/sys/module/am_vecm/parameters/dnlp_en"
 
+// default backlight value 10%
+#define DEFAULT_BACKLIGHT_BRIGHTNESS 10
+
 #define LDIM_PATH    "/dev/aml_ldim"
 
 #define MODE_VPP_3D_DISABLE     0x00000000

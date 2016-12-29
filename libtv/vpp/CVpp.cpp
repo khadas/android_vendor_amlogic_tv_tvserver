@@ -93,6 +93,19 @@ int CVpp::Vpp_Init(const char *pq_db_path, bool hdmiOutFbc)
         LOGD ("Load local dimming regs failure!!!\n");
     }
 
+    if (mpPqData != NULL) {
+        String8 ProjectVersion, GenerateTime, ret;
+
+        if (mpPqData->PQ_GetPqVersion(ProjectVersion, GenerateTime)) {
+            ret = ProjectVersion + " " + GenerateTime;
+        }
+        else {
+            ret = "Get pq db project Verion failure!!!";
+        }
+
+        property_set("sys.pq.version", ret.string());
+    }
+
     LoadVppSettings(SOURCE_TYPE_MPEG, TVIN_SIG_FMT_NULL, INDEX_2D, TVIN_TFMT_2D);
     return ret;
 }

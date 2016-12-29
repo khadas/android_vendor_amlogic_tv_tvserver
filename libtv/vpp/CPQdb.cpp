@@ -1333,6 +1333,26 @@ int CPqData::PQ_ResetAllOverscanParams(void)
     return rval;
 }
 
+bool CPqData::PQ_GetPqVersion(String8& ProjectVersion, String8& GenerateTime)
+{
+    bool ret = false;
+    CSqlite::Cursor c;
+    char sqlmaster[256];
+
+    getSqlParams(__FUNCTION__, sqlmaster,
+                 "select ProjectVersion,GenerateTime from PQ_VersionTable;");
+
+    int rval = this->select(sqlmaster, c);
+
+    if (!rval && c.getCount() > 0) {
+        ProjectVersion = c.getString(0);
+        GenerateTime = c.getString(1);
+        ret = true;
+    }
+
+    return ret;
+}
+
 int CPqData::PQ_GetPQModeParams(tv_source_input_type_t source_type, vpp_picture_mode_t pq_mode,
                                 vpp_pq_para_t *params)
 {

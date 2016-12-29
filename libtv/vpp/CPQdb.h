@@ -136,6 +136,7 @@ public:
     int PQ_GetBlackExtParams(tv_source_input_type_t source_type, tvin_sig_fmt_t fmt, is_3d_type_t is2dOr3d, tvin_trans_fmt_t trans_fmt, ve_bext_t *params);
     int PQ_GetOverscanParams(tv_source_input_type_t source_type, tvin_sig_fmt_t fmt, is_3d_type_t is2dOr3d, tvin_trans_fmt_t trans_fmt, vpp_display_mode_t dmode, tvin_cutwin_t *cutwin_t);
     int PQ_SetOverscanParams(tv_source_input_type_t source_type, tvin_sig_fmt_t fmt, is_3d_type_t is2dOr3d, tvin_trans_fmt_t trans_fmt, tvin_cutwin_t cutwin_t);
+    bool PQ_GetPqVersion(String8& ProjectVersion, String8& GenerateTime);
     int PQ_ResetAllOverscanParams(void);
     int PQ_GetPQModeParams(tv_source_input_type_t source_type, vpp_picture_mode_t pq_mode, vpp_pq_para_t *params);
     int PQ_SetPQModeParams(tv_source_input_type_t source_type, vpp_picture_mode_t pq_mode, vpp_pq_para_t *params);

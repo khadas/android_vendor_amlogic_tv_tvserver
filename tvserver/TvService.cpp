@@ -2409,6 +2409,11 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(tmpRet);
         break;
     }
+    case ATV_DTV_GET_SCAN_STATUS: {
+        int tmpRet = mpTv->getScanStatus();
+        r->writeInt32(tmpRet);
+        break;
+    }
     case DTV_SET_TEXT_CODING: {
         String8 coding(p.readString16());
         mpTv->setDvbTextCoding((char *)coding.string());

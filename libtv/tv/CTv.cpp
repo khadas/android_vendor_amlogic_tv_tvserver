@@ -873,6 +873,17 @@ int CTv::resumeScan()
     return mTvScanner->resumeScan();
 }
 
+int CTv::getScanStatus()
+{
+    int status;
+    if (!(mTvAction & TV_ACTION_SCANNING)) {
+        LOGD("%s, tv not scanning ,return\n", __FUNCTION__);
+        return 0;
+    }
+    mTvScanner->getScanStatus(&status);
+    return status;
+}
+
 void CTv::setDvbTextCoding(char *coding)
 {
     if (!strcmp(coding, "standard")) {
@@ -1674,6 +1685,7 @@ int CTv::OpenTv ( void )
     resetDmxAndAvSource();
     mSourceConnectDetectThread.startDetect();
     ClearAnalogFrontEnd();
+    //mFrontDev.Close();
 
     mTvStatus = TV_OPEN_ED;
     return 0;

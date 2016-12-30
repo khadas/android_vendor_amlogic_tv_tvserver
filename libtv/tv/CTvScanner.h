@@ -42,6 +42,7 @@ public:
     int unsubscribeEvent();
     int pauseScan();
     int resumeScan();
+    int getScanStatus(int *status);
     int dtvAutoScan(int mode);
     int dtvManualScan(int mode, int beginFreq, int endFreq, int para1, int para2);
     int dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2);

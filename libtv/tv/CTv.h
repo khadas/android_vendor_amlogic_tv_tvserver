@@ -135,6 +135,7 @@ public:
     virtual int clearFrontEnd(int para);
     virtual int pauseScan();
     virtual int resumeScan();
+    virtual int getScanStatus();
     virtual void setDvbTextCoding(char *coding);
 
     virtual int clearAllProgram(int arg0);

@@ -1455,3 +1455,14 @@ int CTvScanner::resumeScan()
     return 0;
 }
 
+int CTvScanner::getScanStatus(int *status)
+{
+    LOGD("[scanner]getScanStatus scan started:%d", mbScanStart);
+    if (mbScanStart && status) { //if start ok and not stop
+        int ret = AM_SCAN_GetStatus(mScanHandle, status);
+        LOGD("[scanner]getScanStatus = [%d], ret=%d", *status, ret);
+        return ret;
+    }
+    return 0;
+}
+

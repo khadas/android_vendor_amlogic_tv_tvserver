@@ -1873,7 +1873,7 @@ int CTvin::SwitchSnow(bool enable)
     }
     if ( enable ) {
         ret = AFE_DeviceIOCtl( TVIN_IOC_S_AFE_SONWON );
-        ret = VDIN_DeviceIOCtl( TVIN_IOC_SNOWON );;
+        ret = VDIN_DeviceIOCtl( TVIN_IOC_SNOWON );
     } else {
         ret = AFE_DeviceIOCtl( TVIN_IOC_S_AFE_SONWOFF );
         ret = VDIN_DeviceIOCtl( TVIN_IOC_SNOWOFF );

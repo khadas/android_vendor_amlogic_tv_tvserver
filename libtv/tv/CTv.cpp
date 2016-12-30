@@ -291,8 +291,7 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
         }
     } else if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_NO_SIG ) { //作为信号消失
         if (/*m_source_input == SOURCE_TV || */m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //just playing
-            config_value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-            if ( strcmp ( config_value, "black" ) == 0 ) {
+            if ( iSBlackPattern ) {
                 mAv.DisableVideoWithBlackColor();
             } else {
                 mAv.DisableVideoWithBlueColor();
@@ -336,12 +335,10 @@ void CTv::onEvent ( const CTvEpg::EpgEvent &ev )
 
 void CTv::onEvent(const CAv::AVEvent &ev)
 {
-    const char *config_value = NULL;
     LOGD("AVEvent = %d", ev.type);
     switch ( ev.type ) {
     case CAv::AVEvent::EVENT_AV_STOP: {
-        config_value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-        if ( strcmp ( config_value, "black" ) == 0 ) {
+        if ( iSBlackPattern ) {
             mAv.DisableVideoWithBlackColor();
         } else {
             mAv.DisableVideoWithBlueColor();
@@ -366,8 +363,7 @@ void CTv::onEvent(const CAv::AVEvent &ev)
     }
 
     case CAv::AVEvent::EVENT_AV_SCAMBLED: {
-        config_value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-        if ( strcmp ( config_value, "black" ) == 0 ) {
+        if ( iSBlackPattern ) {
             mAv.DisableVideoWithBlackColor();
         } else {
             mAv.DisableVideoWithBlueColor();
@@ -584,7 +580,6 @@ int CTv::clearFrontEnd(int para)
 }
 int CTv::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2) {
     AutoMutex lock(mLock);
-    const char *config_value = NULL;
     mTvAction = mTvAction | TV_ACTION_SCANNING;
     LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
     LOGD("mode[%#x], scan_mode[%#x], freq[%d-%d], para[%d,%d] %s",
@@ -592,8 +587,7 @@ int CTv::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1,
     //mTvEpg.leaveChannel();
     mAv.StopTS();
 
-    config_value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-    if ( strcmp ( config_value, "black" ) == 0 ) {
+    if ( iSBlackPattern ) {
         mAv.DisableVideoWithBlackColor();
     } else {
         mAv.DisableVideoWithBlueColor();
@@ -835,7 +829,6 @@ int CTv::stopScanLock()
 
 int CTv::stopScan()
 {
-    const char *config_value = NULL;
     if (!(mTvAction & TV_ACTION_SCANNING)) {
         LOGD("%s, tv not scanning ,return\n", __FUNCTION__);
         return 0;
@@ -847,8 +840,7 @@ int CTv::stopScan()
         mpTvin->SwitchSnow( false );
         mAv.DisableVideoWithBlackColor();
     } else {
-        config_value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-        if ( strcmp ( config_value, "black" ) == 0 ) {
+        if ( iSBlackPattern ) {
             mAv.DisableVideoWithBlackColor();
         } else {
             mAv.DisableVideoWithBlueColor();
@@ -1280,7 +1272,6 @@ int CTv::stopPlayingLock()
 
 int CTv::stopPlaying(bool isShowTestScreen)
 {
-    const char *config_value = NULL;
     if (!(mTvAction & TV_ACTION_PLAYING)) {
         LOGD("%s, stopplay cur action = %x not playing , return", __FUNCTION__, mTvAction);
         return 0;
@@ -1298,8 +1289,7 @@ int CTv::stopPlaying(bool isShowTestScreen)
 
     if ( SOURCE_TV != m_source_input ) {
         if ( true == isShowTestScreen ) {
-            config_value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-            if ( strcmp ( config_value, "black" ) == 0 ) {
+            if ( iSBlackPattern ) {
                 mAv.DisableVideoWithBlackColor();
             } else {
                 mAv.DisableVideoWithBlueColor();
@@ -1597,21 +1587,27 @@ TvRunStatus_t CTv::GetTvStatus()
 #include "tvsetting/SSMHandler.h"
 int CTv::OpenTv ( void )
 {
-    //Tv_Spread_Spectrum();
+    const char * value;
     //reboot system by fbc setting.
     if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_TVIN) > 0) {
         mpTvin->VDIN_AddVideoPath(TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
     }
 
-    const char * val_snow = config_get_str ( CFG_SECTION_TV, CFG_TVIN_ATV_DISPLAY_SNOW, "null" );
-    LOGD("open tv, get atv display snow status:%s\n", val_snow);
-    if (strcmp(val_snow, "enable") == 0 ) {
+    value = config_get_str ( CFG_SECTION_TV, CFG_TVIN_ATV_DISPLAY_SNOW, "null" );
+    if (strcmp(value, "enable") == 0 ) {
         mATVDisplaySnow = true;
     } else {
         mATVDisplaySnow = false;
     }
 
-    const char * value = config_get_str ( CFG_SECTION_TV, CFG_FBC_PANEL_INFO, "null" );
+    value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
+    if ( strcmp ( value, "black" ) == 0 ) {
+        iSBlackPattern = true;
+    } else {
+        iSBlackPattern = false;
+    }
+
+    value = config_get_str ( CFG_SECTION_TV, CFG_FBC_PANEL_INFO, "null" );
     LOGD("open tv, get fbc panel info:%s\n", value);
     if (strcmp(value, "edid") == 0 ) {
         rebootSystemByEdidInfo();
@@ -2169,7 +2165,7 @@ void CTv::onSigStableToUnSupport()
 {
     SetAudioMuteForTv(CC_AUDIO_MUTE);
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
-        mpTvin->SwitchSnow( true );;
+        mpTvin->SwitchSnow( true );
         mpTvin->Tvin_StartDecoder ( mSigDetectThread.getCurSigInfo() );
         mAv.EnableVideoNow( false );
     } else {
@@ -2191,12 +2187,11 @@ void CTv::onSigStableToNoSig()
 {
     SetAudioMuteForTv(CC_AUDIO_MUTE);
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
-        mpTvin->SwitchSnow( true );;
+        mpTvin->SwitchSnow( true );
         mpTvin->Tvin_StartDecoder ( mSigDetectThread.getCurSigInfo() );
         mAv.EnableVideoNow( false );
     } else {
-        const char *value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-        if ( strcmp ( value, "black" ) == 0 ) {
+        if ( iSBlackPattern ) {
             mAv.DisableVideoWithBlackColor();
         } else {
             mAv.DisableVideoWithBlueColor();
@@ -2218,7 +2213,7 @@ void CTv::onSigUnStableToUnSupport()
 {
     SetAudioMuteForTv(CC_AUDIO_MUTE);
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
-        mpTvin->SwitchSnow( true );;
+        mpTvin->SwitchSnow( true );
         mpTvin->Tvin_StartDecoder ( mSigDetectThread.getCurSigInfo() );
         mAv.EnableVideoNow( false );
     } else {
@@ -2241,12 +2236,11 @@ void CTv::onSigUnStableToNoSig()
 {
     SetAudioMuteForTv(CC_AUDIO_MUTE);
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
-        mpTvin->SwitchSnow( true );;
+        mpTvin->SwitchSnow( true );
         mpTvin->Tvin_StartDecoder ( mSigDetectThread.getCurSigInfo() );
         mAv.EnableVideoNow( false );
     } else {
-        const char *value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-        if ( strcmp ( value, "black" ) == 0 ) {
+        if ( iSBlackPattern ) {
             mAv.DisableVideoWithBlackColor();
         } else {
             mAv.DisableVideoWithBlueColor();
@@ -2272,12 +2266,11 @@ void CTv::onSigNoSigToUnstable()
 {
     SetAudioMuteForTv(CC_AUDIO_MUTE);
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
-        mpTvin->SwitchSnow( true );;
+        mpTvin->SwitchSnow( true );
         mpTvin->Tvin_StartDecoder ( mSigDetectThread.getCurSigInfo() );
         mAv.EnableVideoNow( false );
     } else {
-        const char *value = config_get_str(CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null");
-        if ( strcmp ( value, "black" ) == 0 ) {
+        if ( iSBlackPattern ) {
             mAv.DisableVideoWithBlackColor();
         } else {
             mAv.DisableVideoWithBlueColor();
@@ -2296,12 +2289,11 @@ void CTv::onSigStillNosig()
     LOGD("onSigStillNosig");
     SetAudioMuteForTv(CC_AUDIO_MUTE);
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
-        mpTvin->SwitchSnow( true );;
+        mpTvin->SwitchSnow( true );
         mpTvin->Tvin_StartDecoder ( mSigDetectThread.getCurSigInfo() );
         mAv.EnableVideoNow( false );
     } else {
-        const char *value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-        if (strcmp(value, "black") == 0) {
+        if ( iSBlackPattern ) {
             mAv.DisableVideoWithBlackColor();
         } else {
             mAv.DisableVideoWithBlueColor();
@@ -2409,8 +2401,7 @@ void CTv::CTvDetectObserverForScanner::onSigStableToUnstable()
         CTvin::getInstance()->Tvin_StartDecoder (mpTv->mSigDetectThread.getCurSigInfo() );
         mpTv->mAv.EnableVideoNow( false );
     } else {
-        const char *value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-        if ( strcmp ( value, "black" ) == 0 ) {
+        if ( mpTv->iSBlackPattern ) {
             mpTv->mAv.DisableVideoWithBlackColor();
         } else {
             mpTv->mAv.DisableVideoWithBlueColor();
@@ -2428,8 +2419,7 @@ void CTv::CTvDetectObserverForScanner::onSigUnStableToNoSig()
         CTvin::getInstance()->Tvin_StartDecoder (mpTv->mSigDetectThread.getCurSigInfo() );
         mpTv->mAv.EnableVideoNow( false );
     } else {
-        const char *value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-        if ( strcmp ( value, "black" ) == 0 ) {
+        if ( mpTv->iSBlackPattern ) {
             mpTv->mAv.DisableVideoWithBlackColor();
         } else {
             mpTv->mAv.DisableVideoWithBlueColor();
@@ -2447,8 +2437,7 @@ void CTv::CTvDetectObserverForScanner::onSigStableToNoSig()
         CTvin::getInstance()->Tvin_StartDecoder (mpTv->mSigDetectThread.getCurSigInfo() );
         mpTv->mAv.EnableVideoNow( false );
     } else {
-        const char *value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
-        if ( strcmp ( value, "black" ) == 0 ) {
+        if ( mpTv->iSBlackPattern ) {
             mpTv->mAv.DisableVideoWithBlackColor();
         } else {
             mpTv->mAv.DisableVideoWithBlueColor();
@@ -5272,24 +5261,16 @@ int CTv::handleGPIO(const char *port_name, bool is_out, int edge)
 
 int CTv::KillMediaServerClient()
 {
-    int retval,status;
-    char buf[PROPERTY_VALUE_MAX] = {0};
+    char buf[PROPERTY_VALUE_MAX] = { 0 };
     int len = property_get("media.player.pid", buf, "");
     if (len > 0) {
         char* end;
         int pid = strtol(buf, &end, 0);
         if (end != buf) {
-            LOGD("[ctv] %s, remove video path, but video decorder has used, kill it:%d\n", __FUNCTION__, pid);
-            if ( 0 == (waitpid( pid, &status, WNOHANG ))) {
-                retval = kill( pid,SIGKILL );
-                if ( retval )  {
-                    LOGD("[ctv] %s, kill it:%d failed!\n", __FUNCTION__, pid);
-                    waitpid( pid, &status, 0 );
-                } else  {
-                    LOGD("[ctv] %s, kill it:%d successfully !\n", __FUNCTION__, pid);
-                }
-                property_set("media.player.pid", "");
-            }
+            LOGD("[ctv] %s, remove video path, but video decorder has used, kill it:%d\n",
+                __FUNCTION__, pid);
+            kill(pid, SIGKILL);
+            property_set("media.player.pid", "");
         }
     }
     return 0;

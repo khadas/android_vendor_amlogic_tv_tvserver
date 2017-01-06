@@ -35,6 +35,7 @@
 #include "../audio/CTvAudio.h"
 #include "AutoBackLight.h"
 #include "CAutoPQparam.h"
+#include "CBootvideoStatusDetect.h"
 #include "tvin/CSourceConnectDetect.h"
 #include "fbcutils/fbcutils.h"
 #include "CTvGpio.h"
@@ -91,7 +92,7 @@ typedef enum TvRunStatus_s {
     TV_CLOSE_ED,
 } TvRunStatus_t;
 
-class CTv : public CTvin::CTvinSigDetect::ISigDetectObserver, public CSourceConnectDetect::ISourceConnectObserver, public IUpgradeFBCObserver, public CTvSubtitle::IObserver, public  CTv2d4GHeadSetDetect::IHeadSetObserver {
+class CTv : public CTvin::CTvinSigDetect::ISigDetectObserver, public CSourceConnectDetect::ISourceConnectObserver, public IUpgradeFBCObserver, public CTvSubtitle::IObserver, public CBootvideoStatusDetect::IBootvideoStatusObserver, public  CTv2d4GHeadSetDetect::IHeadSetObserver {
 public:
     static const int TV_ACTION_NULL = 0x0000;
     static const int TV_ACTION_STARTING = 0x0001;
@@ -218,6 +219,7 @@ public:
     CTvFactory mFactoryMode;
     CTvin::CTvinSigDetect mSigDetectThread;
     CSourceConnectDetect mSourceConnectDetectThread;
+    CBootvideoStatusDetect *mBootvideoStatusDetectThread;
     CHDMIRxManager mHDMIRxManager;
 
     CTvSubtitle mSubtitle;
@@ -453,6 +455,8 @@ private:
     int KillMediaServerClient();
     bool insertedFbcDevice();
 
+    bool isBootvideoStopped();
+
     CAudioAlsa mAudioAlsa;
     CAudioEffect mAudioEffect;
 
@@ -588,6 +592,9 @@ protected:
     virtual void onUpgradeStatus(int status, int progress);
     virtual void onThermalDetect(int state);
     virtual void onVframeSizeChange();
+
+    virtual void onBootvideoRunning();
+    virtual void onBootvideoStopped();
 
     CTvEpg mTvEpg;
     CTvScanner *mTvScanner;

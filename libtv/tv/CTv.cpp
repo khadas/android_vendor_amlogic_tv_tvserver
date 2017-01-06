@@ -174,6 +174,9 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     m_sig_stable_nums = 0;
     mSetHdmiEdid = false;
 
+    mBootvideoStatusDetectThread = new CBootvideoStatusDetect();
+    mBootvideoStatusDetectThread->setObserver(this);
+
     m_hdmi_audio_data = 0;
     mSigDetectThread.setObserver ( this );
     mSourceConnectDetectThread.setObserver ( this );
@@ -2496,6 +2499,16 @@ void CTv::CTvDetectObserverForScanner::onSigStillStable()
     m_sig_stable_nums++;
 }
 
+void CTv::onBootvideoRunning() {
+    LOGD("%s,boot video is running", __FUNCTION__);
+}
+
+void CTv::onBootvideoStopped() {
+    LOGD("%s,boot video has stopped", __FUNCTION__);
+    SetAudioMasterVolume( GetAudioMasterVolume());
+    mBootvideoStatusDetectThread->stopDetect();
+}
+
 void CTv::onSourceConnect(int source_type, int connect_status)
 {
     TvEvent::SourceConnectEvent ev;
@@ -3656,6 +3669,7 @@ int CTv::LoadCurAudioSPDIFMode()
 
 int CTv::SetAudioMasterVolume(int tmp_vol)
 {
+    LOGD("%s, tmp_vol = %d", __FUNCTION__, tmp_vol);
     if (GetUseAndroidVolEnable()) {
         int master_vol;
         master_vol =  config_get_int(CFG_SECTION_TV, CFG_AUDIO_MASTER_VOL, 150);
@@ -3663,6 +3677,10 @@ int CTv::SetAudioMasterVolume(int tmp_vol)
         return 0;
     }
     mCustomAudioMasterVolume = tmp_vol;
+    if (!isBootvideoStopped()) {
+        mBootvideoStatusDetectThread->startDetect();
+        return 0;
+    }
 
     //Volume Compensation
     tmp_vol += mVolumeCompensationVal;
@@ -4975,6 +4993,14 @@ void CTv::LoadAudioCtl()
 
     // Get Current EQ Gain
     LoadCurAudioEQGain();
+}
+
+bool CTv::isBootvideoStopped() {
+    char prop_value[PROPERTY_VALUE_MAX];
+    memset(prop_value, '\0', PROPERTY_VALUE_MAX);
+    property_get("init.svc.bootvideo", prop_value, "null");
+    LOGD("%s, init.svc.bootvideo = %s", __FUNCTION__, prop_value);
+    return (strcmp(prop_value, "stopped") == 0) ? true : false;
 }
 
 void CTv::InitSetAudioCtl()

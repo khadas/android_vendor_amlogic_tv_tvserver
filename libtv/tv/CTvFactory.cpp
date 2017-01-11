@@ -46,49 +46,49 @@ int CTvFactory::setPQModeBrightness (int sourceType __unused, int pqMode, int br
     return CVpp::getInstance()->FactorySetPQMode_Brightness(pqMode, pqMode, brightness);
 }
 
-int CTvFactory::getPQModeBrightness (int sourceType, int pqMode)
+int CTvFactory::getPQModeBrightness (int tv_source_input, int pqMode)
 {
-    return CVpp::getInstance()->FactoryGetPQMode_Brightness(sourceType, pqMode);
+    return CVpp::getInstance()->FactoryGetPQMode_Brightness(tv_source_input, pqMode);
 }
 
-int CTvFactory::setPQModeContrast (int sourceType, int pqMode, int contrast)
+int CTvFactory::setPQModeContrast (int tv_source_input, int pqMode, int contrast)
 {
-    return CVpp::getInstance()->FactorySetPQMode_Contrast(sourceType, pqMode, contrast);
+    return CVpp::getInstance()->FactorySetPQMode_Contrast(tv_source_input, pqMode, contrast);
 }
 
-int CTvFactory::getPQModeContrast (int sourceType, int pqMode)
+int CTvFactory::getPQModeContrast (int tv_source_input, int pqMode)
 {
-    return CVpp::getInstance()->FactoryGetPQMode_Contrast(sourceType, pqMode);
+    return CVpp::getInstance()->FactoryGetPQMode_Contrast(tv_source_input, pqMode);
 }
 
-int CTvFactory::setPQModeSaturation ( int sourceType, int pqMode, int saturation )
+int CTvFactory::setPQModeSaturation ( int tv_source_input, int pqMode, int saturation )
 {
-    return CVpp::getInstance()->FactorySetPQMode_Saturation(sourceType, pqMode, saturation);
+    return CVpp::getInstance()->FactorySetPQMode_Saturation(tv_source_input, pqMode, saturation);
 }
 
-int CTvFactory::getPQModeSaturation ( int sourceType, int pqMode )
+int CTvFactory::getPQModeSaturation ( int tv_source_input, int pqMode )
 {
-    return CVpp::getInstance()->FactoryGetPQMode_Saturation(sourceType, pqMode);
+    return CVpp::getInstance()->FactoryGetPQMode_Saturation(tv_source_input, pqMode);
 }
 
-int CTvFactory::setPQModeHue ( int sourceType, int pqMode, int hue )
+int CTvFactory::setPQModeHue ( int tv_source_input, int pqMode, int hue )
 {
-    return CVpp::getInstance()->FactorySetPQMode_Hue(sourceType, pqMode, hue);
+    return CVpp::getInstance()->FactorySetPQMode_Hue(tv_source_input, pqMode, hue);
 }
 
-int CTvFactory::getPQModeHue ( int sourceType, int pqMode )
+int CTvFactory::getPQModeHue ( int tv_source_input, int pqMode )
 {
-    return CVpp::getInstance()->FactoryGetPQMode_Hue(sourceType, pqMode);
+    return CVpp::getInstance()->FactoryGetPQMode_Hue(tv_source_input, pqMode);
 }
 
-int CTvFactory::setPQModeSharpness ( int sourceType, int pqMode, int sharpness )
+int CTvFactory::setPQModeSharpness ( int tv_source_input, int pqMode, int sharpness )
 {
-    return CVpp::getInstance()->FactorySetPQMode_Sharpness(sourceType, pqMode, sharpness);
+    return CVpp::getInstance()->FactorySetPQMode_Sharpness(tv_source_input, pqMode, sharpness);
 }
 
-int CTvFactory::getPQModeSharpness ( int sourceType, int pqMode )
+int CTvFactory::getPQModeSharpness ( int tv_source_input, int pqMode )
 {
-    return CVpp::getInstance()->FactoryGetPQMode_Sharpness(sourceType, pqMode);
+    return CVpp::getInstance()->FactoryGetPQMode_Sharpness(tv_source_input, pqMode);
 }
 
 int CTvFactory::resetPQMode ()
@@ -209,18 +209,23 @@ int CTvFactory::getLVDSSSC ()
     return CVpp::getInstance()->FactoryGetLVDSSSC();
 }
 
-int CTvFactory::setNolineParams ( int nolineParamstype, int sourceType, noline_params_t nolineParams )
+int CTvFactory::setNolineParams ( int nolineParamstype, int tv_source_input, noline_params_t nolineParams )
 {
-    return CVpp::getInstance()->FactorySetNolineParams(nolineParamstype, sourceType, nolineParams);
+    return CVpp::getInstance()->FactorySetNolineParams(nolineParamstype, tv_source_input, nolineParams);
 }
 
-noline_params_t CTvFactory::getNolineParams ( int nolineParamstype, int sourceType )
+noline_params_t CTvFactory::getNolineParams ( int nolineParamstype, int tv_source_input )
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
+
     return CVpp::getInstance()->FactoryGetNolineParams(nolineParamstype, sourceType);
 }
 
-int CTvFactory::setOverscan ( int sourceType, int fmt, int transFmt, tvin_cutwin_t cutwin )
+int CTvFactory::setOverscan ( int tv_source_input, int fmt, int transFmt, tvin_cutwin_t cutwin )
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
     CVpp::getInstance()->FactorySetOverscan(sourceType, fmt, transFmt, cutwin);
 #if 0
     char val_buf[256];
@@ -233,8 +238,10 @@ int CTvFactory::setOverscan ( int sourceType, int fmt, int transFmt, tvin_cutwin
     return CVpp::getInstance()->VPP_SetVideoCrop ( ( int ) cutwin.vs, ( int ) cutwin.hs, ( int ) cutwin.ve, ( int ) cutwin.he );
 }
 
-tvin_cutwin_t CTvFactory::getOverscan ( int sourceType, int fmt, int transFmt )
+tvin_cutwin_t CTvFactory::getOverscan ( int tv_source_input, int fmt, int transFmt )
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
     return CVpp::getInstance()->FactoryGetOverscan(sourceType, fmt, INDEX_2D, transFmt);
 }
 
@@ -637,8 +644,10 @@ int CTvFactory::fbcGetOffsetBlue ()
     return 0;
 }
 
-int CTvFactory::whiteBalanceGainRedGet(int sourceType, int colortemp_mode)
+int CTvFactory::whiteBalanceGainRedGet(int tv_source_input, int colortemp_mode)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
         LOGD("--------- call none fbc method ---------");
@@ -650,8 +659,11 @@ int CTvFactory::whiteBalanceGainRedGet(int sourceType, int colortemp_mode)
     return ret;
 }
 
-int CTvFactory::whiteBalanceGainRedSet(int sourceType, int colortemp_mode, int value)
+int CTvFactory::whiteBalanceGainRedSet(int tv_source_input, int colortemp_mode, int value)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
+
     int ret = -1;
     if (value < 0) {
         value = 0;
@@ -671,8 +683,11 @@ int CTvFactory::whiteBalanceGainRedSet(int sourceType, int colortemp_mode, int v
     return ret;
 }
 
-int CTvFactory::whiteBalanceGainGreenGet(int sourceType, int colortemp_mode)
+int CTvFactory::whiteBalanceGainGreenGet(int tv_source_input, int colortemp_mode)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
+
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
         ret = CVpp::getInstance()->FactoryGetColorTemp_Ggain(sourceType, colortemp_mode);
@@ -682,8 +697,10 @@ int CTvFactory::whiteBalanceGainGreenGet(int sourceType, int colortemp_mode)
     return ret;
 }
 
-int CTvFactory::whiteBalanceGainGreenSet(int sourceType, int colortemp_mode, int value)
+int CTvFactory::whiteBalanceGainGreenSet(int tv_source_input, int colortemp_mode, int value)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
     int ret = -1;
     if (value < 0) {
         value = 0;
@@ -703,8 +720,11 @@ int CTvFactory::whiteBalanceGainGreenSet(int sourceType, int colortemp_mode, int
     return ret;
 }
 
-int CTvFactory::whiteBalanceGainBlueGet(int sourceType, int colortemp_mode)
+int CTvFactory::whiteBalanceGainBlueGet(int tv_source_input, int colortemp_mode)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
+
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
         ret = CVpp::getInstance()->FactoryGetColorTemp_Bgain(sourceType, colortemp_mode);
@@ -714,8 +734,11 @@ int CTvFactory::whiteBalanceGainBlueGet(int sourceType, int colortemp_mode)
     return ret;
 }
 
-int CTvFactory::whiteBalanceGainBlueSet(int sourceType, int colortemp_mode, int value)
+int CTvFactory::whiteBalanceGainBlueSet(int tv_source_input, int colortemp_mode, int value)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
+
     int ret = -1;
     if (value < 0) {
         value = 0;
@@ -735,8 +758,11 @@ int CTvFactory::whiteBalanceGainBlueSet(int sourceType, int colortemp_mode, int 
     return ret;
 }
 
-int CTvFactory::whiteBalanceOffsetRedGet(int sourceType, int colortemp_mode)
+int CTvFactory::whiteBalanceOffsetRedGet(int tv_source_input, int colortemp_mode)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
+
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
         ret = CVpp::getInstance()->FactoryGetColorTemp_Roffset(sourceType, colortemp_mode);
@@ -746,8 +772,10 @@ int CTvFactory::whiteBalanceOffsetRedGet(int sourceType, int colortemp_mode)
     return ret;
 }
 
-int CTvFactory::whiteBalanceOffsetRedSet(int sourceType, int colortemp_mode, int value)
+int CTvFactory::whiteBalanceOffsetRedSet(int tv_source_input, int colortemp_mode, int value)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
     int ret = -1;
     if (value < -1024) {
         value = -1024;
@@ -767,8 +795,11 @@ int CTvFactory::whiteBalanceOffsetRedSet(int sourceType, int colortemp_mode, int
     return ret;
 }
 
-int CTvFactory::whiteBalanceOffsetGreenGet(int sourceType, int colortemp_mode)
+int CTvFactory::whiteBalanceOffsetGreenGet(int tv_source_input, int colortemp_mode)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
+
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
         ret = CVpp::getInstance()->FactoryGetColorTemp_Goffset(sourceType, colortemp_mode);
@@ -778,8 +809,11 @@ int CTvFactory::whiteBalanceOffsetGreenGet(int sourceType, int colortemp_mode)
     return ret;
 }
 
-int CTvFactory::whiteBalanceOffsetGreenSet(int sourceType, int colortemp_mode, int value)
+int CTvFactory::whiteBalanceOffsetGreenSet(int tv_source_input, int colortemp_mode, int value)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
+
     int ret = -1;
     if (value < -1024) {
         value = -1024;
@@ -799,8 +833,11 @@ int CTvFactory::whiteBalanceOffsetGreenSet(int sourceType, int colortemp_mode, i
     return ret;
 }
 
-int CTvFactory::whiteBalanceOffsetBlueGet(int sourceType, int colortemp_mode)
+int CTvFactory::whiteBalanceOffsetBlueGet(int tv_source_input, int colortemp_mode)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
+
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
         ret = CVpp::getInstance()->FactoryGetColorTemp_Boffset(sourceType, colortemp_mode);
@@ -810,8 +847,11 @@ int CTvFactory::whiteBalanceOffsetBlueGet(int sourceType, int colortemp_mode)
     return ret;
 }
 
-int CTvFactory::whiteBalanceOffsetBlueSet(int sourceType, int colortemp_mode, int value)
+int CTvFactory::whiteBalanceOffsetBlueSet(int tv_source_input, int colortemp_mode, int value)
 {
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
+
     int ret = -1;
     if (value < -1024) {
         value = -1024;
@@ -831,33 +871,36 @@ int CTvFactory::whiteBalanceOffsetBlueSet(int sourceType, int colortemp_mode, in
     return ret;
 }
 
-int CTvFactory::whiteBalanceColorTempModeSet(int sourceType, int colortemp_mode, int is_save)
+int CTvFactory::whiteBalanceColorTempModeSet(int tv_source_input, int colortemp_mode, int is_save)
 {
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->SetColorTemperature((vpp_color_temperature_mode_t)colortemp_mode, (tv_source_input_type_t)sourceType, is_save);
+        ret = CVpp::getInstance()->SetColorTemperature((vpp_color_temperature_mode_t)colortemp_mode, (tv_source_input_t)tv_source_input, is_save);
     } else { //use fbc store the white balance params
         ret = fbcColorTempModeSet(colortemp_mode);
     }
     return ret;
 }
 
-int CTvFactory::whiteBalanceColorTempModeGet(int sourceType )
+int CTvFactory::whiteBalanceColorTempModeGet(int tv_source_input )
 {
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->GetColorTemperature((tv_source_input_type_t)sourceType);
+        ret = CVpp::getInstance()->GetColorTemperature((tv_source_input_t)tv_source_input);
     } else { //use fbc store the white balance params
         ret = fbcColorTempModeGet();
     }
     return ret;
 }
 
-int CTvFactory::whiteBalancePramSave(int sourceType, int tempmode, int r_gain, int g_gain, int b_gain, int r_offset, int g_offset, int b_offset)
+int CTvFactory::whiteBalancePramSave(int tv_source_input, int tempmode, int r_gain, int g_gain, int b_gain, int r_offset, int g_offset, int b_offset)
 {
     int ret = 0;
+    tv_source_input_type_t sourceType;
+    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
+
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        CVpp::getInstance()->SaveColorTemp((vpp_color_temperature_mode_t) tempmode, (tv_source_input_type_t) sourceType);
+        CVpp::getInstance()->SaveColorTemp((vpp_color_temperature_mode_t) tempmode, (tv_source_input_t) tv_source_input);
         CVpp::getInstance()->FactorySaveColorTemp_Rgain(sourceType, tempmode, r_gain);
         CVpp::getInstance()->FactorySaveColorTemp_Ggain(sourceType, tempmode, g_gain);
         CVpp::getInstance()->FactorySaveColorTemp_Bgain(sourceType, tempmode, b_gain);

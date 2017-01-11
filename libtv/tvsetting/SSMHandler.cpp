@@ -319,7 +319,7 @@ int SSMHandler::VPPSSMRestoreDefault(int id, bool resetAll)
         }
     }
 
-    for (i = 0; i < SOURCE_TYPE_MAX; i++) {
+    for (i = 0; i < SOURCE_MAX; i++) {
         if (resetAll || VPP_DATA_COLOR_SPACE_START == id) {
             if (i == SOURCE_TYPE_HDMI) {
                 SSMSaveColorSpaceStart ( VPP_COLOR_SPACE_AUTO);

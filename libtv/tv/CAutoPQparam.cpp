@@ -39,10 +39,10 @@ bool CAutoPQparam::isAutoPQing()
     return mAutoPQ_OnOff_Flag;
 }
 
-void CAutoPQparam::startAutoPQ( tv_source_input_type_t source_type )
+void CAutoPQparam::startAutoPQ( tv_source_input_t tv_source_input )
 {
 #ifndef CC_PROJECT_DISABLE_AUTO_PQ
-    mAutoPQSource = source_type;
+    mAutoPQSource = tv_source_input;
 
     LOGD("---------startAutoPQParameters  --------mAutoPQ_OnOff_Flag  = %d", mAutoPQ_OnOff_Flag);
     if (!mAutoPQ_OnOff_Flag) {

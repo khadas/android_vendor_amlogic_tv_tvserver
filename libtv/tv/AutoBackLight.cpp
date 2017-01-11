@@ -20,7 +20,7 @@
 
 AutoBackLight::AutoBackLight()
 {
-    mAutoBacklightSource = SOURCE_TYPE_TV;
+    mAutoBacklightSource = SOURCE_TV;
     mCur_source_default_backlight = 100;
     mCur_sig_state == SIG_STATE_NOSIG;
     mAutoBacklight_OnOff_Flag = false;
@@ -44,12 +44,12 @@ void AutoBackLight::updateSigState(int state)
     LOGD("updateSigState = %d", mCur_sig_state);
 }
 
-void AutoBackLight::startAutoBacklight( tv_source_input_type_t source_type )
+void AutoBackLight::startAutoBacklight( tv_source_input_t tv_source_input )
 {
-    mAutoBacklightSource = source_type;
-    mCur_source_default_backlight = CVpp::getInstance()->GetBacklight(source_type);
+    mAutoBacklightSource = tv_source_input;
+    mCur_source_default_backlight = CVpp::getInstance()->GetBacklight(tv_source_input);
     mCurrent_backlight = mCur_source_default_backlight;
-    CVpp::getInstance()->SetBacklight(mCur_source_default_backlight, source_type, 1);
+    CVpp::getInstance()->SetBacklight(mCur_source_default_backlight, tv_source_input, 1);
 
     /*
     mDefault_auto_bl_value = def_source_bl_value;

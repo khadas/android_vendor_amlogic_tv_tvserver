@@ -21,19 +21,25 @@ typedef enum vpp_picture_mode_e {
 } vpp_picture_mode_t;
 
 //CTvin.h
-typedef enum tv_source_input_type_e {
-    SOURCE_TYPE_TV,
-    SOURCE_TYPE_AV,
-    SOURCE_TYPE_COMPONENT,
-    SOURCE_TYPE_HDMI,
-    SOURCE_TYPE_VGA,
-    SOURCE_TYPE_MPEG,
-    SOURCE_TYPE_DTV,
-    SOURCE_TYPE_SVIDEO,
-    SOURCE_TYPE_IPTV,
-    SOURCE_TYPE_SPDIF,
-    SOURCE_TYPE_MAX,
-} tv_source_input_type_t;
+typedef enum tv_source_input_e {
+    SOURCE_INVALID = -1,
+    SOURCE_TV = 0,
+    SOURCE_AV1,
+    SOURCE_AV2,
+    SOURCE_YPBPR1,
+    SOURCE_YPBPR2,
+    SOURCE_HDMI1,
+    SOURCE_HDMI2,
+    SOURCE_HDMI3,
+    SOURCE_VGA,
+    SOURCE_MPEG,
+    SOURCE_DTV,
+    SOURCE_SVIDEO,
+    SOURCE_IPTV,
+    SOURCE_DUMMY,
+    SOURCE_SPDIF,
+    SOURCE_MAX,
+} tv_source_input_t;
 
 
 #endif

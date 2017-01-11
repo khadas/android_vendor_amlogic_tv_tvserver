@@ -7,7 +7,7 @@
 
 class CAutoPQparam: public CThread {
 private:
-    tv_source_input_type_t mAutoPQSource;
+    tv_source_input_t mAutoPQSource;
     bool mAutoPQ_OnOff_Flag;
     int preFmtType, curFmtType, autofreq_checkcount, autofreq_checkflag;
     int adjustPQparameters();
@@ -17,7 +17,7 @@ public:
 
     CAutoPQparam();
     ~CAutoPQparam();
-    void startAutoPQ( tv_source_input_type_t source_type );
+    void startAutoPQ( tv_source_input_t tv_source_input );
     void stopAutoPQ();
     bool isAutoPQing();
 };

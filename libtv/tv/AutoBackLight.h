@@ -6,7 +6,7 @@
 
 class AutoBackLight: public CThread {
 private:
-    tv_source_input_type_t mAutoBacklightSource;
+    tv_source_input_t mAutoBacklightSource;
     int mCur_source_default_backlight;
     int mCur_sig_state;
     bool mAutoBacklight_OnOff_Flag;
@@ -27,7 +27,7 @@ public:
     AutoBackLight();
     ~AutoBackLight();
     void updateSigState(int state);
-    void startAutoBacklight( tv_source_input_type_t source_type );
+    void startAutoBacklight( tv_source_input_t tv_source_input );
     void stopAutoBacklight();
     bool isAutoBacklightOn();
 };

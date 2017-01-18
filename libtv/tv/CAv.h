@@ -20,7 +20,7 @@ static const char *PATH_MEPG_DTMB_LOOKUP_PTS_FLAG = "/sys/module/amvdec_mpeg12/p
 #define VIDEO_SCREEN_MODE   "/sys/class/video/screen_mode"
 #define VIDEO_AXIS          "/sys/class/video/axis"
 #define VIDEO_DEVICE_RESOLUTION "/sys/class/video/device_resolution"
-#define VIDEO_FREERUN_MODE  "/sys/class/video/freerun_mode"
+
 
 enum {
     VIDEO_LAYER_NONE                    = -1,

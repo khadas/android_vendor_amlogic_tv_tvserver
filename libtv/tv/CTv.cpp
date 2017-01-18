@@ -1777,7 +1777,11 @@ int CTv::StopTvLock ( void )
     mSigDetectThread.requestAndWaitPauseDetect();
     Mutex::Autolock _l ( mLock );
     mAv.DisableVideoWithBlackColor();
-    tvWriteSysfs( VIDEO_FREERUN_MODE, "0" );
+
+    if ( SOURCE_TV == m_source_input ) {
+        mpTvin->SwitchSnow( false );
+    }
+
     //we should stop audio first for audio mute.
     mTvAction |= TV_ACTION_STOPING;
     mpTvin->Tvin_StopDecoder();
@@ -1890,13 +1894,6 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
         if (tmp_ret < 0)
             LOGE ( "[ctv]%s, do not set hdmi port%d edid.ret=%d", __FUNCTION__, source_input - 4, tmp_ret );
     }
-
-    if ( (SOURCE_HDMI1 == source_input) || (SOURCE_HDMI2 == source_input) || (SOURCE_HDMI3 == source_input) ) {
-        tvWriteSysfs( VIDEO_FREERUN_MODE, "1" );
-    } else {
-        tvWriteSysfs( VIDEO_FREERUN_MODE, "0" );
-    }
-
     mTvAction |= TV_ACTION_SOURCE_SWITCHING;
     //
     SetAudioMuteForTv(CC_AUDIO_MUTE);

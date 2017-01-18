@@ -5180,20 +5180,7 @@ int CTv::UnInitSetTvAudioCard()
 
 int CTv::SetSPDIFMode(int mode_val)
 {
-    FILE *fp = fopen(SYS_SPDIF_MODE_DEV_PATH, "w");
-    if (fp == NULL) {
-        LOGE("[ctv]%s, Open file %s error(%s)!\n", __FUNCTION__, SYS_SPDIF_MODE_DEV_PATH, strerror(errno));
-        return -1;
-    }
-
-    if (mode_val == CC_SPDIF_MODE_PCM) {
-        fprintf(fp, "%d", 0);
-    } else if (mode_val == CC_SPDIF_MODE_RAW ) {
-        fprintf(fp, "%d", 1);
-    }
-
-    fclose(fp);
-    fp = NULL;
+    tvWriteSysfs(SYS_SPDIF_MODE_DEV_PATH, mode_val);
     return 0;
 }
 

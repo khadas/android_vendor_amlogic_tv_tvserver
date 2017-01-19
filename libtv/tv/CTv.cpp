@@ -1778,10 +1778,6 @@ int CTv::StopTvLock ( void )
     Mutex::Autolock _l ( mLock );
     mAv.DisableVideoWithBlackColor();
 
-    if ( SOURCE_TV == m_source_input ) {
-        mpTvin->SwitchSnow( false );
-    }
-
     //we should stop audio first for audio mute.
     mTvAction |= TV_ACTION_STOPING;
     mpTvin->Tvin_StopDecoder();

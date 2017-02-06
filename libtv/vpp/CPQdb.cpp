@@ -235,6 +235,21 @@ int CPqData::getRegValues(const char *table_name, tvin_port_t source, tvin_sig_f
                  "TVIN_SIG_FMT = %d and "
                  "TVIN_TRANS_FMT = %d ;", table_name, source, signal, mode);
     this->select(sqlmaster, c_tablelist);
+
+    if (c_tablelist.getCount() <= 0) {
+        signal = TVIN_SIG_FMT_NULL;
+        c_tablelist.close();
+        LOGD ("%s - Load default", __func__);
+
+        getSqlParams(__FUNCTION__, sqlmaster,
+                     "select TableName from %s where "
+                     "TVIN_PORT = %d and "
+                     "TVIN_SIG_FMT = %d and "
+                     "TVIN_TRANS_FMT = %d ;", table_name, source, signal, mode);
+        this->select(sqlmaster, c_tablelist);
+    }
+
+
     if (c_tablelist.moveToFirst()) { //for table list
         do {
             getSqlParams(__FUNCTION__, sqlmaster,
@@ -379,6 +394,18 @@ int CPqData::PQ_GetBaseColorParams(vpp_color_basemode_t basemode, tvin_port_t so
 
     this->select(sqlmaster, c);
 
+    if (c.getCount() <= 0) {
+        sig_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+        getSqlParams(__FUNCTION__, sqlmaster,
+                     "select TableName from GeneralColormanagementTable where "
+                     "TVIN_PORT = %d and "
+                     "TVIN_SIG_FMT = %d and "
+                     "TVIN_TRANS_FMT = %d ;", source_port, sig_fmt, mode);
+        this->select(sqlmaster, c);
+    }
+
     if (c.moveToFirst()) {
         int index_TableName = 0;//c.getColumnIndex("TableName");
         rval = getRegValuesByValue(c.getString(index_TableName), CM_LEVEL_NAME, "", (int) basemode,
@@ -419,6 +446,19 @@ int CPqData::PQ_GetCM2Params(vpp_color_management2_t basemode, tvin_port_t sourc
 
     rval = this->select(sqlmaster, c);
 
+    if (c.getCount() <= 0) {
+        sig_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+
+        getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralCM2Table where "
+                                              "TVIN_PORT = %d and "
+                                              "TVIN_SIG_FMT = %d and "
+                                              "TVIN_TRANS_FMT = %d ;", source_port, sig_fmt, mode);
+
+        this->select(sqlmaster, c);
+    }
+
     if (c.moveToFirst()) {
         int index_TableName = 0;//c.getColumnIndex("TableName");
         rval = getRegValuesByValue(c.getString(index_TableName), CM_LEVEL_NAME, "", (int) basemode,
@@ -452,6 +492,19 @@ int CPqData::PQ_GetNR2Params(vpp_noise_reduction2_mode_t nr_mode, tvin_port_t so
                  "TVIN_TRANS_FMT = %d ;", source_port, sig_fmt, mode);
 
     rval = this->select(sqlmaster, c);
+
+    if (c.getCount() <= 0) {
+        sig_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+
+        getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralNR2Table where "
+                                              "TVIN_PORT = %d and "
+                                              "TVIN_SIG_FMT = %d and "
+                                              "TVIN_TRANS_FMT = %d ;", source_port, sig_fmt, mode);
+
+        this->select(sqlmaster, c);
+    }
 
     if (c.moveToFirst()) {
         int index_TableName = 0;//c.getColumnIndex("TableName");
@@ -488,6 +541,18 @@ int CPqData::PQ_GetXVYCCParams(vpp_xvycc_mode_t xvycc_mode, tvin_port_t source_p
 
     rval = this->select(sqlmaster, c);
 
+    if (c.getCount() <= 0) {
+        sig_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+        getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralXVYCCTable where "
+                                              "TVIN_PORT = %d and "
+                                              "TVIN_SIG_FMT = %d and "
+                                              "TVIN_TRANS_FMT = %d ;", source_port, sig_fmt, mode);
+
+        this->select(sqlmaster, c);
+    }
+
     if (c.moveToFirst()) {
         int index_TableName = 0;//c.getColumnIndex("TableName");
         rval = getRegValuesByValue_long(c.getString(index_TableName), LEVEL_NAME, "",
@@ -522,6 +587,18 @@ int CPqData::PQ_GetMCDIParams(vpp_mcdi_mode_t mcdi_mode, tvin_port_t source_port
 
     rval = this->select(sqlmaster, c);
 
+    if (c.getCount() <= 0) {
+        sig_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+        getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralMCDITable where "
+                                              "TVIN_PORT = %d and "
+                                              "TVIN_SIG_FMT = %d and "
+                                              "TVIN_TRANS_FMT = %d ;", source_port, sig_fmt, mode);
+
+        this->select(sqlmaster, c);
+    }
+
     if (c.moveToFirst()) {
         int index_TableName = 0;//c.getColumnIndex("TableName");
         rval = getRegValuesByValue(c.getString(index_TableName), LEVEL_NAME, "", (int) mcdi_mode,
@@ -545,6 +622,18 @@ int CPqData::PQ_GetDeblockParams(vpp_deblock_mode_t deb_mode, tvin_port_t source
                  "TVIN_TRANS_FMT = %d ;", source_port, sig_fmt, is2dOr3d);
 
     rval = this->select(sqlmaster, c);
+
+    if (c.getCount() <= 0) {
+        sig_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+        getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralDeblockTable where "
+                                              "TVIN_PORT = %d and "
+                                              "TVIN_SIG_FMT = %d and "
+                                              "TVIN_TRANS_FMT = %d ;", source_port, sig_fmt, is2dOr3d);
+
+        this->select(sqlmaster, c);
+    }
 
     if (c.moveToFirst()) {
         rval = getRegValuesByValue(c.getString(0), LEVEL_NAME, "", (int)deb_mode, 0, regs);
@@ -579,6 +668,18 @@ int CPqData::PQ_GetColorTemperatureParams(vpp_color_temperature_mode_t Tempmode,
                  "TVIN_TRANS_FMT = %d;", source_port, sig_fmt, trans_fmt);
 
     rval = this->select(sqlmaster, c);
+
+    if (c.getCount() <= 0) {
+        sig_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+        getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralWhiteBalanceTable where "
+                                              "TVIN_PORT = %d and "
+                                              "TVIN_SIG_FMT = %d and "
+                                              "TVIN_TRANS_FMT = %d;", source_port, sig_fmt, trans_fmt);
+
+        this->select(sqlmaster, c);
+    }
 
     if (c.moveToFirst()) {
         int index_TableName = 0;//c.getColumnIndex("TableName");
@@ -622,6 +723,18 @@ int CPqData::PQ_SetColorTemperatureParams(vpp_color_temperature_mode_t Tempmode,
                  "TVIN_TRANS_FMT = %d;", source_port, sig_fmt, trans_fmt);
 
     rval = this->select(sqlmaster, c);
+
+    if (c.getCount() <= 0) {
+        sig_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+        getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralWhiteBalanceTable where "
+                                              "TVIN_PORT = %d and "
+                                              "TVIN_SIG_FMT = %d and "
+                                              "TVIN_TRANS_FMT = %d;", source_port, sig_fmt, trans_fmt);
+
+        this->select(sqlmaster, c);
+    }
 
     if (c.moveToFirst()) {
         int index_TableName = 0;//c.getColumnIndex("TableName");
@@ -696,6 +809,17 @@ int CPqData::PQ_GetDNLPParams(tvin_port_t source_port, tvin_sig_fmt_t fmt, is_3d
                  "TVIN_TRANS_FMT = %d ;", source_port, fmt, mode);
 
     rval = this->select(sqlmaster, c);
+
+    if (c.getCount() <= 0) {
+        fmt = TVIN_SIG_FMT_NULL;
+        LOGD ("%s - Load default", __func__);
+        getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralDNLPTable where "
+                                              "TVIN_PORT = %d and "
+                                              "TVIN_SIG_FMT = %d and "
+                                              "TVIN_TRANS_FMT = %d ;", source_port, fmt, mode);
+
+        this->select(sqlmaster, c);
+    }
 
     if (c.moveToFirst()) {
         int index_TableName = 0;//c.getColumnIndex("TableName");
@@ -1233,6 +1357,18 @@ int CPqData::PQ_GetNoiseReductionParams(vpp_noise_reduction_mode_t nr_mode,
 
     rval = this->select(sqlmaster, c);
 
+    if (c.getCount() <= 0) {
+        sig_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+        getSqlParams(__FUNCTION__, sqlmaster, "select TableName from GeneralNoiseReductionTable where "
+                                              "TVIN_PORT = %d and "
+                                              "TVIN_SIG_FMT = %d and "
+                                              "TVIN_TRANS_FMT = %d ;", source_port, sig_fmt, mode);
+
+        this->select(sqlmaster, c);
+    }
+
     if (c.moveToFirst()) {
         int index_TableName = 0;//c.getColumnIndex("TableName");
         getSqlParams(__FUNCTION__, sqlmaster, "select NRValue from %s where NRLevel = %d;",
@@ -1277,6 +1413,18 @@ int CPqData::PQ_GetOverscanParams(tv_source_input_type_t source_type, tvin_sig_f
 
     rval = this->select(sqlmaster, c);
 
+    if (c.getCount() <= 0) {
+        fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+
+        getSqlParams(__FUNCTION__, sqlmaster, "select Hs, He, Vs, Ve from OVERSCAN where "
+                                              "TVIN_PORT = %d and "
+                                              "TVIN_SIG_FMT = %d and "
+                                              "TVIN_TRANS_FMT = %d ;", source_type, fmt, mode);
+        this->select(sqlmaster, c);
+    }
+
     if (c.moveToFirst()) {
         cutwin_t->hs = c.getInt(0);
         cutwin_t->he = c.getInt(1);
@@ -1300,6 +1448,19 @@ int CPqData::PQ_SetOverscanParams(tv_source_input_type_t source_type, tvin_sig_f
         source_type, fmt, mode);
 
     rval = this->select(sqlmaster, c);
+
+    if (c.getCount() <= 0) {
+        fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+
+        getSqlParams(
+                    __FUNCTION__,
+                    sqlmaster,
+                    "select * from OVERSCAN where TVIN_PORT = %d and TVIN_SIG_FMT = %d and TVIN_TRANS_FMT = %d;",
+                    source_type, fmt, mode);
+        this->select(sqlmaster, c);
+    }
 
     if (c.moveToFirst()) {
         getSqlParams(
@@ -1521,6 +1682,19 @@ int CPqData::PQ_GetVGAAjustPara(tvin_sig_fmt_t vga_fmt, tvafe_vga_parm_t *adjpar
 
     rval = this->select(sqlmaster, c);
 
+    if (c.getCount() <= 0) {
+        vga_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+
+        getSqlParams(
+                    __FUNCTION__,
+                    sqlmaster,
+                    "select Clk, Phase, HPos, VPos, Vga_in_clean from VGA_AutoParams where TVIN_SIG_FMT = %d",
+                    vga_fmt);
+        this->select(sqlmaster, c);
+    }
+
     if (c.moveToFirst()) {
         adjparam->clk_step = c.getInt(0);
         adjparam->phase = c.getInt(1);
@@ -1541,6 +1715,19 @@ int CPqData::PQ_SetVGAAjustPara(tvin_sig_fmt_t vga_fmt, tvafe_vga_parm_t adjpara
                  vga_fmt);
 
     rval = this->select(sql, c);
+
+    if (c.getCount() <= 0) {
+        vga_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+
+        getSqlParams(
+                    __FUNCTION__,
+                    sql,
+                    "select * from VGA_AutoParams where TVIN_SIG_FMT = %d;",
+                    vga_fmt);
+        this->select(sql, c);
+    }
 
     if (c.moveToFirst()) {
         getSqlParams(
@@ -1899,6 +2086,19 @@ int CPqData::LoadPQData(tvpq_data_type_t data_type, tvin_port_t source_port,
                  "%s = %d;", tableName[data_type].string(), source_port, sig_fmt, mode, ID_FIELD, id);
 
     rval = this->select(sqlmaster, c);
+
+    if (c.getCount() <= 0) {
+        sig_fmt = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+        getSqlParams(__FUNCTION__,sqlmaster,
+                     "select TableName from %s where "
+                     "TVIN_PORT = %d and "
+                     "TVIN_SIG_FMT = %d and "
+                     "TVIN_TRANS_FMT = %d and "
+                     "%s = %d;", tableName[data_type].string(), source_port, sig_fmt, mode, ID_FIELD, id);
+        this->select(sqlmaster, c);
+    }
 
     if (c.moveToFirst()) {
         switch (data_type) {

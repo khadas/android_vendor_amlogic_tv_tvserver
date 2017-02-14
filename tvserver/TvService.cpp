@@ -3331,6 +3331,11 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeCString(value);
         break;
     }
+    case GET_HDMI_PORTS: {
+        int value = config_get_int(CFG_SECTION_TV, CGF_DEFAULT_HDMI_PORTS, 0);
+        r->writeInt32(value);
+        break;
+    }
     case TV_CLEAR_FRONTEND: {
         int para = p.readInt32();
         int tmpRet = mpTv->clearFrontEnd(para);

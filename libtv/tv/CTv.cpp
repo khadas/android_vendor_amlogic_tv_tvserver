@@ -670,7 +670,12 @@ int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchTyp
     mSigDetectThread.setVdinNoSigCheckKeepTimes(1000, false);
     mSigDetectThread.requestAndWaitPauseDetect();
     mSigDetectThread.setObserver(&mTvScannerDetectObserver);
-    mpTvin->Tvin_StopDecoder();
+    if ( !mATVDisplaySnow ) {
+        mpTvin->Tvin_StopDecoder();
+    } else {
+        mpTvin->SwitchSnow( true );
+    }
+
     vStd = CC_ATV_VIDEO_STD_PAL;
     aStd = CC_ATV_AUDIO_STD_DK;
     tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceInput(SOURCE_TV);

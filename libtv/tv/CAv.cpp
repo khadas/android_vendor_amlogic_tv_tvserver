@@ -272,7 +272,9 @@ tvin_sig_fmt_t CAv::getVideoResolutionToFmt()
     int height = atoi(buf);
     if (height <= 576) {
         sig_fmt = TVIN_SIG_FMT_HDMI_720X480P_60HZ;
-    } else if (height > 576 && height <= 1088) {
+    } else if (height > 576 && height <= 720) {
+        sig_fmt = TVIN_SIG_FMT_HDMI_1280X720P_60HZ;
+    } else if (height > 720 && height <= 1088) {
         sig_fmt = TVIN_SIG_FMT_HDMI_1920X1080P_60HZ;
     } else {
         sig_fmt = TVIN_SIG_FMT_HDMI_3840_2160_00HZ;

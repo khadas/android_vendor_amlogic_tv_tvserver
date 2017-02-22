@@ -20,9 +20,6 @@ LIB_SQLITE_PATH := $(wildcard external/sqlite)
 #tvserver
 include $(CLEAR_VARS)
 
-#first delete prebuilt file
-$(shell rm -r vendor/amlogic/prebuilt/tv)
-
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES:= \

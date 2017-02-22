@@ -1,9 +1,6 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-#first delete prebuilt file
-$(shell rm -r vendor/amlogic/prebuilt/tv)
-
 CSV_RET=$(shell ($(LOCAL_PATH)/tvsetting/csvAnalyze.sh > /dev/zero;echo $$?))
 ifeq ($(CSV_RET), 1)
   $(error "Csv file or common.h file is not exist!!!!")

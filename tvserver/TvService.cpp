@@ -1730,6 +1730,23 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case SET_AUDIO_VIRTUAL: {
+        int enable = p.readInt32();
+        int level = p.readInt32();
+        int ret = mpTv->SetAudioVirtualizer(enable, level);
+        r->writeInt32(ret);
+        break;
+    }
+    case GET_AUDIO_VIRTUAL_ENABLE: {
+        int ret = mpTv->GetAudioVirtualizerEnable();
+        r->writeInt32(ret);
+        break;
+    }
+    case GET_AUDIO_VIRTUAL_LEVEL: {
+        int ret = mpTv->GetAudioVirtualizerLevel();
+        r->writeInt32(ret);
+        break;
+    }
     // AUDIO END
 
     // SSM

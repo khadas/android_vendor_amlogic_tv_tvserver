@@ -329,6 +329,10 @@ public:
     int SetAudioSPDIFSwitch(int tmp_val);
     int GetCurAudioSPDIFSwitch();
     int SaveCurAudioSPDIFSwitch(int tmp_val);
+    int SetAudioVirtualizer(int enable, int EffectLevel);
+    int GetAudioVirtualizerEnable();
+    int GetAudioVirtualizerLevel();
+    int LoadAudioVirtualizer();
 
     //Audio SPDIF Mode
     int SetAudioSPDIFMode(int tmp_val);

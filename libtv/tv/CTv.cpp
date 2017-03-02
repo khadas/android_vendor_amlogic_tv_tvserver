@@ -1940,6 +1940,7 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
         RefreshAudioMasterVolume ( SOURCE_MPEG );
         RefreshSrsEffectAndDacGain();
         SetCustomEQGain();
+        LoadAudioVirtualizer();
         mpTvin->setMpeg2Vdin(1);
         mAv.setLookupPtsForDtmb(1);
         CVpp::getInstance()->LoadVppSettings(SOURCE_DTV, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, INDEX_2D, TVIN_TFMT_2D);
@@ -4151,8 +4152,29 @@ void CTv::RefreshSrsEffectAndDacGain()
     mAudioAlsa.SetMainVolumeGain(main_gain_val);
 }
 
-int CTv::SetAudioBassVolume(int tmp_vol)
+int CTv::SetAudioVirtualizer(int enable, int EffectLevel)
 {
+    config_set_int(CFG_SECTION_TV, CFG_AUDIO_VIRTUAL_ENABLE, enable);
+    config_set_int(CFG_SECTION_TV, CFG_AUDIO_VIRTUAL_LEVEL, EffectLevel);
+    return mAudioEffect.SetAudioVirtualizer(enable, EffectLevel);
+}
+
+int CTv::GetAudioVirtualizerEnable()
+{
+    return   config_get_int(CFG_SECTION_TV, CFG_AUDIO_VIRTUAL_ENABLE, 0);
+}
+
+int CTv::GetAudioVirtualizerLevel()
+{
+    return    config_get_int(CFG_SECTION_TV, CFG_AUDIO_VIRTUAL_LEVEL, 100);
+}
+
+int CTv::LoadAudioVirtualizer()
+{
+    return SetAudioVirtualizer(GetAudioVirtualizerEnable(), GetAudioVirtualizerLevel());
+}
+
+int CTv::SetAudioBassVolume(int tmp_vol) {
     int nMinBassVol = 0, nMaxBassVol = 0;
 
     nMinBassVol = GetBassUIMinGainVal();
@@ -4874,6 +4896,7 @@ int CTv::InitTvAudio(int sr, int input_device)
 
     RefreshSrsEffectAndDacGain();
     SetCustomEQGain();
+    LoadAudioVirtualizer();
     return 0;
 }
 
@@ -4994,6 +5017,9 @@ void CTv::LoadAudioCtl()
 
     // Get Current EQ Gain
     LoadCurAudioEQGain();
+
+    //Get Current Virtual Effect status
+    LoadAudioVirtualizer();
 }
 
 bool CTv::isBootvideoStopped() {

@@ -95,6 +95,8 @@
 #define SYS_ATV_DEMOD_DEBUG                     "/sys/class/amlatvdemod/atvdemod_debug"
 
 #define SYS_SCAN_TO_PRIVATE_DB                  "tuner.device.scan.to.private.db.en"
+#define CFG_AUDIO_VIRTUAL_ENABLE                "audio.virtual.enable"
+#define CFG_AUDIO_VIRTUAL_LEVEL                 "audio.virtual.level"
 
 
 extern int tv_config_load(const char *file_name);

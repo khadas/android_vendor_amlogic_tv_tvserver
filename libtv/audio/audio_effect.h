@@ -21,6 +21,7 @@ public:
     int SetSrsDefinitionGain(int gain_val);
     int SetSrsTrubassSpeakerSize(int tmp_val);
     int DbxTv_SetMode(int mode, int son_value, int vol_value, int sur_value);
+    int SetAudioVirtualizer(int enable, int EffectLevel);
 
 private:
 };

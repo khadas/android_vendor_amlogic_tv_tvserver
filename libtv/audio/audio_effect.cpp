@@ -132,3 +132,8 @@ int CAudioEffect::DbxTv_SetMode(int mode __unused, int son_value, int vol_value,
 #endif
     return ret;
 }
+
+int CAudioEffect::SetAudioVirtualizer(int enable, int EffectLevel)
+{
+    return amAudioVirtualizer(enable, EffectLevel);
+}

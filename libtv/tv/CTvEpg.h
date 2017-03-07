@@ -77,7 +77,7 @@ public :
 
         int type;
         int channelID;
-        int programID;
+        long programID;
         int dvbOrigNetID;
         int dvbTSID;
         int dvbServiceID;

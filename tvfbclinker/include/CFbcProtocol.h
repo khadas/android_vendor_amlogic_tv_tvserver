@@ -75,7 +75,7 @@ private:
     int mbDownHaveSend;
 
     int mbFbcKeyEnterDown;
-    nsecs_t mFbcEnterKeyDownTime;
+    nsecs_t_l mFbcEnterKeyDownTime;
 };
 
 extern CFbcProtocol *GetFbcProtocolInstance(unsigned int baud_rate = 115200);

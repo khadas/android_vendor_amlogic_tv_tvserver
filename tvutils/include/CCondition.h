@@ -11,7 +11,7 @@ reference android api, just linux pthread
 #include <pthread.h>
 #include "CMutex.h"
 
-typedef long long nsecs_t;
+typedef long long nsecs_t_l;
 
 class CCondition {
 public:

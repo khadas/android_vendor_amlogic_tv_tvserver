@@ -65,7 +65,7 @@ public:
         static const int EVENT_AV_UNSUPPORT        = 4;
         static const int EVENT_AV_VIDEO_AVAILABLE  = 5;
         int type;
-        int param;
+        long param;
     };
 
     class IObserver {

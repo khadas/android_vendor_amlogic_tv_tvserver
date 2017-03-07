@@ -27,22 +27,22 @@ void CTvEpg::epg_evt_callback(long dev_no, int event_type, void *param, void *us
     break;
     case AM_EPG_EVT_UPDATE_EVENTS:
         pEpg->mCurEpgEv.type = EpgEvent::EVENT_PROGRAM_EVENTS_UPDATE;
-        pEpg->mCurEpgEv.programID = (int)param;
+        pEpg->mCurEpgEv.programID = (long)param;
         pEpg->mpObserver->onEvent(pEpg->mCurEpgEv);
         break;
     case AM_EPG_EVT_UPDATE_PROGRAM_AV:
         pEpg->mCurEpgEv.type = EpgEvent::EVENT_PROGRAM_AV_UPDATE;
-        pEpg->mCurEpgEv.programID = (int)param;
+        pEpg->mCurEpgEv.programID = (long)param;
         pEpg->mpObserver->onEvent(pEpg->mCurEpgEv);
         break;
     case AM_EPG_EVT_UPDATE_PROGRAM_NAME:
         pEpg->mCurEpgEv.type = EpgEvent::EVENT_PROGRAM_NAME_UPDATE;
-        pEpg->mCurEpgEv.programID = (int)param;
+        pEpg->mCurEpgEv.programID = (long)param;
         pEpg->mpObserver->onEvent(pEpg->mCurEpgEv);
         break;
     case AM_EPG_EVT_UPDATE_TS:
         pEpg->mCurEpgEv.type = EpgEvent::EVENT_CHANNEL_UPDATE;
-        pEpg->mCurEpgEv.channelID = (int)param;
+        pEpg->mCurEpgEv.channelID = (long)param;
         pEpg->mpObserver->onEvent(pEpg->mCurEpgEv);
         break;
     default:

@@ -105,7 +105,7 @@ public:
         int mChannelNumber;
         //CTvChannel mChannel;
         int mMode;
-        int mFrequency;
+        long mFrequency;
         int mSymbolRate;
         int mModulation;
         int mBandwidth;

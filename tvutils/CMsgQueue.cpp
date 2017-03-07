@@ -25,7 +25,7 @@ CMsgQueueThread::~CMsgQueueThread()
     requestExitAndWait();
 }
 
-nsecs_t CMsgQueueThread::getNowMs()
+nsecs_t_l CMsgQueueThread::getNowMs()
 {
     return systemTime(SYSTEM_TIME_MONOTONIC) / 1000000;
 }
@@ -84,7 +84,7 @@ bool CMsgQueueThread::threadLoop()
         mLockQueue.unlock();
         //get delay time
         CMessage msg;
-        nsecs_t delayMs = 0, nowMS = 0;
+        nsecs_t_l delayMs = 0, nowMS = 0;
         do { //wait ,until , the lowest time msg's whentime is low nowtime, to go on
             if (m_v_msg.size() <= 0) {
                 LOGD("msg size is 0, break");

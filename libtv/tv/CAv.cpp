@@ -385,29 +385,29 @@ void CAv::av_evt_callback ( long dev_no, int event_type, void *param, void *user
     switch ( event_type ) {
     case AM_AV_EVT_AV_NO_DATA:
         pAv->mCurAvEvent.type = AVEvent::EVENT_AV_STOP;
-        pAv->mCurAvEvent.param = ( int )param;
+        pAv->mCurAvEvent.param = ( long )param;
         pAv->mpObserver->onEvent(pAv->mCurAvEvent);
         break;
     case AM_AV_EVT_AV_DATA_RESUME:
         pAv->mCurAvEvent.type = AVEvent::EVENT_AV_RESUEM;
-        pAv->mCurAvEvent.param = ( int )param;
+        pAv->mCurAvEvent.param = ( long )param;
         pAv->mpObserver->onEvent(pAv->mCurAvEvent);
         break;
     case AM_AV_EVT_VIDEO_SCAMBLED:
     case AM_AV_EVT_AUDIO_SCAMBLED:
         pAv->mCurAvEvent.type = AVEvent::EVENT_AV_SCAMBLED;
-        pAv->mCurAvEvent.param = ( int )param;
+        pAv->mCurAvEvent.param = ( long )param;
         pAv->mpObserver->onEvent(pAv->mCurAvEvent);
         break;
     case AM_AV_EVT_VIDEO_NOT_SUPPORT: {
         pAv->mCurAvEvent.type = AVEvent::EVENT_AV_UNSUPPORT;
-        pAv->mCurAvEvent.param = ( int )param;
+        pAv->mCurAvEvent.param = ( long )param;
         pAv->mpObserver->onEvent(pAv->mCurAvEvent);
         break;
     }
     case AM_AV_EVT_VIDEO_AVAILABLE: {
         pAv->mCurAvEvent.type = AVEvent::EVENT_AV_VIDEO_AVAILABLE;
-        pAv->mCurAvEvent.param = ( int )param;
+        pAv->mCurAvEvent.param = ( long )param;
         pAv->mpObserver->onEvent(pAv->mCurAvEvent);
         break;
     }
@@ -415,7 +415,7 @@ void CAv::av_evt_callback ( long dev_no, int event_type, void *param, void *user
         break;
     }
     LOGD ( "%s, av_evt_callback : dev_no %ld type %d param = %d\n",
-        __FUNCTION__, dev_no, pAv->mCurAvEvent.type , (int)param);
+        __FUNCTION__, dev_no, pAv->mCurAvEvent.type , (long)param);
 }
 
 int CAv::setLookupPtsForDtmb(int enable)

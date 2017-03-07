@@ -1576,12 +1576,8 @@ int CVpp::SetDNLP(tv_source_input_type_t source_type, tvin_port_t source_port,
             "newdnlp.en:%d,newdnlp.method:%d,newdnlp.cliprate:%d,newdnlp.lowrange:%d,newdnlp.hghrange:%d,newdnlp.lowalpha:%d,newdnlp.midalpha:%d,newdnlp.hghalpha:%d\n",
             newdnlp.en, newdnlp.method, newdnlp.cliprate, newdnlp.lowrange, newdnlp.hghrange,
             newdnlp.lowalpha, newdnlp.midalpha, newdnlp.hghalpha);
-        if (source_type == SOURCE_TYPE_DTV) {
-            tvWriteSysfs("/sys/module/am_vecm/parameters/dnlp_en", "0");
-        } else {
-            VPP_SetVENewDNLP(&newdnlp);
-            tvWriteSysfs("/sys/module/am_vecm/parameters/dnlp_en", "1");
-        }
+        VPP_SetVENewDNLP(&newdnlp);
+        tvWriteSysfs("/sys/module/am_vecm/parameters/dnlp_en", "1");
         ret = 1;
     } else {
         LOGE("mpPqData->PQ_GetDNLPParams failed!\n");

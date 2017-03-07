@@ -184,6 +184,7 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     if (mHdmiOutFbc) {
         fbcIns = GetSingletonFBC();
         setUpgradeFbcObserver(this);
+        fbcIns->cfbc_Set_DNLP(COMM_DEV_SERIAL, 0);//disable dnlp for fbc project.
     }
     mSubtitle.setObserver(this);
     mHeadSet.setObserver(this);

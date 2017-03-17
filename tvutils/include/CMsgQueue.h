@@ -13,8 +13,8 @@ class CMessage {
 public:
     CMessage();
     ~CMessage();
-    nsecs_t mDelayMs;//delay times , MS
-    nsecs_t mWhenMs;//when, the msg will handle
+    nsecs_t_l mDelayMs;//delay times , MS
+    nsecs_t_l mWhenMs;//when, the msg will handle
     int mType;
     void *mpData;
     unsigned char mpPara[3382];
@@ -30,7 +30,7 @@ public:
     void clearMsg();
 private:
     bool  threadLoop();
-    nsecs_t getNowMs();//get system time , MS
+    nsecs_t_l getNowMs();//get system time , MS
     virtual void handleMessage(CMessage &msg) = 0;
 
     //

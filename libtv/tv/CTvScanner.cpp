@@ -1352,7 +1352,7 @@ void CTvScanner::tv_scan_evt_callback(long dev_no, int event_type, void *param, 
         }
         break;
         case AM_SCAN_PROGRESS_ATV_TUNING: {
-            pT->mCurEv.mFrequency = (int)evt->data;
+            pT->mCurEv.mFrequency = (long)evt->data;
             pT->mCurEv.mLockedStatus = 0;
             tmpFreq = (pT->mCurEv.mFrequency - pT->mCurScanStartFreq) / 1000000;
             pT->mCurEv.mPercent = tmpFreq * 100UL / ((pT->mCurScanEndFreq - pT->mCurScanStartFreq) / 1000000);

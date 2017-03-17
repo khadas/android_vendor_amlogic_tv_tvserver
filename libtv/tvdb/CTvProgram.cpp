@@ -778,7 +778,7 @@ int CTvProgram::getCurrentAudio(String8 defaultLang)
             LOGD("getCurrentAudio defaultLang.isEmpty() =%s= %d", defaultLang.string(), defaultLang.isEmpty());
             if (!defaultLang.isEmpty()) {
                 for (int i = 0; i < (int)mvAudios.size(); i++) {
-                    LOGD("getCurrentAudio a mvAudios[i] = %x", (int)mvAudios[i]);
+                    LOGD("getCurrentAudio a mvAudios[i] = %x", (long)mvAudios[i]);
                     if (mvAudios[i]->getLang() == defaultLang) {
                         id = i;
                         break;

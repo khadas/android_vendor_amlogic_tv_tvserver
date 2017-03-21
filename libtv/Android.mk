@@ -12,6 +12,7 @@ endif
 
 DVB_PATH := $(wildcard external/dvb)
 LIB_TV_UTILS := $(LOCAL_PATH)/../tvutils
+LIB_TV_BINDER := $(LOCAL_PATH)/../../framework/libtvbinder
 
 ifeq ($(DVB_PATH), )
   DVB_PATH := $(wildcard vendor/amlogic/external/dvb)
@@ -157,7 +158,7 @@ endif
 
 LOCAL_C_INCLUDES += \
   external/tinyxml \
-  vendor/amlogic/frameworks/libtvbinder/include \
+  $(LIB_TV_BINDER)/include \
   $(LIB_SQLITE_PATH)/dist \
   system/media/audio_effects/include
 

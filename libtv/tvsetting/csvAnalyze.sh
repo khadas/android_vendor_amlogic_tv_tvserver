@@ -5,12 +5,13 @@ count=0
 CsvPath=""
 definePath=""
 version=""
+rootPath= "vendor/amlogic/tv/tvserver"
 
 function Prepare() {
-    CsvPath=`find vendor/amlogic/tvserver -name ssmHeader.csv`
+    CsvPath=`find ${rootPath} -name ssmHeader.csv`
     CsvPath=`echo ${CsvPath%/*}`
 
-    definePath=`find vendor/amlogic/tvserver -name common.h`
+    definePath=`find ${rootPath} -name common.h`
     definePath=`echo ${definePath%/*}`
 
     version=`cat ${CsvPath}/ssmHeader.csv ${definePath}/common.h | cksum | awk '{print $1}'`

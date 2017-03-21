@@ -3,6 +3,7 @@ LOCAL_PATH:= $(call my-dir)
 
 DVB_PATH := $(wildcard external/dvb)
 LIB_TV_UTILS := $(LOCAL_PATH)/../tvutils
+LIB_TV_BINDER := $(LOCAL_PATH)/../../framework/libtvbinder
 
 ifeq ($(DVB_PATH), )
   DVB_PATH := $(wildcard vendor/amlogic/external/dvb)
@@ -50,7 +51,7 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_C_INCLUDES += \
   system/extras/ext4_utils \
-  vendor/amlogic/frameworks/libtvbinder/include \
+  $(LIB_TV_BINDER)/include \
   system/media/audio_effects/include \
   hardware/amlogic/audio/libTVaudio
 

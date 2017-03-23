@@ -106,7 +106,7 @@ bool CSqlite::exeSql(const char *sql)
             sqlite3_free(errmsg);
         return false;
     }
-    LOGD("sql=%s", sql);
+    //LOGD("sql=%s", sql);
     return true;
 }
 

@@ -2113,6 +2113,7 @@ int CPqData::LoadPQData(tvpq_data_type_t data_type, tvin_port_t source_port,
                 c.getString(0).string());
             break;
         case TVPQ_DATA_SHARPNESS:
+            sha_diff_flag = 0;//reset sharpness flag before loading.
             do {
                 getSqlParams(__FUNCTION__, sqlmaster,
                              "select TotalNode, NodeNumber, RegType, RegAddr, RegMask,"

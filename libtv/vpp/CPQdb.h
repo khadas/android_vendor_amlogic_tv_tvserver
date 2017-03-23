@@ -36,7 +36,7 @@
             char value[PROPERTY_VALUE_MAX];\
             memset(value, '\0', PROPERTY_VALUE_MAX);\
             property_get(PROP_DEBUG_PQ, value, "0");\
-            if(!strcmp(value, "1")){\
+            if(!strcmp(value, "1") || !strcmp(value, "true")){\
                 LOGD("getSqlParams for %s\n", func);\
                 LOGD("%s = %s\n",#buffer, buffer);\
             }\

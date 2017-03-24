@@ -5,7 +5,7 @@ count=0
 CsvPath=""
 definePath=""
 version=""
-rootPath= "vendor/amlogic/tv/tvserver"
+rootPath="vendor/amlogic/tv/tvserver"
 
 function Prepare() {
     CsvPath=`find ${rootPath} -name ssmHeader.csv`

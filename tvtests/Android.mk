@@ -1,6 +1,8 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
+LIB_TV_BINDER_PATH := $(LOCAL_PATH)/../../framework/libtvbinder
+
 LOCAL_SRC_FILES:= \
     android_tvtest.cpp
 
@@ -15,7 +17,7 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_C_INCLUDES += \
     bionic/libc/include \
-    vendor/amlogic/frameworks/libtvbinder/include
+    $(LIB_TV_BINDER_PATH)/include
 
 LOCAL_MODULE:= tvtest
 

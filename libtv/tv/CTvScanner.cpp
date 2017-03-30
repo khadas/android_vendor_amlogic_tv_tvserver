@@ -1567,8 +1567,8 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
         case AM_SCAN_PROGRESS_ATV_TUNING: {
             CFrontEnd::FEMode femode(FE_ANALOG);
             pT->mCurEv.mFEParas.setFEMode(femode);
-            pT->mCurEv.mFEParas.setFrequency((int)evt->data);
-            pT->mCurEv.mFrequency = (int)evt->data;
+            pT->mCurEv.mFEParas.setFrequency((long)evt->data);
+            pT->mCurEv.mFrequency = (long)evt->data;
             pT->mCurEv.mLockedStatus = 0;
             tmpFreq = (pT->mCurEv.mFrequency - pT->mCurScanStartFreq) / 1000000;
             pT->mCurEv.mPercent = tmpFreq * factor / ((pT->mCurScanEndFreq - pT->mCurScanStartFreq) / 1000000)

@@ -25,6 +25,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES:= \
   main.cpp \
+  MemoryLeakTrackUtil.cpp \
   TvService.cpp
 
 LOCAL_SHARED_LIBRARIES += \

@@ -23,6 +23,7 @@
 #include <version/version.h>
 #include "tvcmd.h"
 #include <tvdb/CTvRegion.h>
+#include "MemoryLeakTrackUtil.h"
 extern "C" {
 #include <stdio.h>
 #include <sys/types.h>
@@ -3430,10 +3431,14 @@ status_t TvService::dump(int fd, const Vector<String16>& args)
                 else if (args[i] == String16("-h")) {
                     result.append(
                         "\ntv service use to control the tv logical \n\n"
-                        "usage: dumpsys tvservice [-s <SECTION> <KEY>][-h] \n"
+                        "usage: dumpsys tvservice [-s <SECTION> <KEY>][-m][-h] \n"
                         "-s: get config string \n"
                         "   SECTION:[TV|ATV|SourceInputMap|SETTING|FBCUART]\n"
+                        "-m: track native heap memory\n"
                         "-h: help \n\n");
+                }
+                else if (args[i] == String16("-m")) {
+                    dumpMemoryAddresses(fd);
                 }
             }
         }

@@ -1,7 +1,7 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-LIB_TV_BINDER_PATH := $(LOCAL_PATH)/../../framework/libtvbinder
+LIB_TV_BINDER_PATH := $(LOCAL_PATH)/../../frameworks/libtvbinder
 
 LOCAL_SRC_FILES:= \
     android_tvtest.cpp

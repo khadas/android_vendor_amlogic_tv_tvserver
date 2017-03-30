@@ -13,7 +13,6 @@ ifeq ($(DVB_PATH), )
   DVB_PATH := $(wildcard vendor/amlogic/dvb)
 endif
 
-AM_LIBPLAYER_PATH := $(wildcard vendor/amlogic/frameworks/av/LibPlayer)
 LIB_ZVBI_PATH := $(wildcard external/libzvbi)
 LIB_SQLITE_PATH := $(wildcard external/sqlite)
 
@@ -61,10 +60,8 @@ LOCAL_C_INCLUDES += \
   $(DVB_PATH)/include/am_mw \
   $(DVB_PATH)/include/am_ver \
   $(DVB_PATH)/android/ndk/include \
-  $(AM_LIBPLAYER_PATH)/amadec/include \
-  $(AM_LIBPLAYER_PATH)/amcodec/include \
-  $(AM_LIBPLAYER_PATH)/amffmpeg \
-  $(AM_LIBPLAYER_PATH)/amplayer
+  hardware/amlogic/media/amadec/include \
+  hardware/amlogic/media/amcodec/include
 
 LOCAL_CFLAGS += -DTARGET_BOARD_$(strip $(TVAPI_TARGET_BOARD_VERSION))
 

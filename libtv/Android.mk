@@ -22,7 +22,6 @@ ifeq ($(DVB_PATH), )
   DVB_PATH := $(wildcard vendor/amlogic/dvb)
 endif
 
-AM_LIBPLAYER_PATH := $(wildcard vendor/amlogic/frameworks/av/LibPlayer)
 LIB_ZVBI_PATH := $(wildcard external/libzvbi)
 LIB_SQLITE_PATH := $(wildcard external/sqlite)
 
@@ -182,10 +181,8 @@ LOCAL_C_INCLUDES += \
   $(LIB_ZVBI_PATH)/ntsc_decode/include \
   $(LIB_ZVBI_PATH)/ntsc_decode/include/ntsc_dmx \
   $(LIB_ZVBI_PATH)/src \
-  $(AM_LIBPLAYER_PATH)/amadec/include \
-  $(AM_LIBPLAYER_PATH)/amcodec/include \
-  $(AM_LIBPLAYER_PATH)/amffmpeg \
-  $(AM_LIBPLAYER_PATH)/amplayer \
+  hardware/amlogic/media/amadec/include \
+  hardware/amlogic/media/amcodec/include \
   $(LOCAL_PATH)/tvdb \
   $(LOCAL_PATH)/tv \
   $(LOCAL_PATH)/gpio \

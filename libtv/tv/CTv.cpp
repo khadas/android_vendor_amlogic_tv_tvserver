@@ -2616,6 +2616,12 @@ tv_source_input_t CTv::GetCurrentSourceInputLock ( void )
     return m_source_input;
 }
 
+tv_source_input_t CTv::GetCurrentSourceInputVirtualLock ( void )
+{
+    Mutex::Autolock _l ( mLock );
+    return m_source_input_virtual;
+}
+
 //dtv and tvin
 tvin_info_t CTv::GetCurrentSignalInfo ( void )
 {

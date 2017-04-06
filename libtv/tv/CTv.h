@@ -125,6 +125,7 @@ public:
     virtual int SetSourceSwitchInput (tv_source_input_t source_input );
     virtual int SetSourceSwitchInput(tv_source_input_t virtual_input, tv_source_input_t source_input);
     virtual tv_source_input_t GetCurrentSourceInputLock ( void );
+    virtual tv_source_input_t GetCurrentSourceInputVirtualLock ( void );
     virtual tvin_info_t GetCurrentSignalInfo ( void );
     int setPreviewWindowMode(bool mode);
     virtual int SetPreviewWindow ( tvin_window_pos_t pos );

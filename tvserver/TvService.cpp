@@ -679,6 +679,11 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case GET_CURRENT_SOURCE_INPUT_VIRTUAL: {
+        int ret = (int)mpTv->GetCurrentSourceInputVirtualLock();
+        r->writeInt32(ret);
+        break;
+    }
     case GET_CURRENT_SIGNAL_INFO: {
         tvin_info_t siginfo = mpTv->GetCurrentSignalInfo();
         int frame_rate = mpTv->getHDMIFrameRate();

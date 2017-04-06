@@ -12,7 +12,7 @@ endif
 
 DVB_PATH := $(wildcard external/dvb)
 LIB_TV_UTILS := $(LOCAL_PATH)/../tvutils
-LIB_TV_BINDER := $(LOCAL_PATH)/../../framework/libtvbinder
+LIB_TV_BINDER := $(LOCAL_PATH)/../../frameworks/libtvbinder
 
 ifeq ($(DVB_PATH), )
   DVB_PATH := $(wildcard vendor/amlogic/external/dvb)

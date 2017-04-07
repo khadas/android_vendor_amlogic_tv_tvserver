@@ -12,6 +12,7 @@
 #include <am_epg.h>
 #include <am_mem.h>
 #include <am_db.h>
+#include "am_cc.h"
 #include "CTvChannel.h"
 #include "CTvLog.h"
 #include "CTvEv.h"
@@ -303,6 +304,7 @@ private:
         AM_SI_AudioInfo_t aud_info;
         AM_SI_SubtitleInfo_t sub_info;
         AM_SI_TeletextInfo_t ttx_info;
+        AM_SI_CaptionInfo_t cap_info;
         int sdt_version;
         SCAN_TsInfo_t *tsinfo;
     } SCAN_ServiceInfo_t;
@@ -333,15 +335,25 @@ private:
 
     void storeScan(AM_SCAN_Result_t *result, AM_SCAN_TS_t *curr_ts);
 
+    int getScanDtvStandard(ScanParas &scp);
     int createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEParas &fp, ScanParas &sp);
     int freeAtvParas(AM_SCAN_ATVCreatePara_t &atv_para);
     int createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEParas &fp, ScanParas &sp);
     int freeDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para);
 
     int FETypeHelperCB(int id, void *para, void *user);
+    void CC_VBINetworkCb(AM_CC_Handle_t handle, vbi_network *n);
+
+    AM_Bool_t needVbiAssist();
+    AM_Bool_t checkVbiDataReady(int freq);
+    int startVBI();
+    void stopVBI();
+    void resetVBI();
 
     static void storeScanHelper(AM_SCAN_Result_t *result);
     static int FETypeHelperCBHelper(int id, void *para, void *user);
+    static void CC_VBINetworkCbHelper(AM_CC_Handle_t handle, vbi_network *n);
+
 
 private:
     static CTvScanner *mInstance;
@@ -395,5 +407,16 @@ private:
     static ScannerEvent mCurEv;
 
     static service_list_t service_list_dummy;
+
+    AM_CC_Handle_t mVbi;
+    int mVbiTsId;
+
+    typedef struct {
+        int freq;
+        int tsid;
+    }SCAN_TsIdInfo_t;
+    typedef std::list<SCAN_TsIdInfo_t*> tsid_list_t;
+    tsid_list_t tsid_list;
+
 };
 #endif //CTVSCANNER_H

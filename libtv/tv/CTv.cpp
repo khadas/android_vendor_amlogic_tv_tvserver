@@ -295,7 +295,7 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
             sendTvEvent ( ev );
         }
     } else if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_NO_SIG ) { //作为信号消失
-        if (/*m_source_input == SOURCE_TV || */m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //just playing
+        if ((!(mTvAction & TV_ACTION_STOPING)) && m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //just playing
             if ( iSBlackPattern ) {
                 mAv.DisableVideoWithBlackColor();
             } else {
@@ -343,6 +343,10 @@ void CTv::onEvent(const CAv::AVEvent &ev)
     LOGD("AVEvent = %d", ev.type);
     switch ( ev.type ) {
     case CAv::AVEvent::EVENT_AV_STOP: {
+        if ( mTvAction & TV_ACTION_STOPING ) {
+            LOGD("tv stopping, no need CAv::AVEvent::EVENT_AV_STOP");
+            break;
+        }
         if ( iSBlackPattern ) {
             mAv.DisableVideoWithBlackColor();
         } else {
@@ -1839,10 +1843,9 @@ int CTv::StopTvLock ( void )
     LOGD("%s, call Tv_Stop status = %d \n", __FUNCTION__, mTvStatus);
     mSigDetectThread.requestAndWaitPauseDetect();
     Mutex::Autolock _l ( mLock );
-    mAv.DisableVideoWithBlackColor();
-
-    //we should stop audio first for audio mute.
     mTvAction |= TV_ACTION_STOPING;
+    mAv.DisableVideoWithBlackColor();
+    stopPlaying(false);
     mpTvin->Tvin_StopDecoder();
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
         mpTvin->SwitchSnow( false );
@@ -1851,8 +1854,6 @@ int CTv::StopTvLock ( void )
     //stop scan  if scanning
     stopScan();
     mFrontDev->SetAnalogFrontEndTimerSwitch(0);
-    //first stop play(if playing)
-    stopPlaying(false);
     //
     setAudioChannel(AM_AOUT_OUTPUT_STEREO);
     mpTvin->setMpeg2Vdin(0);

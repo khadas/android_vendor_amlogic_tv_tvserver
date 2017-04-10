@@ -73,6 +73,7 @@ CTvin::CTvin()
     mSourceInputToPortMap[SOURCE_HDMI1] = TVIN_PORT_HDMI0;
     mSourceInputToPortMap[SOURCE_HDMI2] = TVIN_PORT_HDMI2;
     mSourceInputToPortMap[SOURCE_HDMI3] = TVIN_PORT_HDMI1;
+    mSourceInputToPortMap[SOURCE_HDMI4] = TVIN_PORT_HDMI3;
     mSourceInputToPortMap[SOURCE_VGA] = TVIN_PORT_VGA0;
     mSourceInputToPortMap[SOURCE_MPEG] = TVIN_PORT_MPEG0;
     mSourceInputToPortMap[SOURCE_DTV] = TVIN_PORT_DTV;
@@ -1483,6 +1484,7 @@ tv_source_input_type_t CTvin::Tvin_SourceInputToSourceInputType ( tv_source_inpu
         case SOURCE_HDMI1:
         case SOURCE_HDMI2:
         case SOURCE_HDMI3:
+        case SOURCE_HDMI4:
             ret = SOURCE_TYPE_HDMI;
             break;
         case SOURCE_DTV:
@@ -1627,6 +1629,9 @@ void CTvin::Tvin_LoadSourceInputToPortMap()
     config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi3", "TVIN_PORT_HDMI1");
     mSourceInputToPortMap[SOURCE_HDMI3] = Tvin_TransPortStringToValue(config_value);
 
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi4", "TVIN_PORT_HDMI3");
+    mSourceInputToPortMap[SOURCE_HDMI4] = Tvin_TransPortStringToValue(config_value);
+
     config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.vga", "TVIN_PORT_VGA0");
     mSourceInputToPortMap[SOURCE_VGA] = Tvin_TransPortStringToValue(config_value);
 
@@ -1669,6 +1674,8 @@ tv_audio_channel_t CTvin::Tvin_GetInputSourceAudioChannelIndex ( tv_source_input
         config_value = config_get_str(CFG_SECTION_TV, "tvin.aud.chan.hdmi2", "0");
     } else if ( source_input == SOURCE_HDMI3 ) {
         config_value = config_get_str(CFG_SECTION_TV, "tvin.aud.chan.hdmi3", "0");
+    } else if ( source_input == SOURCE_HDMI4 ) {
+        config_value = config_get_str(CFG_SECTION_TV, "tvin.aud.chan.hdmi4", "0");
     } else if ( source_input == SOURCE_VGA ) {
         config_value = config_get_str(CFG_SECTION_TV, "tvin.aud.chan.vga", "0");
     } else if ( source_input == SOURCE_MPEG ) {
@@ -1696,6 +1703,7 @@ tv_audio_in_source_type_t CTvin::Tvin_GetAudioInSourceType ( tv_source_input_t s
         case SOURCE_HDMI1:
         case SOURCE_HDMI2:
         case SOURCE_HDMI3:
+        case SOURCE_HDMI4:
             ret = TV_AUDIO_IN_SOURCE_TYPE_HDMI;
             break;
         case SOURCE_SPDIF:

@@ -1353,6 +1353,9 @@ int GetHDMIEdidFromFile(int rd_off, int rd_size, int port,
     case 3:
         tmpInfo.path_cfg_name = (char *) CS_HDMI_PORT3_EDID_FILE_PATH_CFG;
         break;
+    case 4:
+        tmpInfo.path_cfg_name = (char *) CS_HDMI_PORT4_EDID_FILE_PATH_CFG;
+        break;
     default:
         LOGE("%s, port is error, =%d\n", CFG_SECTION_TV, port);
         tmpInfo.path_cfg_name = (char *) CS_HDMI_EDID_FILE_PATH_CFG;

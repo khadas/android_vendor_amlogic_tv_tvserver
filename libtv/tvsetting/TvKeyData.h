@@ -8,7 +8,7 @@
 
 #define SSM_CR_RGBOGO_LEN                           (256)
 #define SSM_CR_RGBOGO_CHKSUM_LEN                    (2)
-#define SSM_HDMI_PORT_MAX                           (3)
+#define SSM_HDMI_PORT_MAX                           (4)
 #define SSM_HDMI_EDID_SIZE                          (256)
 
 #if ANDROID_PLATFORM_SDK_VERSION == 19
@@ -60,6 +60,8 @@
 #define CS_HDMI_PORT1_EDID_FILE_PATH_CFG        "ssm.handle.hdmi.port1.edid.file.path"
 #define CS_HDMI_PORT2_EDID_FILE_PATH_CFG        "ssm.handle.hdmi.port2.edid.file.path"
 #define CS_HDMI_PORT3_EDID_FILE_PATH_CFG        "ssm.handle.hdmi.port3.edid.file.path"
+#define CS_HDMI_PORT4_EDID_FILE_PATH_CFG        "ssm.handle.hdmi.port4.edid.file.path"
+
 #define CS_HDMI_EDID_FILE_OFFSET_CFG            "ssm.handle.hdmi.edid.file.offset"
 
 #define CS_RGBOGO_FILE_PATH_CFG                 "ssm.rgbogo.file.path"

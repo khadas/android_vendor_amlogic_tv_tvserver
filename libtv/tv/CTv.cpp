@@ -1910,6 +1910,7 @@ int CTv::Tv_MiscSetBySource ( tv_source_input_t source_input )
     case SOURCE_HDMI1:
     case SOURCE_HDMI2:
     case SOURCE_HDMI3:
+    case SOURCE_HDMI4:
         CVpp::getInstance()->VPP_SetScalerPathSel(0);
         //ret = CVpp::getInstance()->Tv_SavePanoramaMode ( VPP_PANORAMA_MODE_FULL, SOURCE_TYPE_HDMI );
         ret |= tvWriteSysfs ( SYS_VECM_DNLP_ADJ_LEVEL, "5" );
@@ -1981,6 +1982,9 @@ int CTv::SetSourceSwitchInput(tv_source_input_t virtual_input __unused, tv_sourc
         case SOURCE_HDMI3:
             tmp_ret = SSMSetHDMIEdid(3);
             break;
+        case SOURCE_HDMI4:
+            tmp_ret = SSMSetHDMIEdid(4);
+            break;
         default:
             tmp_ret = -1;
             break;
@@ -2049,7 +2053,7 @@ int CTv::SetSourceSwitchInput(tv_source_input_t virtual_input __unused, tv_sourc
         // Uninit data
         UnInitTvAudio();
         if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3 ||
-                source_input == SOURCE_MPEG || source_input == SOURCE_DTV) {
+              source_input == SOURCE_HDMI4 || source_input == SOURCE_MPEG || source_input == SOURCE_DTV) {
             SwitchAVOutBypass(0);
         } else {
             SwitchAVOutBypass(1);
@@ -2059,7 +2063,8 @@ int CTv::SetSourceSwitchInput(tv_source_input_t virtual_input __unused, tv_sourc
         AudioLineInSelectChannel( audio_channel );
 
         Tv_SetAudioInSource ( source_input );
-        if ( source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3 ) {
+        if ( source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3
+            || source_input == SOURCE_HDMI4) {
             m_hdmi_sampling_rate = 0;
             m_hdmi_audio_data = 0;
         } else if (source_input == SOURCE_SPDIF) {
@@ -2234,6 +2239,7 @@ void CTv::Tv_SetAVOutPut_Input_gain(tv_source_input_t source_input)
     case SOURCE_HDMI1:
     case SOURCE_HDMI2:
     case SOURCE_HDMI3:
+    case SOURCE_HDMI4:
     case SOURCE_DTV:
     case SOURCE_MPEG:
         nPgaValueIndex = 3;
@@ -2740,7 +2746,8 @@ int CTv::SetAudioVolDigitLUTTable ( tv_source_input_t source_input )
         lut_table_index = CC_GET_LUT_COMP;
     } else if (source_input == SOURCE_VGA) {
         lut_table_index = CC_GET_LUT_VGA;
-    } else if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3) {
+    } else if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3
+            || source_input == SOURCE_HDMI4) {
         lut_table_index = CC_GET_LUT_HDMI;
     } else if ( source_input == SOURCE_MPEG ) {
         lut_table_index = CC_GET_LUT_MPEG;
@@ -2763,7 +2770,8 @@ int CTv::SetAudioVolDigitLUTTable ( tv_source_input_t source_input )
 
 void CTv::RefreshAudioMasterVolume ( tv_source_input_t source_input )
 {
-    if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3) {
+    if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3
+        || source_input == SOURCE_HDMI4) {
         if ( GetAudioDVISupportEnable() == 1 ) {
             if ( IsDVISignal() ) {
                 SetAudioVolDigitLUTTable ( SOURCE_MPEG );
@@ -2802,6 +2810,7 @@ int CTv::Tv_SetAudioInSource (tv_source_input_t source_input)
     case SOURCE_HDMI1:
     case SOURCE_HDMI2:
     case SOURCE_HDMI3:
+    case SOURCE_HDMI4:
     case SOURCE_MPEG:
     case SOURCE_DTV:
         AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_HDMI);
@@ -2823,7 +2832,7 @@ int CTv::Tv_SetAudioSourceType (tv_source_input_t source_input)
     } else if (source_input == SOURCE_AV1 || source_input == SOURCE_AV2) {
         audio_source = AUDIO_AV_SOURCE;
     } else if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 ||
-               source_input == SOURCE_HDMI3) {
+               source_input == SOURCE_HDMI3 || source_input == SOURCE_HDMI4) {
         audio_source = AUDIO_HDMI_SOURCE;
     } else if (source_input == SOURCE_YPBPR1 || source_input == SOURCE_YPBPR2 ||
                source_input == SOURCE_VGA) {
@@ -3055,7 +3064,8 @@ void CTv::StopRecording()
 int CTv::GetHdmiHdcpKeyKsvInfo(int data_buf[])
 {
     int ret = -1;
-    if (m_source_input != SOURCE_HDMI1 && m_source_input != SOURCE_HDMI2 && m_source_input != SOURCE_HDMI3) {
+    if (m_source_input != SOURCE_HDMI1 && m_source_input != SOURCE_HDMI2 && m_source_input != SOURCE_HDMI3
+       &&m_source_input != SOURCE_HDMI4) {
         return -1;
     }
 
@@ -3481,6 +3491,7 @@ float CTv::getAudioPreGain(tv_source_input_t source_input)
     case SOURCE_HDMI1:
     case SOURCE_HDMI2:
     case SOURCE_HDMI3:
+    case SOURCE_HDMI4:
         pre_gain = config_get_float(CFG_SECTION_TV, CFG_AUDIO_PRE_GAIN_FOR_HDMI, -100);
         break;
     case SOURCE_DTV:

@@ -414,6 +414,7 @@ typedef enum tvin_source_input_e {
     SOURCE_HDMI1,
     SOURCE_HDMI2,
     SOURCE_HDMI3,
+    SOURCE_HDMI4,
     SOURCE_VGA,
     SOURCE_MPEG,
     SOURCE_DTV,

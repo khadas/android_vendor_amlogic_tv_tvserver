@@ -132,7 +132,8 @@ int CSourceConnectDetect::GetSourceConnectStatus(tv_source_input_t source_input)
     }
     case SOURCE_HDMI1:
     case SOURCE_HDMI2:
-    case SOURCE_HDMI3: {
+    case SOURCE_HDMI3:
+    case SOURCE_HDMI4:{
         mHdmiDetectFile.readFile((void *)(&hdmi_status), sizeof(int));
         if ((hdmi_status & HdmiDetectStatusBit) == HdmiDetectStatusBit) {
             PlugStatus = CC_SOURCE_PLUG_IN;

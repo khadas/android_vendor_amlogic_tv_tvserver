@@ -656,6 +656,9 @@ int GetAudioOutputSwapStatus(tv_source_input_t source_input)
         case SOURCE_HDMI3:
             config_value = config_get_str(CFG_SECTION_TV, "audio.output.swap.hdmi3", "null");
             break;
+        case SOURCE_HDMI4:
+            config_value = config_get_str(CFG_SECTION_TV, "audio.output.swap.hdmi4", "null");
+            break;
         case SOURCE_TV:
             config_value = config_get_str(CFG_SECTION_TV, "audio.output.swap.tv", "null");
             break;

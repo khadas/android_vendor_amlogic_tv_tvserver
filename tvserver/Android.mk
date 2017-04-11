@@ -59,9 +59,22 @@ LOCAL_C_INCLUDES += \
   $(DVB_PATH)/include/am_adp \
   $(DVB_PATH)/include/am_mw \
   $(DVB_PATH)/include/am_ver \
-  $(DVB_PATH)/android/ndk/include \
-  hardware/amlogic/media/amadec/include \
-  hardware/amlogic/media/amcodec/include
+  $(DVB_PATH)/android/ndk/include
+
+ifeq ($(wildcard hardware/amlogic/media),hardware/amlogic/media)
+$(info "have hardware/amlogic/media")
+AML_DEC_PATH := $(wildcard hardware/amlogic/media)
+LOCAL_C_INCLUDES += \
+  $(AML_DEC_PATH)/amadec/include \
+  $(AML_DEC_PATH)/amcodec/include
+else
+AML_DEC_PATH := $(wildcard vendor/amlogic/frameworks/av/LibPlayer)
+LOCAL_C_INCLUDES += \
+  $(AML_DEC_PATH)/amadec/include \
+  $(AML_DEC_PATH)/amcodec/include \
+  $(AML_DEC_PATH)/amffmpeg \
+  $(AML_DEC_PATH)/amplayer
+endif
 
 LOCAL_CFLAGS += -DTARGET_BOARD_$(strip $(TVAPI_TARGET_BOARD_VERSION))
 

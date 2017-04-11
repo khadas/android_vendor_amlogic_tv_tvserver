@@ -172,6 +172,20 @@ else
   LOCAL_C_INCLUDES += external/alsa-lib/include
 endif
 
+ifeq ($(wildcard hardware/amlogic/media),hardware/amlogic/media)
+$(info "have hardware/amlogic/media")
+AML_DEC_PATH := $(wildcard hardware/amlogic/media)
+LOCAL_C_INCLUDES += \
+  $(AML_DEC_PATH)/amadec/include \
+  $(AML_DEC_PATH)/amcodec/include
+else
+AML_DEC_PATH := $(wildcard vendor/amlogic/frameworks/av/LibPlayer)
+LOCAL_C_INCLUDES += \
+  $(AML_DEC_PATH)/amadec/include \
+  $(AML_DEC_PATH)/amcodec/include \
+  $(AML_DEC_PATH)/amffmpeg \
+  $(AML_DEC_PATH)/amplayer
+endif
 
 LOCAL_C_INCLUDES += \
   $(DVB_PATH)/include/am_adp \
@@ -181,8 +195,6 @@ LOCAL_C_INCLUDES += \
   $(LIB_ZVBI_PATH)/ntsc_decode/include \
   $(LIB_ZVBI_PATH)/ntsc_decode/include/ntsc_dmx \
   $(LIB_ZVBI_PATH)/src \
-  hardware/amlogic/media/amadec/include \
-  hardware/amlogic/media/amcodec/include \
   $(LOCAL_PATH)/tvdb \
   $(LOCAL_PATH)/tv \
   $(LOCAL_PATH)/gpio \

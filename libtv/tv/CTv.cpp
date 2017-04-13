@@ -618,6 +618,8 @@ int CTv::Scan(const char *feparas, const char *scanparas) {
     mTvScanner->setObserver(&mTvMsgQueue);
     mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
 
+    mFrontDev->Open(FE_AUTO);
+
     return mTvScanner->Scan(fp, sp);
 }
 
@@ -1128,8 +1130,7 @@ int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int
 {
     AutoMutex lock ( mLock );
 
-    if (m_virtual)
-        SetSourceSwitchInput(m_source_input_virtual, SOURCE_DTV);
+    SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
 
     mTvAction |= TV_ACTION_PLAYING;
     if (mBlackoutEnable)
@@ -1218,8 +1219,7 @@ int CTv::playDtmbProgram ( int progId )
 
 int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __unused, int audioCompetation)
 {
-    if (m_virtual)
-        SetSourceSwitchInput(m_source_input_virtual, SOURCE_TV);
+    SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_TV);
 
     mTvAction |= TV_ACTION_PLAYING;
     if ( mBlackoutEnable ) {
@@ -1937,30 +1937,42 @@ int CTv::Tv_MiscSetBySource ( tv_source_input_t source_input )
     return ret;
 }
 
+bool CTv::isVirtualSourceInput(tv_source_input_t source_input) {
+    switch (source_input) {
+        case SOURCE_ADTV:
+            return true;
+        default:
+            return false;
+    }
+    return false;
+}
 
 int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
 {
     Mutex::Autolock _l ( mLock );
+
     LOGD ( "%s, source input = %d", __FUNCTION__, source_input );
 
-    int ret = 0;
     m_source_input_virtual = source_input;
 
-    switch (source_input) {
-        case SOURCE_ADTV:
-            m_virtual = true;
-            return 0;// wait for real source setting.
-        default:
-            m_virtual = false;
-            break;
-    }
+    if (isVirtualSourceInput(source_input))
+        return 0;//defer real source setting.
 
-    return SetSourceSwitchInput(m_source_input_virtual, source_input);
+    return SetSourceSwitchInputLocked(m_source_input_virtual, source_input);
 }
 
-int CTv::SetSourceSwitchInput(tv_source_input_t virtual_input __unused, tv_source_input_t source_input)
+int CTv::SetSourceSwitchInput(tv_source_input_t virtual_input, tv_source_input_t source_input) {
+    Mutex::Autolock _l ( mLock );
+    return SetSourceSwitchInputLocked(virtual_input, source_input);
+}
+
+int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_input_t source_input)
 {
     tvin_port_t cur_port;
+
+    LOGD ( "%s, virtual source input = %d source input = %d", __FUNCTION__, virtual_input, source_input );
+
+    m_source_input_virtual = virtual_input;
 
     Tv_SetDDDRCMode(source_input);
     if (source_input == m_source_input ) {

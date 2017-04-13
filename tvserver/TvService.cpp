@@ -701,6 +701,14 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case SET_SOURCE_INPUT_EXT: {
+        int sourceinput = p.readInt32();
+        int vsourceinput = p.readInt32();
+        LOGD(" SetSourceInputExt vsourceId= %d sourceId=%d", vsourceinput, sourceinput);
+        int ret = mpTv->SetSourceSwitchInput((tv_source_input_t)vsourceinput, (tv_source_input_t)sourceinput);
+        r->writeInt32(ret);
+        break;
+    }
     case DO_SUSPEND: {
         int type = p.readInt32();
         int ret = mpTv->DoSuspend(type);

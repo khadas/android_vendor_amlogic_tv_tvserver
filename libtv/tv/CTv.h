@@ -129,8 +129,10 @@ public:
     virtual tv_source_input_t GetLastSourceInput (void);
     virtual int SetSourceSwitchInput (tv_source_input_t source_input );
     virtual int SetSourceSwitchInput(tv_source_input_t virtual_input, tv_source_input_t source_input);
+    virtual int SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_input_t source_input);
     virtual tv_source_input_t GetCurrentSourceInputLock ( void );
     virtual tv_source_input_t GetCurrentSourceInputVirtualLock ( void );
+    bool isVirtualSourceInput(tv_source_input_t source_input);
     virtual tvin_info_t GetCurrentSignalInfo ( void );
     int setPreviewWindowMode(bool mode);
     virtual int SetPreviewWindow ( tvin_window_pos_t pos );
@@ -630,7 +632,7 @@ protected:
     volatile tv_source_input_t m_source_input;
     volatile tv_source_input_t m_last_source_input;
     volatile tv_source_input_t m_source_input_virtual;
-    bool m_virtual;
+
     /* for tvin window mode and pos*/
     tvin_window_pos_t m_win_pos;
     tv_window_mode_t m_win_mode;

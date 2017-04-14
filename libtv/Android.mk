@@ -11,18 +11,22 @@ else ifeq ($(CSV_RET), 3)
 endif
 
 DVB_PATH := $(wildcard external/dvb)
-LIB_TV_UTILS := $(LOCAL_PATH)/../tvutils
-LIB_TV_BINDER := $(LOCAL_PATH)/../../frameworks/libtvbinder
-
 ifeq ($(DVB_PATH), )
   DVB_PATH := $(wildcard vendor/amlogic/external/dvb)
 endif
-
 ifeq ($(DVB_PATH), )
   DVB_PATH := $(wildcard vendor/amlogic/dvb)
 endif
 
 LIB_ZVBI_PATH := $(wildcard external/libzvbi)
+ifeq ($(LIB_ZVBI_PATH), )
+  LIB_ZVBI_PATH := $(wildcard vendor/amlogic/external/libzvbi)
+endif
+
+LIB_TV_UTILS := $(LOCAL_PATH)/../tvutils
+LIB_TV_BINDER := $(LOCAL_PATH)/../../frameworks/libtvbinder
+
+AM_LIBPLAYER_PATH := $(wildcard vendor/amlogic/frameworks/av/LibPlayer)
 LIB_SQLITE_PATH := $(wildcard external/sqlite)
 
 #support android and amaudio

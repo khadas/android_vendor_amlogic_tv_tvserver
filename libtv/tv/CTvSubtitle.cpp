@@ -519,6 +519,7 @@ program, no signal, blocked...*/
 //else != 0
 int CTvSubtitle::sub_start_atsc_cc(enum cc_param_country country, enum cc_param_source_type src_type, int channel_num, enum cc_param_caption_type caption_type)
 {
+/*
     LOGD("----sub_start_atsc_cc-1--- country=%d,src=%d,ctype=%d", country, src_type, caption_type);
     switch (country) {
     case CC_PARAM_COUNTRY_USA:
@@ -587,20 +588,25 @@ int CTvSubtitle::sub_start_atsc_cc(enum cc_param_country country, enum cc_param_
     //start
     AM_CC_Cmd(CMD_CC_START);
     LOGD("----sub_start_atsc_cc-2--- country=%d,src=%d,ctype=%d", country, src_type, caption_type);
+*/
     return 0;
 }
 
 int CTvSubtitle::sub_stop_atsc_cc()
 {
+/*
     LOGD("----sub_stop_atsc_cc----");
     AM_CC_Cmd(CMD_CC_STOP);
+*/
     return 0;
 }
 
 int CTvSubtitle::ResetVchipChgStat()
 {
+/*
     avchip_chg = 0;
     AM_CC_Cmd(CMD_VCHIP_RST_CHGSTAT);
+*/
     return 0;
 }
 

@@ -2,18 +2,22 @@ LOCAL_PATH:= $(call my-dir)
 
 
 DVB_PATH := $(wildcard external/dvb)
-LIB_TV_UTILS := $(LOCAL_PATH)/../tvutils
-LIB_TV_BINDER := $(LOCAL_PATH)/../../frameworks/libtvbinder
-
 ifeq ($(DVB_PATH), )
   DVB_PATH := $(wildcard vendor/amlogic/external/dvb)
 endif
-
 ifeq ($(DVB_PATH), )
   DVB_PATH := $(wildcard vendor/amlogic/dvb)
 endif
 
 LIB_ZVBI_PATH := $(wildcard external/libzvbi)
+ifeq ($(LIB_ZVBI_PATH), )
+  LIB_ZVBI_PATH := $(wildcard vendor/amlogic/external/libzvbi)
+endif
+
+LIB_TV_UTILS := $(LOCAL_PATH)/../tvutils
+LIB_TV_BINDER := $(LOCAL_PATH)/../../frameworks/libtvbinder
+
+AM_LIBPLAYER_PATH := $(wildcard vendor/amlogic/frameworks/av/LibPlayer)
 LIB_SQLITE_PATH := $(wildcard external/sqlite)
 
 
@@ -59,7 +63,10 @@ LOCAL_C_INCLUDES += \
   $(DVB_PATH)/include/am_adp \
   $(DVB_PATH)/include/am_mw \
   $(DVB_PATH)/include/am_ver \
-  $(DVB_PATH)/android/ndk/include
+  $(DVB_PATH)/android/ndk/include \
+  $(LIB_ZVBI_PATH)/ntsc_decode/include \
+  $(LIB_ZVBI_PATH)/ntsc_decode/include/ntsc_dmx \
+  $(LIB_ZVBI_PATH)/src
 
 ifeq ($(wildcard hardware/amlogic/media),hardware/amlogic/media)
 $(info "have hardware/amlogic/media")

@@ -925,7 +925,19 @@ int CTv::getScanStatus()
     mTvScanner->getScanStatus(&status);
     return status;
 }
-
+void CTv::operateDeviceForScan(int type)
+{
+    LOGD("%s : type:%d\n", __FUNCTION__, type);
+    if (type & OPEN_DEV_FOR_SCAN_ATV) {
+            mFrontDev->Open(FE_ANALOG);
+            mFrontDev->SetAnalogFrontEndTimerSwitch(1);
+     }else if  (type & OPEN_DEV_FOR_SCAN_DTV) {
+            mFrontDev->Open(FE_AUTO);
+            mFrontDev->SetAnalogFrontEndTimerSwitch(0);
+     }else if  (type & CLOSE_DEV_FOR_SCAN) {
+            mFrontDev->SetAnalogFrontEndTimerSwitch(0);
+     }
+}
 void CTv::setDvbTextCoding(char *coding)
 {
     if (!strcmp(coding, "standard")) {

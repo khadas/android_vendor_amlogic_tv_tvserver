@@ -2444,6 +2444,11 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(tmpRet);
         break;
     }
+    case ATV_DTV_SCAN_OPERATE_DEVICE : {
+        int type = p.readInt32();
+        mpTv->operateDeviceForScan(type);
+        break;
+    }
     case DTV_SET_TEXT_CODING: {
         String8 coding(p.readString16());
         mpTv->setDvbTextCoding((char *)coding.string());

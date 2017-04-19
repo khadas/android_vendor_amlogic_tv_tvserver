@@ -101,6 +101,11 @@ public:
     static const int TV_ACTION_PLAYING = 0x0008;
     static const int TV_ACTION_RECORDING = 0x0010;
     static const int TV_ACTION_SOURCE_SWITCHING = 0x0020;
+
+    static const int OPEN_DEV_FOR_SCAN_ATV = 1;
+    static const int OPEN_DEV_FOR_SCAN_DTV = 2;
+    static const int CLOSE_DEV_FOR_SCAN = 3;
+
 public:
     class TvIObserver {
     public:
@@ -139,6 +144,7 @@ public:
     virtual int pauseScan();
     virtual int resumeScan();
     virtual int getScanStatus();
+    virtual void operateDeviceForScan(int type);
     virtual void setDvbTextCoding(char *coding);
     virtual int Scan(const char *feparas, const char *scanparas);
 

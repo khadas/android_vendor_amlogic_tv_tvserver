@@ -89,8 +89,8 @@ void TvService::onTvEvent(const CTvEv &ev)
             sp<Client> ScannerClient = mpScannerClient.promote();
             if (ScannerClient != 0) {
                 Parcel p;
-                LOGD("scanner evt type:%d freq:%d vid:%d acnt:%d",
-                     pScannerEv->mType, pScannerEv->mFrequency, pScannerEv->mVid, pScannerEv->mAcnt);
+                LOGD("scanner evt type:%d freq:%d vid:%d acnt:%d scnt:%d",
+                     pScannerEv->mType, pScannerEv->mFrequency, pScannerEv->mVid, pScannerEv->mAcnt, pScannerEv->mScnt);
                 p.writeInt32(pScannerEv->mType);
                 p.writeInt32(pScannerEv->mPercent);
                 p.writeInt32(pScannerEv->mTotalChannelCount);

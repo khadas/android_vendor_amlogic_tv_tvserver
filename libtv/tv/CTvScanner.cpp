@@ -365,6 +365,27 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
         mCurEv.mAudioStd = mCurEv.mFEParas.getAudioStd();
         mCurEv.mIsAutoStd = ((mCurEv.mVideoStd & V4L2_COLOR_STD_AUTO) == V4L2_COLOR_STD_AUTO) ? 1 : 0;
 
+        if (srv->tsinfo->dtvstd == AM_SCAN_DTV_STD_ATSC) {
+            mCurEv.mAccessControlled = srv->access_controlled;
+            mCurEv.mHidden = srv->hidden;
+            mCurEv.mHideGuide = srv->hide_guide;
+            mCurEv.mSourceId = srv->source_id;
+            mCurEv.mMajorChannelNumber = srv->major_chan_num;
+            mCurEv.mMinorChannelNumber = srv->minor_chan_num;
+
+            LOGD("add cc info [%d]", srv->cap_info.caption_count);
+            mCurEv.mScnt = srv->cap_info.caption_count;
+            for (int i = 0; i < srv->cap_info.caption_count; i++) {
+                mCurEv.mStype[i] = srv->cap_info.captions[i].type ? TYPE_DTV_CC : TYPE_ATV_CC;
+                mCurEv.mSid[i] = srv->cap_info.captions[i].service_number;
+                mCurEv.mSstype[i] = srv->cap_info.captions[i].type;
+                mCurEv.mSid1[i] = srv->cap_info.captions[i].pid_or_line21;
+                mCurEv.mSid2[i] = srv->cap_info.captions[i].flags;
+                strncpy(mCurEv.mSlang[i], srv->cap_info.captions[i].lang, 10);
+            }
+
+        }
+
         mCurEv.mType = ScannerEvent::EVENT_ATV_PROG_DATA;
         LOGD("notifyService freq:%d, vstd:%x astd:%x",
             mCurEv.mFrequency, mCurEv.mFEParas.getVideoStd(), mCurEv.mFEParas.getAudioStd());
@@ -376,10 +397,6 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
 void CTvScanner::sendEvent(ScannerEvent &evt)
 {
     if (mpObserver) {
-        if (evt.mType != ScannerEvent::EVENT_DTV_PROG_DATA) {
-            evt.mAcnt = 0;//avoid invalid count confused the array.
-            evt.mScnt = 0;
-        }
 
         strncpy(mCurEv.mParas,
             mCurEv.mFEParas.toString().c_str(),
@@ -823,6 +840,8 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
         int tsid = -1;
         int found = 0;
 
+        LOGD("collecting info for %d", tsinfo->fe.getFrequency());
+
         /*try get channel number from vct*/
         for (tsid_list_t::iterator p=tsid_list.begin(); p != tsid_list.end(); p++) {
             if ((*p)->freq == tsinfo->fe.getFrequency())
@@ -843,6 +862,7 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
             } AM_SI_LIST_END()
         }
 
+        LOGD("tsid:%d, found:%d", tsid, found);
         /*generate by channel id*/
         if (tsid == -1 || found == 0) {
             const char *list_name = getDtvScanListName(mFEParas.getFEMode().getMode());
@@ -1423,10 +1443,8 @@ void CTvScanner::stopVBI()
 
 void CTvScanner::resetVBI()
 {
-    if (mVbi != NULL) {
-        //AM_CC_Reset(mVbi);
-    }
-    mVbiTsId = -1;
+    stopVBI();
+    startVBI();
 }
 
 AM_Bool_t CTvScanner::checkVbiDataReady(int freq) {
@@ -1483,10 +1501,8 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
         //tvin->VDIN_OpenModule();
         tvin->VDIN_ClosePort();
         tvin->VDIN_OpenPort(tvin->Tvin_GetSourcePortBySourceInput(SOURCE_TV));
-        if (needVbiAssist()) {
-            startVBI();
+        if (needVbiAssist())
             resetVBI();
-        }
     } else {
         if (needVbiAssist())
             stopVBI();

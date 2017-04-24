@@ -1570,7 +1570,7 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
 
 
             if (tp->fend_para.m_type == FE_ANALOG) {
-                if (pT->mFEParas.getFEMode().getExt() & 1) {//mix
+                if (AdtvMixed) {//mix
                     pT->mCurEv.mPercent = (tp->index * factor) / tp->total;
                 } else {
                     pT->mCurEv.mPercent = 0;

@@ -3385,6 +3385,13 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(tmpRet);
         break;
     }
+    case TV_SET_FRONTEND: {
+        int force = p.readInt32();
+        String8 feparas(p.readString16());
+        int tmpRet = mpTv->setFrontEnd(feparas, (force != 0));
+        r->writeInt32(tmpRet);
+        break;
+    }
     case PLAY_PROGRAM_2: {
         String8 feparas(p.readString16());
         int vid = p.readInt32();

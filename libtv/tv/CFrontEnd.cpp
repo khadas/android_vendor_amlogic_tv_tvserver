@@ -202,13 +202,19 @@ int CFrontEnd::setPara(int mode, int freq, int para1, int para2)
     convertParas(paras, mode, freq, freq, para1, para2);
     return setPara(paras);
 }
+
 int CFrontEnd::setPara(const char *paras)
+{
+    return setPara(paras, false);
+}
+
+int CFrontEnd::setPara(const char *paras, bool force )
 {
     int ret = 0;
     FEParas feparas(paras);
 
     LOGD("fe setpara [%s]", paras);
-    if (mFEParas == feparas) {
+    if (mFEParas == feparas && !force) {
         LOGD("fe setpara  is same return");
         return 0;
     }
@@ -285,8 +291,13 @@ int CFrontEnd::setPara(const char *paras)
 
 int CFrontEnd::fineTune(int fineFreq)
 {
+    return fineTune(fineFreq, false);
+}
+
+int CFrontEnd::fineTune(int fineFreq, bool force)
+{
     int ret = 0;
-    if (mCurFineFreq == fineFreq) return -1;
+    if (mCurFineFreq == fineFreq && !force) return -1;
 
     mCurFineFreq = fineFreq;
     ret = AM_FEND_FineTune(FE_DEV_ID, fineFreq);

@@ -149,6 +149,7 @@ public:
     virtual void operateDeviceForScan(int type);
     virtual void setDvbTextCoding(char *coding);
     virtual int Scan(const char *feparas, const char *scanparas);
+    virtual int setFrontEnd ( const char *paras, bool force );
 
     virtual int clearAllProgram(int arg0);
     virtual int clearDbAllProgramInfoTable();

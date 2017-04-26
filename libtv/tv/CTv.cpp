@@ -1294,6 +1294,50 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
     return 0;
 }
 
+int CTv::setFrontEnd ( const char *paras, bool force )
+{
+    LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
+    if (mTvAction & TV_ACTION_SCANNING) {
+        return -1;
+    }
+
+    CFrontEnd::FEParas fp(paras);
+
+    if ( fp.getFEMode().getBase() == FE_ANALOG ) {
+        int tmpFreq = fp.getFrequency();
+        int tmpfineFreq = fp.getFrequency2();
+
+        //get tunerStd from videoStd and audioStd
+        v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor (fp.getVideoStd(), fp.getAudioStd());
+
+        LOGD("%s: vstd=%d astd=%d stdandcolor=%lld", __FUNCTION__, fp.getVideoStd(), fp.getAudioStd(), stdAndColor);
+
+        //set frontend parameters to tuner dev
+        mSigDetectThread.requestAndWaitPauseDetect();
+        mpTvin->Tvin_StopDecoder();
+
+        //set CVBS
+        int fmt = CFrontEnd::stdEnumToCvbsFmt (fp.getVideoStd(), fp.getAudioStd() );
+        mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
+
+        //set TUNER
+        usleep(400 * 1000);
+        mFrontDev->Open(FE_AUTO);
+        mFrontDev->setPara ( paras, force );
+        usleep(400 * 1000);
+        if ( tmpfineFreq != 0 ) {
+            mFrontDev->fineTune ( tmpfineFreq / 1000, force );
+        }
+
+        mSigDetectThread.initSigState();
+        mSigDetectThread.resumeDetect();
+    } else {
+        mFrontDev->Open(FE_AUTO);
+        mFrontDev->setPara ( paras, force );
+    }
+    return 0;
+}
+
 int CTv::resetDmxAndAvSource()
 {
     AM_DMX_Source_t curdmxSource;

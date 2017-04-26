@@ -92,10 +92,12 @@ public:
     int Close();
     int setMode(int mode);
     int fineTune(int freq);
+    int fineTune(int fineFreq, bool force);
     static int formatATVFreq(int freq);
     int GetTSSource(AM_DMX_Source_t *src);
     int setPara(int mode, int freq, int para1, int para2);
     int setPara(const char *);
+    int setPara(const char *paras, bool force );
     int setProp(int cmd, int val);
     int ClearAnalogFrontEnd();
     int autoLoadFE();

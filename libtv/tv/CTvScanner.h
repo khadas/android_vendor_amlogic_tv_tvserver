@@ -322,6 +322,8 @@ private:
     void getLcnInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, lcn_list_t &llist);
     void notifyLcn(ScannerLcnInfo *lcn);
     int insertLcnList(lcn_list_t &llist, ScannerLcnInfo *lcn, int idx);
+    int getParamOption(char *para);
+    void addFixedATSCCaption(AM_SI_CaptionInfo_t *cap_info, int service, int cc, int text, int is_digital_cc);
 
     void processDvbTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist);
     void processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist);

@@ -176,8 +176,16 @@ int CTvScanner::getScanStatus(int *status)
 }
 
 
-
-
+int CTvScanner::getParamOption(char *para) {
+    int forcePara = -1;
+    char paraForce[64];
+    snprintf(paraForce, sizeof(paraForce), "dtv.scan.%s", para);
+    const char *paraForced = config_get_str ( CFG_SECTION_TV, paraForce, "null");
+    if (sscanf(paraForced, "%i", &forcePara)) {
+        LOGD("option %s: %d", para, forcePara);
+    }
+    return forcePara;
+}
 
 int CTvScanner::insertLcnList(lcn_list_t &llist, ScannerLcnInfo *lcn, int idx)
 {
@@ -711,6 +719,49 @@ void CTvScanner::updateServiceInfo(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t 
     }
 }
 
+void CTvScanner::addFixedATSCCaption(AM_SI_CaptionInfo_t *cap_info, int service, int cc, int text, int is_digital_cc)
+{
+    #define DEFAULT_SERVICE_MAX 6
+    #define DEFAULT_CC_MAX 4
+    #define DEFAULT_TEXT_MAX 4
+
+    if (service) {
+        /*service1 ~ service6*/
+        int start = cap_info->caption_count;
+        int cnt = (service == -1 || service > DEFAULT_SERVICE_MAX)? DEFAULT_SERVICE_MAX : service;
+        for (int i = 0; i < cnt; i++) {
+            cap_info->captions[start+i].type = 1;
+            cap_info->captions[start+i].service_number = AM_CC_CAPTION_SERVICE1 + i;
+            sprintf(cap_info->captions[start+i].lang, "SERVICE%d", i+1);
+        }
+        cap_info->caption_count += cnt;
+    }
+
+    if (cc) {
+        /*cc1 ~ cc4*/
+        int start = cap_info->caption_count;
+        int cnt = (cc == -1 || cc > DEFAULT_CC_MAX)? DEFAULT_CC_MAX : cc;
+        for (int i = 0; i < cnt; i++) {
+            cap_info->captions[start+i].type = is_digital_cc;
+            cap_info->captions[start+i].service_number = AM_CC_CAPTION_CC1 + i;
+            sprintf(cap_info->captions[start+i].lang, "CC%d", i+1);
+        }
+        cap_info->caption_count += cnt;
+    }
+
+    if (text) {
+        /*text1 ~ text4*/
+        int start = cap_info->caption_count;
+        int cnt = (text == -1 || text > DEFAULT_TEXT_MAX)? DEFAULT_TEXT_MAX : text;
+        for (int i = 0; i < cnt; i++) {
+            cap_info->captions[start+i].type = is_digital_cc;
+            cap_info->captions[start+i].service_number = AM_CC_CAPTION_TEXT1 + i;
+            sprintf(cap_info->captions[start+i].lang, "TEXT%d", i+1);
+        }
+        cap_info->caption_count += cnt;
+    }
+}
+
 void CTvScanner::processDvbTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist)
 {
     LOGD("processDvbTs");
@@ -890,13 +941,8 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
         }
     }
 
-    /*analog cc1 ~ cc4*/
-    psrv_info->cap_info.caption_count = 4;
-    for (int i = 0; i < psrv_info->cap_info.caption_count; i++) {
-        psrv_info->cap_info.captions[i].type = 0;
-        psrv_info->cap_info.captions[i].service_number = i + 1;
-        sprintf(psrv_info->cap_info.captions[i].lang, "cc%d", psrv_info->cap_info.captions[i].service_number);
-    }
+    memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
+    addFixedATSCCaption(&psrv_info->cap_info, 0, -1, -1, 0);
 
     slist.push_back(psrv_info);
 }
@@ -918,6 +964,8 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, servi
     AM_Bool_t stream_found_in_vct = AM_FALSE;
     AM_Bool_t program_found_in_vct = AM_FALSE;
     SCAN_ServiceInfo_t *psrv_info;
+    int cc_smart = getParamOption("cc.smart");
+    AM_Bool_t is_cc_smart = (cc_smart == -1)? false : (cc_smart != 0);
 
     if (!ts->digital.pats && !ts->digital.vcts)
     {
@@ -942,7 +990,8 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, servi
 
         AM_SI_LIST_BEGIN(pmt->p_first_es, es) {
             AM_SI_ExtractAVFromES(es, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
-            AM_SI_ExtractATSCCaptionFromES(es, &psrv_info->cap_info);
+            if (cc_smart)
+                AM_SI_ExtractATSCCaptionFromES(es, &psrv_info->cap_info);
             if (! psrv_info->scrambled_flag)
                 extractCaScrambledFlag(es->p_first_descriptor, &psrv_info->scrambled_flag);
         }AM_SI_LIST_END()
@@ -978,6 +1027,11 @@ VCT_END:
         /*Store this service*/
         updateServiceInfo(result, psrv_info);
 
+        if (!is_cc_smart) {
+            memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
+            addFixedATSCCaption(&psrv_info->cap_info, -1, -1, -1, 1);
+        }
+
         slist.push_back(psrv_info);
 
     } AM_SI_LIST_END()
@@ -1011,6 +1065,11 @@ VCT_END:
             AM_SI_ExtractAVFromATSCVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
             extractSrvInfoFromVct(result, vcinfo, psrv_info);
             updateServiceInfo(result, psrv_info);
+
+            if (!is_cc_smart) {
+                memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
+                addFixedATSCCaption(&psrv_info->cap_info, -1, -1, -1, 1);
+            }
 
             slist.push_back(psrv_info);
 

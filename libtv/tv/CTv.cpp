@@ -1882,6 +1882,7 @@ int CTv::StopTvLock ( void )
     RefreshAudioMasterVolume ( SOURCE_MPEG );
     m_last_source_input = SOURCE_INVALID;
     m_source_input = SOURCE_INVALID;
+    m_source_input_virtual = SOURCE_INVALID;
     mFrontDev->Close();
     mTvAction &= ~TV_ACTION_STOPING;
     mTvStatus = TV_STOP_ED;

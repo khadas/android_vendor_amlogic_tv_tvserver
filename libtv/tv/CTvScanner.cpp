@@ -732,7 +732,7 @@ void CTvScanner::addFixedATSCCaption(AM_SI_CaptionInfo_t *cap_info, int service,
         for (int i = 0; i < cnt; i++) {
             cap_info->captions[start+i].type = 1;
             cap_info->captions[start+i].service_number = AM_CC_CAPTION_SERVICE1 + i;
-            sprintf(cap_info->captions[start+i].lang, "SERVICE%d", i+1);
+            sprintf(cap_info->captions[start+i].lang, "CS%d", i+1);
         }
         cap_info->caption_count += cnt;
     }
@@ -756,7 +756,7 @@ void CTvScanner::addFixedATSCCaption(AM_SI_CaptionInfo_t *cap_info, int service,
         for (int i = 0; i < cnt; i++) {
             cap_info->captions[start+i].type = is_digital_cc;
             cap_info->captions[start+i].service_number = AM_CC_CAPTION_TEXT1 + i;
-            sprintf(cap_info->captions[start+i].lang, "TEXT%d", i+1);
+            sprintf(cap_info->captions[start+i].lang, "TX%d", i+1);
         }
         cap_info->caption_count += cnt;
     }

@@ -2405,7 +2405,7 @@ bool CPqData::IsMatchHDRCondition(const tvin_port_t source_port)
         (source_port >= TVIN_PORT_HDMI0 && source_port <= TVIN_PORT_HDMI7)) {
         int cscType = GetFileAttrIntValue("/sys/module/am_vecm/parameters/cur_csc_type", O_RDONLY);
 
-        if (cscType >= 64) {
+        if ( (cscType >= 64) && (cscType != 0xffff) ) {
             ret = true;
         }
         else {

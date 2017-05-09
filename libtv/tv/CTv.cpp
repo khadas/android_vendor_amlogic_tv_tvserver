@@ -1706,6 +1706,7 @@ int CTv::OpenTv ( void )
     }
 
     mpTvin->Tvin_LoadSourceInputToPortMap();
+    mpHDMIRxManager->SetHdmiPortCecPhysicAddr();
 
     extern CBlobDevice *mpCurDevice;
     SSMHandler::mSSMHeaderFile = mpCurDevice;

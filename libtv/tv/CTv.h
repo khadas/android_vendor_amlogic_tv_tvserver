@@ -660,6 +660,7 @@ protected:
 
     CTvin *mpTvin;
     CTvGpio *pGpio;
+    CHDMIRxManager *mpHDMIRxManager;
 
     bool mPreviewEnabled;
 };

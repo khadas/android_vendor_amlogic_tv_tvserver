@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <CTvLog.h>
 #include <tvutils.h>
+#include "../include/common.h"
 
 
 CHDMIRxManager::CHDMIRxManager()
@@ -112,3 +113,20 @@ tv_hdmi_color_range_t CHDMIRxManager::GetHdmiColorRangeMode()
     return (tv_hdmi_color_range_t)atoi(value);
 }
 
+int CHDMIRxManager::SetHdmiPortCecPhysicAddr()
+{
+    char val[10] = {0};
+    tv_source_input_t tmpHdmiPortCecPhysicAddr[4] = {SOURCE_HDMI1};
+    tvin_port_t tvInport[4] = {TVIN_PORT_HDMI0,TVIN_PORT_HDMI1,TVIN_PORT_HDMI2,TVIN_PORT_HDMI3};
+    int HdmiPortCecPhysicAddr = 0x0;
+    for (int i = 0; i < 4; i++) {
+        tmpHdmiPortCecPhysicAddr[i] = CTvin::getInstance()->Tvin_PortToSourceInput(tvInport[i]);
+    }
+    HdmiPortCecPhysicAddr |= (((tmpHdmiPortCecPhysicAddr[0] - 4) << 4)
+                             |((tmpHdmiPortCecPhysicAddr[1] - 4) << 4) << 8
+                             |((tmpHdmiPortCecPhysicAddr[2] - 4) << 4) << 16
+                             |((tmpHdmiPortCecPhysicAddr[3] - 4) << 4) << 24);
+    sprintf(val, "%x", HdmiPortCecPhysicAddr);
+    tvWriteSysfs(HDMI_ROECR_MAP_RANGE, val);
+    return 0;
+}

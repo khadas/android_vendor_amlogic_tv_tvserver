@@ -122,10 +122,10 @@ int CHDMIRxManager::SetHdmiPortCecPhysicAddr()
     for (int i = 0; i < 4; i++) {
         tmpHdmiPortCecPhysicAddr[i] = CTvin::getInstance()->Tvin_PortToSourceInput(tvInport[i]);
     }
-    HdmiPortCecPhysicAddr |= (((tmpHdmiPortCecPhysicAddr[0] - 4) << 4)
-                             |((tmpHdmiPortCecPhysicAddr[1] - 4) << 4) << 8
-                             |((tmpHdmiPortCecPhysicAddr[2] - 4) << 4) << 16
-                             |((tmpHdmiPortCecPhysicAddr[3] - 4) << 4) << 24);
+    HdmiPortCecPhysicAddr |= (((tmpHdmiPortCecPhysicAddr[0] - 4))
+                             |((tmpHdmiPortCecPhysicAddr[1] - 4) << 4)
+                             |((tmpHdmiPortCecPhysicAddr[2] - 4) << 8)
+                             |((tmpHdmiPortCecPhysicAddr[3] - 4) << 12));
     sprintf(val, "%x", HdmiPortCecPhysicAddr);
     tvWriteSysfs(HDMI_ROECR_MAP_RANGE, val);
     return 0;

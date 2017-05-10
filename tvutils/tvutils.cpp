@@ -331,6 +331,23 @@ int TvMisc_SetSystemPetEnable(int enable)
     return 0;
 }
 
+int SetAudioOutmode(int mode){
+    char val[32] = {0};
+    sprintf(val, "%d", mode);
+    int len = tvWriteSysfs(AUDIO_OUTMODE_PATH, val);
+    if (len > 0) {
+        char temp[] = "init";
+        tvWriteSysfs(ATVDEMODE_DEBUG_PATH,temp);
+    }
+    return 0;
+}
+
+int GetAudioOutmode(){
+    char mode[32] = {0};
+    tvReadSysfs(AUDIO_OUTMODE_PATH, mode);
+    return atoi(mode);
+}
+
 int TvMisc_SetSystemPetCounterTimeOut(int timeout)
 {
     FILE *fp;

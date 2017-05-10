@@ -3404,6 +3404,15 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(ret);
         break;
     }
+    case SET_AUDIO_OUTMODE: {
+        int mode = p.readInt32();
+        int ret = SetAudioOutmode(mode);
+        r->writeInt32(ret);
+    }
+    case GET_AUDIO_OUTMODE: {
+        int ret = GetAudioOutmode();
+        r->writeInt32(ret);
+    }
     // EXTAR END
     default:
         LOGD("default");

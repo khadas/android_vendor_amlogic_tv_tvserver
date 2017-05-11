@@ -116,17 +116,20 @@ tv_hdmi_color_range_t CHDMIRxManager::GetHdmiColorRangeMode()
 int CHDMIRxManager::SetHdmiPortCecPhysicAddr()
 {
     char val[10] = {0};
-    tv_source_input_t tmpHdmiPortCecPhysicAddr[4] = {SOURCE_HDMI1};
+    tv_source_input_t tmpHdmiPortCecPhysicAddr[4] = {SOURCE_MAX};
     tvin_port_t tvInport[4] = {TVIN_PORT_HDMI0,TVIN_PORT_HDMI1,TVIN_PORT_HDMI2,TVIN_PORT_HDMI3};
     int HdmiPortCecPhysicAddr = 0x0;
     for (int i = 0; i < 4; i++) {
         tmpHdmiPortCecPhysicAddr[i] = CTvin::getInstance()->Tvin_PortToSourceInput(tvInport[i]);
     }
-    HdmiPortCecPhysicAddr |= (((tmpHdmiPortCecPhysicAddr[0] - 4))
-                             |((tmpHdmiPortCecPhysicAddr[1] - 4) << 4)
-                             |((tmpHdmiPortCecPhysicAddr[2] - 4) << 8)
-                             |((tmpHdmiPortCecPhysicAddr[3] - 4) << 12));
+    HdmiPortCecPhysicAddr |= ((tmpHdmiPortCecPhysicAddr[0] == SOURCE_MAX? 0xf:(tmpHdmiPortCecPhysicAddr[0]-4))
+                             |((tmpHdmiPortCecPhysicAddr[1] == SOURCE_MAX? 0xf:(tmpHdmiPortCecPhysicAddr[1]-4)) << 4)
+                             |((tmpHdmiPortCecPhysicAddr[2] == SOURCE_MAX? 0xf:(tmpHdmiPortCecPhysicAddr[2]-4)) << 8)
+                             |((tmpHdmiPortCecPhysicAddr[3] == SOURCE_MAX? 0xf:(tmpHdmiPortCecPhysicAddr[3]-4)) << 12));
     sprintf(val, "%x", HdmiPortCecPhysicAddr);
-    tvWriteSysfs(HDMI_ROECR_MAP_RANGE, val);
+    tvWriteSysfs(HDMI_CEC_PORT_SEQUENCE, val);
+    memset(val,0,10);
+    sprintf(val, "%d", HdmiPortCecPhysicAddr);
+    tvWriteSysfs(HDMI_CEC_PORT_MAP,val);
     return 0;
 }

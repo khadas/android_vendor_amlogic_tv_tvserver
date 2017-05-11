@@ -19,7 +19,9 @@
 #define CS_HDMIRX_DEV_PATH    "/dev/hdmirx0"
 #define HDMI_FORCE_COLOR_RANGE "/sys/module/tvin_hdmirx/parameters/force_color_range"
 #define HDMIRX0_DEBUG_PATH "/sys/class/hdmirx/hdmirx0/debug"
-#define HDMI_ROECR_MAP_RANGE "/sys/module/tvin_hdmirx/parameters/port_map"
+#define HDMI_CEC_PORT_SEQUENCE "/sys/class/cec/port_seq"
+#define HDMI_CEC_PORT_MAP "/sys/module/tvin_hdmirx/parameters/port_map"
+
 
 typedef struct _hdcp_ksv {
     int bksv0;

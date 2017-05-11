@@ -1598,7 +1598,7 @@ unsigned int CTvin::Tvin_TransPortStringToValue(const char *port_str)
         return TVIN_PORT_HDMI3;
     }
 
-    return TVIN_PORT_MPEG0;
+    return TVIN_PORT_NULL;
 }
 
 void CTvin::Tvin_LoadSourceInputToPortMap()
@@ -1620,16 +1620,16 @@ void CTvin::Tvin_LoadSourceInputToPortMap()
     config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.ypbpr2", "TVIN_PORT_COMP1");
     mSourceInputToPortMap[SOURCE_YPBPR2] = Tvin_TransPortStringToValue(config_value);
 
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi1", "TVIN_PORT_HDMI0");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi1", "");
     mSourceInputToPortMap[SOURCE_HDMI1] = Tvin_TransPortStringToValue(config_value);
 
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi2", "TVIN_PORT_HDMI2");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi2", "");
     mSourceInputToPortMap[SOURCE_HDMI2] = Tvin_TransPortStringToValue(config_value);
 
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi3", "TVIN_PORT_HDMI1");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi3", "");
     mSourceInputToPortMap[SOURCE_HDMI3] = Tvin_TransPortStringToValue(config_value);
 
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi4", "TVIN_PORT_HDMI3");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi4", "");
     mSourceInputToPortMap[SOURCE_HDMI4] = Tvin_TransPortStringToValue(config_value);
 
     config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.vga", "TVIN_PORT_VGA0");

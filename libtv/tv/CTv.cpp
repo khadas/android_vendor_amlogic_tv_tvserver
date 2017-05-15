@@ -2128,7 +2128,8 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
             m_hdmi_audio_data = 0;
         } else if (source_input == SOURCE_SPDIF) {
             InitTvAudio(48000, CC_IN_USE_SPDIF_DEVICE);
-            HanldeAudioInputSr(-1);
+            HanldeAudioInputSr(48000);
+            SetAudioMuteForTv(CC_AUDIO_UNMUTE);
         } else {
             InitTvAudio(48000, CC_IN_USE_I2S_DEVICE);
             HanldeAudioInputSr(-1);
@@ -2152,9 +2153,6 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         }
     }
 
-    if (source_input == SOURCE_SPDIF)
-        resumeSpdifStatus();
-
     Tv_SetAudioSourceType(source_input);
     RefreshAudioMasterVolume(source_input);
     Tv_SetAudioOutputSwap_Type(source_input);
@@ -2162,20 +2160,6 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
 
     mTvAction &= ~ TV_ACTION_SOURCE_SWITCHING;
     return 0;
-}
-
-void CTv::resumeSpdifStatus()
-{
-    usleep(1000 * 1000);
-
-    TvEvent::SignalInfoEvent ev;
-    ev.mStatus = TVIN_SIG_STATUS_NULL;
-    ev.mTrans_fmt = TVIN_TFMT_2D;
-    ev.mTrans_fmt = TVIN_TFMT_2D;
-    ev.mReserved = 1;
-    sendTvEvent(ev);
-
-    SetAudioMuteForTv(CC_AUDIO_UNMUTE);
 }
 
 void CTv::onSigToStable()
@@ -2858,6 +2842,9 @@ int CTv::Tv_SetAudioInSource (tv_source_input_t source_input)
         }
         break;
     case SOURCE_SPDIF:
+        AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_SPDIFIN);
+        vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_HDMI);
+        break;
     case SOURCE_AV1:
     case SOURCE_AV2:
     case SOURCE_YPBPR1:

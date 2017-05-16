@@ -595,7 +595,7 @@ int CTv::Scan(const char *feparas, const char *scanparas) {
     LOGD("fe[%s], scan[%s] %s", feparas, scanparas, __FUNCTION__);
 
     mAv.StopTS();
-
+    mpTvin->Tvin_StopDecoder();
     if ( iSBlackPattern ) {
         mAv.DisableVideoWithBlackColor();
     } else {

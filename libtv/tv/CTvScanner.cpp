@@ -920,8 +920,8 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
             Vector<sp<CTvChannel>> vcp;
             CTvRegion::getChannelListByName((char *)list_name, vcp);
             for (int i = 0; i < (int)vcp.size(); i++) {
-                if (tsinfo->fe.getFrequency() == vcp[i]->getFrequency()) {
-                    psrv_info->major_chan_num = vcp[i]->getID();
+                if ((tsinfo->fe.getFrequency()/1000) == (vcp[i]->getFrequency()/1000)) {
+                    psrv_info->major_chan_num = i+2;
                     psrv_info->minor_chan_num = 0;
                     psrv_info->chan_num = (psrv_info->major_chan_num<<16) | (psrv_info->minor_chan_num&0xffff);
                     psrv_info->hidden = 0;
@@ -947,7 +947,7 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
     slist.push_back(psrv_info);
 }
 
-void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist)
+void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist)
 {
     LOGD("processAtscTs");
 
@@ -1016,7 +1016,7 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, servi
                     goto VCT_END;
                 }
             } else {
-                AM_DEBUG(1, "Program(%d ts:%d) in VCT(ts:%d) found, current (ts:%d)",
+                LOGD("Program(%d ts:%d) in VCT(ts:%d) found, current (ts:%d)",
                     vcinfo->program_number, vcinfo->channel_TSID,
                     vct->transport_stream_id, ts->digital.pats->i_ts_id);
                 continue;
@@ -1030,6 +1030,18 @@ VCT_END:
         if (!is_cc_smart) {
             memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
             addFixedATSCCaption(&psrv_info->cap_info, -1, -1, -1, 1);
+        }
+
+        if (!program_found_in_vct) {
+            const char *list_name = getDtvScanListName(mFEParas.getFEMode().getMode());
+            Vector<sp<CTvChannel>> vcp;
+            CTvRegion::getChannelListByName((char *)list_name, vcp);
+            for (int i = 0; i < (int)vcp.size(); i++) {
+                if ((tsinfo->fe.getFrequency()/1000) == (vcp[i]->getFrequency()/1000)) {
+                    psrv_info->major_chan_num = i+2;
+                    psrv_info->minor_chan_num = psrv_info->srv_id;
+                }
+            }
         }
 
         slist.push_back(psrv_info);
@@ -1074,7 +1086,7 @@ VCT_END:
             slist.push_back(psrv_info);
 
         } else {
-            AM_DEBUG(1, "Program(%d ts:%d) in VCT(ts:%d) found",
+            LOGD("Program(%d ts:%d) in VCT(ts:%d) found",
                 vcinfo->program_number, vcinfo->channel_TSID,
                 vct->transport_stream_id);
             continue;
@@ -1114,7 +1126,7 @@ void CTvScanner::storeScan(AM_SCAN_Result_t *result, AM_SCAN_TS_t *curr_ts)
             ts_list.push_back(tsinfo);
 
             if (result->start_para->dtv_para.standard == AM_SCAN_DTV_STD_ATSC)
-                processAtscTs(result, ts, slist);
+                processAtscTs(result, ts, tsinfo, slist);
             else
                 processDvbTs(result, ts, slist);
             for (service_list_t::iterator p=slist.begin(); p != slist.end(); p++) {

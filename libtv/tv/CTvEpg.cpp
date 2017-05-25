@@ -85,7 +85,7 @@ void CTvEpg::epg_create(int fend_id, int dmx_id, int src, char *textLangs)
         return;
     }
 
-    /*注册EIT通知事件*/
+    /*register eit events notifications*/
     AM_EVT_Subscribe((long)mEpgScanHandle, AM_EPG_EVT_NEW_TDT, epg_evt_callback, NULL);
     AM_EVT_Subscribe((long)mEpgScanHandle, AM_EPG_EVT_NEW_STT, epg_evt_callback, NULL);
     AM_EVT_Subscribe((long)mEpgScanHandle, AM_EPG_EVT_UPDATE_EVENTS, epg_evt_callback, NULL);
@@ -99,15 +99,19 @@ void CTvEpg::epg_create(int fend_id, int dmx_id, int src, char *textLangs)
 
 void CTvEpg::epg_destroy()
 {
-    /*反注册EIT通知事件*/
-    AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_NEW_TDT, epg_evt_callback, NULL);
-    AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_NEW_STT, epg_evt_callback, NULL);
-    AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_UPDATE_EVENTS, epg_evt_callback, NULL);
-    AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_UPDATE_PROGRAM_AV, epg_evt_callback, NULL);
-    AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_UPDATE_PROGRAM_NAME, epg_evt_callback, NULL);
-    AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_UPDATE_TS, epg_evt_callback, NULL);
-    AM_EPG_Destroy(mEpgScanHandle);
-    AM_DMX_Close(mDmx_dev_id);
+    if (mEpgScanHandle != NULL) {
+        /*unregister eit events notifications*/
+        AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_NEW_TDT, epg_evt_callback, NULL);
+        AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_NEW_STT, epg_evt_callback, NULL);
+        AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_UPDATE_EVENTS, epg_evt_callback, NULL);
+        AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_UPDATE_PROGRAM_AV, epg_evt_callback, NULL);
+        AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_UPDATE_PROGRAM_NAME, epg_evt_callback, NULL);
+        AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_UPDATE_TS, epg_evt_callback, NULL);
+        AM_EPG_Destroy(mEpgScanHandle);
+    }
+
+    if (mDmx_dev_id != INVALID_ID)
+        AM_DMX_Close(mDmx_dev_id);
 }
 
 

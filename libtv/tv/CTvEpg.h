@@ -108,6 +108,7 @@ public :
         mCurScanProgramId  = INVALID_ID;
         mEpgScanHandle = NULL;
         mpObserver = NULL;
+        mDmx_dev_id = INVALID_ID;
     }
     void Init(int fend, int dmx, int fend_mod, char *textLanguages, char *dvb_text_coding);
 

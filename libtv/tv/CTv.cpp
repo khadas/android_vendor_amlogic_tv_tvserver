@@ -590,10 +590,13 @@ int CTv::clearFrontEnd(int para)
 
 int CTv::Scan(const char *feparas, const char *scanparas) {
     AutoMutex lock(mLock);
+    m_source_input = SOURCE_INVALID;
+    SetAudioMuteForTv ( CC_AUDIO_MUTE );
     mTvAction = mTvAction | TV_ACTION_SCANNING;
     LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
     LOGD("fe[%s], scan[%s] %s", feparas, scanparas, __FUNCTION__);
 
+    mSigDetectThread.requestAndWaitPauseDetect();
     mAv.StopTS();
     mpTvin->Tvin_StopDecoder();
     if ( iSBlackPattern ) {

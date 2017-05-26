@@ -1568,8 +1568,7 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
     CTvin *tvin = CTvin::getInstance();
     if (type == FE_ANALOG) {
         fe->setMode(type);
-        //tvin->AFE_OpenModule();
-        //tvin->VDIN_OpenModule();
+        tvin->Tvin_StopDecoder();
         tvin->VDIN_ClosePort();
         tvin->VDIN_OpenPort(tvin->Tvin_GetSourcePortBySourceInput(SOURCE_TV));
         if (needVbiAssist())
@@ -1577,6 +1576,7 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
     } else {
         if (needVbiAssist())
             stopVBI();
+        tvin->Tvin_StopDecoder();
         tvin->VDIN_ClosePort();
         //tvin->VDIN_OpenPort(tvin->Tvin_GetSourcePortBySourceInput(SOURCE_DTV));
         //tvin->VDIN_CloseModule();

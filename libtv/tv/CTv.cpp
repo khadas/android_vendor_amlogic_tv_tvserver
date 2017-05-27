@@ -1311,7 +1311,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor (fp.getVideoStd(), fp.getAudioStd());
 
         LOGD("%s: vstd=%d astd=%d stdandcolor=%lld", __FUNCTION__, fp.getVideoStd(), fp.getAudioStd(), stdAndColor);
-
+        SetAudioMuteForTv ( CC_AUDIO_MUTE);
         //set frontend parameters to tuner dev
         mSigDetectThread.requestAndWaitPauseDetect();
         mpTvin->Tvin_StopDecoder();

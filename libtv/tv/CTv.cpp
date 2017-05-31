@@ -3934,7 +3934,12 @@ int CTv::SetAudioBalance(int tmp_val)
     } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_CUSTOMER_LIB) {
         mCustomerCtrl.SetBlance(mMainVolumeBalanceVal);
     } else {
-        SetAudioMasterVolume(GetAudioMasterVolume());
+        int tmp_ret = 0;
+        int vol_buf[2] = {0, 0};
+        mAudioAlsa.CalculateBalanceVol(255, mMainVolumeBalanceVal, vol_buf);
+
+        tmp_ret |= mAudioAlsa.SetExternalDacChannelVolume(1, vol_buf[0]);
+        tmp_ret |= mAudioAlsa.SetExternalDacChannelVolume(2, vol_buf[1]);
     }
     return 0;
 }

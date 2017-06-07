@@ -557,6 +557,7 @@ protected:
         CTv *mpTv;
         int m_sig_stable_nums;
     };
+    bool isTvViewBlocked();
     void onEnableVideoLater(int framecount);
     void onVideoAvailableLater(int framecount);
     int resetDmxAndAvSource();

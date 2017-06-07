@@ -2241,12 +2241,24 @@ void CTv::onSigStillStable()
         m_sig_stable_nums++;
 }
 
+bool CTv::isTvViewBlocked() {
+    char prop_value[PROPERTY_VALUE_MAX];
+    memset(prop_value, '\0', PROPERTY_VALUE_MAX);
+    property_get("persist.sys.tvview.blocked", prop_value, "false");
+    LOGD("%s, persist.sys.tvview.blocked = %s", __FUNCTION__, prop_value);
+    return (strcmp(prop_value, "true") == 0) ? true : false;
+}
+
 void CTv::onEnableVideoLater(int framecount)
 {
     LOGD("onEnableVideoLater framecount = %d", framecount);
     mAv.EnableVideoWhenVideoPlaying(framecount);
     if (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_HDMI ) {
-        SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
+        if (isTvViewBlocked()) {
+            SetAudioMuteForTv ( CC_AUDIO_MUTE );
+        } else {
+            SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
+        }
         Tv_SetAudioInSource(m_source_input);
     }
 }

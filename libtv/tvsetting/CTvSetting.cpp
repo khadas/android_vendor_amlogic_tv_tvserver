@@ -2495,6 +2495,8 @@ int SSMSaveHDMIEdidMode(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t rw_val)
         case HDMI_PORT_3 :
             ret = SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI3_EDID_START, 1, &tmp_val);
             break;
+        case HDMI_PORT_4 :
+            ret = SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI4_EDID_START, 1, &tmp_val);
         default:
             break;
     }
@@ -2526,6 +2528,15 @@ tv_hdmi_edid_version_t SSMReadHDMIEdidMode(tv_hdmi_port_id_t port)
             break;
         case HDMI_PORT_3 :
             tmp_ret = SSMReadNTypes(CUSTOMER_DATA_POS_HDMI3_EDID_START, 1, &tmp_val);
+            if (tmp_ret < 0) {
+                tmp_val = 0;
+            }
+            if (1 < tmp_val ) {
+                tmp_val = 0;
+            }
+            break;
+        case HDMI_PORT_4:
+            tmp_ret = SSMReadNTypes(CUSTOMER_DATA_POS_HDMI4_EDID_START, 1, &tmp_val);
             if (tmp_ret < 0) {
                 tmp_val = 0;
             }
@@ -2571,6 +2582,8 @@ int SSMHDMIEdidRestoreDefault(void)
         config_set_str(CFG_SECTION_TV, CS_HDMI_PORT2_EDID_FILE_PATH_CFG, "");
     if (config_get_str(CFG_SECTION_TV, CS_HDMI_PORT3_EDID_FILE_PATH_CFG, NULL) != NULL)
         config_set_str(CFG_SECTION_TV, CS_HDMI_PORT3_EDID_FILE_PATH_CFG, "");
+    if (config_get_str(CFG_SECTION_TV, CS_HDMI_PORT4_EDID_FILE_PATH_CFG, NULL) != NULL)
+        config_set_str(CFG_SECTION_TV, CS_HDMI_PORT4_EDID_FILE_PATH_CFG, "");
 
     int tmp_val = HDMI_EDID_VER_14;
     return SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, SSMGetCustomerDataLen(), &tmp_val);

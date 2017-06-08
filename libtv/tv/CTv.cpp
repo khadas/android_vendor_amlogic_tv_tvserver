@@ -1753,10 +1753,6 @@ int CTv::OpenTv ( void )
     }
 
     mpTvin->Tvin_LoadSourceInputToPortMap();
-    mHDMIRxManager.SetHdmiPortCecPhysicAddr();
-    Tv_HandeHDMIEDIDFilePathConfig();
-    SSMSetHDMIEdid(1);
-    mHDMIRxManager.HdmiRxEdidUpdate();
 
     extern CBlobDevice *mpCurDevice;
     SSMHandler::mSSMHeaderFile = mpCurDevice;
@@ -1798,6 +1794,11 @@ int CTv::OpenTv ( void )
     } else {
         mAutoSetDisplayFreq = false;
     }
+
+    mHDMIRxManager.SetHdmiPortCecPhysicAddr();
+    Tv_HandeHDMIEDIDFilePathConfig();
+    SSMSetHDMIEdid(1);
+    mHDMIRxManager.HdmiRxEdidUpdate();
 
     Tvin_GetTvinConfig();
     m_last_source_input = SOURCE_INVALID;

@@ -412,6 +412,7 @@ private:
 
     AM_CC_Handle_t mVbi;
     int mVbiTsId;
+    int mAtvIsAtsc;
 
     typedef struct {
         int freq;

@@ -73,6 +73,7 @@ int CTvScanner::Scan(CFrontEnd::FEParas &fp, ScanParas &sp) {
     mCurEv.reset();
     mFEType = -1;
 
+    mAtvIsAtsc = 0;
     // Create the scan
     memset(&para, 0, sizeof(para));
     para.fend_dev_id = 0;//default
@@ -373,7 +374,7 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
         mCurEv.mAudioStd = mCurEv.mFEParas.getAudioStd();
         mCurEv.mIsAutoStd = ((mCurEv.mVideoStd & V4L2_COLOR_STD_AUTO) == V4L2_COLOR_STD_AUTO) ? 1 : 0;
 
-        if (srv->tsinfo->dtvstd == AM_SCAN_DTV_STD_ATSC) {
+        if (mAtvIsAtsc) {
             mCurEv.mAccessControlled = srv->access_controlled;
             mCurEv.mHidden = srv->hidden;
             mCurEv.mHideGuide = srv->hide_guide;
@@ -1300,6 +1301,11 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
             || (atv_para.mode == AM_SCAN_ATVMODE_AUTO && freq1 > freq2)) {
         LOGW(" freq error start = %d end = %d",  freq1,  freq2);
         return -1;
+    }
+
+    if (FE_ATSC == fp.getFEMode().getBase()) {
+        mAtvIsAtsc = 1;
+        LOGD("create ATV scan param: ATSC");
     }
 
     atv_para.am_scan_atv_cvbs_lock =  &checkAtvCvbsLockHelper;

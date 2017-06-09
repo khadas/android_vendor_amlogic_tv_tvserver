@@ -886,8 +886,7 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
     psrv_info->tsinfo = tsinfo;
 
     /*if atsc, generate the analog channel's channel number*/
-    if (result->start_para->dtv_para.mode != AM_SCAN_DTVMODE_NONE
-        && result->start_para->dtv_para.standard == AM_SCAN_DTV_STD_ATSC) {
+    if (mAtvIsAtsc) {
 
         int tsid = -1;
         int found = 0;
@@ -917,11 +916,12 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
         LOGD("tsid:%d, found:%d", tsid, found);
         /*generate by channel id*/
         if (tsid == -1 || found == 0) {
-            const char *list_name = getDtvScanListName(mFEParas.getFEMode().getMode());
+            //const char *list_name = getDtvScanListName(mFEParas.getFEMode().getMode());
             Vector<sp<CTvChannel>> vcp;
-            CTvRegion::getChannelListByName((char *)list_name, vcp);
+            CTvRegion::getChannelListByName((char *)"U.S.,ATSC Air", vcp); // NTSC analog channel id is same with ATSC AIR
             for (int i = 0; i < (int)vcp.size(); i++) {
-                if ((tsinfo->fe.getFrequency()/1000) == (vcp[i]->getFrequency()/1000)) {
+                int diff = vcp[i]->getFrequency() - tsinfo->fe.getFrequency();
+                if (diff > 0 && diff < 2000000) { // NTSC analog channel frequancy is less then ATSC AIR 1.75M on the same channel id
                     psrv_info->major_chan_num = i+2;
                     psrv_info->minor_chan_num = 0;
                     psrv_info->chan_num = (psrv_info->major_chan_num<<16) | (psrv_info->minor_chan_num&0xffff);
@@ -937,7 +937,29 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
                     LOGD("get channel info by channel id [%d.%d][%s]",
                         psrv_info->major_chan_num, psrv_info->minor_chan_num,
                         psrv_info->name);
+                    found = 1;
+                    break;
                 }
+            }
+            if (found == 0) { // do not match ATSC AIR channel table, major channel number start from ATSC AIR channel table max number + 1
+                if (slist.size() <= 0 || slist.back()->major_chan_num <= vcp.size() + 1)
+                    psrv_info->major_chan_num = vcp.size() + 2;
+                else
+                    psrv_info->major_chan_num = slist.back()->major_chan_num + 1;
+
+                psrv_info->minor_chan_num = 0;
+                psrv_info->chan_num = (psrv_info->major_chan_num<<16) | (psrv_info->minor_chan_num&0xffff);
+                psrv_info->hidden = 0;
+                psrv_info->hide_guide = 0;
+                psrv_info->source_id = -1;
+                char name[] = "ATV Program";
+                memcpy(psrv_info->name, "xxx", 3);
+                memcpy(psrv_info->name+3, name, sizeof(name));
+                psrv_info->name[sizeof(name)+3] = 0;
+                psrv_info->srv_type = AM_SCAN_SRV_ATV;
+                LOGD("ntsc channel doesn't match ATSC Air table , set channel id to [%d.%d][%s]",
+                        psrv_info->major_chan_num, psrv_info->minor_chan_num,
+                        psrv_info->name);
             }
         }
     }
@@ -1149,10 +1171,7 @@ void CTvScanner::storeScan(AM_SCAN_Result_t *result, AM_SCAN_TS_t *curr_ts)
             processTsInfo(result, ts, tsinfo);
             ts_list.push_back(tsinfo);
 
-            service_list_t slist;
-            processAnalogTs(result, ts, tsinfo, slist);
-            service_list.merge(slist);
-            slist.clear();
+            processAnalogTs(result, ts, tsinfo, service_list);
         }
     }
     AM_SI_LIST_END()
@@ -1621,6 +1640,8 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
             pT->mCurEv.mPercent = 0;
             pT->mCurEv.mScanMode = (cp->mode<<24)|((cp->atv_para.mode&0xFF)<<16)|(cp->dtv_para.mode&0xFFFF);
             pT->mCurEv.mSortMode = (cp->dtv_para.standard<<16)|(cp->dtv_para.sort_method&0xFFFF);
+            if (FE_ATSC == pT->mFEParas.getFEMode().getBase())
+                pT->mCurEv.mSortMode = pT->mCurEv.mSortMode | (AM_SCAN_DTV_STD_ATSC<<16);
             pT->mCurEv.mType = ScannerEvent::EVENT_SCAN_BEGIN;
             pT->sendEvent(pT->mCurEv);
             }

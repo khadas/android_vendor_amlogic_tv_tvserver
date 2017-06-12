@@ -132,6 +132,34 @@ typedef enum reg_bus_type_e {
     REG_TYPE_MAX,
 } reg_bus_type_t;
 
+typedef enum pq_table_name_e {
+    TABLE_NAME_SHARPNESS0 = 0x1,/*in vpp*/
+    TABLE_NAME_SHARPNESS1 = 0x2,/*in vpp*/
+    TABLE_NAME_DNLP = 0x4,      /*in vpp*/
+    TABLE_NAME_CM = 0x8,        /*in vpp*/
+    TABLE_NAME_BLK_BLUE_EXT = 0x10,/*in vpp*/
+    TABLE_NAME_BRIGHTNESS = 0x20,/*in vpp*/
+    TABLE_NAME_CONTRAST = 0x40, /*in vpp*/
+    TABLE_NAME_SATURATION_HUE = 0x80,/*in vpp*/
+    TABLE_NAME_CVD2 = 0x100,        /*in tvafe*/
+    TABLE_NAME_DI = 0x200,      /*in di*/
+    TABLE_NAME_NR = 0x400,      /*in di*/
+    TABLE_NAME_MCDI = 0x800,    /*in di*/
+    TABLE_NAME_DEBLOCK = 0x1000,    /*in di*/
+    TABLE_NAME_DEMOSQUITO = 0x2000,/*in di*/
+    TABLE_NAME_WB = 0X4000,     /*in vpp*/
+    TABLE_NAME_GAMMA = 0X8000,  /*in vpp*/
+    TABLE_NAME_XVYCC = 0x10000, /*in vpp*/
+    TABLE_NAME_HDR = 0x20000,   /*in vpp*/
+    TABLE_NAME_DOLBY_VISION = 0x40000,/*in vpp*/
+    TABLE_NAME_RESERVED1 = 0x80000,
+    TABLE_NAME_RESERVED2 = 0x100000,
+    TABLE_NAME_RESERVED3 = 0x200000,
+    TABLE_NAME_RESERVED4 = 0x400000,
+    TABLE_NAME_RESERVED5 = 0x800000,
+    TABLE_NAME_MAX,
+} pq_table_name_t;
+
 /* Register table structure */
 typedef struct am_reg_s {
     unsigned int type; //32-bits; 0: CBUS; 1: APB BUS...
@@ -150,6 +178,16 @@ typedef struct am_regs_s {
     unsigned int    length; // Length of total am_reg
     struct am_reg_s am_reg[REGS_MAX_NUMBER];
 } am_regs_t;
+
+typedef struct am_pq_param_s {
+    unsigned int table_name;
+    unsigned int table_len;
+    void *table_ptr;
+    void *reserved0;
+    void *reserved1;
+    void *reserved2;
+} am_pq_param_t;
+
 #endif
 
 #endif  // _TVOUT_CM_H

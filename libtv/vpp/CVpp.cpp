@@ -37,6 +37,7 @@ CVpp *CVpp::getInstance()
 CVpp::CVpp()
 {
     vpp_amvideo_fd = -1;
+    di_fd = -1;
     mIsHdrLastTime = false;
     mpPqData = new CPqData();
     fbcIns = GetSingletonFBC();
@@ -68,6 +69,7 @@ int CVpp::Vpp_Init(const char *pq_db_path, bool hdmiOutFbc)
     Vpp_GetVppConfig();
 
     ret = VPP_OpenModule();
+    ret = DI_OpenModule();
     backlight = GetBacklight(SOURCE_TV);
 
     if (mbVppCfg_backlight_init) {
@@ -114,6 +116,7 @@ int CVpp::Vpp_Uninit(void)
 {
     Vpp_ResetLastVppSettingsSourceType();
     VPP_CloseModule();
+    DI_CloseModule();
     mpPqData->closeDb();
     return 0;
 }
@@ -158,6 +161,32 @@ int CVpp::VPP_CloseModule(void)
     return 0;
 }
 
+int CVpp::DI_OpenModule(void)
+{
+    if (di_fd < 0) {
+        di_fd = open(DI_DEV_PATH, O_RDWR);
+
+        LOGD("DI_OpenModule path: %s", DI_DEV_PATH);
+
+        if (di_fd < 0) {
+            LOGE("Open DI module, error(%s)!\n", strerror(errno));
+            return -1;
+        }
+    }
+
+    return di_fd;
+}
+
+int CVpp::DI_CloseModule(void)
+{
+    if (di_fd>= 0) {
+        close ( di_fd);
+        di_fd = -1;
+    }
+    return 0;
+}
+
+
 int CVpp::VPP_DeviceIOCtl(int request, ...)
 {
     int tmp_ret = -1;
@@ -168,6 +197,38 @@ int CVpp::VPP_DeviceIOCtl(int request, ...)
     va_end(ap);
     tmp_ret = ioctl(vpp_amvideo_fd, request, arg);
     return tmp_ret;
+}
+
+int CVpp::DI_DeviceIOCtl(int request, ...)
+{
+    int tmp_ret = -1;
+    va_list ap;
+    void *arg;
+    va_start(ap, request);
+    arg = va_arg ( ap, void * );
+    va_end(ap);
+    tmp_ret = ioctl(di_fd, request, arg);
+    return tmp_ret;
+}
+
+int CVpp::DI_LoadRegs(am_pq_param_t di_regs)
+{
+    int count_retry = 20;
+    int rt = 0;
+    while (count_retry) {
+        rt = DI_DeviceIOCtl(AMDI_IOC_SET_PQ_PARM, &di_regs);
+        if (rt < 0) {
+            LOGE("%s, error(%s), errno(%d)\n", __FUNCTION__, strerror(errno), errno);
+            if (errno == EBUSY) {
+                LOGE("%s, %s, retry...\n", __FUNCTION__, strerror(errno));
+                count_retry--;
+                continue;
+            }
+        }
+        break;
+    }
+
+    return rt;
 }
 
 int CVpp::Vpp_LoadRegs(am_regs_t regs)
@@ -232,6 +293,7 @@ int CVpp::LoadVppSettings(tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_
                           is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
 {
     int val = 0, ret = -1;
+    di_mode_param_t di_param;
     vpp_color_temperature_mode_t temp_mode = VPP_COLOR_TEMPERATURE_MODE_STANDARD;
     vpp_picture_mode_t pqmode = VPP_PICTURE_MODE_STANDARD;
     vpp_display_mode_t dispmode = VPP_DISPLAY_MODE_169;
@@ -247,15 +309,17 @@ int CVpp::LoadVppSettings(tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_
         return -1;
     }
 
-    nr_mode = GetNoiseReductionMode(tv_source_input);
-    ret |= Vpp_SetNoiseReductionMode(nr_mode, source_type, source_port, sig_fmt, is3d, trans_fmt);
     ret |= Vpp_SetXVYCCMode(VPP_XVYCC_MODE_STANDARD, source_type, source_port, sig_fmt, is3d,
-                            trans_fmt);
-    ret |= Vpp_SetMCDIMode(VPP_MCDI_MODE_STANDARD, source_type, source_port, sig_fmt, is3d,
-                           trans_fmt);
-    ret |= Vpp_SetDeblockMode(VPP_DEBLOCK_MODE_MIDDLE, source_port, sig_fmt, is3d, trans_fmt);
+                                trans_fmt);
 
-    Vpp_LoadDI(source_type, sig_fmt, is3d, trans_fmt);
+    nr_mode = GetNoiseReductionMode(tv_source_input);
+    di_param.nr_mode = (vpp_noise_reduction2_mode_t)nr_mode;
+    di_param.tablename = "GeneralDITable";
+    di_param.deblock_mode = VPP_DEBLOCK_MODE_MIDDLE;
+    di_param.mcdi_mode = VPP_MCDI_MODE_STANDARD;
+
+    ret |= Vpp_SetDIMode(di_param, source_port, sig_fmt, is3d, trans_fmt);
+
     Vpp_LoadBasicRegs(source_type, sig_fmt, is3d, trans_fmt);
     SetGammaValue(VPP_GAMMA_CURVE_AUTO, 1);
 
@@ -371,24 +435,6 @@ int CVpp::Vpp_GetVppConfig(void)
     return 0;
 }
 
-int CVpp::Vpp_LoadDI(tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt,
-                     is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
-{
-    am_regs_t regs;
-    int ret = -1;
-    tvin_port_t source_port = CTvin::Tvin_GetSourcePortBySourceType(source_type);
-    if (mpPqData->getRegValues("GeneralDITable", source_port, sig_fmt, is3d, trans_fmt, &regs) > 0) {
-        if (Vpp_LoadRegs(regs) < 0) {
-            LOGE("%s, Vpp_LoadRegs failed!\n", __FUNCTION__);
-        } else {
-            ret = 0;
-        }
-    } else {
-        LOGE("Vpp_LoadDI getRegValues failed!\n");
-    }
-    return ret;
-}
-
 int CVpp::Vpp_LoadBasicRegs(tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt,
                             is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
 {
@@ -416,6 +462,48 @@ int CVpp::Vpp_LoadBasicRegs(tv_source_input_type_t source_type, tvin_sig_fmt_t s
         LOGE("Vpp_LoadBasicRegs getPQData failed!\n");
         ret = -1;
     }
+    return ret;
+}
+
+int CVpp::Vpp_SetDIMode(di_mode_param_t di_param, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt,
+                            is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
+{
+    am_regs_t regs;
+    regs.length = 0;
+    int ret = -1;
+    am_pq_param_t di_regs;
+    di_regs.table_name = 0;
+
+    if (mpPqData->PQ_GetDIParams(di_param.tablename, source_port, sig_fmt, is3d, trans_fmt, &regs) != 0) {
+        LOGE("%s GetDIParams failed!\n",__FUNCTION__);
+    }
+
+    if (mpPqData->PQ_GetMCDIParams(di_param.mcdi_mode,source_port, sig_fmt, is3d, trans_fmt,&regs) != 0) {
+        LOGE("%s GetDIParams failed!\n",__FUNCTION__);
+    }
+
+    if (mpPqData->PQ_GetDeblockParams(di_param.deblock_mode,source_port, sig_fmt, is3d, trans_fmt, &regs) != 0) {
+       LOGE("%s GetDeblockParams failed!\n",__FUNCTION__);
+    }
+
+    if (mpPqData->PQ_GetNR2Params(di_param.nr_mode,source_port, sig_fmt, is3d, trans_fmt,  &regs) != 0) {
+       LOGE("%s GetDeblockParams failed!\n",__FUNCTION__);
+    }
+
+    di_regs.table_name |= (TABLE_NAME_DI | TABLE_NAME_NR | TABLE_NAME_MCDI | TABLE_NAME_DEBLOCK);
+    di_regs.table_len = regs.length;
+
+    am_reg_t tmp_buf[regs.length];
+    for (int i=0;i<regs.length;i++) {
+          tmp_buf[i].addr = regs.am_reg[i].addr;
+          tmp_buf[i].mask = regs.am_reg[i].mask;
+          tmp_buf[i].type = regs.am_reg[i].type;
+          tmp_buf[i].val  = regs.am_reg[i].val;
+    }
+
+    di_regs.table_ptr = tmp_buf;
+
+    ret = DI_LoadRegs(di_regs);
 
     return ret;
 }
@@ -1097,7 +1185,20 @@ int CVpp::Vpp_SetNoiseReductionMode(vpp_noise_reduction_mode_t nr_mode,
     if (mbVppCfg_new_nr) {
         if (mpPqData->PQ_GetNR2Params((vpp_noise_reduction2_mode_t) nr_mode, source_port, sig_fmt,
                                       is3d, trans_fmt, &regs) == 0) {
-            ret = Vpp_LoadRegs(regs);
+            am_pq_param_t di_regs;
+            di_regs.table_name = TABLE_NAME_NR;
+            di_regs.table_len = regs.length;
+
+            am_reg_t tmp_buf[regs.length];
+            for (int i=0;i<regs.length;i++) {
+                  tmp_buf[i].addr = regs.am_reg[i].addr;
+                  tmp_buf[i].mask = regs.am_reg[i].mask;
+                  tmp_buf[i].type = regs.am_reg[i].type;
+                  tmp_buf[i].val  = regs.am_reg[i].val;
+            }
+            di_regs.table_ptr = tmp_buf;
+
+            ret = DI_LoadRegs(di_regs);
         } else {
             LOGE("PQ_GetNR2Params failed!\n");
         }
@@ -1169,36 +1270,6 @@ int CVpp::Vpp_SetXVYCCMode(vpp_xvycc_mode_t xvycc_mode, tv_source_input_type_t s
         }
     } else {
         LOGE("disable xvycc!\n");
-    }
-    return ret;
-}
-
-int CVpp::Vpp_SetMCDIMode(vpp_mcdi_mode_t mcdi_mode, tv_source_input_type_t source_type __unused,
-                          tvin_port_t source_port, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d,
-                          tvin_trans_fmt_t trans_fmt)
-{
-    int ret = -1;
-    am_regs_t regs;
-
-    if (mpPqData->PQ_GetMCDIParams((vpp_mcdi_mode_t) mcdi_mode, source_port, sig_fmt, is3d,
-                                   trans_fmt, &regs) == 0) {
-        ret = Vpp_LoadRegs(regs);
-    } else {
-        LOGE("%s, PQ_GetMCDIParams failed!\n", __FUNCTION__);
-    }
-    return ret;
-}
-
-int CVpp::Vpp_SetDeblockMode(vpp_deblock_mode_t mode, tvin_port_t source_port,
-                             tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
-{
-    int ret = -1;
-    am_regs_t regs;
-
-    if (mpPqData->PQ_GetDeblockParams(mode, source_port, sig_fmt, is3d, trans_fmt, &regs) == 0) {
-        ret = Vpp_LoadRegs(regs);
-    } else {
-        LOGE("%s PQ_GetDeblockParams failed!\n", __FUNCTION__);
     }
     return ret;
 }

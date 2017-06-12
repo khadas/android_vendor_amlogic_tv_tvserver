@@ -157,6 +157,8 @@ public:
     int getRegValues(const char *table_name, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt, is_3d_type_t is2dOr3d, tvin_trans_fmt_t trans_fmt, am_regs_t *regs);
     int getRegValuesByValue(const char *name, const char *f_name, const char *f2_name, const int val, const int val2, am_regs_t *regs);
     int getRegValuesByValue_long(const char *name, const char *f_name, const char *f2_name, const int val, const int val2, am_regs_t *regs, am_regs_t *regs_1);
+    int getDIRegValuesByValue(const char *name, const char *f_name, const char *f2_name, const int val, const int val2, am_regs_t *regs);
+    int PQ_GetDIParams(const char *table_name, tvin_port_t source, tvin_sig_fmt_t signal, is_3d_type_t is2dOr3d, tvin_trans_fmt_t trans_fmt __unused,  am_regs_t *regs);
     int LoadAllPQData(tvin_port_t source_port, tvin_sig_fmt_t sig_fmt, is_3d_type_t is2dOr3d, tvin_trans_fmt_t trans_fmt, int flag);
     void initialTable(int type);
     void transferFixTable();

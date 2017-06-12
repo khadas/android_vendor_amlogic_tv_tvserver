@@ -285,14 +285,16 @@ int CPqData::getRegValuesByValue(const char *name, const char *f_name, const cha
     char sqlmaster[256];
     int rval = -1;
     //first  get table name
-    if ((strlen(f2_name) == 0) && (val2 == 0))
+    if ((strlen(f2_name) == 0) && (val2 == 0)) {
+
         getSqlParams(__FUNCTION__, sqlmaster,
                      "select RegType, RegAddr, RegMask, RegValue from %s where %s = %d;", name, f_name,
                      val);
-    else
+    } else {
         getSqlParams(__FUNCTION__, sqlmaster,
                      "select RegType, RegAddr, RegMask, RegValue from %s where %s = %d and %s = %d;",
                      name, f_name, val, f2_name, val2);
+    }
 
     rval = this->select(sqlmaster, c_reg_list);
     int count = c_reg_list.getCount();
@@ -508,7 +510,7 @@ int CPqData::PQ_GetNR2Params(vpp_noise_reduction2_mode_t nr_mode, tvin_port_t so
 
     if (c.moveToFirst()) {
         int index_TableName = 0;//c.getColumnIndex("TableName");
-        rval = getRegValuesByValue(c.getString(index_TableName), LEVEL_NAME, "", (int) nr_mode, 0,
+        rval = getDIRegValuesByValue(c.getString(index_TableName), LEVEL_NAME, "", (int) nr_mode, 0,
                                    regs);
     }
     return rval;
@@ -601,7 +603,7 @@ int CPqData::PQ_GetMCDIParams(vpp_mcdi_mode_t mcdi_mode, tvin_port_t source_port
 
     if (c.moveToFirst()) {
         int index_TableName = 0;//c.getColumnIndex("TableName");
-        rval = getRegValuesByValue(c.getString(index_TableName), LEVEL_NAME, "", (int) mcdi_mode,
+        rval = getDIRegValuesByValue(c.getString(index_TableName), LEVEL_NAME, "", (int) mcdi_mode,
                                    0, regs);
     }
     return rval;
@@ -636,8 +638,95 @@ int CPqData::PQ_GetDeblockParams(vpp_deblock_mode_t deb_mode, tvin_port_t source
     }
 
     if (c.moveToFirst()) {
-        rval = getRegValuesByValue(c.getString(0), LEVEL_NAME, "", (int)deb_mode, 0, regs);
+        rval = getDIRegValuesByValue(c.getString(0), LEVEL_NAME, "", (int)deb_mode, 0, regs);
     }
+    return rval;
+}
+
+int CPqData::PQ_GetDIParams(const char *table_name, tvin_port_t source, tvin_sig_fmt_t signal,
+                                  is_3d_type_t is2dOr3d, tvin_trans_fmt_t trans_fmt __unused,  am_regs_t *regs)
+{
+    CSqlite::Cursor c;
+    char sqlmaster[256];
+    int mode = is2dOr3d;//Check2Dor3D(status, trans_fmt);
+    int rval = -1;
+
+    if (table_name == NULL || !strlen(table_name)) {
+        LOGE("%s, table_name is null\n", __FUNCTION__);
+        return rval;
+    }
+
+    getSqlParams(__FUNCTION__, sqlmaster,
+                 "select TableName from %s where "
+                 "TVIN_PORT = %d and "
+                 "TVIN_SIG_FMT = %d and "
+                 "TVIN_TRANS_FMT = %d ;", table_name, source, signal, mode);
+    this->select(sqlmaster, c);
+
+    if (c.getCount() <= 0) {
+        signal = TVIN_SIG_FMT_NULL;
+        c.close();
+        LOGD ("%s - Load default", __func__);
+
+        getSqlParams(__FUNCTION__, sqlmaster,
+                     "select TableName from %s where "
+                     "TVIN_PORT = %d and "
+                     "TVIN_SIG_FMT = %d and "
+                     "TVIN_TRANS_FMT = %d ;", table_name, source, signal, mode);
+        this->select(sqlmaster, c);
+    }
+
+    if (c.moveToFirst()) {
+        int index_TableName = 0;//c.getColumnIndex("TableName");
+        rval = getDIRegValuesByValue(c.getString(index_TableName), "", "", 0, 0, regs);
+    }
+    return rval;
+}
+
+int CPqData::getDIRegValuesByValue(const char *name, const char *f_name, const char *f2_name,
+                                                   const int val, const int val2, am_regs_t *regs)
+{
+    CSqlite::Cursor c_reg_list;
+    char sqlmaster[256];
+    int rval = -1;
+    //first  get table name
+    if ((strlen(f2_name) == 0) && (val2 == 0)) {
+        if ((strlen(f_name) == 0) && (val == 0)) {
+            getSqlParams(__FUNCTION__, sqlmaster,
+                         "select RegType, RegAddr, RegMask, RegValue from %s ;", name);
+        } else {
+            getSqlParams(__FUNCTION__, sqlmaster,
+                         "select RegType, RegAddr, RegMask, RegValue from %s where %s = %d;", name, f_name,
+                         val);
+        }
+    } else {
+        getSqlParams(__FUNCTION__, sqlmaster,
+                     "select RegType, RegAddr, RegMask, RegValue from %s where %s = %d and %s = %d;",
+                     name, f_name, val, f2_name, val2);
+    }
+
+    rval = this->select(sqlmaster, c_reg_list);
+    int count = c_reg_list.getCount();
+    if (count > REGS_MAX_NUMBER) {
+        LOGD("%s, regs is too more, in pq.db count = %d", __FUNCTION__, count);
+        return -1;
+    }
+    if (c_reg_list.moveToFirst()) { //reg list for each table
+        int index_type = 0;//c_reg_list.getColumnIndex("RegType");
+        int index_addr = 1;//c_reg_list.getColumnIndex("RegAddr");
+        int index_mask = 2;//c_reg_list.getColumnIndex("RegMask");
+        int index_val = 3;//c_reg_list.getColumnIndex("RegValue");
+        do {
+            regs->am_reg[regs->length].type = c_reg_list.getUInt(index_type);
+            regs->am_reg[regs->length].addr = c_reg_list.getUInt(index_addr);
+            regs->am_reg[regs->length].mask = c_reg_list.getUInt(index_mask);
+            regs->am_reg[regs->length].val = c_reg_list.getUInt(index_val);
+            regs->length++;
+        } while (c_reg_list.moveToNext());
+    } else
+        rval = -1;
+    //
+    LOGD("%s, length = %d", __FUNCTION__, regs->length);
     return rval;
 }
 

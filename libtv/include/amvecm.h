@@ -68,6 +68,9 @@
 // VPP.Local dimming command list
 #define LDIM_IOC_PARA        _IOW(AMVECM_IOC_MAGIC, 0x50, struct vpu_ldim_param_s)
 
+// VPP.DI IOCTL command list
+#define _DI_    'D'
+#define AMDI_IOC_SET_PQ_PARM     _IOW(_DI_, 0x51, struct am_pq_param_s)
 
 #endif /* __AMVECM_H */
 

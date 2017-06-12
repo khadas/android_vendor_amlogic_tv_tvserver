@@ -17,6 +17,7 @@
 #define PQ_USER_DATA_FROM_DB    1
 
 #define VPP_DEV_PATH    "/dev/amvecm"
+#define DI_DEV_PATH     "/dev/di0"
 #define VPP_3D_DEV_PATH    "/dev/amvideo"
 #define VPP_PANEL_BACKLIGHT_DEV_PATH   "/sys/class/aml_bl/power"
 #define BACKLIGHT_BRIGHTNESS "/sys/class/backlight/aml-bl/brightness"
@@ -217,6 +218,13 @@ typedef enum vpp_gamma_curve_e {
     VPP_GAMMA_CURVE_MAX,
 } vpp_gamma_curve_t;
 
+typedef struct di_mode_param_s {
+    const char *tablename;
+    vpp_mcdi_mode_t mcdi_mode;
+    vpp_deblock_mode_t deblock_mode;
+    vpp_noise_reduction2_mode_t nr_mode;
+}di_mode_param_t;
+
 class CPqData;
 
 class CVpp {
@@ -228,6 +236,7 @@ public:
     int Vpp_Init ( const char *pq_db_path, bool hdmiOutFbc);
     int Vpp_Uninit ( void );
     CPqData *getPqData();
+	int Vpp_SetDIMode(di_mode_param_t di_param, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
     int Vpp_ResetLastVppSettingsSourceType ( void );
     int Vpp_SetColorDemoMode ( vpp_color_demomode_t demomode );
     int Vpp_SetBaseColorMode ( vpp_color_basemode_t basemode , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
@@ -239,10 +248,10 @@ public:
     int Vpp_SetPQMode ( vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input, tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int Vpp_SetNoiseReductionMode ( vpp_noise_reduction_mode_t nr_mode,  tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int Vpp_SetXVYCCMode ( vpp_xvycc_mode_t xvycc_mode, tv_source_input_type_t source_type, tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int Vpp_SetDeblockMode(vpp_deblock_mode_t mode, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
-    int Vpp_SetMCDIMode ( vpp_mcdi_mode_t mcdi_mode, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
+    //int Vpp_SetDeblockMode(vpp_deblock_mode_t mode, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
+    //int Vpp_SetMCDIMode ( vpp_mcdi_mode_t mcdi_mode, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
     int Vpp_SetZoom ( int value );
-    int Vpp_LoadDI(tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
+    //int Vpp_LoadDI(tvin_port_t source_port, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
     int Vpp_LoadBasicRegs ( tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int VppRegisterInterface();
     int RGBGainValueSSMToRisterMapping ( int gainValue );
@@ -370,12 +379,15 @@ private:
     int Vpp_LoadGamma(vpp_gamma_curve_t gamma_curve);
     int Vpp_SetColorTemperatureUser(vpp_color_temperature_mode_t temp_mode, tv_source_input_type_t source_type);
     int VPP_OpenModule ( void );
+    int DI_OpenModule ( void );
     int VPP_CloseModule ( void );
+    int DI_CloseModule ( void );
     int VPP_SetVideoBrightness ( int value );
     int VPP_SetVideoContrast ( int value );
     int VPP_SetVideoSaturationHue ( int satVal, int hueVal );
     int VPP_SetCMRegisterMap ( struct cm_regmap_s *pRegMap );
     int Vpp_LoadRegs ( am_regs_t regs );
+    int DI_LoadRegs ( am_pq_param_t di_regs );
     int VPP_SetRGBOGO ( const struct tcon_rgb_ogo_s *rgbogo );
     int VPP_GetRGBOGO ( const struct tcon_rgb_ogo_s *rgbogo );
     int VPP_SetGammaOnOff ( unsigned char onoff );
@@ -394,6 +406,7 @@ private:
     int VPP_SetVEChromaCoring ( const ve_ccor_s * );
     int VPP_SetVEBlueEnh ( const ve_benh_s * );
     int VPP_DeviceIOCtl ( int request, ... );
+    int DI_DeviceIOCtl(int request, ...);
     int VPP_SetVideoNoiseReduction ( int );
     int VPP_SetDeinterlaceMode ( int );
     int VPP_FBCColorTempBatchGet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t *);
@@ -425,5 +438,6 @@ private:
     CPqData *mpPqData;
 
     int vpp_amvideo_fd;
+    int di_fd;
 };
 #endif

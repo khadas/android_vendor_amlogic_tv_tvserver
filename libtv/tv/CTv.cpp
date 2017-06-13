@@ -1144,10 +1144,15 @@ int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int
 
     mFrontDev->Open(FE_AUTO);
     if (!(mTvAction & TV_ACTION_SCANNING)) {
-        if (!feparas)
-            mFrontDev->setPara ( mode, freq, para1, para2);
-        else
+        if (!feparas) {
+            if ( SOURCE_ADTV == m_source_input_virtual ) {
+                mFrontDev->setPara (FE_ATSC, freq, para1, para2);
+            } else {
+                mFrontDev->setPara (mode, freq, para1, para2);
+            }
+        } else {
             mFrontDev->setPara(feparas);
+        }
     }
     mTvAction |= TV_ACTION_PLAYING;
     startPlayTv ( SOURCE_DTV, vpid, apid, pcr, vfmt, afmt );

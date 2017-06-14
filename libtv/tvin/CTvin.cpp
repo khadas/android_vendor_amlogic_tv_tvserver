@@ -340,9 +340,7 @@ int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
         usleep ( 300000 );
     }
 
-    tvWriteSysfs(SYS_DISPLAY_MODE_PATH, display_mode );
-    setBootEnv(UBOOTENV_OUTPUTMODE, display_mode);
-    setBootEnv(UBOOTENV_HDMIMODE, display_mode);
+    tvWriteDisplayMode(display_mode);
     return 0;
 }
 

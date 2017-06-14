@@ -209,6 +209,14 @@ int tvWriteSysfs(const char *path, int value, int base)
 #endif
 }
 
+int tvWriteDisplayMode(const char *mode)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        sws->setSinkOutputMode(String16(mode));
+    }
+    return 0;
+}
 
 int Tv_MiscRegs(const char *cmd)
 {

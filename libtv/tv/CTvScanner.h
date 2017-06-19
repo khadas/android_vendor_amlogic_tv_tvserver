@@ -316,7 +316,7 @@ private:
     SCAN_ServiceInfo_t* getServiceInfo();
     void extractCaScrambledFlag(dvbpsi_descriptor_t *p_first_descriptor, int *flag);
     void extractSrvInfoFromSdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *sdts, SCAN_ServiceInfo_t *service);
-    void extractSrvInfoFromVct(AM_SCAN_Result_t *result, vct_channel_info_t *vcinfo, SCAN_ServiceInfo_t *service);
+    void extractSrvInfoFromVc(AM_SCAN_Result_t *result, dvbpsi_atsc_vct_channel_t *vcinfo, SCAN_ServiceInfo_t *service);
     void updateServiceInfo(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t *service);
     void notifyService(SCAN_ServiceInfo_t *service);
     void getLcnInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, lcn_list_t &llist);

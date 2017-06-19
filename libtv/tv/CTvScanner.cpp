@@ -441,7 +441,7 @@ void CTvScanner::processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
             else if (IS_DVBT2_TS(ts->digital.fend_para) && ts->digital.dvbt2_data_plp_num > 0 && ts->digital.dvbt2_data_plps[0].sdts)
                 ts_info->tsid = ts->digital.dvbt2_data_plps[0].sdts->i_ts_id;
         } else if (ts->digital.vcts != NULL) {
-            ts_info->tsid = ts->digital.vcts->transport_stream_id;
+            ts_info->tsid = ts->digital.vcts->i_extension;
         }
 
         /*nid*/
@@ -637,26 +637,32 @@ void CTvScanner::extractSrvInfoFromSdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *s
     AM_SI_LIST_END()
 }
 
-void CTvScanner::extractSrvInfoFromVct(AM_SCAN_Result_t *result, vct_channel_info_t *vcinfo, SCAN_ServiceInfo_t *srv_info)
+void CTvScanner::extractSrvInfoFromVc(AM_SCAN_Result_t *result, dvbpsi_atsc_vct_channel_t *vcinfo, SCAN_ServiceInfo_t *srv_info)
 {
+    char name[14] = {0};
+
     UNUSED(result);
 
-    srv_info->major_chan_num = vcinfo->major_channel_number;
-    srv_info->minor_chan_num = vcinfo->minor_channel_number;
+    srv_info->major_chan_num = vcinfo->i_major_number;
+    srv_info->minor_chan_num = vcinfo->i_minor_number;
 
-    srv_info->chan_num = (vcinfo->major_channel_number<<16) | (vcinfo->minor_channel_number&0xffff);
-    srv_info->hidden = vcinfo->hidden;
-    srv_info->hide_guide = vcinfo->hide_guide;
-    srv_info->source_id = vcinfo->source_id;
+    srv_info->chan_num = (vcinfo->i_major_number<<16) | (vcinfo->i_minor_number&0xffff);
+    srv_info->hidden = vcinfo->b_hidden;
+    srv_info->hide_guide = vcinfo->b_hide_guide;
+    srv_info->source_id = vcinfo->i_source_id;
     memcpy(srv_info->name, "xxx", 3);
-    memcpy(srv_info->name+3, vcinfo->short_name, sizeof(vcinfo->short_name));
-    srv_info->name[sizeof(vcinfo->short_name)+3] = 0;
-    srv_info->srv_type = vcinfo->service_type;
+
+    char const *coding = "utf-16";
+    if (AM_SI_ConvertToUTF8((char*)vcinfo->i_short_name, 14, name, 14, (char*)coding) != AM_SUCCESS)
+        strcpy(name, "No Name");
+    memcpy(srv_info->name+3, name, sizeof(name));
+    srv_info->name[sizeof(name)+3] = 0;
+    srv_info->srv_type = vcinfo->i_service_type;
 
     LOGD("Program(%d)('%s':%d-%d) in current TSID(%d) found!",
         srv_info->srv_id, srv_info->name,
         srv_info->major_chan_num, srv_info->minor_chan_num,
-        vcinfo->channel_TSID);
+        vcinfo->i_channel_tsid);
 }
 
 void CTvScanner::updateServiceInfo(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t *srv_info)
@@ -899,14 +905,14 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
                 tsid = (*p)->tsid;
         }
         if (tsid != -1) {
-            vct_section_info_t *vct;
-            vct_channel_info_t *vcinfo;
+            dvbpsi_atsc_vct_t *vct;
+            dvbpsi_atsc_vct_channel_t *vcinfo;
 
             AM_SI_LIST_BEGIN(ts->digital.vcts, vct){
-            AM_SI_LIST_BEGIN(vct->vct_chan_info, vcinfo){
-                if (vcinfo->channel_TSID == tsid) {
+            AM_SI_LIST_BEGIN(vct->p_first_channel, vcinfo){
+                if (vcinfo->i_channel_tsid == tsid) {
                     LOGD("found channel info in vct.");
-                    extractSrvInfoFromVct(result, vcinfo, psrv_info);
+                    extractSrvInfoFromVc(result, vcinfo, psrv_info);
                     found = 1;
                 }
             } AM_SI_LIST_END()
@@ -975,12 +981,12 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
     LOGD("processAtscTs");
 
     if(ts->digital.vcts
-        && (ts->digital.vcts->transport_stream_id != ts->digital.pats->i_ts_id)
+        && (ts->digital.vcts->i_extension != ts->digital.pats->i_ts_id)
         && (ts->digital.pats->i_ts_id == 0))
         ts->digital.use_vct_tsid = 1;
 
-    vct_section_info_t *vct;
-    vct_channel_info_t *vcinfo;
+    dvbpsi_atsc_vct_t *vct;
+    dvbpsi_atsc_vct_channel_t *vcinfo;
     dvbpsi_pmt_t *pmt;
     dvbpsi_pmt_es_t *es;
     int src = result->start_para->dtv_para.source;
@@ -1020,28 +1026,24 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
         }AM_SI_LIST_END()
 
         program_found_in_vct = AM_FALSE;
-        AM_SI_LIST_BEGIN(ts->digital.vcts, vct){
-        AM_SI_LIST_BEGIN(vct->vct_chan_info, vcinfo){
+        AM_SI_LIST_BEGIN(ts->digital.vcts, vct) {
+        AM_SI_LIST_BEGIN(vct->p_first_channel, vcinfo) {
             /*Skip inactive program*/
-            if (vcinfo->program_number == 0  || vcinfo->program_number == 0xffff)
+            if (vcinfo->i_program_number == 0  || vcinfo->i_program_number == 0xffff)
                 continue;
 
-            if ((ts->digital.use_vct_tsid || (vct->transport_stream_id == ts->digital.pats->i_ts_id))
-                && vcinfo->channel_TSID == vct->transport_stream_id)
-            {
-                if (vcinfo->program_number == pmt->i_program_number)
-                {
-                    AM_SI_ExtractAVFromATSCVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
-
-                    extractSrvInfoFromVct(result, vcinfo, psrv_info);
-
+            if ((ts->digital.use_vct_tsid || (vct->i_extension == ts->digital.pats->i_ts_id))
+                && vcinfo->i_channel_tsid == vct->i_extension) {
+                if (vcinfo->i_program_number == pmt->i_program_number) {
+                    AM_SI_ExtractAVFromVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
+                    extractSrvInfoFromVc(result, vcinfo, psrv_info);
                     program_found_in_vct = AM_TRUE;
                     goto VCT_END;
                 }
             } else {
                 LOGD("Program(%d ts:%d) in VCT(ts:%d) found, current (ts:%d)",
-                    vcinfo->program_number, vcinfo->channel_TSID,
-                    vct->transport_stream_id, ts->digital.pats->i_ts_id);
+                    vcinfo->i_program_number, vcinfo->i_channel_tsid,
+                    vct->i_extension, ts->digital.pats->i_ts_id);
                 continue;
             }
         } AM_SI_LIST_END()
@@ -1073,21 +1075,21 @@ VCT_END:
 
     /* All programs in PMTs added, now trying the programs in VCT but NOT in PMT */
     AM_SI_LIST_BEGIN(ts->digital.vcts, vct) {
-    AM_SI_LIST_BEGIN(vct->vct_chan_info, vcinfo) {
+    AM_SI_LIST_BEGIN(vct->p_first_channel, vcinfo) {
         AM_Bool_t found_in_pmt = AM_FALSE;
 
         if (!(psrv_info = getServiceInfo()))
             return;
-        psrv_info->srv_id = vcinfo->program_number;
+        psrv_info->srv_id = vcinfo->i_program_number;
         psrv_info->src = src;
 
         /*Skip inactive program*/
-        if (vcinfo->program_number == 0  || vcinfo->program_number == 0xffff)
+        if (vcinfo->i_program_number == 0  || vcinfo->i_program_number == 0xffff)
             continue;
 
         /* Is already added in PMT? */
         AM_SI_LIST_BEGIN(ts->digital.pmts, pmt) {
-            if (vcinfo->program_number == pmt->i_program_number) {
+            if (vcinfo->i_program_number == pmt->i_program_number) {
                 found_in_pmt = AM_TRUE;
                 break;
             }
@@ -1096,9 +1098,9 @@ VCT_END:
         if (found_in_pmt)
             continue;
 
-        if (vcinfo->channel_TSID == vct->transport_stream_id) {
-            AM_SI_ExtractAVFromATSCVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
-            extractSrvInfoFromVct(result, vcinfo, psrv_info);
+        if (vcinfo->i_channel_tsid == vct->i_extension) {
+            AM_SI_ExtractAVFromVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
+            extractSrvInfoFromVc(result, vcinfo, psrv_info);
             updateServiceInfo(result, psrv_info);
 
             if (!is_cc_smart) {
@@ -1110,8 +1112,8 @@ VCT_END:
 
         } else {
             LOGD("Program(%d ts:%d) in VCT(ts:%d) found",
-                vcinfo->program_number, vcinfo->channel_TSID,
-                vct->transport_stream_id);
+                vcinfo->i_program_number, vcinfo->i_channel_tsid,
+                vct->i_extension);
             continue;
         }
     } AM_SI_LIST_END()

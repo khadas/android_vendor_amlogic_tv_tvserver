@@ -344,7 +344,7 @@ int SetAudioOutmode(int mode){
     sprintf(val, "%d", mode);
     int len = tvWriteSysfs(AUDIO_OUTMODE_PATH, val);
     if (len > 0) {
-        char temp[] = "init";
+        char temp[] = "audout_mode";
         tvWriteSysfs(ATVDEMODE_DEBUG_PATH,temp);
     }
     return 0;

@@ -323,9 +323,11 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
 
             mCurEv.mScnt = srv->cap_info.caption_count;
             for (int i = 0; i < srv->cap_info.caption_count; i++) {
-                mCurEv.mStype[i] = srv->cap_info.captions[i].type ? TYPE_DTV_CC : TYPE_ATV_CC;
-                mCurEv.mSid[i] = srv->cap_info.captions[i].service_number;
-                mCurEv.mSstype[i] = srv->cap_info.captions[i].type;
+                //all captions parsed from tables are treated as dtv cc.
+                mCurEv.mStype[i] = TYPE_DTV_CC; //srv->cap_info.captions[i].type ? TYPE_DTV_CC : TYPE_ATV_CC;
+                mCurEv.mSid[i] = srv->cap_info.captions[i].service_number
+                    + (srv->cap_info.captions[i].type ? (AM_CC_CAPTION_SERVICE1-1) : (AM_CC_CAPTION_CC1));
+                mCurEv.mSstype[i] = srv->cap_info.captions[i].type ? TYPE_DTV_CC : TYPE_ATV_CC;
                 mCurEv.mSid1[i] = srv->cap_info.captions[i].pid_or_line21;
                 mCurEv.mSid2[i] = srv->cap_info.captions[i].flags;
                 strncpy(mCurEv.mSlang[i], srv->cap_info.captions[i].lang, 10);
@@ -970,9 +972,15 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
         }
     }
 
-    memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
-    addFixedATSCCaption(&psrv_info->cap_info, 0, -1, -1, 0);
+    {
+        int cc_fixed = getParamOption("cc.fixed");
+        AM_Bool_t is_cc_fixed = (cc_fixed == -1)? false : (cc_fixed != 0);
 
+        if (is_cc_fixed) {
+            memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
+            addFixedATSCCaption(&psrv_info->cap_info, 0, -1, -1, 0);
+        }
+    }
     slist.push_back(psrv_info);
 }
 
@@ -993,8 +1001,8 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
     AM_Bool_t stream_found_in_vct = AM_FALSE;
     AM_Bool_t program_found_in_vct = AM_FALSE;
     SCAN_ServiceInfo_t *psrv_info;
-    int cc_smart = getParamOption("cc.smart");
-    AM_Bool_t is_cc_smart = (cc_smart == -1)? false : (cc_smart != 0);
+    int cc_fixed = getParamOption("cc.fixed");
+    AM_Bool_t is_cc_fixed = (cc_fixed == -1)? false : (cc_fixed != 0);
 
     if (!ts->digital.pats && !ts->digital.vcts)
     {
@@ -1019,7 +1027,7 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
 
         AM_SI_LIST_BEGIN(pmt->p_first_es, es) {
             AM_SI_ExtractAVFromES(es, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
-            if (cc_smart)
+            if (!is_cc_fixed)
                 AM_SI_ExtractATSCCaptionFromES(es, &psrv_info->cap_info);
             if (! psrv_info->scrambled_flag)
                 extractCaScrambledFlag(es->p_first_descriptor, &psrv_info->scrambled_flag);
@@ -1052,7 +1060,7 @@ VCT_END:
         /*Store this service*/
         updateServiceInfo(result, psrv_info);
 
-        if (!is_cc_smart) {
+        if (is_cc_fixed) {
             memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
             addFixedATSCCaption(&psrv_info->cap_info, -1, -1, -1, 1);
         }
@@ -1103,7 +1111,7 @@ VCT_END:
             extractSrvInfoFromVc(result, vcinfo, psrv_info);
             updateServiceInfo(result, psrv_info);
 
-            if (!is_cc_smart) {
+            if (is_cc_fixed) {
                 memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
                 addFixedATSCCaption(&psrv_info->cap_info, -1, -1, -1, 1);
             }

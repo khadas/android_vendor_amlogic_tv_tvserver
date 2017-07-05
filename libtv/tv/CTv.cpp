@@ -782,7 +782,6 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
         mAv.DisableVideoWithBlueColor();
     mTvAction |= TV_ACTION_SCANNING;
     mTvScanner->setObserver ( &mTvMsgQueue );
-
     SetAudioMuteForTv ( CC_AUDIO_MUTE );
     v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor(vStd, aStd);
 
@@ -1184,7 +1183,6 @@ int CTv::playDtmbProgram ( int progId )
     CTvProgram::Audio *pA;
     CTvProgram::Video *pV;
     int ret = CTvProgram::selectByID ( progId, prog );
-
     SetAudioMuteForTv ( CC_AUDIO_MUTE );
     saveDTVProgramID ( progId );
     prog.getChannel ( channel );
@@ -1235,7 +1233,6 @@ int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __u
     } else {
         mAv.DisableVideoBlackout();
     }
-
     SetAudioMuteForTv ( CC_AUDIO_MUTE );
     //image selecting channel
     mSigDetectThread.requestAndWaitPauseDetect();
@@ -2061,7 +2058,7 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
             LOGE ( "[ctv]%s, do not set hdmi port%d edid.ret=%d", __FUNCTION__, source_input - 4, tmp_ret );
     }
     mTvAction |= TV_ACTION_SOURCE_SWITCHING;
-    //
+
     SetAudioMuteForTv(CC_AUDIO_MUTE);
     mSigDetectThread.requestAndWaitPauseDetect();
     mAv.DisableVideoWithBlackColor();
@@ -2138,6 +2135,7 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         } else if (source_input == SOURCE_SPDIF) {
             InitTvAudio(48000, CC_IN_USE_SPDIF_DEVICE);
             HanldeAudioInputSr(48000);
+            SetAudioMuteForSystem(CC_AUDIO_UNMUTE);
             SetAudioMuteForTv(CC_AUDIO_UNMUTE);
         } else {
             InitTvAudio(48000, CC_IN_USE_I2S_DEVICE);

@@ -25,12 +25,15 @@
 #define PQ_USER_DATA_FROM_E2P   0
 #define PQ_USER_DATA_FROM_DB    1
 
-#define VPP_DEV_PATH    "/dev/amvecm"
-#define DI_DEV_PATH     "/dev/di0"
-#define VPP_3D_DEV_PATH    "/dev/amvideo"
-#define VPP_PANEL_BACKLIGHT_DEV_PATH   "/sys/class/aml_bl/power"
-#define BACKLIGHT_BRIGHTNESS "/sys/class/backlight/aml-bl/brightness"
-#define DNLP_ENABLE    "/sys/module/am_vecm/parameters/dnlp_en"
+#define VPP_DEV_PATH                                        "/dev/amvecm"
+#define DI_DEV_PATH                                         "/dev/di0"
+#define VPP_3D_DEV_PATH                                     "/dev/amvideo"
+#define VPP_PANEL_BACKLIGHT_DEV_PATH                        "/sys/class/aml_bl/power"
+#define BACKLIGHT_BRIGHTNESS                                "/sys/class/backlight/aml-bl/brightness"
+#define DNLP_ENABLE                                         "/sys/module/am_vecm/parameters/dnlp_en"
+#define DI_NR2_ENABLE                                       "/sys/module/di/parameters/nr2_en"
+#define AMVECM_PC_MODE                                      "/sys/class/amvecm/pc_mode"
+
 
 // default backlight value 10%
 #define DEFAULT_BACKLIGHT_BRIGHTNESS 10
@@ -253,6 +256,7 @@ public:
     int Vpp_SetContrast ( int value, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int Vpp_SetSaturation ( int value, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int Vpp_SetHue ( int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_port_t source_port, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt  );
+    void enableMonitorMode(bool enable);
     int Vpp_SetSharpness ( int value, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int Vpp_SetPQMode ( vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input, tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int Vpp_SetNoiseReductionMode ( vpp_noise_reduction_mode_t nr_mode,  tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );

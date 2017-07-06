@@ -155,6 +155,8 @@ enum fbc_command_t {
     CMD_SET_AUTO_BACKLIGHT_ONFF = 0x85,
     CMD_GET_AUTO_BACKLIGHT_ONFF = 0x86,
 
+	CMD_SET_ENTER_PCMODE = 0x88,
+
 };
 
 typedef enum fbc_upgrade_mode {

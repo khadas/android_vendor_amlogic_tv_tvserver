@@ -140,6 +140,7 @@ public:
     int fbcSetGammaPattern(COMM_DEV_TYPE_E fromDev, unsigned short gamma_r, unsigned short gamma_g, unsigned short gamma_b);
     int fbcStartUpgrade(char *file_name, int mode, int blk_size);
     int fbcRelease();
+	int cfbc_EnterPCMode(int value);
 
 private:
     int cfbcSetValueInt(COMM_DEV_TYPE_E fromDev, int cmd_id, int value, int value_count);

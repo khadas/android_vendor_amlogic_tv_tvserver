@@ -906,3 +906,8 @@ int CFbcCommunication::fbcRelease()
     return cfbcSetValueInt(COMM_DEV_SERIAL, CMD_FBC_RELEASE, 0, 0);
 }
 
+int CFbcCommunication::cfbc_EnterPCMode(int value)
+{
+    return cfbcSetValueInt(COMM_DEV_SERIAL, CMD_SET_ENTER_PCMODE, value, 1);
+}
+

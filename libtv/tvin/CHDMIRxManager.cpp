@@ -142,3 +142,21 @@ int CHDMIRxManager::SetHdmiPortCecPhysicAddr()
     tvWriteSysfs(HDMI_CEC_PORT_MAP,val);
     return 0;
 }
+
+int CHDMIRxManager::SetHdmiPcMode_Monitor(int value)
+{
+    int m_hdmi_fd = -1;
+    m_hdmi_fd = open(CS_HDMIRX_DEV_PATH, O_RDWR);
+    if (m_hdmi_fd < 0) {
+        LOGE("%s, Open file %s error: (%s)!\n", __FUNCTION__, CS_HDMIRX_DEV_PATH, strerror ( errno ));
+        return -1;
+    }
+    if (value == 1) {
+        ioctl(m_hdmi_fd, HDMI_IOC_PC_MODE_ON, NULL);
+    }else if (value == 0) {
+        ioctl(m_hdmi_fd, HDMI_IOC_PC_MODE_OFF, NULL);
+    }
+    close(m_hdmi_fd);
+    return 0;
+}
+

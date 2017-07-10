@@ -1128,6 +1128,7 @@ public:
         int pauseDetect();
         int resumeDetect(int later = 0);
         int initSigState();
+        void setTvinSigDetectEnable(bool enable = true);
         void setVdinNoSigCheckKeepTimes(int times, bool isOnce);//times is time, ms
         int requestAndWaitPauseDetect();
         //first pause detect? ok
@@ -1187,6 +1188,7 @@ public:
         };
         int mDetectState;
         int mResumeLaterTime;
+        bool mTvinSigDetectEnable;
         ISigDetectObserver *mpObserver;
     };//
 

@@ -2135,27 +2135,34 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         } else if (source_input == SOURCE_SPDIF) {
             InitTvAudio(48000, CC_IN_USE_SPDIF_DEVICE);
             HanldeAudioInputSr(48000);
-            SetAudioMuteForSystem(CC_AUDIO_UNMUTE);
-            SetAudioMuteForTv(CC_AUDIO_UNMUTE);
+            //SetAudioMuteForSystem(CC_AUDIO_UNMUTE);
+            //SetAudioMuteForTv(CC_AUDIO_UNMUTE);
         } else {
             InitTvAudio(48000, CC_IN_USE_I2S_DEVICE);
             HanldeAudioInputSr(-1);
         }
 
-        if (source_input != SOURCE_SPDIF && mpTvin->SwitchPort ( cur_port ) == 0) { //ok
-            unsigned char std;
-            SSMReadCVBSStd(&std);
-            int fmt = CFrontEnd::stdEnumToCvbsFmt (std, CC_ATV_AUDIO_STD_AUTO);
-            mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
+        if (mpTvin->SwitchPort ( cur_port ) == 0) { //ok
+            if (source_input != SOURCE_SPDIF)
+            {
+                unsigned char std;
+                SSMReadCVBSStd(&std);
+                int fmt = CFrontEnd::stdEnumToCvbsFmt (std, CC_ATV_AUDIO_STD_AUTO);
+                mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
 
-            //for HDMI source connect detect
-            mpTvin->VDIN_OpenHDMIPinMuxOn(true);
-            CVpp::getInstance()->Vpp_ResetLastVppSettingsSourceType();
-
+                //for HDMI source connect detect
+                mpTvin->VDIN_OpenHDMIPinMuxOn(true);
+                CVpp::getInstance()->Vpp_ResetLastVppSettingsSourceType();
+            }
             m_sig_stable_nums = 0;
+            m_sig_spdif_nums = 0;
             mSigDetectThread.setObserver ( this );
             mSigDetectThread.initSigState();
             mSigDetectThread.setVdinNoSigCheckKeepTimes(150, true);
+            if (source_input != SOURCE_SPDIF)
+                mSigDetectThread.setTvinSigDetectEnable(true);
+            else
+                mSigDetectThread.setTvinSigDetectEnable(false);
             mSigDetectThread.resumeDetect(0);
         }
     }
@@ -2555,6 +2562,13 @@ void CTv::onSigDetectLoop()
             LOGD("HDMI  auds_rcv_sts CHANGED = %d", hdmi_audio_data);
             m_hdmi_audio_data = hdmi_audio_data;
             onHMDIAudioStatusChanged(hdmi_audio_data);
+        }
+    }else if (( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_SPDIF ) ) {
+        if ( ( mAudioMuteStatusForTv == CC_AUDIO_MUTE ) && ( m_sig_spdif_nums ++ > 3 ) )
+        {
+            SetAudioMuteForSystem(CC_AUDIO_UNMUTE);
+            SetAudioMuteForTv(CC_AUDIO_UNMUTE);
+            LOGD("SPDIF UNMUTE");
         }
     }
 }

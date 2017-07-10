@@ -648,6 +648,7 @@ protected:
     volatile tv_config_t gTvinConfig;
     bool mAutoSetDisplayFreq;
     int m_sig_stable_nums;
+    int m_sig_spdif_nums;
     bool mSetHdmiEdid;
     /** for HDMI-in sampling detection. **/
     int  m_hdmi_sampling_rate;

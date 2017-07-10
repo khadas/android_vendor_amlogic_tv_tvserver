@@ -2096,6 +2096,7 @@ int CTvin::CTvinSigDetect::initSigState()
     mKeepNosigTime = 0;
     mIsNosig = false;
     mResumeLaterTime = 0;
+    mTvinSigDetectEnable = true;
     return 0;
 }
 
@@ -2140,6 +2141,15 @@ int CTvin::CTvinSigDetect::resumeDetect(int later)//ms
     m_request_pause_detect = false;
     mDetectPauseCondition.signal();
     return 0;
+}
+
+void CTvin::CTvinSigDetect::setTvinSigDetectEnable(bool enable)
+{
+    if (enable)
+        LOGD("setTvinSigDetectEnable enable");
+    else
+        LOGD("setTvinSigDetectEnable disable");
+    mTvinSigDetectEnable = enable;
 }
 
 void CTvin::CTvinSigDetect::setVdinNoSigCheckKeepTimes(int times, bool isOnce __unused)
@@ -2254,7 +2264,8 @@ bool CTvin::CTvinSigDetect::threadLoop()
 
         mResumeLaterTime = 0;
         mpObserver->onSigDetectLoop();
-        Tv_TvinSigDetect ( sleeptime );
+        if (mTvinSigDetectEnable)
+            Tv_TvinSigDetect ( sleeptime );
         //可以优化
         if ( !m_request_pause_detect ) {
             usleep ( sleeptime * 1000 );

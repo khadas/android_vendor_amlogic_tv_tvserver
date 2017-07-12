@@ -1134,7 +1134,6 @@ int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int
 
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
 
-    mTvAction |= TV_ACTION_PLAYING;
     if (mBlackoutEnable)
         mAv.EnableVideoBlackout();
     else
@@ -1309,6 +1308,10 @@ int CTv::setFrontEnd ( const char *paras, bool force )
     CFrontEnd::FEParas fp(paras);
 
     if ( fp.getFEMode().getBase() == FE_ANALOG ) {
+        if (SOURCE_DTV == m_source_input) {
+            mAv.DisableVideoBlackout();
+            stopPlaying(false);
+        }
         int tmpFreq = fp.getFrequency();
         int tmpfineFreq = fp.getFrequency2();
 
@@ -1337,6 +1340,17 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         mSigDetectThread.initSigState();
         mSigDetectThread.resumeDetect();
     } else {
+        if (SOURCE_ADTV == m_source_input_virtual) {
+            if (SOURCE_TV == m_source_input) {
+                mAv.DisableVideoBlackout();
+                mSigDetectThread.requestAndWaitPauseDetect();
+                mpTvin->Tvin_StopDecoder();
+                if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
+                    mpTvin->SwitchSnow( false );
+                }
+                mpTvin->VDIN_ClosePort();
+            }
+        }
         mFrontDev->Open(FE_AUTO);
         mFrontDev->setPara ( paras, force );
     }

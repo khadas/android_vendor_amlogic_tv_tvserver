@@ -73,6 +73,13 @@ static void sqliteLogCallback(void *data, int iErrCode, const char *zMsg)
     LOGD( "showbo sqlite (%d) %s\n", iErrCode, zMsg);
 }
 
+static float getUptimeSeconds() {
+    timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    return (float)(ts.tv_sec +(float)ts.tv_nsec / 1000000000);
+}
+
 bool CTv::insertedFbcDevice()
 {
     bool ret = false;
@@ -1849,7 +1856,7 @@ int CTv::CloseTv ( void )
 
 int CTv::StartTvLock ()
 {
-    LOGD ( "%s, tv start status = %d", __FUNCTION__, mTvStatus);
+    LOGD ( "[source_switch_time]: %fs,  StartTvLock status = %d", getUptimeSeconds(), mTvStatus);
     if (mTvStatus == TV_START_ED)
         return 0;
 
@@ -1881,6 +1888,7 @@ int CTv::StartTvLock ()
 
     mTvAction &= ~TV_ACTION_STARTING;
     mTvStatus = TV_START_ED;
+    LOGD ( "[source_switch_time]: %fs, StartTvLock end", getUptimeSeconds());
     return 0;
 }
 
@@ -2192,6 +2200,7 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
 
 void CTv::onSigToStable()
 {
+    LOGD ( "[source_switch_time]: %fs, onSigToStable start", getUptimeSeconds());
     if (mAutoSetDisplayFreq && !mPreviewEnabled) {
         int freq = 60;
         if (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_HDMI ) {
@@ -2221,6 +2230,7 @@ void CTv::onSigToStable()
         SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( m_source_input ), m_source_input, mSigDetectThread.getCurSigInfo().fmt);
     }
     m_sig_stable_nums = 0;
+    LOGD ( "[source_switch_time]: %fs, onSigToStable end", getUptimeSeconds());
 }
 
 void CTv::onSigStillStable()
@@ -2275,7 +2285,7 @@ bool CTv::isTvViewBlocked() {
 
 void CTv::onEnableVideoLater(int framecount)
 {
-    LOGD("onEnableVideoLater framecount = %d", framecount);
+    LOGD ( "[source_switch_time]: %fs, onEnableVideoLater start, wait %d video frame come out", getUptimeSeconds(), framecount);
     mAv.EnableVideoWhenVideoPlaying(framecount);
     if (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_HDMI ) {
         if (isTvViewBlocked()) {
@@ -2285,6 +2295,7 @@ void CTv::onEnableVideoLater(int framecount)
         }
         Tv_SetAudioInSource(m_source_input);
     }
+    LOGD ( "[source_switch_time]: %fs, onEnableVideoLater end, show source on screen", getUptimeSeconds());
 }
 
 void CTv::onVideoAvailableLater(int framecount)

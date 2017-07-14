@@ -1833,6 +1833,7 @@ int CTv::OpenTv ( void )
     mBlackoutEnable = ((enable==1)?true:false);
 
     mFrontDev->Open(FE_AUTO);
+    mFrontDev->autoLoadFE();
     mAv.Open();
     resetDmxAndAvSource();
     mSourceConnectDetectThread.startDetect();
@@ -1870,11 +1871,8 @@ int CTv::StartTvLock ()
     SwitchAVOutBypass(0);
     InitSetTvAudioCard();
     SetAudioMuteForTv(CC_AUDIO_MUTE);
-    mFrontDev->Open(FE_AUTO);
-    mFrontDev->autoLoadFE();
     mSigDetectThread.startDetect();
     mTvMsgQueue.startMsgQueue();
-    resetDmxAndAvSource();
     SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( m_source_input ), m_source_input, mSigDetectThread.getCurSigInfo().fmt);
     TvMisc_EnableWDT ( gTvinConfig.kernelpet_disable, gTvinConfig.userpet, gTvinConfig.kernelpet_timeout, gTvinConfig.userpet_timeout, gTvinConfig.userpet_reset );
     am_phase_t am_phase;
@@ -2088,11 +2086,9 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
     mAv.EnableVideoBlackout();
     //set front dev mode
     if ( source_input == SOURCE_TV ) {
-        mFrontDev->Close();
         mFrontDev->Open(FE_ANALOG);
         mFrontDev->SetAnalogFrontEndTimerSwitch(1);
     } else if ( source_input == SOURCE_DTV ) {
-        mFrontDev->Close();
         mFrontDev->Open(FE_AUTO);
         mFrontDev->SetAnalogFrontEndTimerSwitch(0);
     } else {
@@ -2108,6 +2104,8 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
     SetAudioVolumeCompensationVal ( 0 );
 
     if ( source_input == SOURCE_DTV ) {
+        resetDmxAndAvSource();
+
         //we should stop audio first for audio mute.
         SwitchAVOutBypass(0);
         tv_audio_channel_e audio_channel = mpTvin->Tvin_GetInputSourceAudioChannelIndex (SOURCE_MPEG);

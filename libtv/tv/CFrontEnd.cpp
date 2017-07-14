@@ -41,7 +41,7 @@ CFrontEnd::CFrontEnd()
     mFrontDevID = FE_DEV_ID;
     mpObserver = NULL;
     mCurFineFreq = 0;
-    mCurMode =  FE_ANALOG;
+    mCurMode =  -1;
     mCurFreq = -1;
     mCurPara1 = -1;
     mCurPara2 = -1;
@@ -61,10 +61,16 @@ int CFrontEnd::Open(int mode)
     AM_FEND_OpenPara_t para;
     int rc = 0;
 
-    if (mbFEOpened) {
-        LOGD("FrontEnd have opened, return");
+    LOGD("FE Open [%d->%d]", mCurMode, mode);
+
+    if (mbFEOpened && mCurMode == mode) {
+        LOGD("FrontEnd already opened, return");
         return 0;
     }
+
+    if (mbFEOpened)
+        AM_FEND_Close(mFrontDevID);
+
     memset(&para, 0, sizeof(AM_FEND_OpenPara_t));
     para.mode = mode;
     rc = AM_FEND_Open(mFrontDevID, &para);
@@ -87,8 +93,11 @@ int CFrontEnd::Open(int mode)
 int CFrontEnd::Close()
 {
     int rc = 0;
+
+    LOGD("FE Close");
+
     if (!mbFEOpened) {
-        LOGD("FrontEnd have close, but not return");
+        LOGD("FrontEnd already closed.");
     }
     rc = AM_FEND_Close(mFrontDevID);
     if (rc != 0) {
@@ -112,11 +121,11 @@ int CFrontEnd::setMode(int mode)
     int rc = 0;
     if (mCurMode == mode) return 0;
     rc = AM_FEND_SetMode(mFrontDevID, mode);
-
     if (rc != 0) {
         LOGD("%s,front dev set mode failed! dvb error id is %d\n", __FUNCTION__, rc);
         return -1;
     }
+    mCurMode = mode;
     return 0;
 }
 

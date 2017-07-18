@@ -182,10 +182,8 @@ typedef struct am_regs_s {
 typedef struct am_pq_param_s {
     unsigned int table_name;
     unsigned int table_len;
-    void *table_ptr;
-    void *reserved0;
-    void *reserved1;
-    void *reserved2;
+    long long  table_ptr;
+    long long reserved0;
 } am_pq_param_t;
 
 #endif

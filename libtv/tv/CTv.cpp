@@ -281,11 +281,12 @@ void CTv::onEvent ( const CTvScanner::ScannerEvent &ev )
 void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
 {
     const char *config_value = NULL;
-    LOGD ( "%s, FE event type = %d tvaction=%x", __FUNCTION__, ev.mCurSigStaus, mTvAction);
+    LOGD ( "[source_switch_time]: %fs, %s, FE event type = %d tvaction=%x", getUptimeSeconds(), __FUNCTION__, ev.mCurSigStaus, mTvAction);
     if (mTvAction & TV_ACTION_SCANNING) return;
 
     //前端事件响应处理
     if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_HAS_SIG ) { //作为信号稳定
+        LOGD("[source_switch_time]: %fs, fe lock", getUptimeSeconds());
         if (/*m_source_input == SOURCE_TV || */m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //atv and other tvin source    not to use it, and if not playing, not use have sig
             TvEvent::SignalInfoEvent ev;
             ev.mStatus = TVIN_SIG_STATUS_STABLE;
@@ -295,6 +296,7 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
             sendTvEvent ( ev );
         }
     } else if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_NO_SIG ) { //作为信号消失
+        LOGD("[source_switch_time]: %fs, fe unlock", getUptimeSeconds());
         if ((!(mTvAction & TV_ACTION_STOPING)) && m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //just playing
             if ( iSBlackPattern ) {
                 mAv.DisableVideoWithBlackColor();
@@ -340,7 +342,7 @@ void CTv::onEvent ( const CTvEpg::EpgEvent &ev )
 
 void CTv::onEvent(const CAv::AVEvent &ev)
 {
-    LOGD("AVEvent = %d", ev.type);
+    LOGD ( "[source_switch_time]: %fs, AVEvent = %d", getUptimeSeconds(), ev.type);
     switch ( ev.type ) {
     case CAv::AVEvent::EVENT_AV_STOP: {
         if ( mTvAction & TV_ACTION_STOPING ) {
@@ -384,7 +386,7 @@ void CTv::onEvent(const CAv::AVEvent &ev)
         break;
     }
     case CAv::AVEvent::EVENT_AV_VIDEO_AVAILABLE: {
-        LOGD("EVENT_AV_VIDEO_AVAILABLE");
+        LOGD("[source_switch_time]: %fs, EVENT_AV_VIDEO_AVAILABLE, video available", getUptimeSeconds());
         if (m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //atv and other tvin source    not to use it, and if not playing, not use have sig
             if ( m_win_mode == PREVIEW_WONDOW ) {
                 mAv.setVideoScreenMode ( CAv::VIDEO_WIDEOPTION_FULL_STRETCH );

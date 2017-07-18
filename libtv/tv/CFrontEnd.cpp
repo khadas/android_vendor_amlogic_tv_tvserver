@@ -222,7 +222,7 @@ int CFrontEnd::setPara(const char *paras, bool force )
     int ret = 0;
     FEParas feparas(paras);
 
-    LOGD("fe setpara [%s]", paras);
+    LOGD("[source_switch_time]: %fs, fe setpara [%s]", getUptimeSeconds(), paras);
     if (mFEParas == feparas && !force) {
         LOGD("fe setpara  is same return");
         return 0;

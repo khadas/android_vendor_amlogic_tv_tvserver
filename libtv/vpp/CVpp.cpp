@@ -468,11 +468,11 @@ int CVpp::Vpp_LoadBasicRegs(tv_source_input_type_t source_type, tvin_sig_fmt_t s
 int CVpp::Vpp_SetDIMode(di_mode_param_t di_param, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt,
                             is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
 {
-    am_regs_t regs;
-    regs.length = 0;
     int ret = -1;
+    am_regs_t regs;
     am_pq_param_t di_regs;
-    di_regs.table_name = 0;
+    memset(&regs, 0x0, sizeof(am_regs_t));
+    memset(&di_regs, 0x0, sizeof(am_pq_param_t));
 
     if (mpPqData->PQ_GetDIParams(di_param.tablename, source_port, sig_fmt, is3d, trans_fmt, &regs) != 0) {
         LOGE("%s GetDIParams failed!\n",__FUNCTION__);
@@ -501,7 +501,7 @@ int CVpp::Vpp_SetDIMode(di_mode_param_t di_param, tvin_port_t source_port, tvin_
           tmp_buf[i].val  = regs.am_reg[i].val;
     }
 
-    di_regs.table_ptr = tmp_buf;
+    di_regs.table_ptr = (long long)tmp_buf;
 
     ret = DI_LoadRegs(di_regs);
 
@@ -1181,11 +1181,13 @@ int CVpp::Vpp_SetNoiseReductionMode(vpp_noise_reduction_mode_t nr_mode,
 {
     int ret = -1;
     am_regs_t regs;
+    am_pq_param_t di_regs;
+    memset(&regs, 0x0, sizeof(am_regs_t));
+    memset(&di_regs, 0x0, sizeof(am_pq_param_t));
 
     if (mbVppCfg_new_nr) {
         if (mpPqData->PQ_GetNR2Params((vpp_noise_reduction2_mode_t) nr_mode, source_port, sig_fmt,
                                       is3d, trans_fmt, &regs) == 0) {
-            am_pq_param_t di_regs;
             di_regs.table_name = TABLE_NAME_NR;
             di_regs.table_len = regs.length;
 
@@ -1196,7 +1198,7 @@ int CVpp::Vpp_SetNoiseReductionMode(vpp_noise_reduction_mode_t nr_mode,
                   tmp_buf[i].type = regs.am_reg[i].type;
                   tmp_buf[i].val  = regs.am_reg[i].val;
             }
-            di_regs.table_ptr = tmp_buf;
+            di_regs.table_ptr = (long long)tmp_buf;
 
             ret = DI_LoadRegs(di_regs);
         } else {

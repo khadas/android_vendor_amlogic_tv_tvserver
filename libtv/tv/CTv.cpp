@@ -2899,7 +2899,7 @@ int CTv::Tv_SetAudioInSource (tv_source_input_t source_input)
         break;
     case SOURCE_SPDIF:
         AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_SPDIFIN);
-        vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_HDMI);
+        vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_SPDIFIN);
         break;
     case SOURCE_AV1:
     case SOURCE_AV2:
@@ -5497,12 +5497,8 @@ int CTv::SetHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t versi
     Tv_HDMIEDIDFileSelect(port, version);
     SSMSetHDMIEdid(port);
     mHDMIRxManager.HdmiRxEdidUpdate();
-
-    usleep(500 * 1000);
-    // is signal status stable? maybe fail to reset hpd, need unmute audio.
-    if (mSigDetectThread.getCurSigInfo().status == TVIN_SIG_STATUS_STABLE) {
-        SetAudioMuteForTv(CC_AUDIO_UNMUTE);
-    }
+    mSigDetectThread.initSigState();
+    mSigDetectThread.resumeDetect();
     return 0;
 }
 

@@ -10,7 +10,7 @@
 #include "../tvsetting/CTvSetting.h"
 #include <tvconfig.h>
 #include "audio_cfg.h"
-
+#include "../audio/audio_alsa.h"
 #include "CTvLog.h"
 
 static const char AudioAmpMainVolLutBaseNameTable[CC_GET_TYPE_CNT][128] = {"audio.amp.mainvol.tv.lutbuf",//0
@@ -620,12 +620,14 @@ int GetAudioInternalDACDigitalPlayBackVolume_Cfg(int audio_src_in_type)
 {
     const char *config_value = NULL;
 
-    if (audio_src_in_type == 2) {  // CC_AUDIO_IN_SOURCE_HDMI
+    if (audio_src_in_type == CC_AUDIO_IN_SOURCE_HDMI) {  // CC_AUDIO_IN_SOURCE_HDMI
         config_value = config_get_str(CFG_SECTION_TV, "audio.internal.dac.playback.volume_hdmi", "null");
-    } else if (audio_src_in_type == 0) {    // CC_AUDIO_IN_SOURCE_LINEIN
+    } else if (audio_src_in_type == CC_AUDIO_IN_SOURCE_LINEIN) {    // CC_AUDIO_IN_SOURCE_LINEIN
         config_value = config_get_str(CFG_SECTION_TV, "audio.internal.dac.playback.volume_linein", "null");
-    } else if (audio_src_in_type == 1) {    // CC_AUDIO_IN_SOURCE_ATV
+    } else if (audio_src_in_type == CC_AUDIO_IN_SOURCE_ATV) {    // CC_AUDIO_IN_SOURCE_ATV
         config_value = config_get_str(CFG_SECTION_TV, "audio.internal.dac.playback.volume_atv", "null");
+    } else if (audio_src_in_type == CC_AUDIO_IN_SOURCE_SPDIFIN) {    // CC_AUDIO_IN_SOURCE_SPDIFIN
+        config_value = config_get_str(CFG_SECTION_TV, "audio.internal.dac.playback.volume_hdmi", "null");
     }
 
     if (strcmp(config_value, "null") == 0) {

@@ -1748,11 +1748,6 @@ TvRunStatus_t CTv::GetTvStatus()
 int CTv::OpenTv ( void )
 {
     const char * value;
-    //reboot system by fbc setting.
-    if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_TVIN) > 0) {
-        mpTvin->VDIN_AddVideoPath(TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
-    }
-
     value = config_get_str ( CFG_SECTION_TV, CFG_TVIN_ATV_DISPLAY_SNOW, "null" );
     if (strcmp(value, "enable") == 0 ) {
         mATVDisplaySnow = true;
@@ -2704,6 +2699,9 @@ void CTv::onBootvideoStopped() {
     LOGD("%s,boot video has stopped", __FUNCTION__);
     SetAudioMasterVolume( GetAudioMasterVolume());
     mBootvideoStatusDetectThread->stopDetect();
+    if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_TVIN) > 0) {
+        mpTvin->VDIN_AddVideoPath(TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
+    }
 }
 
 void CTv::onSourceConnect(int source_type, int connect_status)

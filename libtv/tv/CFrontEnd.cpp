@@ -63,7 +63,7 @@ int CFrontEnd::Open(int mode)
 
     LOGD("FE Open [%d->%d]", mCurMode, mode);
 
-    if (mbFEOpened && mCurMode == mode) {
+    if (mbFEOpened && (mCurMode == mode || mode == FE_AUTO)) {
         LOGD("FrontEnd already opened, return");
         return 0;
     }
@@ -99,13 +99,7 @@ int CFrontEnd::Close()
     if (!mbFEOpened) {
         LOGD("FrontEnd already closed.");
     }
-    rc = AM_FEND_Close(mFrontDevID);
-    if (rc != 0) {
-        LOGD("%s,frontend_close fail! dvb error id is %d\n", __FUNCTION__, rc);
-        return -1;
-    }
 
-    LOGD("%s,close frontend is ok\n", __FUNCTION__);
     mbFEOpened = false;
     mCurMode =  -1;
     mCurFreq = -1;
@@ -113,6 +107,13 @@ int CFrontEnd::Close()
     mCurPara2 = -1;
     mFEParas.setFrequency(-1);
 
+    rc = AM_FEND_Close(mFrontDevID);
+    if (rc != 0) {
+        LOGD("%s,frontend_close fail! dvb error id is %d\n", __FUNCTION__, rc);
+        return -1;
+    }
+
+    LOGD("%s,close frontend is ok\n", __FUNCTION__);
     return 0;
 }
 
@@ -180,7 +181,7 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
     mFEParas = paras;
 
     /*for compatible*/
-    mCurMode = mFEParas.getFEMode().getMode();
+    mCurMode = mFEParas.getFEMode().getBase();
     mCurFreq = mFEParas.getFrequency();
     mCurPara1 = mCurPara2 = 0;
     switch (mFEParas.getFEMode().getBase())

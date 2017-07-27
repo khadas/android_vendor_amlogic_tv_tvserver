@@ -563,6 +563,7 @@ protected:
     int resetDmxAndAvSource();
     int stopScan();
     int stopPlaying(bool isShowTestScreen);
+    int stopPlaying(bool isShowTestScreen, bool resetFE);
     void sendTvEvent ( const CTvEv &ev );
     int startPlayTv ( int source, int vid, int aid, int pcrid, int vfat, int afat );
     //scan observer

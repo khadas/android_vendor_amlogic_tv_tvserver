@@ -1425,7 +1425,11 @@ int CTv::stopPlayingLock()
     return stopPlaying(true);
 }
 
-int CTv::stopPlaying(bool isShowTestScreen)
+int CTv::stopPlaying(bool isShowTestScreen) {
+    return stopPlaying(isShowTestScreen, true);
+}
+
+int CTv::stopPlaying(bool isShowTestScreen, bool resetFE)
 {
     if (!(mTvAction & TV_ACTION_PLAYING)) {
         LOGD("%s, stopplay cur action = %x not playing , return", __FUNCTION__, mTvAction);
@@ -1435,7 +1439,8 @@ int CTv::stopPlaying(bool isShowTestScreen)
     if (m_source_input == SOURCE_TV) {
         //first mute
         SetAudioMuteForTv(CC_AUDIO_MUTE);
-        ClearAnalogFrontEnd();
+        if (resetFE)
+            ClearAnalogFrontEnd();
     } else if (m_source_input ==  SOURCE_DTV) {
         mSigDetectThread.requestAndWaitPauseDetect();
         mAv.EnableVideoBlackout();
@@ -2042,7 +2047,7 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         LOGW ( "[ctv]%s,same input change display mode", __FUNCTION__ );
         return 0;
     }
-    stopPlaying(false);
+    stopPlaying(false, !(source_input == SOURCE_DTV && m_source_input == SOURCE_TV));
     KillMediaServerClient();
     //if HDMI, need to set EDID of each port
     if (mSetHdmiEdid) {

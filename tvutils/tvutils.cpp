@@ -701,3 +701,10 @@ void Paras::setInt(const char *key, int v)
     }
 }
 
+float getUptimeSeconds() {
+    timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    return (float)(ts.tv_sec +(float)ts.tv_nsec / 1000000000);
+}
+

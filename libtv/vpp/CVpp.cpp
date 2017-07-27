@@ -292,6 +292,7 @@ bool CVpp::LoadVppLdimRegs()
 int CVpp::LoadVppSettings(tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt,
                           is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
 {
+    LOGD ( "%s, load pq.db start at %fs", __FUNCTION__, getUptimeSeconds());
     int val = 0, ret = -1;
     di_mode_param_t di_param;
     vpp_color_temperature_mode_t temp_mode = VPP_COLOR_TEMPERATURE_MODE_STANDARD;
@@ -347,7 +348,7 @@ int CVpp::LoadVppSettings(tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_
     else {
         mIsHdrLastTime = false;
     }
-
+    LOGD ( "%s, load pq.db end at %fs", __FUNCTION__, getUptimeSeconds());
     return 0;
 }
 

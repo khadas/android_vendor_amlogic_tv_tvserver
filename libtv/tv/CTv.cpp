@@ -73,13 +73,6 @@ static void sqliteLogCallback(void *data, int iErrCode, const char *zMsg)
     LOGD( "showbo sqlite (%d) %s\n", iErrCode, zMsg);
 }
 
-static float getUptimeSeconds() {
-    timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-
-    return (float)(ts.tv_sec +(float)ts.tv_nsec / 1000000000);
-}
-
 bool CTv::insertedFbcDevice()
 {
     bool ret = false;

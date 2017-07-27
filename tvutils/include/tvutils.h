@@ -89,5 +89,6 @@ public:
     Paras& operator = (const Paras &p) { mparas = p.mparas; return *this; };
 };
 
+float getUptimeSeconds();
 
 #endif  //__TV_MISC_H__

@@ -58,6 +58,8 @@ CFrontEnd::~CFrontEnd()
 
 int CFrontEnd::Open(int mode)
 {
+    CMutex::Autolock _l ( mLock );
+
     AM_FEND_OpenPara_t para;
     int rc = 0;
 
@@ -92,6 +94,8 @@ int CFrontEnd::Open(int mode)
 
 int CFrontEnd::Close()
 {
+    CMutex::Autolock _l ( mLock );
+
     int rc = 0;
 
     LOGD("FE Close");
@@ -119,6 +123,8 @@ int CFrontEnd::Close()
 
 int CFrontEnd::setMode(int mode)
 {
+    CMutex::Autolock _l ( mLock );
+
     int rc = 0;
     if (mCurMode == mode) return 0;
     rc = AM_FEND_SetMode(mFrontDevID, mode);
@@ -132,14 +138,16 @@ int CFrontEnd::setMode(int mode)
 
 int CFrontEnd::setProp(int cmd, int val)
 {
-     struct dtv_properties props;
-     struct dtv_property prop;
+    CMutex::Autolock _l ( mLock );
 
-     memset(&props, 0, sizeof(props));
-     memset(&prop, 0, sizeof(prop));
+    struct dtv_properties props;
+    struct dtv_property prop;
 
-     prop.cmd = cmd;
-     prop.u.data = val;
+    memset(&props, 0, sizeof(props));
+    memset(&prop, 0, sizeof(prop));
+
+    prop.cmd = cmd;
+    prop.u.data = val;
 
     props.num = 1;
     props.props = &prop;
@@ -306,6 +314,8 @@ int CFrontEnd::fineTune(int fineFreq)
 
 int CFrontEnd::fineTune(int fineFreq, bool force)
 {
+    CMutex::Autolock _l ( mLock );
+
     int ret = 0;
     if (mCurFineFreq == fineFreq && !force) return -1;
 

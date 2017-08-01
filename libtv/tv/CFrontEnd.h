@@ -6,6 +6,7 @@
 #include <string.h>
 #include "CTvLog.h"
 #include "CTvEv.h"
+#include "CMutex.h"
 
 #include "tvutils.h"
 
@@ -270,6 +271,9 @@ private:
     FEParas mFEParas;
     static void dmd_fend_callback(long dev_no, int event_type, void *param, void *user_data);
     void saveCurrentParas(FEParas &paras);
+
+protected:
+    mutable CMutex mLock;
 };
 #endif // ANDROID_FRONTEND_H
 

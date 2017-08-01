@@ -1,13 +1,11 @@
-//
-//
-//  amlogic 2013
-//
-//  @ Project : tv
-//  @ File Name : CTvDimension.h
-//  @ Date : 2013-11
-//  @ Author :
-//
-//
+/*
+ * Copyright (c) 2014 Amlogic, Inc. All rights reserved.
+ *
+ * This source code is subject to the terms and conditions defined in the
+ * file 'LICENSE' which is part of this source code package.
+ *
+ * Description: header file
+ */
 
 #if !defined(_CTVVCHIPCHECK_H)
 #define _CTVVCHIPCHECK_H

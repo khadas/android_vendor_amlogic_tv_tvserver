@@ -1,9 +1,12 @@
 /*
- * amlogic 2013
- *@ Project : tv
- *@ Date : 2013-12
- *@ Author :
-*/
+ * Copyright (c) 2014 Amlogic, Inc. All rights reserved.
+ *
+ * This source code is subject to the terms and conditions defined in the
+ * file 'LICENSE' which is part of this source code package.
+ *
+ * Description: header file
+ */
+
 #include <am_debug.h>
 #include <am_scan.h>
 #include <am_epg.h>

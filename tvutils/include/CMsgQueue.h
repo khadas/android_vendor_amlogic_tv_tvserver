@@ -1,8 +1,12 @@
 /*
- * showboz
- * 单(线程)消费者
- * 一个简单的MSG handler
-*/
+ * Copyright (c) 2014 Amlogic, Inc. All rights reserved.
+ *
+ * This source code is subject to the terms and conditions defined in the
+ * file 'LICENSE' which is part of this source code package.
+ *
+ * Description: header file
+ */
+
 #include "CThread.h"
 #include <utils/Vector.h>
 using namespace android;

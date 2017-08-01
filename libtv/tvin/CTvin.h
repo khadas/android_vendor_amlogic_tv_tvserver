@@ -1,20 +1,14 @@
 /*
- * TVIN Modules Exported Header File
+ * Copyright (c) 2014 Amlogic, Inc. All rights reserved.
  *
- * Author: Lin Xu <lin.xu@amlogic.com>
- *         Bobby Yang <bo.yang@amlogic.com>
+ * This source code is subject to the terms and conditions defined in the
+ * file 'LICENSE' which is part of this source code package.
  *
- * Copyright (C) 2010 Amlogic Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
+ * Description: header file
  */
-
 
 #ifndef _CTVIN_H
 #define _CTVIN_H
-
 
 #include <pthread.h>
 #include <cm.h>

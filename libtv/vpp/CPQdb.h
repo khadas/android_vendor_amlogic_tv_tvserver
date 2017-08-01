@@ -1,8 +1,10 @@
 /*
- * CPQdb.h
+ * Copyright (c) 2014 Amlogic, Inc. All rights reserved.
  *
- *  Created on: 2011-12-13
- *      Author: casey
+ * This source code is subject to the terms and conditions defined in the
+ * file 'LICENSE' which is part of this source code package.
+ *
+ * Description: header file
  */
 
 #ifndef CPQDB_H_

@@ -1132,10 +1132,9 @@ public:
         void setVdinNoSigCheckKeepTimes(int times, bool isOnce);//times is time, ms
         int requestAndWaitPauseDetect();
         //first pause detect? ok
-        tvin_info_t &getCurSigInfo()
-        {
-            return m_cur_sig_info;
-        }
+        tvin_info_t &getCurSigInfo();
+        void setCurSigFmt(tvin_sig_fmt_t sig_fmt);
+
         class ISigDetectObserver {
         public:
             ISigDetectObserver()

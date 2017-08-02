@@ -2133,6 +2133,16 @@ int CTvin::CTvinSigDetect::requestAndWaitPauseDetect()
     return 0;
 }
 
+tvin_info_t &CTvin::CTvinSigDetect::getCurSigInfo()
+{
+    return m_cur_sig_info;
+}
+
+void CTvin::CTvinSigDetect::setCurSigFmt(tvin_sig_fmt_t sig_fmt)
+{
+    m_cur_sig_info.fmt = sig_fmt;
+}
+
 int CTvin::CTvinSigDetect::resumeDetect(int later)//ms
 {
     CMutex::Autolock _l ( mLock );

@@ -2119,7 +2119,8 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         LoadAudioVirtualizer();
         mpTvin->setMpeg2Vdin(1);
         mAv.setLookupPtsForDtmb(1);
-        CVpp::getInstance()->LoadVppSettings(SOURCE_DTV, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, INDEX_2D, TVIN_TFMT_2D);
+        mSigDetectThread.setCurSigFmt(TVIN_SIG_FMT_HDMI_1920X1080P_60HZ);
+        CVpp::getInstance()->LoadVppSettings(SOURCE_DTV, mSigDetectThread.getCurSigInfo().fmt, INDEX_2D, TVIN_TFMT_2D);
         Tv_SetAudioInSource ( source_input );
     } else {
         mpTvin->setMpeg2Vdin(0);
@@ -2715,9 +2716,11 @@ void CTv::onSourceConnect(int source_type, int connect_status)
 void CTv::onVframeSizeChange()
 {
     if (m_source_input == SOURCE_DTV) {
+        //mSigDetectThread.setCurSigFmt(mAv.getVideoResolutionToFmt());
         //CVpp::getInstance()->LoadVppSettings ( SOURCE_DTV, mAv.getVideoResolutionToFmt(), INDEX_2D, TVIN_TFMT_2D );
     } else if (m_source_input == SOURCE_INVALID) {
-        CVpp::getInstance()->LoadVppSettings ( SOURCE_MPEG, mAv.getVideoResolutionToFmt(), INDEX_2D, TVIN_TFMT_2D );
+        mSigDetectThread.setCurSigFmt(mAv.getVideoResolutionToFmt());
+        CVpp::getInstance()->LoadVppSettings ( SOURCE_MPEG, mSigDetectThread.getCurSigInfo().fmt, INDEX_2D, TVIN_TFMT_2D );
     }
 }
 

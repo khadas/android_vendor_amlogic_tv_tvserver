@@ -1311,6 +1311,7 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 
 int CTv::setFrontEnd ( const char *paras, bool force )
 {
+    Mutex::Autolock _l ( mLock );
     LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
     if (mTvAction & TV_ACTION_SCANNING) {
         return -1;
@@ -1359,7 +1360,6 @@ int CTv::setFrontEnd ( const char *paras, bool force )
                 if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
                     mpTvin->SwitchSnow( false );
                 }
-                mpTvin->VDIN_ClosePort();
             }
         }
         mFrontDev->Open(FE_AUTO);
@@ -2053,7 +2053,7 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
 
     Tv_SetDDDRCMode(source_input);
     if (source_input == m_source_input ) {
-        LOGW ( "[ctv]%s,same input change display mode", __FUNCTION__ );
+        LOGW ( "[ctv]%s,same source input, return", __FUNCTION__ );
         return 0;
     }
     stopPlaying(false, !(source_input == SOURCE_DTV && m_source_input == SOURCE_TV));

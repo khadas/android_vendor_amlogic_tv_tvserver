@@ -329,6 +329,7 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
             mCurEv.mSourceId = srv->source_id;
             mCurEv.mMajorChannelNumber = srv->major_chan_num;
             mCurEv.mMinorChannelNumber = srv->minor_chan_num;
+            mCurEv.mVctType = srv->vct_type;
 
             mCurEv.mScnt = srv->cap_info.caption_count;
             for (int i = 0; i < srv->cap_info.caption_count; i++) {
@@ -417,11 +418,19 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
 void CTvScanner::sendEvent(ScannerEvent &evt)
 {
     if (mpObserver) {
-
-        strncpy(mCurEv.mParas,
-            mCurEv.mFEParas.toString().c_str(),
-            sizeof(mCurEv.mParas));
-        LOGD("FEParas:%s", mCurEv.mParas);
+        strcpy(mCurEv.mParas, "{");
+        //fe para
+        snprintf(mCurEv.mParas, sizeof(mCurEv.mParas), "%s\"fe\":", mCurEv.mParas);
+        snprintf(mCurEv.mParas, sizeof(mCurEv.mParas), "%s%s",
+            mCurEv.mParas, mCurEv.mFEParas.toString().c_str());
+        //other para
+        if (mCurEv.mVctType) {
+            // service para
+            snprintf(mCurEv.mParas, sizeof(mCurEv.mParas), "%s,\"srv\":{\"vct\":%d}",
+                mCurEv.mParas, mCurEv.mVctType);
+        }
+        snprintf(mCurEv.mParas, sizeof(mCurEv.mParas), "%s}", mCurEv.mParas);
+        LOGD("Paras:%s", mCurEv.mParas);
 
         mpObserver->onEvent(evt);
     }
@@ -1052,6 +1061,8 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
             if ((ts->digital.use_vct_tsid || (vct->i_extension == ts->digital.pats->i_ts_id))
                 && vcinfo->i_channel_tsid == vct->i_extension) {
                 if (vcinfo->i_program_number == pmt->i_program_number) {
+                    if (vct->b_cable_vct)
+                        psrv_info->vct_type = 1;
                     AM_SI_ExtractAVFromVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
                     extractSrvInfoFromVc(result, vcinfo, psrv_info);
                     program_found_in_vct = AM_TRUE;

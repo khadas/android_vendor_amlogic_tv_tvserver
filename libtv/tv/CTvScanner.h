@@ -101,6 +101,7 @@ public:
             mParas[0] = '\0';
             mAcnt = 0;
             mScnt = 0;
+            mVctType = 0;
 
             memset(&mLcnInfo, 0, sizeof(ScannerLcnInfo));
 
@@ -179,6 +180,7 @@ public:
         char mAccessControlled;
         char mHidden;
         char mHideGuide;
+        char mVctType;
     };
 
     class IObserver {
@@ -295,7 +297,7 @@ private:
     typedef struct {
         uint8_t srv_type, eit_sche, eit_pf, rs, free_ca;
         uint8_t access_controlled, hidden, hide_guide;
-        uint8_t plp_id;
+        uint8_t plp_id, vct_type;
         int vid, vfmt, srv_id, pmt_pid, pcr_pid, src;
         int chan_num, scrambled_flag;
         int major_chan_num, minor_chan_num, source_id;

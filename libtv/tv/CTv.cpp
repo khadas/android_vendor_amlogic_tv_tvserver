@@ -408,6 +408,7 @@ void CTv::onEvent(const CAv::AVEvent &ev)
                 mAv.getVideoResolutionToFmt());
             usleep(50 * 1000);
             mAv.EnableVideoNow(true);
+            LOGD("[source_switch_time]: %fs, EVENT_AV_VIDEO_AVAILABLE, video available ok", getUptimeSeconds());
             SetAudioMuteForTv(CC_AUDIO_UNMUTE);
             Tv_SetAudioInSource(SOURCE_DTV);
         }
@@ -2047,7 +2048,8 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
 {
     tvin_port_t cur_port;
 
-    LOGD ( "%s, virtual source input = %d source input = %d", __FUNCTION__, virtual_input, source_input );
+    LOGD ( "[source_switch_time]: %fs, %s, virtual source input = %d source input = %d",
+        getUptimeSeconds(), __FUNCTION__, virtual_input, source_input );
 
     m_source_input_virtual = virtual_input;
 

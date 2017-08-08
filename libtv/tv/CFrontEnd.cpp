@@ -225,6 +225,7 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
 
 int CFrontEnd::setPara(int mode, int freq, int para1, int para2)
 {
+    CMutex::Autolock _l ( mLock );
     char paras[128];
     convertParas(paras, mode, freq, freq, para1, para2);
     return setPara(paras);

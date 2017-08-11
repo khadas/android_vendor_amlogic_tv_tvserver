@@ -30,6 +30,7 @@
 #include "CTvLog.h"
 #include <tvconfig.h>
 #include "CAv.h"
+#include "../tvin/CHDMIRxManager.h"
 
 #include "../tvsetting/SSMHandler.h"
 
@@ -620,6 +621,26 @@ int CVpp::Vpp_SetPQParams(tv_source_input_type_t source_type, vpp_picture_mode_t
         }
     }
     return ret;
+}
+
+void CVpp::enableMonitorMode(bool enable) {
+    CHDMIRxManager manager;
+    if (enable) {
+        VPP_SetVideoCrop(0, 0, 0, 0);
+        tvWriteSysfs(DI_NR2_ENABLE, "0");
+        tvWriteSysfs(AMVECM_PC_MODE, "0");
+        manager.SetHdmiPcMode_Monitor(1);
+        if (mHdmiOutFbc && fbcIns) {
+            fbcIns->cfbc_EnterPCMode(0);
+        }
+    } else {
+        tvWriteSysfs(DI_NR2_ENABLE, "1");
+        tvWriteSysfs(AMVECM_PC_MODE, "1");
+        manager.SetHdmiPcMode_Monitor(0);
+        if (mHdmiOutFbc && fbcIns) {
+            fbcIns->cfbc_EnterPCMode(1);
+        }
+    }
 }
 
 int CVpp::Vpp_SetPQMode(vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input,

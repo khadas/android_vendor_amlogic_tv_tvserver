@@ -48,6 +48,7 @@ class CHDMIRxManager {
         int SetHdmiColorRangeMode(tv_hdmi_color_range_t range_mode);
         tv_hdmi_color_range_t GetHdmiColorRangeMode();
         int SetHdmiPortCecPhysicAddr();
+		int SetHdmiPcMode_Monitor(int value);
 };
 
 #endif/*_C_HDMI_RX_MANAGER_H_*/

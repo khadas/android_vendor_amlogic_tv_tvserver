@@ -942,12 +942,15 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
         LOGD("tsid:%d, found:%d", tsid, found);
         /*generate by channel id*/
         if (tsid == -1 || found == 0) {
-            //const char *list_name = getDtvScanListName(mFEParas.getFEMode().getMode());
+            int mode = mScanParas.getAtvModifier(CFrontEnd::FEParas::FEP_MODE, -1);
+            if (mode == -1)
+                mode = mFEParas.getFEMode().getMode();
+            const char *list_name = getDtvScanListName(mode);
             Vector<sp<CTvChannel>> vcp;
-            CTvRegion::getChannelListByName((char *)"U.S.,ATSC Air", vcp); // NTSC analog channel id is same with ATSC AIR
+            CTvRegion::getChannelListByName(const_cast<char*>(list_name), vcp);
             for (int i = 0; i < (int)vcp.size(); i++) {
                 int diff = vcp[i]->getFrequency() - tsinfo->fe.getFrequency();
-                if (diff > 0 && diff < 2000000) { // NTSC analog channel frequancy is less then ATSC AIR 1.75M on the same channel id
+                if (diff >= 0 && diff <= 2000000) { // 2M tolerance
                     psrv_info->major_chan_num = i+2;
                     psrv_info->minor_chan_num = 0;
                     psrv_info->chan_num = (psrv_info->major_chan_num<<16) | (psrv_info->minor_chan_num&0xffff);
@@ -967,7 +970,7 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
                     break;
                 }
             }
-            if (found == 0) { // do not match ATSC AIR channel table, major channel number start from ATSC AIR channel table max number + 1
+            if (found == 0) { // do not match channel table, major channel number start from table max number + 1
                 if (slist.size() <= 0 || slist.back()->major_chan_num <= vcp.size() + 1)
                     psrv_info->major_chan_num = vcp.size() + 2;
                 else
@@ -983,7 +986,8 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
                 memcpy(psrv_info->name+3, name, sizeof(name));
                 psrv_info->name[sizeof(name)+3] = 0;
                 psrv_info->srv_type = AM_SCAN_SRV_ATV;
-                LOGD("ntsc channel doesn't match ATSC Air table , set channel id to [%d.%d][%s]",
+                LOGD("ntsc channel[%d] doesn't match table[%s], set channel id to [%d.%d][%s]",
+                        tsinfo->fe.getFrequency(), list_name,
                         psrv_info->major_chan_num, psrv_info->minor_chan_num,
                         psrv_info->name);
             }
@@ -1265,15 +1269,32 @@ const char *CTvScanner::getDtvScanListName(int mode)
             list_name = (char *)"UK,Default DVB-T";
             break;
         case FE_ATSC:
-            if (list == 1)
+            switch (list) {
+            case 1:
                 list_name = (char *)"U.S.,ATSC Cable Standard";
-            else if (list == 2)
+                break;
+            case 2:
                 list_name = (char *)"U.S.,ATSC Cable IRC";
-            else if (list == 3)
+                break;
+            case 3:
                 list_name = (char *)"U.S.,ATSC Cable HRC";
-            else
+                break;
+            case 4:
+                list_name = (char *)"U.S.,NTSC Air";
+                break;
+            case 5:
+                list_name = (char *)"U.S.,NTSC Cable Standard";
+                break;
+            case 6:
+                list_name = (char *)"U.S.,NTSC Cable IRC";
+                break;
+            case 7:
+                list_name = (char *)"U.S.,NTSC Cable HRC";
+                break;
+            default:
                 list_name = (char *)"U.S.,ATSC Air";
-            break;
+                break;
+            }break;
         default:
             list_name = (char *)"CHINA,Default DTMB ALL";
             LOGD("unknown scan mode %d, using default[%s]", mode, list_name);
@@ -1337,18 +1358,19 @@ int CTvScanner::getScanDtvStandard(ScanParas &scp) {
     return -1;
 }
 
-int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEParas &fp, ScanParas &sp) {
-    atv_para.mode = sp.getAtvMode();
+int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEParas &fp, ScanParas &scp) {
+    atv_para.mode = scp.getAtvMode();
     if (atv_para.mode == AM_SCAN_ATVMODE_NONE)
         return 0;
 
     int freq1, freq2;
-    freq1 = sp.getAtvFrequency1();
-    freq2 = sp.getAtvFrequency2();
-    if (freq1 <= 0 || freq2 <= 0
+    freq1 = scp.getAtvFrequency1();
+    freq2 = scp.getAtvFrequency2();
+    if ((atv_para.mode != AM_SCAN_ATVMODE_FREQ && (freq1 <= 0 || freq2 <= 0))
             || (atv_para.mode == AM_SCAN_ATVMODE_MANUAL && freq1 == freq2)
-            || (atv_para.mode == AM_SCAN_ATVMODE_AUTO && freq1 > freq2)) {
-        LOGW(" freq error start = %d end = %d",  freq1,  freq2);
+            || (atv_para.mode == AM_SCAN_ATVMODE_AUTO && freq1 > freq2)
+            || (atv_para.mode == AM_SCAN_ATVMODE_FREQ && freq1 > freq2)) {
+        LOGW(" freq error start:%d end=%d amode:%d",  freq1,  freq2, atv_para.mode);
         return -1;
     }
 
@@ -1358,20 +1380,56 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
     }
 
     atv_para.am_scan_atv_cvbs_lock =  &checkAtvCvbsLockHelper;
+    atv_para.default_std = CFrontEnd::getInstance()->enumToStdAndColor(fp.getVideoStd(), fp.getAudioStd());
+    atv_para.channel_id = -1;
+    atv_para.afc_range = 2000000;
+
+    int analog_auto = getParamOption("analog.auto");
+    AM_Bool_t is_analog_auto = (analog_auto == -1)? false : (analog_auto != 0);
+
+    if (mAtvIsAtsc && !is_analog_auto) {// atsc scan with list-mode, not auto mode
+        int mode = scp.getAtvModifier(CFrontEnd::FEParas::FEP_MODE, -1);
+        if (mode == -1)
+            mode = fp.getFEMode().getMode();
+        const char *list_name = getDtvScanListName(mode);
+        LOGD("Using Region List [%s] for ATV", list_name);
+
+        Vector<sp<CTvChannel>> vcp;
+
+        CTvRegion::getChannelListByName((char *)list_name, vcp);
+        int size = vcp.size();
+        LOGD("channel list size = %d", size);
+
+        if (size == 0) {
+            CTvDatabase::GetTvDb()->importXmlToDB("/etc/tv_default.xml");
+            CTvRegion::getChannelListByName((char *)list_name, vcp);
+            size = vcp.size();
+        }
+
+        if (!(atv_para.fe_paras = static_cast<AM_FENDCTRL_DVBFrontendParameters_t *>(calloc(size, sizeof(AM_FENDCTRL_DVBFrontendParameters_t)))))
+            return -1;
+
+        int i;
+        for (i = 0; i < size; i++) {
+            atv_para.fe_paras[i].m_type = FE_ANALOG;
+            atv_para.fe_paras[i].analog.para.frequency = vcp[i]->getFrequency();
+        }
+        atv_para.fe_cnt = size;
+
+        return 0;
+    }
+
     atv_para.fe_paras = static_cast<AM_FENDCTRL_DVBFrontendParameters_t *>(calloc(3, sizeof(AM_FENDCTRL_DVBFrontendParameters_t)));
     if (atv_para.fe_paras != NULL) {
         memset(atv_para.fe_paras, 0, 3 * sizeof(AM_FENDCTRL_DVBFrontendParameters_t));
         atv_para.fe_paras[0].m_type = FE_ANALOG;
-        atv_para.fe_paras[0].analog.para.frequency = sp.getAtvFrequency1();
+        atv_para.fe_paras[0].analog.para.frequency = scp.getAtvFrequency1();
         atv_para.fe_paras[1].m_type = FE_ANALOG;
-        atv_para.fe_paras[1].analog.para.frequency = sp.getAtvFrequency2();
+        atv_para.fe_paras[1].analog.para.frequency = scp.getAtvFrequency2();
         atv_para.fe_paras[2].m_type = FE_ANALOG;
-        atv_para.fe_paras[2].analog.para.frequency = (atv_para.mode == AM_SCAN_ATVMODE_AUTO)? 0 : sp.getAtvFrequency1();
+        atv_para.fe_paras[2].analog.para.frequency = (atv_para.mode == AM_SCAN_ATVMODE_AUTO)? 0 : scp.getAtvFrequency1();
     }
     atv_para.fe_cnt = 3;
-    atv_para.default_std = CFrontEnd::getInstance()->enumToStdAndColor(fp.getVideoStd(), fp.getAudioStd());
-    atv_para.channel_id = -1;
-    atv_para.afc_range = 2000000;
     if (atv_para.mode == AM_SCAN_ATVMODE_AUTO) {
         atv_para.afc_unlocked_step = 3000000;
         atv_para.cvbs_unlocked_step = 1500000;
@@ -1410,7 +1468,7 @@ int CTvScanner::createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEP
     }
 
     const char *list_name = getDtvScanListName(fp.getFEMode().getMode());
-    LOGD("Using Region List [%s]", list_name);
+    LOGD("Using Region List [%s] for DTV", list_name);
 
     Vector<sp<CTvChannel>> vcp;
 
@@ -1656,14 +1714,14 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
     }
     int AdtvMixed = (pT->mScanParas.getAtvMode() != AM_SCAN_ATVMODE_NONE
         && pT->mScanParas.getDtvMode() != AM_SCAN_DTVMODE_NONE)? 1 : 0;
-    int factor =  (AdtvMixed)? 50 : 100;
+    int factor =  (AdtvMixed && pT->mScanParas.getAtvMode() != AM_SCAN_ATVMODE_FREQ)? 50 : 100;
 
     pT->mCurEv.clear();
     memset(pT->mCurEv.mProgramName, '\0', sizeof(pT->mCurEv.mProgramName));
     memset(pT->mCurEv.mParas, '\0', sizeof(pT->mCurEv.mParas));
     if (event_type == AM_SCAN_EVT_PROGRESS) {
         AM_SCAN_Progress_t *evt = (AM_SCAN_Progress_t *)param;
-        LOGD("progress evt:%d", evt->evt);
+        LOGD("progress evt:%d [%d%%]", evt->evt, pT->mCurEv.mPercent);
         switch (evt->evt) {
         case AM_SCAN_PROGRESS_SCAN_BEGIN: {
             AM_SCAN_CreatePara_t *cp = (AM_SCAN_CreatePara_t*)evt->data;
@@ -1696,9 +1754,8 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
 
             pT->mCurEv.mFEParas.fromFENDCTRLParameters(CFrontEnd::FEMode(pT->mCurEv.mMode), &tp->fend_para);
 
-
             if (tp->fend_para.m_type == FE_ANALOG) {
-                if (AdtvMixed) {//mix
+                if (AdtvMixed || pT->mScanParas.getAtvMode() == AM_SCAN_ATVMODE_FREQ) {//mix
                     pT->mCurEv.mPercent = (tp->index * factor) / tp->total;
                 } else {
                     pT->mCurEv.mPercent = 0;
@@ -1813,7 +1870,8 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
             if (npd != NULL) {
                 switch (npd->newts->type) {
                     case AM_SCAN_TS_ANALOG:
-                        if (npd->result->start_para->atv_para.mode == AM_SCAN_ATVMODE_AUTO)
+                        if (npd->result->start_para->atv_para.mode == AM_SCAN_ATVMODE_AUTO
+                            || npd->result->start_para->atv_para.mode == AM_SCAN_ATVMODE_FREQ)
                             pT->storeScan(npd->result, npd->newts);
                     break;
                     case AM_SCAN_TS_DIGITAL:

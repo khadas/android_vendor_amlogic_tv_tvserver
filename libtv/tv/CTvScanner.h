@@ -227,6 +227,11 @@ public:
         ScanParas& setDtvStandard(int s) { setInt(SCP_DTVSTD, s); return *this; }
         int getDtvStandard() const { return getInt(SCP_DTVSTD, -1); }
 
+        ScanParas&  setAtvModifier(const char* name, int m) { char n[32] = {0}; snprintf(n, 32, "%s_amod", name); setInt(n, m); return *this; }
+        int getAtvModifier(const char* name, int def) { char n[32] = {0}; snprintf(n, 32, "%s_amod", name); return getInt(n, def); }
+        ScanParas&  setDtvModifier(const char* name, int m) { char n[32] = {0}; snprintf(n, 32, "%s_dmod", name); setInt(n, m); return *this; }
+        int getDtvModifier(const char* name, int def) { char n[32] = {0}; snprintf(n, 32, "%s_dmod", name); return getInt(n, def); }
+
     public:
         static const char* SCP_MODE;
         static const char* SCP_ATVMODE;

@@ -63,7 +63,6 @@ public:
         virtual ~ISourceConnectObserver() {};
         virtual void onSourceConnect(int source __unused, int connect_status __unused) {
         };
-        virtual void onVframeSizeChange() {};
     };
 
     void setObserver ( ISourceConnectObserver *pOb ) {

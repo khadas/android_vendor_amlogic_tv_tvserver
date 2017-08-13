@@ -18,7 +18,6 @@
 #include <tvconfig.h>
 
 #include "CTvLog.h"
-#include "CTvSettingCfg.h"
 #include "../tvin/CTvin.h"
 
 CTvSettingDeviceFactory::CTvSettingDeviceFactory()

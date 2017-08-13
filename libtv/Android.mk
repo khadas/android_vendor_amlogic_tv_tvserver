@@ -8,15 +8,6 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-CSV_RET=$(shell ($(LOCAL_PATH)/tvsetting/csvAnalyze.sh > /dev/zero;echo $$?))
-ifeq ($(CSV_RET), 1)
-  $(error "Csv file or common.h file is not exist!!!!")
-else ifeq ($(CSV_RET), 2)
-  $(error "Csv file's Id must be integer")
-else ifeq ($(CSV_RET), 3)
-  $(error "Csv file's Size must be integer or defined in common.h")
-endif
-
 DVB_PATH := $(wildcard external/dvb)
 ifeq ($(DVB_PATH), )
   DVB_PATH := $(wildcard vendor/amlogic/external/dvb)
@@ -68,8 +59,6 @@ LOCAL_SRC_FILES := \
   tvin/CHDMIRxManager.cpp \
   tvdb/CTvDimension.cpp \
   vpp/CVpp.cpp \
-  vpp/pqdata.cpp \
-  vpp/CPQdb.cpp \
   audio/CTvAudio.cpp \
   audio/audio_effect.cpp \
   audio/audio_alsa.cpp \
@@ -81,8 +70,6 @@ LOCAL_SRC_FILES := \
   tvsetting/CTvSetting.cpp  \
   tvsetting/CTvSettingDeviceFactory.cpp  \
   tvsetting/TvKeyData.cpp \
-  tvsetting/SSMHeader.cpp \
-  tvsetting/SSMHandler.cpp \
   version/version.cpp \
   tvdb/CTvChannel.cpp \
   tvdb/CTvDatabase.cpp \

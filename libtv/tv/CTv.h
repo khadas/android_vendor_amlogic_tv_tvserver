@@ -24,7 +24,6 @@
 #include "CTvBooking.h"
 #include "CFrontEnd.h"
 #include "../vpp/CVpp.h"
-#include "../vpp/CPQdb.h"
 #include "../tvin/CTvin.h"
 #include "../tvin/CHDMIRxManager.h"
 #include <CMsgQueue.h>
@@ -615,7 +614,6 @@ protected:
     virtual void onSourceConnect(int source_type, int connect_status);
     virtual void onUpgradeStatus(int status, int progress);
     virtual void onThermalDetect(int state);
-    virtual void onVframeSizeChange();
 
     virtual void onBootvideoRunning();
     virtual void onBootvideoStopped();

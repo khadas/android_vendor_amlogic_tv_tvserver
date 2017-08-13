@@ -9,14 +9,9 @@
 
 #ifndef _C_VPP_H
 #define _C_VPP_H
-#include "amstream.h"
-#include "cm.h"
-#include "amvecm.h"
-#include "pqdata.h"
 #include "../tvin/CTvin.h"
 #include "fbcutils/CFbcCommunication.h"
-#include "ldim.h"
-#include <common.h>
+#include <tvutils.h>
 
 #define GLOBAL_OGO_FORMAT_FLAG  0x6688
 #define RGB_FORMAT          0
@@ -25,20 +20,13 @@
 #define PQ_USER_DATA_FROM_E2P   0
 #define PQ_USER_DATA_FROM_DB    1
 
-#define VPP_DEV_PATH                                        "/dev/amvecm"
-#define DI_DEV_PATH                                         "/dev/di0"
-#define VPP_3D_DEV_PATH                                     "/dev/amvideo"
-#define VPP_PANEL_BACKLIGHT_DEV_PATH                        "/sys/class/aml_bl/power"
-#define BACKLIGHT_BRIGHTNESS                                "/sys/class/backlight/aml-bl/brightness"
-#define DNLP_ENABLE                                         "/sys/module/am_vecm/parameters/dnlp_en"
-#define DI_NR2_ENABLE                                       "/sys/module/di/parameters/nr2_en"
-#define AMVECM_PC_MODE                                      "/sys/class/amvecm/pc_mode"
-
+#define VPP_PANEL_BACKLIGHT_DEV_PATH   "/sys/class/aml_bl/power"
+#define BACKLIGHT_BRIGHTNESS           "/sys/class/backlight/aml-bl/brightness"
+#define DI_NR2_ENABLE                  "/sys/module/di/parameters/nr2_en"
+#define AMVECM_PC_MODE                 "/sys/class/amvecm/pc_mode"
 
 // default backlight value 10%
 #define DEFAULT_BACKLIGHT_BRIGHTNESS 10
-
-#define LDIM_PATH    "/dev/aml_ldim"
 
 #define MODE_VPP_3D_DISABLE     0x00000000
 #define MODE_VPP_3D_ENABLE      0x00000001
@@ -51,165 +39,11 @@
 #define MODE_VPP_3D_TO_2D_L     0x00000200
 #define MODE_VPP_3D_TO_2D_R     0x00000400
 
-typedef union tag_suc {
-    short s;
-    unsigned char c[2];
-} SUC;
-
-typedef union tag_usuc {
-    unsigned short s;
-    unsigned char c[2];
-} USUC;
-
-typedef enum is_3d_type_e {
-    INDEX_3D_INVALID = -1,
-    INDEX_2D = 0,
-    INDEX_3D = 1,
-} is_3d_type_t;
-
-typedef enum vpp_deblock_mode_e {
-    VPP_DEBLOCK_MODE_OFF,
-    VPP_DEBLOCK_MODE_LOW,
-    VPP_DEBLOCK_MODE_MIDDLE,
-    VPP_DEBLOCK_MODE_HIGH,
-    VPP_DEBLOCK_MODE_AUTO,
-} vpp_deblock_mode_t;
-
 typedef enum vpp_panorama_mode_e {
     VPP_PANORAMA_MODE_FULL,
     VPP_PANORAMA_MODE_NORMAL,
     VPP_PANORAMA_MODE_MAX,
 } vpp_panorama_mode_t;
-
-typedef enum vpp_color_space_type_e {
-    VPP_COLOR_SPACE_AUTO,
-    VPP_COLOR_SPACE_YUV,
-    VPP_COLOR_SPACE_RGB,
-} vpp_color_space_type_t;
-
-typedef enum vpp_display_mode_e {
-    VPP_DISPLAY_MODE_169,
-    VPP_DISPLAY_MODE_PERSON,
-    VPP_DISPLAY_MODE_MOVIE,
-    VPP_DISPLAY_MODE_CAPTION,
-    VPP_DISPLAY_MODE_MODE43,
-    VPP_DISPLAY_MODE_FULL,
-    VPP_DISPLAY_MODE_NORMAL,
-    VPP_DISPLAY_MODE_NOSCALEUP,
-    VPP_DISPLAY_MODE_CROP_FULL,
-    VPP_DISPLAY_MODE_CROP,
-    VPP_DISPLAY_MODE_ZOOM,
-    VPP_DISPLAY_MODE_FULL_REAL,//add for N360 by haifeng.liu
-    VPP_DISPLAY_MODE_MAX,
-} vpp_display_mode_t;
-
-typedef enum vpp_color_demomode_e {
-    VPP_COLOR_DEMO_MODE_ALLON,
-    VPP_COLOR_DEMO_MODE_YOFF,
-    VPP_COLOR_DEMO_MODE_COFF,
-    VPP_COLOR_DEMO_MODE_GOFF,
-    VPP_COLOR_DEMO_MODE_MOFF,
-    VPP_COLOR_DEMO_MODE_ROFF,
-    VPP_COLOR_DEMO_MODE_BOFF,
-    VPP_COLOR_DEMO_MODE_RGBOFF,
-    VPP_COLOR_DEMO_MODE_YMCOFF,
-    VPP_COLOR_DEMO_MODE_ALLOFF,
-    VPP_COLOR_DEMO_MODE_MAX,
-} vpp_color_demomode_t;
-
-typedef enum vpp_color_basemode_e {
-    VPP_COLOR_BASE_MODE_OFF,
-    VPP_COLOR_BASE_MODE_OPTIMIZE,
-    VPP_COLOR_BASE_MODE_ENHANCE,
-    VPP_COLOR_BASE_MODE_DEMO,
-    VPP_COLOR_BASE_MODE_MAX,
-} vpp_color_basemode_t;
-
-typedef enum vpp_color_management2_e {
-    VPP_COLOR_MANAGEMENT2_MODE_OFF,
-    VPP_COLOR_MANAGEMENT2_MODE_OPTIMIZE,
-    VPP_COLOR_MANAGEMENT2_MODE_ENHANCE,
-    VPP_COLOR_MANAGEMENT2_MODE_DEMO,
-    VPP_COLOR_MANAGEMENT2_MODE_MAX,
-} vpp_color_management2_t;
-
-typedef enum vpp_noise_reduction2_mode_e {
-    VPP_NOISE_REDUCTION2_MODE_OFF,
-    VPP_NOISE_REDUCTION2_MODE_LOW,
-    VPP_NOISE_REDUCTION2_MODE_MID,
-    VPP_NOISE_REDUCTION2_MODE_HIGH,
-    VPP_NOISE_REDUCTION2_MODE_AUTO,
-    VPP_NOISE_REDUCTION2_MODE_MAX,
-} vpp_noise_reduction2_mode_t;
-typedef enum vpp_xvycc_mode_e {
-    VPP_XVYCC_MODE_OFF,
-    VPP_XVYCC_MODE_STANDARD,
-    VPP_XVYCC_MODE_ENHANCE,
-    VPP_XVYCC_MODE_MAX,
-} vpp_xvycc_mode_t;
-
-typedef enum vpp_mcdi_mode_e {
-    VPP_MCDI_MODE_OFF,
-    VPP_MCDI_MODE_STANDARD,
-    VPP_MCDI_MODE_ENHANCE,
-    VPP_MCDI_MODE_MAX,
-} vpp_mcdi_mode_t;
-
-typedef enum vpp_color_temperature_mode_e {
-    VPP_COLOR_TEMPERATURE_MODE_STANDARD,
-    VPP_COLOR_TEMPERATURE_MODE_WARM,
-    VPP_COLOR_TEMPERATURE_MODE_COLD,
-    VPP_COLOR_TEMPERATURE_MODE_USER,
-    VPP_COLOR_TEMPERATURE_MODE_MAX,
-} vpp_color_temperature_mode_t;
-
-typedef enum vpp_noise_reduction_mode_e {
-    VPP_NOISE_REDUCTION_MODE_OFF,
-    VPP_NOISE_REDUCTION_MODE_LOW,
-    VPP_NOISE_REDUCTION_MODE_MID,
-    VPP_NOISE_REDUCTION_MODE_HIGH,
-    VPP_NOISE_REDUCTION_MODE_AUTO,
-    VPP_NOISE_REDUCTION_MODE_MAX,
-} vpp_noise_reduction_mode_t;
-
-typedef enum vpp_test_pattern_e {
-    VPP_TEST_PATTERN_NONE,
-    VPP_TEST_PATTERN_RED,
-    VPP_TEST_PATTERN_GREEN,
-    VPP_TEST_PATTERN_BLUE,
-    VPP_TEST_PATTERN_WHITE,
-    VPP_TEST_PATTERN_BLACK,
-    VPP_TEST_PATTERN_MAX,
-} vpp_test_pattern_e;
-
-typedef struct vpp_pq_para_s {
-    int brightness;
-    int contrast;
-    int saturation;
-    int hue;
-    int sharpness;
-    int backlight;
-    int nr;
-} vpp_pq_para_t;
-
-typedef enum noline_params_type_e {
-    NOLINE_PARAMS_TYPE_BRIGHTNESS,
-    NOLINE_PARAMS_TYPE_CONTRAST,
-    NOLINE_PARAMS_TYPE_SATURATION,
-    NOLINE_PARAMS_TYPE_HUE,
-    NOLINE_PARAMS_TYPE_SHARPNESS,
-    NOLINE_PARAMS_TYPE_VOLUME,
-    NOLINE_PARAMS_TYPE_BACKLIGHT,
-    NOLINE_PARAMS_TYPE_MAX,
-} noline_params_type_t;
-
-typedef struct noline_params_s {
-    int osd0;
-    int osd25;
-    int osd50;
-    int osd75;
-    int osd100;
-} noline_params_t;
 
 typedef enum vpp_dream_panel_e {
     VPP_DREAM_PANEL_OFF,
@@ -220,92 +54,56 @@ typedef enum vpp_dream_panel_e {
     VPP_DREAM_PANEL_MAX,
 } vpp_dream_panel_t;
 
-typedef enum vpp_gamma_curve_e {
-    VPP_GAMMA_CURVE_AUTO = -1,//choose gamma table by value has been saved.
-    VPP_GAMMA_CURVE_DEFAULT,
-    VPP_GAMMA_CURVE_2_1,
-    VPP_GAMMA_CURVE_2_2,
-    VPP_GAMMA_CURVE_2_3,
-    VPP_GAMMA_CURVE_2_4,
-    VPP_GAMMA_CURVE_MAX,
-} vpp_gamma_curve_t;
-
-typedef struct di_mode_param_s {
-    const char *tablename;
-    vpp_mcdi_mode_t mcdi_mode;
-    vpp_deblock_mode_t deblock_mode;
-    vpp_noise_reduction2_mode_t nr_mode;
-}di_mode_param_t;
-
-class CPqData;
 
 class CVpp {
 public:
     CVpp();
     ~CVpp();
-    int doSuspend();
-    int doResume();
     int Vpp_Init ( const char *pq_db_path, bool hdmiOutFbc);
-    int Vpp_Uninit ( void );
-    CPqData *getPqData();
-	int Vpp_SetDIMode(di_mode_param_t di_param, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
-    int Vpp_ResetLastVppSettingsSourceType ( void );
-    int Vpp_SetColorDemoMode ( vpp_color_demomode_t demomode );
-    int Vpp_SetBaseColorMode ( vpp_color_basemode_t basemode , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
-    int Vpp_SetBrightness ( int value, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int Vpp_SetContrast ( int value, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int Vpp_SetSaturation ( int value, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int Vpp_SetHue ( int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_port_t source_port, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt  );
+    int Vpp_ResetLastVppSettingsSourceType(void);
+    int LoadVppLdimRegs();
+    int LoadVppSettings ( tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
+    int Vpp_GetVppConfig();
+    int SetPQMode ( vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
+    vpp_picture_mode_t GetPQMode ( tv_source_input_t tv_source_input );
+    int SavePQMode ( vpp_picture_mode_t pq_mode,  tv_source_input_t tv_source_input );
+    int Vpp_GetPQModeValue ( tv_source_input_t, vpp_picture_mode_t, vpp_pq_para_t * );
     void enableMonitorMode(bool enable);
-    int Vpp_SetSharpness ( int value, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int Vpp_SetPQMode ( vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input, tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int Vpp_SetNoiseReductionMode ( vpp_noise_reduction_mode_t nr_mode,  tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int Vpp_SetXVYCCMode ( vpp_xvycc_mode_t xvycc_mode, tv_source_input_type_t source_type, tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    //int Vpp_SetDeblockMode(vpp_deblock_mode_t mode, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
-    //int Vpp_SetMCDIMode ( vpp_mcdi_mode_t mcdi_mode, tv_source_input_type_t source_type , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
-    int Vpp_SetZoom ( int value );
-    //int Vpp_LoadDI(tvin_port_t source_port, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
-    int Vpp_LoadBasicRegs ( tv_source_input_type_t source_type, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int VppRegisterInterface();
-    int RGBGainValueSSMToRisterMapping ( int gainValue );
-    int RGBOffsetValueSSMToRisterMapping ( int gainValue );
-    int SetGammaValue(vpp_gamma_curve_t gamma_curve, int is_save);
-    int GetGammaValue();
-
-    int SetBaseColorMode ( vpp_color_basemode_t basemode , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
-    vpp_color_basemode_t GetBaseColorMode ( void );
-    int SetBaseColorModeWithoutSave ( vpp_color_basemode_t basemode , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
-    int SaveBaseColorMode ( vpp_color_basemode_t basemode );
-    int SetColorTemperature ( vpp_color_temperature_mode_t temp_mode, tv_source_input_t tv_source_input, int is_save );
-    vpp_color_temperature_mode_t GetColorTemperature ( tv_source_input_t tv_source_input );
-    int SetColorTempWithoutSave ( vpp_color_temperature_mode_t Tempmode, tv_source_input_t tv_source_input );
-    int SaveColorTemp ( vpp_color_temperature_mode_t temp_mode, tv_source_input_t tv_source_input );
     int SetBrightness ( int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
     int GetBrightness ( tv_source_input_t tv_source_input );
-    int SetContrast ( int value, tv_source_input_t tv_source_input,  tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
-    int GetContrast ( tv_source_input_t tv_source_input );
+    int SaveBrightness (int value, tv_source_input_t tv_source_input);
     int SetSaturation ( int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
     int GetSaturation ( tv_source_input_t tv_source_input );
-    int SetHue ( int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
-    int GetHue ( tv_source_input_t tv_source_input );
+    int SaveSaturation ( int value, tv_source_input_t tv_source_input );
+    int SetColorTemperature ( vpp_color_temperature_mode_t temp_mode, tv_source_input_t tv_source_input, int is_save );
+    vpp_color_temperature_mode_t GetColorTemperature ( tv_source_input_t tv_source_input );
+    int SaveColorTemperature ( vpp_color_temperature_mode_t temp_mode, tv_source_input_t tv_source_input );
+
+    int SaveNoiseReductionMode ( vpp_noise_reduction_mode_t nr_mode, tv_source_input_t tv_source_input );
+    int SetNoiseReductionMode ( vpp_noise_reduction_mode_t nr_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt, int is_save );
+    vpp_noise_reduction_mode_t GetNoiseReductionMode ( tv_source_input_t tv_source_input );
     int SetSharpness ( int value, tv_source_input_t tv_source_input, int is_enable, is_3d_type_t is3d, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, int is_save );
     int GetSharpness ( tv_source_input_t tv_source_input );
+    int SaveSharpness ( int value, tv_source_input_t tv_source_input );
+    int SetHue ( int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
+    int GetHue ( tv_source_input_t tv_source_input );
+    int SaveHue (int value, tv_source_input_t tv_source_input );
+    int SetContrast ( int value, tv_source_input_t tv_source_input,  tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
+    int GetContrast ( tv_source_input_t tv_source_input );
+    int SaveContrast ( int value, tv_source_input_t tv_source_input );
+    int SetEyeProtectionMode(tv_source_input_t tv_source_input, int enable);
+    int GetEyeProtectionMode();
+    int SetDNLP ( tv_source_input_type_t source_type, tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
+    int SetBaseColorMode ( vpp_color_basemode_t basemode , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
+    vpp_color_basemode_t GetBaseColorMode ( void );
+    int SaveBaseColorMode ( vpp_color_basemode_t basemode );
+    int SetGammaValue(vpp_gamma_curve_t gamma_curve, int is_save);
+    int GetGammaValue();
+    vpp_display_mode_t GetDisplayMode ( tv_source_input_t tv_source_input );
     int SetBacklight ( int value, tv_source_input_t tv_source_input, int is_save );
     int GetBacklight ( tv_source_input_t tv_source_input );
     int SetBacklightWithoutSave ( int value, tv_source_input_t tv_source_input );
     int SaveBacklight ( int value, tv_source_input_t tv_source_input );
-    int SetPQMode ( vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
-    vpp_picture_mode_t GetPQMode ( tv_source_input_t tv_source_input );
-    int SavePQMode ( vpp_picture_mode_t pq_mode,  tv_source_input_t tv_source_input );
-    vpp_display_mode_t GetDisplayMode ( tv_source_input_t tv_source_input );
-    int SaveNoiseReductionMode ( vpp_noise_reduction_mode_t nr_mode, tv_source_input_t tv_source_input );
-    int SetNoiseReductionMode ( vpp_noise_reduction_mode_t nr_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt, int is_save );
-    vpp_noise_reduction_mode_t GetNoiseReductionMode ( tv_source_input_t tv_source_input );
-    int SetDNLP ( tv_source_input_type_t source_type, tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int LoadVppSettings ( tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int SetEyeProtectionMode(tv_source_input_t tv_source_input, int enable);
-    int GetEyeProtectionMode();
-
     int FactorySetPQMode_Brightness ( int source_type, int pq_mode, int brightness );
     int FactoryGetPQMode_Brightness ( int tv_source_input, int pq_mode );
     int FactorySetPQMode_Contrast ( int tv_source_input, int pq_mode, int contrast );
@@ -352,31 +150,14 @@ public:
 
     int VPPSSMFacRestoreDefault();
 
-
-    int SetDnlp_OFF();
-    int SetDnlp_ON ( void );
-    int GetDnlp_Status();
-
     int GetColorTemperatureParams ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params );
-    int ReadColorTemperatureParams ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params );
     int SetColorTemperatureParams ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params );
     int SaveColorTemperatureParams ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params );
-    unsigned short CalColorTemperatureParamsChecksum ( void );
-    int SetColorTempParamsChecksum ( void );
-    unsigned short GetColorTempParamsChecksum ( void );
-    int CheckTempDataLable ( void );
-    int SetTempDataLable ( void );
-    int CheckColorTemperatureParams ( void );
-    int RestoeColorTemperatureParamsFromDB ( tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt );
-    int CheckColorTemperatureParamAlldata ( tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt );
-    void  Tvin_SetVideoScreenColorType ( int type );
-    int Vpp_GetVppConfig();
-    int Vpp_GetPQModeValue ( tv_source_input_t, vpp_picture_mode_t, vpp_pq_para_t * );
-    int Vpp_SetPQParams ( tv_source_input_type_t source_type, vpp_picture_mode_t pq_mode, vpp_pq_para_t pq_para , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
 
     int FactoryResetNonlinear();
     tvin_cutwin_t GetOverscan ( tv_source_input_t tv_source_input, tvin_sig_fmt_t fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    static is_3d_type_t Check2Dor3D ( is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
+    int VPP_SetPLLValues (tv_source_input_t tv_source_input, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt);
+    int VPP_SetCVD2Values (tv_source_input_t tv_source_input, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt);
     //api
     int VPP_SetVideoCrop ( int Voffset0, int Hoffset0, int Voffset1, int Hoffset1 );
     int VPP_SetNonLinearFactor ( int value );
@@ -385,72 +166,26 @@ public:
     int VPP_SetBackLight_Switch ( int value );
     int VPP_GetBackLight_Switch ( void );
     int VPP_SetScalerPathSel (const unsigned int value);
-
+    int VPP_SSMRestorToDefault(int id, bool resetAll);
+    int TV_SSMRecovery();
+    int VPP_GetSSMStatus (void);
     static CVpp *getInstance();
 private:
     //
-    int Vpp_LoadGamma(vpp_gamma_curve_t gamma_curve);
-    int Vpp_SetColorTemperatureUser(vpp_color_temperature_mode_t temp_mode, tv_source_input_type_t source_type);
-    int VPP_OpenModule ( void );
-    int DI_OpenModule ( void );
-    int VPP_CloseModule ( void );
-    int DI_CloseModule ( void );
-    int VPP_SetVideoBrightness ( int value );
-    int VPP_SetVideoContrast ( int value );
-    int VPP_SetVideoSaturationHue ( int satVal, int hueVal );
     int VPP_SetCMRegisterMap ( struct cm_regmap_s *pRegMap );
-    int Vpp_LoadRegs ( am_regs_t regs );
-    int DI_LoadRegs ( am_pq_param_t di_regs );
-    int VPP_SetRGBOGO ( const struct tcon_rgb_ogo_s *rgbogo );
-    int VPP_GetRGBOGO ( const struct tcon_rgb_ogo_s *rgbogo );
-    int VPP_SetGammaOnOff ( unsigned char onoff );
-    int VPP_SetGammaTbl_R ( unsigned short red[256] );
-    int VPP_SetGammaTbl_G ( unsigned short green[256] );
-    int VPP_SetGammaTbl_B ( unsigned short blue[256] );
     void video_set_saturation_hue ( signed char saturation, signed char hue, signed long *mab );
     void video_get_saturation_hue ( signed char *sat, signed char *hue, signed long *mab );
     int VPP_SetBackLightLevel ( int value );
-    int VPP_SetVEDNLP ( const struct ve_dnlp_s *pDNLP );
-    int VPP_SetVENewDNLP ( const ve_dnlp_table_t *pDNLP );
-    int Vpp_GetAVGHistogram ( struct ve_hist_s *hist );
-    int Vpp_SetDnlpOff ( void );
-    int Vpp_SetDnlpOn ( void );
-    int VPP_SetVESharpness ( const ve_hsvs_s * );
-    int VPP_SetVEChromaCoring ( const ve_ccor_s * );
-    int VPP_SetVEBlueEnh ( const ve_benh_s * );
-    int VPP_DeviceIOCtl ( int request, ... );
-    int DI_DeviceIOCtl(int request, ...);
-    int VPP_SetVideoNoiseReduction ( int );
-    int VPP_SetDeinterlaceMode ( int );
     int VPP_FBCColorTempBatchGet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t *);
     int VPP_FBCColorTempBatchSet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t);
     int VPP_FBCSetColorTemperature(vpp_color_temperature_mode_t);
 
-    bool LoadVppLdimRegs();
-
     static CVpp *mInstance;
     bool mHdmiOutFbc;
     CFbcCommunication *fbcIns;
-    tv_source_input_type_t vpp_setting_last_source_type;
-    tvin_sig_fmt_t vpp_setting_last_sig_fmt;
-    tvin_trans_fmt_t vpp_setting_last_trans_fmt;
-    bool mIsHdrLastTime;
     //cfg
     bool mbVppCfg_backlight_reverse;
     bool mbVppCfg_backlight_init;
-    bool mbVppCfg_pqmode_without_hue;
-    bool mbVppCfg_hue_reverse;
-    bool mbVppCfg_gamma_onoff;
-    bool mbVppCfg_whitebalance_sameparam;
-    bool mbVppCfg_new_cm;
-    bool mbVppCfg_new_nr;
-    bool mbVppCfg_panorama_switch;
     bool mbVppCfg_pqmode_depend_bklight;
-    bool mbVppCfg_colortemp_by_source;
-
-    CPqData *mpPqData;
-
-    int vpp_amvideo_fd;
-    int di_fd;
 };
 #endif

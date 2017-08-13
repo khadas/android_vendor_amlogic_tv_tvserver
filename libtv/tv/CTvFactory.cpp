@@ -87,7 +87,7 @@ int CTvFactory::resetPQMode ()
 
 int CTvFactory::replacePQDb(const char *newFilePath)
 {
-    return CVpp::getInstance()->getPqData()->replacePQDb(newFilePath);
+    return 0;
 }
 
 int CTvFactory::setGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b)
@@ -889,7 +889,7 @@ int CTvFactory::whiteBalancePramSave(int tv_source_input, int tempmode, int r_ga
     sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
 
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        CVpp::getInstance()->SaveColorTemp((vpp_color_temperature_mode_t) tempmode, (tv_source_input_t) tv_source_input);
+        CVpp::getInstance()->SaveColorTemperature((vpp_color_temperature_mode_t) tempmode, (tv_source_input_t) tv_source_input);
         CVpp::getInstance()->FactorySaveColorTemp_Rgain(sourceType, tempmode, r_gain);
         CVpp::getInstance()->FactorySaveColorTemp_Ggain(sourceType, tempmode, g_gain);
         CVpp::getInstance()->FactorySaveColorTemp_Bgain(sourceType, tempmode, b_gain);

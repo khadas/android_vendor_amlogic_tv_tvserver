@@ -16,7 +16,6 @@
 #include <errno.h>
 #include <CTvLog.h>
 #include <tvutils.h>
-#include "../include/common.h"
 
 
 CHDMIRxManager::CHDMIRxManager()

@@ -44,12 +44,6 @@ CSourceConnectDetect::CSourceConnectDetect()
         m_event.events = EPOLLIN | EPOLLET;
         mEpoll.add(mHdmiDetectFile.getFd(), &m_event);
     }
-    //vfame size change
-    if (mVppPollFile.openFile(VPP_POLL_PATCH) > 0) {
-        m_event.data.fd = mVppPollFile.getFd();
-        m_event.events = EPOLLIN | EPOLLET;
-        mEpoll.add(mVppPollFile.getFd(), &m_event);
-    }
 }
 
 CSourceConnectDetect::~CSourceConnectDetect()
@@ -255,8 +249,6 @@ bool CSourceConnectDetect::threadLoop()
                         mpObserver->onSourceConnect(source, plug);
                     }
                     m_hdmi_status = hdmi_status;
-                } else if (fd == mVppPollFile.getFd()) { //vframe size change
-                    mpObserver->onVframeSizeChange();
                 }
                 /**
                  * EPOLLOUT event

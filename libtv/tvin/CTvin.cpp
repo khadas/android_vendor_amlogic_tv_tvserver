@@ -26,7 +26,6 @@
 #include <cutils/properties.h>
 #include <cutils/log.h>
 #include <sys/mman.h>
-#include "../vpp/CPQdb.h"
 #include "CAv.h"
 #include "../tvsetting/CTvSetting.h"
 #include <tvutils.h>
@@ -1371,25 +1370,6 @@ int CTvin::TvinApi_SetVdinHVScale ( int vdinx, int hscale, int vscale )
     return ret;
 }
 
-int CTvin::TvinApi_SetCompPhase ( am_phase_t &am_phase )
-{
-    int idx = 0;
-    char str1[200] = {0}, str2[100] = {0};
-
-    LOGD ( "enter,TvinApi_SetCompPhase" );
-
-    for (int i = 0; i < (int)am_phase.length; i++ ) {
-        sprintf ( &str1[idx], "%d,", am_phase.phase[i] );
-        sprintf ( str2, "%d,", am_phase.phase[i] );
-        int len = strlen ( str2 );
-        idx = idx + len;
-    }
-
-    LOGD ( "write str = %s\n", str1 );
-    tvWriteSysfs("/sys/module/tvin_afe/parameters/comp_phase", str1);
-    return 0;
-}
-
 tvin_trans_fmt CTvin::TvinApi_Get3DDectMode()
 {
     char buf[32] = {0};
@@ -1448,26 +1428,6 @@ int CTvin::TvinApi_GetHDMIAudioStatus ( void )
     tvReadSysfs("/sys/module/tvin_hdmirx/parameters/auds_rcv_sts", buf);
     int val = atoi(buf);
     return val;
-}
-
-int CTvin::TvinApi_LoadPLLValues ( am_regs_t regs )
-{
-    int rt = AFE_DeviceIOCtl ( TVIN_IOC_LOAD_REG, &regs );
-    if ( rt < 0 ) {
-        LOGE ( "TvinApi_LoadPLLValues, error(%s)!\n", strerror ( errno ) );
-    }
-
-    return rt;
-}
-
-int CTvin::TvinApi_LoadCVD2Values ( am_regs_t regs )
-{
-    int rt = AFE_DeviceIOCtl ( TVIN_IOC_LOAD_REG, &regs );
-    if ( rt < 0 ) {
-        LOGE ( "TvinApi_LoadCVD2Values, error(%s)!\n", strerror ( errno ) );
-    }
-
-    return rt;
 }
 
 tv_source_input_type_t CTvin::Tvin_SourceInputToSourceInputType ( tv_source_input_t source_input )

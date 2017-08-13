@@ -13,11 +13,10 @@
 #include <pthread.h>
 #include <stdint.h>
 
-#include "CTvSettingCfg.h"
 #include "CTvSettingDeviceFactory.h"
 #include "TvKeyData.h"
 #include <CTvLog.h>
-
+#include "PQSettingCfg.h"
 using namespace android;
 
 #ifdef __cplusplus
@@ -32,6 +31,8 @@ int CTvSettingdoResume();
 int MiscSSMRestoreDefault();
 int MiscSSMFacRestoreDefault();
 int ReservedSSMRestoreDefault();
+int TVSSMWriteNTypes(int id, int data_len, int data_buf, int offset = 0);
+int TVSSMReadNTypes(int id, int data_len, int *data_buf, int offset = 0);
 
 int SSMSaveEEP_One_N310_N311(int offset, int rw_val) ;
 int SSMReadEEP_One_N310_N311(int offset);

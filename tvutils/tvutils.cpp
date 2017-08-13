@@ -227,6 +227,705 @@ int tvWriteDisplayMode(const char *mode)
     return 0;
 }
 
+//Add for PQ
+int tvResetLastVppSettingsSourceType(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        sws->resetLastPQSettingsSourceType();
+    }
+    return 0;
+}
+
+int tvLoadPQSettings(source_input_param_t source_input_param)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        sws->loadPQSettings(source_input_param);
+    }
+    return 0;
+}
+
+int tvLoadCpqLdimRegs(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        sws->loadCpqLdimRegs();
+    }
+    return 0;
+}
+
+int tvSSMReadNTypes(int id, int data_len, int *data_buf, int offset)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        int tmp_val = 0;
+        tmp_val = sws->sysSSMReadNTypes(id, data_len, offset);
+        *data_buf = tmp_val;
+    }
+    return 0;
+}
+
+int tvSSMWriteNTypes(int id, int data_len, int data_buf, int offset)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        sws->sysSSMWriteNTypes(id, data_len, data_buf, offset);
+    }
+    return 0;
+
+}
+
+int tvGetActualAddr(int id)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        sws->getActualAddr(id);
+    }
+    return 0;
+
+}
+
+int tvGetActualSize(int id)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        sws->getActualSize(id);
+    }
+    return 0;
+
+}
+
+int tvSetPQMode ( vpp_picture_mode_t mode, source_input_param_t source_input_param, int is_save )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        sws->setPQmode(source_input_param, (int)mode, is_save);
+    }
+
+    return 0;
+}
+
+vpp_picture_mode_t tvGetPQMode ( source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        return (vpp_picture_mode_t)sws->getPQmode(source_input_param);
+    }
+
+    return VPP_PICTURE_MODE_MAX;
+}
+
+int tvSavePQMode ( vpp_picture_mode_t mode, source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->savePQmode(source_input_param, mode);
+    }
+
+    return -1;
+}
+
+int tvGetPQParams(source_input_param_t source_input_param, vpp_picture_mode_t pq_mode, vpp_pq_para_t *pq_para)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        vpp_pq_para_t tmp_value;
+        tmp_value.brightness = sws->getPQParams(source_input_param, pq_mode, BRIGHTNESS);
+        tmp_value.contrast = sws->getPQParams(source_input_param, pq_mode, CONTRAST);
+        tmp_value.hue = sws->getPQParams(source_input_param, pq_mode, HUE);
+        tmp_value.nr = sws->getPQParams(source_input_param, pq_mode, NR);
+        tmp_value.saturation = sws->getPQParams(source_input_param, pq_mode, SATURATION);
+        tmp_value.sharpness = sws->getPQParams(source_input_param, pq_mode, SHARPNESS);
+        tmp_value.backlight = sws->getPQParams(source_input_param, pq_mode, BACKLIGHT);
+
+        *pq_para = tmp_value;
+
+        return 0;
+    }
+
+    return -1;
+}
+
+int tvSetBrightness(int brightness, source_input_param_t source_input_param, int is_save)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setBrightness(source_input_param, brightness, is_save);
+    }
+    return -1;
+}
+
+int tvGetBrightness ( source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getBrightness(source_input_param);
+    }
+
+    return -1;
+}
+
+int tvSaveBrightness ( int brightness, source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->saveBrightness(source_input_param, brightness);
+    }
+
+    return -1;
+}
+
+int tvSetContrast ( int contrast, source_input_param_t source_input_param,  int is_save )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setContrast(source_input_param, contrast, is_save);
+    }
+
+    return -1;
+}
+
+int tvGetContrast ( source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getContrast(source_input_param);
+    }
+
+    return -1;
+}
+
+int tvSaveContrast ( int contrast, source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->saveContrast(source_input_param, contrast);
+    }
+
+    return -1;
+}
+
+int tvSetSaturation ( int satuation, source_input_param_t source_input_param, int is_save )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setSaturation(source_input_param, satuation, is_save);
+    }
+
+    return -1;
+}
+
+int tvGetSaturation ( source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getSaturation(source_input_param);
+    }
+
+    return -1;
+}
+
+int tvSaveSaturation ( int satuation, source_input_param_t source_input_param)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->saveSaturation(source_input_param, satuation);
+    }
+
+    return -1;
+}
+
+int tvSetHue ( int hue, source_input_param_t source_input_param, int is_save )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setHue(source_input_param, hue, is_save);
+    }
+
+    return -1;
+}
+
+int tvGetHue ( source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getHue(source_input_param);
+    }
+
+    return -1;
+}
+
+int tvSaveHue ( int hue, source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+     if (sws != 0) {
+        return sws->saveHue(source_input_param, hue);
+    }
+
+    return -1;
+}
+
+int tvSetSharpness ( int value, source_input_param_t source_input_param, int en, int is_save )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setSharpness(source_input_param, value, en, is_save);
+    }
+
+    return -1;
+}
+
+int tvGetSharpness ( source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getSharpness(source_input_param);
+    }
+
+    return -1;
+}
+
+int tvSaveSharpness ( int value, source_input_param_t source_input_param)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        sws->saveSharpness(source_input_param, value);
+    }
+
+    return -1;
+}
+
+int tvSetColorTemperature ( vpp_color_temperature_mode_t mode, source_input_param_t source_input_param, int is_save )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setColorTemperature(source_input_param, mode, is_save);
+    }
+
+    return -1;
+}
+
+int tvGetColorTemperature ( source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getColorTemperature(source_input_param);
+    }
+
+    return -1;
+}
+
+int tvSaveColorTemperature ( vpp_color_temperature_mode_t mode, source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->saveColorTemperature(source_input_param, mode);
+    }
+
+    return -1;
+}
+
+int tvSetColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setColorTemperatureParam(Tempmode, params);
+    }
+
+    return -1;
+}
+
+int tvGetColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, pq_color_param_t id)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getColorTemperatureParam((int)Tempmode, (int)id);
+    }
+
+    return -1;
+}
+
+int tvSaveColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->saveColorTemperatureParam((int)Tempmode, params);
+    }
+
+    return -1;
+}
+
+int tvSetNoiseReductionMode ( vpp_noise_reduction_mode_t mode, source_input_param_t source_input_param, int is_save )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setNoiseReductionMode(source_input_param, mode, is_save);
+    }
+
+    return -1;
+}
+
+int tvGetNoiseReductionMode ( source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getNoiseReductionMode(source_input_param);
+    }
+
+    return -1;
+}
+
+int tvSaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, source_input_param_t source_input_param )
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->saveNoiseReductionMode(source_input_param, mode);
+    }
+
+    return -1;
+}
+
+int tvSetGamma(int gamma_curve, int is_save)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        return sws->setGammaValue(gamma_curve, is_save);
+    }
+
+    return -1;
+}
+
+int tvGetGamma(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        return sws->getGammaValue();
+    }
+
+    return -1;
+}
+
+int tvSetBaseColorMode(int basemode, source_input_param_t source_input_param)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        return sws->setBaseColorMode(basemode, source_input_param);
+    }
+
+    return -1;
+}
+
+int tvGetBaseColorMode(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        return sws->getBaseColorMode();
+    }
+
+    return -1;
+}
+
+int tvSaveBaseColorMode(int basemode)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        return sws->saveBaseColorMode(basemode);
+    }
+
+    return -1;
+}
+
+int tvSetEyeProtectionMode(source_input_param_t source_input_param, int enable)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        return sws->setEyeProtectionMode(source_input_param, enable);
+    }
+
+    return -1;
+}
+
+int tvGetEyeProtectionMode(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        return sws->getEyeProtectionMode();
+    }
+
+    return -1;
+}
+
+int tvGetDisplayMode(source_input_param_t source_input_param)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+    if (sws != 0) {
+        return sws->getDisplayMode(source_input_param);
+    }
+
+    return -1;
+}
+
+int tvFactoryResetNonlinear(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factoryResetNonlinear();
+    }
+
+    return -1;
+}
+
+int tvGetOverscanParam(source_input_param_t source_input_param, tvin_cutwin_param_t id)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getOverscanParam(source_input_param, (int)id);
+    }
+
+    return -1;
+}
+
+int tvFactoryResetPQMode(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factoryResetPQMode();
+    }
+
+    return -1;
+}
+
+int tvFactoryResetColorTemp(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factoryResetColorTemp();
+    }
+
+    return -1;
+}
+
+int tvFactorySetPQParam(source_input_param_t source_input_param, int pq_mode, vpp_pq_param_t id, int value)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factorySetPQParam(source_input_param, pq_mode, id, value);
+    }
+
+    return -1;
+}
+
+int tvFactoryGetPQParam(source_input_param_t source_input_param, int pq_mode, vpp_pq_param_t id)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factoryGetPQParam(source_input_param, pq_mode, id);
+    }
+
+    return -1;
+}
+int tvFactorySetColorTemperatureParam(int colortemperature_mode, pq_color_param_t id, int value)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factorySetColorTemperatureParam(colortemperature_mode, id, value);
+    }
+
+    return -1;
+}
+int tvFactoryGetColorTemperatureParam(int colortemperature_mode, pq_color_param_t id)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factoryGetColorTemperatureParam(colortemperature_mode, id);
+    }
+
+    return -1;
+}
+int tvFactorySaveColorTemperatureParam(int colortemperature_mode, pq_color_param_t id, int value)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factorySaveColorTemperatureParam(colortemperature_mode, id, value);
+    }
+
+    return -1;
+}
+
+int tvFactorySetOverscanParam(source_input_param_t source_input_param, int value, int id)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factorySetOverscan(source_input_param, value, id);
+    }
+
+    return -1;
+}
+int tvFactoryGetOverscanParam(source_input_param_t source_input_param, int id)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factoryGetOverscan(source_input_param, id);
+    }
+
+    return -1;
+
+}
+
+int tvFactorySetNolineParams(source_input_param_t source_input_param, int type, int value, int id)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factorySetNolineParams(source_input_param, type, value, id);
+    }
+
+    return -1;
+}
+
+int tvFactoryGetNolineParams(source_input_param_t source_input_param, int type, int id)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factoryGetNolineParams(source_input_param, type, id);
+    }
+
+    return -1;
+}
+
+int tvFactorySetParamsDefault(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factorySetParamsDefault();
+    }
+
+    return -1;
+
+}
+
+int tvFactorySSMRestore(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factorySSMRestore();
+    }
+
+    return -1;
+
+}
+
+int tvSSMRecovery(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->SSMRecovery();
+    }
+
+    return -1;
+}
+
+int tvGetSSMStatus(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getSSMStatus();
+    }
+
+    return -1;
+}
+
+int tvSetPLLValues(source_input_param_t source_input_param)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setPLLValues(source_input_param);
+    }
+
+    return -1;
+
+}
+
+int tvSetCVD2Values(source_input_param_t source_input_param)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setCVD2Values(source_input_param);
+    }
+
+    return -1;
+
+}
+
+int tvSetDNLP(source_input_param_t source_input_param)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setDNLP(source_input_param);
+    }
+
+    return -1;
+}
+
+int tvSetPQConfig(Set_Flag_Cmd_t id, int value)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->setPQConfig(id, value);
+    }
+
+    return -1;
+}
+
+//PQ end
 int Tv_MiscRegs(const char *cmd)
 {
     FILE *fp = NULL;

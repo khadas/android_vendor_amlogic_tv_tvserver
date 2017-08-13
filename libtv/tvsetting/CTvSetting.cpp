@@ -24,7 +24,6 @@
 #include <netinet/if_ether.h>
 
 #include <netutils/ifc.h>
-//#include <netutils/dhcp.h>
 
 #include "CTvSetting.h"
 
@@ -74,96 +73,28 @@ int CTvSettingdoResume()
     return mpCurDevice->OpenDevice();
 }
 
-#include "SSMHandler.h"
-SSMHandler* handler = SSMHandler::GetSingletonInstance();
-
-template<typename T>
-static int SSMWriteNTypes(int id, int data_len, T *data_buf, int offset = 0)
+int TVSSMWriteNTypes(int id, int data_len, int data_buf, int offset)
 {
-    pthread_mutex_lock(&ssm_r_w_op_mutex);
-
-    if (data_buf == NULL) {
-        LOGE("%s, data_buf is NULL.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    if (mpCurDevice == NULL) {
-        LOGE("%s, ssm_device is NULL.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    if (0 == data_len)
-        return -1;
-
-    //LOGD ("Id - %d", id);
-    unsigned int actualAddr = handler->SSMGetActualAddr(id) + offset;
-    //LOGD ("actualAddr - %d", actualAddr);
-
-    if (mpCurDevice->WriteBytes(actualAddr, data_len * sizeof(T),
-                                (unsigned char *) data_buf) < 0) {
-        LOGE("%s, device WriteNBytes error.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    pthread_mutex_unlock(&ssm_r_w_op_mutex);
-    return 0;
+    return tvSSMWriteNTypes(id, data_len, data_buf, offset);
 }
 
-template<typename T>
-static int SSMReadNTypes(int id, int data_len, T *data_buf, int offset = 0)
+int TVSSMReadNTypes(int id, int data_len, int *data_buf, int offset)
 {
-    pthread_mutex_lock(&ssm_r_w_op_mutex);
-
-    if (data_buf == NULL) {
-        LOGE("%s, data_buf is NULL.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    if (mpCurDevice == NULL) {
-        LOGE("%s, ssm_device is NULL.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    if (0 == data_len)
-        return -1;
-
-    //LOGD ("Id - %d", id);
-    unsigned int actualAddr = handler->SSMGetActualAddr(id) + offset;
-    //LOGD ("actualAddr - %d", actualAddr);
-
-    if (mpCurDevice->ReadBytes(actualAddr, data_len * sizeof(T),
-                               (unsigned char *) data_buf) < 0) {
-        LOGE("%s, device ReadNBytes error.\n", CFG_SECTION_TV);
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    pthread_mutex_unlock(&ssm_r_w_op_mutex);
-    return 0;
+    return tvSSMReadNTypes(id, data_len, data_buf, offset);
 }
+
 int SSMSaveFlash_One_N310_N311(int offset, int rw_val)
 {
-    unsigned char tmp_val = rw_val;
     LOGD ( "~~~ SSMSaveFlash_One ~~~##offset %d##rw_val %d##" , offset, rw_val);
 
-    return SSMWriteNTypes(offset, 1, &tmp_val);
+    return TVSSMWriteNTypes(offset, 1, rw_val);
 }
 
 int SSMReadFlash_One_N310_N311(int offset)
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(offset, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(offset, 1, &tmp_val) < 0) {
         return -1;
     }
     LOGD ( "~~~ SSMReadFlash_One ~~~##offset %d##rw_val %d##" , offset, tmp_val);
@@ -171,67 +102,6 @@ int SSMReadFlash_One_N310_N311(int offset)
     return tmp_val;
 }
 
-int SSMSaveFlash_N_N310_N311(int offset, int data_len, int *data_buf)
-{
-    int i = 0;
-    unsigned char *ptr = NULL;
-
-    ptr = new unsigned char[data_len];
-
-    if (ptr != NULL) {
-        for (i = 0; i < data_len; i++) {
-            ptr[i] = data_buf[i];
-        }
-    } else {
-        delete ptr;
-        ptr = NULL;
-
-        return -1;
-    }
-
-    if (SSMWriteNTypes(offset, data_len, ptr) < 0) {
-        delete ptr;
-        ptr = NULL;
-
-        return -1;
-    }
-
-    delete ptr;
-    ptr = NULL;
-
-    return 0;
-}
-
-int SSMReadFlash_N_N310_N311(int offset, int data_len, int *data_buf)
-{
-    int i = 0;
-    unsigned char *ptr = NULL;
-
-    ptr = new unsigned char[data_len];
-
-    if (ptr != NULL) {
-        if (SSMReadNTypes(offset, data_len, ptr) < 0) {
-            delete ptr;
-            ptr = NULL;
-
-            return -1;
-        }
-    } else {
-        delete ptr;
-        ptr = NULL;
-
-        return -1;
-    }
-
-    for (i = 0; i < data_len; i++) {
-        data_buf[i] = ptr[i];
-    }
-
-    delete ptr;
-    ptr = NULL;
-
-    return 0;
-}
 int EEPWriteOneByte(int offset, unsigned char *data_buf)
 {
     int fd = 0;
@@ -276,7 +146,6 @@ int EEPWriteOneByte(int offset, unsigned char *data_buf)
 int EEPReadOneByte(int offset , unsigned char *data_buf)
 {
     int fd = 0;
-    //const char* device_type = config_get_str(CFG_SECTION_SETTING, "peripheral.eeprom.device", "disable");
     const char *device_path = config_get_str(CFG_SECTION_TV, "peripheral.eeprom.path", "/sys/devices/i2c-2/2-0050/eeprom");
 
     pthread_mutex_lock(&ssm_r_w_op_mutex);
@@ -536,16 +405,14 @@ int ReservedSSMRestoreDefault()
 
 int SSMSaveBurnWriteCharaterChar(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RSV_W_CHARACTER_CHAR_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RSV_W_CHARACTER_CHAR_START, 1, rw_val);
 }
 
 int SSMReadBurnWriteCharaterChar()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RSV_W_CHARACTER_CHAR_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RSV_W_CHARACTER_CHAR_START, 1, &tmp_val) < 0) {
         return -1;
     }
 
@@ -554,16 +421,14 @@ int SSMReadBurnWriteCharaterChar()
 
 int SSMSaveFactoryBurnMode(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_FBMF_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_FBMF_START, 1, rw_val);
 }
 
 int SSMReadFactoryBurnMode()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_FBMF_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_FBMF_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -576,15 +441,14 @@ int SSMReadFactoryBurnMode()
 
 int SSMSavePowerOnOffChannel(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-    return SSMWriteNTypes(SSM_RW_POWER_CHANNEL_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_POWER_CHANNEL_START, 1, rw_val);
 }
 
 int SSMReadPowerOnOffChannel()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_POWER_CHANNEL_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_POWER_CHANNEL_START, 1, &tmp_val) < 0) {
         return 0;
     }
     return tmp_val;
@@ -592,15 +456,14 @@ int SSMReadPowerOnOffChannel()
 
 int SSMSaveLastSelectSourceInput(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-    return SSMWriteNTypes(SSM_RW_LAST_SOURCE_INPUT_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_LAST_SOURCE_INPUT_START, 1, rw_val);
 }
 
 int SSMReadLastSelectSourceInput()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_LAST_SOURCE_INPUT_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_LAST_SOURCE_INPUT_START, 1, &tmp_val) < 0) {
         return 0;
     }
     if (tmp_val == CBlobDevice::CC_INIT_BYTE_VAL) {
@@ -612,16 +475,14 @@ int SSMReadLastSelectSourceInput()
 
 int SSMSaveSystemLanguage(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_SYS_LANGUAGE_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_SYS_LANGUAGE_START, 1, rw_val);
 }
 
 int SSMReadSystemLanguage()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_SYS_LANGUAGE_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_SYS_LANGUAGE_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -634,16 +495,14 @@ int SSMReadSystemLanguage()
 
 int SSMSaveAgingMode(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_AGING_MODE_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_AGING_MODE_START, 4, rw_val);
 }
 
 int SSMReadAgingMode()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_AGING_MODE_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_AGING_MODE_START, 4, &tmp_val) < 0) {
         return 0;
     }
 
@@ -656,16 +515,14 @@ int SSMReadAgingMode()
 
 int SSMSavePanelType(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_PANEL_TYPE_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_PANEL_TYPE_START, 1, rw_val);
 }
 
 int SSMReadPanelType()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_PANEL_TYPE_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_PANEL_TYPE_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -678,16 +535,14 @@ int SSMReadPanelType()
 
 int SSMSavePowerOnMusicSwitch(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_POWER_ON_MUSIC_SWITCH_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_POWER_ON_MUSIC_SWITCH_START, 1, rw_val);
 }
 
 int SSMReadPowerOnMusicSwitch()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_POWER_ON_MUSIC_SWITCH_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_POWER_ON_MUSIC_SWITCH_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -700,16 +555,14 @@ int SSMReadPowerOnMusicSwitch()
 
 int SSMSavePowerOnMusicVolume(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_POWER_ON_MUSIC_VOL_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_POWER_ON_MUSIC_VOL_START, 1, rw_val);
 }
 
 int SSMReadPowerOnMusicVolume()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_POWER_ON_MUSIC_VOL_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_POWER_ON_MUSIC_VOL_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -722,14 +575,14 @@ int SSMReadPowerOnMusicVolume()
 
 int SSMSaveSystemSleepTimer(int rw_val)
 {
-    return SSMWriteNTypes(SSM_RW_SYS_SLEEP_TIMER_START, 1, &rw_val);
+    return TVSSMWriteNTypes(SSM_RW_SYS_SLEEP_TIMER_START, 1, rw_val);
 }
 
 int SSMReadSystemSleepTimer()
 {
     int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_SYS_SLEEP_TIMER_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_SYS_SLEEP_TIMER_START, 4, &tmp_val) < 0) {
         return 0;
     }
 
@@ -740,8 +593,7 @@ int SSMReadSystemSleepTimer()
     return tmp_val;
 }
 
-int SSMSaveInputSourceParentalControl(int source_index,
-                                      unsigned char ctl_flag)
+int SSMSaveInputSourceParentalControl(int source_index, unsigned char ctl_flag)
 {
     int tmp_val = 0;
 
@@ -753,15 +605,13 @@ int SSMSaveInputSourceParentalControl(int source_index,
         return -1;
     }
 
-    if (SSMReadNTypes(SSM_RW_INPUT_SRC_PARENTAL_CTL_START, 4,
-                      (unsigned char *) &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_INPUT_SRC_PARENTAL_CTL_START, 4, &tmp_val) < 0) {
         return -1;
     }
 
     tmp_val = (tmp_val & (~(1 << source_index))) | (ctl_flag << source_index);
 
-    return SSMWriteNTypes(SSM_RW_INPUT_SRC_PARENTAL_CTL_START, 4,
-                          (unsigned char *) &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_INPUT_SRC_PARENTAL_CTL_START, 4, tmp_val);
 }
 
 int SSMReadInputSourceParentalControl(int source_index)
@@ -772,8 +622,7 @@ int SSMReadInputSourceParentalControl(int source_index)
         return 0;
     }
 
-    if (SSMReadNTypes(SSM_RW_INPUT_SRC_PARENTAL_CTL_START, 4,
-                      (unsigned char *) &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_INPUT_SRC_PARENTAL_CTL_START, 4, &tmp_val) < 0) {
         return 0;
     }
 
@@ -786,16 +635,14 @@ int SSMReadInputSourceParentalControl(int source_index)
 
 int SSMSaveParentalControlSwitch(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_PARENTAL_CTL_SWITCH_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_PARENTAL_CTL_SWITCH_START, 1, rw_val);
 }
 
 int SSMReadParentalControlSwitch()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_PARENTAL_CTL_SWITCH_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_PARENTAL_CTL_SWITCH_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -808,13 +655,13 @@ int SSMReadParentalControlSwitch()
 
 int SSMGetCustomerDataStart()
 {
-    return handler->SSMGetActualAddr(CUSTOMER_DATA_POS_HDMI1_EDID_START);
+    return tvGetActualAddr(CUSTOMER_DATA_POS_HDMI1_EDID_START);
 }
 
 int SSMGetCustomerDataLen()
 {
-    int LastAddr = handler->SSMGetActualAddr(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START);
-    int LastSize = handler->SSMGetActualSize(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START);
+    int LastAddr = tvGetActualAddr(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START);
+    int LastSize = tvGetActualSize(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START);
     int len = LastAddr - SSMGetCustomerDataStart() + LastSize;
 
     return len;
@@ -832,13 +679,13 @@ int SSMGetATVDataLen()
 
 int SSMGetVPPDataStart()
 {
-    return handler->SSMGetActualAddr(VPP_DATA_POS_COLOR_DEMO_MODE_START);
+    return tvGetActualAddr(VPP_DATA_POS_COLOR_DEMO_MODE_START);
 }
 
 int SSMGetVPPDataLen()
 {
-    int LastAddr = handler->SSMGetActualAddr(SSM_RSV3);
-    int LastSize = handler->SSMGetActualSize(SSM_RSV3);
+    int LastAddr = tvGetActualAddr(SSM_RSV3);
+    int LastSize = tvGetActualSize(SSM_RSV3);
     int len = LastAddr - SSMGetVPPDataStart() + LastSize;
 
     return len;
@@ -846,16 +693,14 @@ int SSMGetVPPDataLen()
 
 int SSMSaveSearchNavigateFlag(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_SEARCH_NAVIGATE_FLAG_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_SEARCH_NAVIGATE_FLAG_START, 1, rw_val);
 }
 
 int SSMReadSearchNavigateFlag()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_SEARCH_NAVIGATE_FLAG_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_SEARCH_NAVIGATE_FLAG_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -864,16 +709,14 @@ int SSMReadSearchNavigateFlag()
 
 int SSMSaveInputNumLimit(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_INPUT_NUMBER_LIMIT_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_INPUT_NUMBER_LIMIT_START, 1, rw_val);
 }
 
 int SSMReadInputNumLimit()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_INPUT_NUMBER_LIMIT_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_INPUT_NUMBER_LIMIT_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -882,16 +725,14 @@ int SSMReadInputNumLimit()
 
 int SSMSaveLocalDimingOnOffFlg(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_LOCAL_DIMING_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_LOCAL_DIMING_START, 1, rw_val);
 }
 
 int SSMReadLocalDimingOnOffFlg()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_LOCAL_DIMING_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_LOCAL_DIMING_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -900,14 +741,14 @@ int SSMReadLocalDimingOnOffFlg()
 
 int SSMSaveVDac2DValue(unsigned short rw_val)
 {
-    return SSMWriteNTypes(SSM_RW_VDAC_2D_START, 1, &rw_val);
+    return TVSSMWriteNTypes(SSM_RW_VDAC_2D_START, 1, rw_val);
 }
 
 int SSMReadVDac2DValue()
 {
-    unsigned short tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_VDAC_2D_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_VDAC_2D_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -916,14 +757,14 @@ int SSMReadVDac2DValue()
 
 int SSMSaveVDac3DValue(unsigned short rw_val)
 {
-    return SSMWriteNTypes(SSM_RW_VDAC_3D_START, 1, &rw_val);
+    return TVSSMWriteNTypes(SSM_RW_VDAC_3D_START, 1, rw_val);
 }
 
 int SSMReadVDac3DValue()
 {
     unsigned short tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_VDAC_3D_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_VDAC_3D_START, 1, (int *)&tmp_val) < 0) {
         return 0;
     }
 
@@ -954,34 +795,18 @@ int SSMSaveChromaStatus(int mode)
 
 int SSMSaveNonStandardValue(unsigned short rw_val)
 {
-    int i = 0, tmp_ret = 0;
-    unsigned char data[] = { 0, 0 };
-
-    {
-        data[0] = (unsigned char) rw_val;
-        rw_val >>= 8;
-        data[1] = (unsigned char) rw_val;
-    }
-
     LOGD("%s, save NonStandard_value = %d", CFG_SECTION_TV, rw_val);
 
-    return SSMWriteNTypes(SSM_RW_NON_STANDARD_START, 2, data);
+    return TVSSMWriteNTypes(SSM_RW_NON_STANDARD_START, 2, rw_val);
 }
 
 int SSMReadNonStandardValue(void)
 {
     int i = 0, value = 0;
-    int data[] = { 0, 0 };
 
-    if (SSMReadNTypes(SSM_RW_NON_STANDARD_START, 2, data) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_NON_STANDARD_START, 2, &value) < 0) {
         LOGE("%s, read NonStandard_value error.", CFG_SECTION_TV);
         return 0;
-    }
-
-    {
-        value += data[1];
-        value <<= 8;
-        value += data[0];
     }
 
     LOGD("%s, read NonStandard_value = %d.", CFG_SECTION_TV, value);
@@ -991,16 +816,14 @@ int SSMReadNonStandardValue(void)
 
 int SSMSaveAdbSwitchValue(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_ADB_SWITCH_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_ADB_SWITCH_START, 1, rw_val);
 }
 
 int SSMReadAdbSwitchValue(void)
 {
-    unsigned char switch_val = 0;
+    int switch_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_ADB_SWITCH_START, 1, &switch_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_ADB_SWITCH_START, 1, &switch_val) < 0) {
         LOGD("%s, read switch value error", CFG_SECTION_TV);
         return -1;
     }
@@ -1012,16 +835,14 @@ int SSMReadAdbSwitchValue(void)
 
 int SSMSaveNoiseGateThresholdValue(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_NOISE_GATE_THRESHOLD_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_NOISE_GATE_THRESHOLD_START, 1, rw_val);
 }
 
 int SSMReadNoiseGateThresholdValue(void)
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_NOISE_GATE_THRESHOLD_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_NOISE_GATE_THRESHOLD_START, 1, &tmp_val) < 0) {
         LOGD("%s, read NoiseGateThreshold error", CFG_SECTION_TV);
         return -1;
     }
@@ -1033,25 +854,23 @@ int SSMReadNoiseGateThresholdValue(void)
 
 int SSMSaveGraphyBacklight(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
     if (rw_val < 0 || rw_val > 100) {
         return -1;
     }
 
-    return SSMWriteNTypes(SSM_RW_UI_GRHPHY_BACKLIGHT_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_UI_GRHPHY_BACKLIGHT_START, 1, rw_val);
 }
 
 int SSMReadGraphyBacklight(void)
 {
-    unsigned char value = 0;
+    int value = 0;
 
-    if (SSMReadNTypes(SSM_RW_UI_GRHPHY_BACKLIGHT_START, 1, &value) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_UI_GRHPHY_BACKLIGHT_START, 1, &value) < 0) {
         LOGD("%s, read graphybacklight error.\n", CFG_SECTION_TV);
         return -1;
     }
 
-    if (/*value < 0 || */value > 100) {
+    if (value > 100) {
         LOGD("%s, range of graphybacklight (%d) is not between 0-100.\n",
              CFG_SECTION_TV, value);
         return -1;
@@ -1062,16 +881,14 @@ int SSMReadGraphyBacklight(void)
 
 int SSMSaveFastSuspendFlag(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_FASTSUSPEND_FLAG_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_FASTSUSPEND_FLAG_START, 1, rw_val);
 }
 
 int SSMReadFastSuspendFlag(void)
 {
-    unsigned char value = 0;
+    int value = 0;
 
-    if (SSMReadNTypes(SSM_RW_FASTSUSPEND_FLAG_START, 1, &value) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_FASTSUSPEND_FLAG_START, 1, &value) < 0) {
         LOGD("%s, read FastSuspendFlag error.\n", CFG_SECTION_TV);
         return -1;
     }
@@ -1081,49 +898,31 @@ int SSMReadFastSuspendFlag(void)
 
 int SSMSaveCABufferSizeValue(unsigned short rw_val)
 {
-    int i = 0, tmp_ret = 0;
-    unsigned char data[] = { 0, 0 };
-
-    {
-        data[0] = (unsigned char) rw_val;
-        rw_val >>= 8;
-        data[1] = (unsigned char) rw_val;
-    }
-
-    return SSMWriteNTypes(SSM_RW_CA_BUFFER_SIZE_START, 2, data);
+    return TVSSMWriteNTypes(SSM_RW_CA_BUFFER_SIZE_START, 2, rw_val);
 }
 
 int SSMReadCABufferSizeValue(void)
 {
-    int i = 0, value = 0;
-    unsigned char data[] = { 0, 0 };
+    int data = 0;
 
-    if (SSMReadNTypes(SSM_RW_CA_BUFFER_SIZE_START, 2, data) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_CA_BUFFER_SIZE_START, 2, &data) < 0) {
         LOGE("%s, read ca_buffer_size error", CFG_SECTION_TV);
         return 0;
     }
 
-    {
-        value += data[1];
-        value <<= 8;
-        value += data[0];
-    }
-
-    return value;
+    return data;
 }
 
 int SSMSaveStandbyMode(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_STANDBY_MODE_FLAG_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_STANDBY_MODE_FLAG_START, 1, rw_val);
 }
 
 int SSMReadStandbyMode()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_STANDBY_MODE_FLAG_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_STANDBY_MODE_FLAG_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -1132,16 +931,14 @@ int SSMReadStandbyMode()
 
 int SSMSaveHDMIEQMode(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_HDMIEQ_MODE_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_HDMIEQ_MODE_START, 1, rw_val);
 }
 
 int SSMReadHDMIEQMode()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_HDMIEQ_MODE_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_HDMIEQ_MODE_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -1150,16 +947,14 @@ int SSMReadHDMIEQMode()
 
 int SSMSaveLogoOnOffFlag(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_LOGO_ON_OFF_FLAG_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_LOGO_ON_OFF_FLAG_START, 1, rw_val);
 }
 
 int SSMReadLogoOnOffFlag()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_LOGO_ON_OFF_FLAG_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_LOGO_ON_OFF_FLAG_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -1168,29 +963,14 @@ int SSMReadLogoOnOffFlag()
 
 int SSMSaveHDMIInternalMode(unsigned int rw_val)
 {
-    int i = 0, tmp_ret = 0;
-    unsigned char data[] = { 0, 0, 0, 0 };
-
-    for (i = 3; i >= 0; i--) {
-        data[i] = (unsigned char) rw_val;
-        rw_val >>= 8;
-    }
-
-    return SSMWriteNTypes(SSM_RW_HDMIINTERNAL_MODE_START, 4, data);
+    return TVSSMWriteNTypes(SSM_RW_HDMIINTERNAL_MODE_START, 4, rw_val);
 }
 
 int SSMReadHDMIInternalMode()
 {
-    int i = 0, value = 0;
-    int data[] = { 0, 0, 0, 0 };
-
-    if (SSMReadNTypes(SSM_RW_HDMIINTERNAL_MODE_START, 4, data) < 0) {
+    int value;
+    if (TVSSMReadNTypes(SSM_RW_HDMIINTERNAL_MODE_START, 4, &value) < 0) {
         return 0;
-    }
-
-    for (i = 0; i < 4; i++) {
-        value <<= 8;
-        value += data[i];
     }
 
     return value;
@@ -1198,30 +978,29 @@ int SSMReadHDMIInternalMode()
 
 int SSMSaveParentalControlPassWord(unsigned char *password, int size)
 {
-    return SSMWriteNTypes(SSM_RW_PARENTAL_CTL_PASSWORD_START, size, password);
+    return TVSSMWriteNTypes(SSM_RW_PARENTAL_CTL_PASSWORD_START, size, (int)*password);
 }
 
 int SSMReadParentalControlPassWord(unsigned short  *password)
 {
-    if (SSMReadNTypes(SSM_RW_PARENTAL_CTL_PASSWORD_START, 16, (unsigned char *) password)
-            < 0) {
+
+    if (TVSSMReadNTypes(SSM_RW_PARENTAL_CTL_PASSWORD_START, 16, (int *)password) < 0) {
         return -1;
     }
+
     return 0;
 }
 
 int SSMSaveDisable3D(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_DISABLE_3D_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_DISABLE_3D_START, 1, rw_val);
 }
 
 int SSMReadDisable3D()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_DISABLE_3D_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_DISABLE_3D_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -1234,16 +1013,14 @@ int SSMReadDisable3D()
 
 int SSMSaveGlobalOgoEnable(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_GLOBAL_OGO_ENABLE_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_GLOBAL_OGO_ENABLE_START, 1, rw_val);
 }
 
 int SSMReadGlobalOgoEnable()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(SSM_RW_GLOBAL_OGO_ENABLE_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(SSM_RW_GLOBAL_OGO_ENABLE_START, 1, &tmp_val) < 0) {
         return 0;
     }
 
@@ -1264,10 +1041,10 @@ int SSMDeviceMarkCheck()
     int i = 0, failed_count = 0;
     int mark_offset[3] = { 0, 0, 0 };
     unsigned char mark_values[3] = { 0, 0, 0 };
-    unsigned char tmp_ch = 0;
+    int tmp_ch = 0;
 
     //read temp one byte
-    SSMReadNTypes(0, 1, &tmp_ch);
+    TVSSMReadNTypes(0, 1, &tmp_ch);
 
     mark_offset[0] = SSM_MARK_01_START;
     mark_offset[1] = SSM_MARK_02_START;
@@ -1284,12 +1061,12 @@ int SSMDeviceMarkCheck()
     failed_count = 0;
     for (i = 0; i < 3; i++) {
         tmp_ch = 0;
-        if (SSMReadNTypes(mark_offset[i], 1, &tmp_ch) < 0) {
+        if (TVSSMReadNTypes(mark_offset[i], 1, &tmp_ch) < 0) {
             LOGE("%s, SSMDeviceMarkCheck Read Mark failed!!!\n", CFG_SECTION_TV);
             break;
         }
 
-        if (tmp_ch != mark_values[i]) {
+        if ((unsigned char)tmp_ch != mark_values[i]) {
             failed_count += 1;
             LOGE(
                 "%s, SSMDeviceMarkCheck Mark[%d]'s offset = %d, Mark[%d]'s Value = %d, read value = %d.\n",
@@ -1313,14 +1090,10 @@ int SSMRestoreDeviceMarkValues()
         (int) SSM_MARK_03_START, //
     };
 
-    unsigned char mark_values[3] = {
-        //
-        (unsigned char) SSM_MARK_01_VALUE, (unsigned char) SSM_MARK_02_VALUE,
-        (unsigned char) SSM_MARK_03_VALUE, //
-    };
+    int mark_values[3] = {SSM_MARK_01_VALUE, SSM_MARK_02_VALUE, SSM_MARK_03_VALUE};
 
     for (i = 0; i < 3; i++) {
-        if (SSMWriteNTypes(mark_offset[i], 1, &(mark_values[i])) < 0) {
+        if (TVSSMWriteNTypes(mark_offset[i], 1, mark_values[i]) < 0) {
             LOGD("SSMRestoreDeviceMarkValues Write Mark failed.\n");
             break;
         }
@@ -1369,7 +1142,7 @@ int SSMHandlePreCopying()
 {
     int device_fd = -1;
     int i = 0, tmp_size = 0;
-    unsigned char tmp_ch = 0;
+    int tmp_ch = 0;
     char tmpPreCopyingDevicePath[256] = { '\0' };
 
     if (SSMGetPreCopyingEnableCfg() == 0) {
@@ -1378,7 +1151,7 @@ int SSMHandlePreCopying()
     }
 
     //read temp one byte
-    SSMReadNTypes(0, 1, &tmp_ch);
+    TVSSMReadNTypes(0, 1, &tmp_ch);
 
     SSMGetPreCopyingDevicePathCfg(tmpPreCopyingDevicePath);
 
@@ -1393,8 +1166,9 @@ int SSMHandlePreCopying()
     if (tmp_size == 4096) {
         lseek(device_fd, 0, SEEK_SET);
         read(device_fd, gTempDataBuf, tmp_size);
-
-        SSMWriteNTypes(0, tmp_size, gTempDataBuf);
+        for (i=0;i<tmp_size;i++) {
+            TVSSMWriteNTypes(0, 1, gTempDataBuf[i]);
+        }
     }
 
     close(device_fd);
@@ -1406,18 +1180,14 @@ int SSMHandlePreCopying()
 
 int SSMSaveDTVType(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(SSM_RW_DTV_TYPE_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(SSM_RW_DTV_TYPE_START, 1, rw_val);
 }
 
 int SSMReadDTVType(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(SSM_RW_DTV_TYPE_START, 1, &tmp_val);
-    *rw_val = tmp_val;
+    tmp_ret = TVSSMReadNTypes(SSM_RW_DTV_TYPE_START, 1, rw_val);
 
     return tmp_ret;
 }
@@ -1471,14 +1241,15 @@ int GetSSMCfgBufferData(const char *key_str, int *buf_item_count, int radix,
 
 int SSMSaveSourceInput(unsigned char rw_val)
 {
-    return SSMWriteNTypes(TVIN_DATA_POS_SOURCE_INPUT_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(TVIN_DATA_POS_SOURCE_INPUT_START, 1, tmp_val);
 }
 
 int SSMReadSourceInput()
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    if (SSMReadNTypes(TVIN_DATA_POS_SOURCE_INPUT_START, 1, &tmp_val) < 0) {
+    if (TVSSMReadNTypes(TVIN_DATA_POS_SOURCE_INPUT_START, 1, &tmp_val) < 0) {
         return 0;
     }
     if (tmp_val == CBlobDevice::CC_INIT_BYTE_VAL) {
@@ -1490,315 +1261,154 @@ int SSMReadSourceInput()
 
 int SSMSaveCVBSStd(unsigned char rw_val)
 {
-    return SSMWriteNTypes(TVIN_DATA_CVBS_STD_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(TVIN_DATA_CVBS_STD_START, 1, tmp_val);
 }
 
 int SSMReadCVBSStd(unsigned char *rw_val)
 {
-    return SSMReadNTypes(TVIN_DATA_CVBS_STD_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(TVIN_DATA_CVBS_STD_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSave3DMode(unsigned char rw_val)
 {
-    return SSMWriteNTypes(TVIN_DATA_POS_3D_MODE_START, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(TVIN_DATA_POS_3D_MODE_START, 1, tmp_val);
 }
 
 int SSMRead3DMode(unsigned char *rw_val)
 {
-    return SSMReadNTypes(TVIN_DATA_POS_3D_MODE_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(TVIN_DATA_POS_3D_MODE_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSave3DLRSwitch(unsigned char rw_val)
 {
-    return SSMWriteNTypes(TVIN_DATA_POS_3D_LRSWITCH_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(TVIN_DATA_POS_3D_LRSWITCH_START, 1, tmp_val);
 }
 
 int SSMRead3DLRSwitch(unsigned char *rw_val)
 {
-    return SSMReadNTypes(TVIN_DATA_POS_3D_LRSWITCH_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(TVIN_DATA_POS_3D_LRSWITCH_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSave3DDepth(unsigned char rw_val)
 {
-    return SSMWriteNTypes(TVIN_DATA_POS_3D_DEPTH_START, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(TVIN_DATA_POS_3D_DEPTH_START, 1, tmp_val);
 }
 
 int SSMRead3DDepth(unsigned char *rw_val)
 {
-    return SSMReadNTypes(TVIN_DATA_POS_3D_DEPTH_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(TVIN_DATA_POS_3D_DEPTH_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSave3DTO2D(unsigned char rw_val)
 {
-    return SSMWriteNTypes(TVIN_DATA_POS_3D_TO2D_START, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(TVIN_DATA_POS_3D_TO2D_START, 1, tmp_val);
 }
 
 int SSMRead3DTO2D(unsigned char *rw_val)
 {
-    return SSMReadNTypes(TVIN_DATA_POS_3D_TO2D_START, 1, rw_val);
-}
+    int tmp_val = 0;
+    int ret = 0;
 
-int SSMSaveBrightness(int offset, int rw_val)
-{
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_BRIGHTNESS_START, 1, &tmp_val, offset);
-}
-
-int SSMReadBrightness(int offset, int *rw_val)
-{
-    int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_BRIGHTNESS_START, 1,
-                            &tmp_val, offset);
+    ret = TVSSMReadNTypes(TVIN_DATA_POS_3D_TO2D_START, 1, &tmp_val);
     *rw_val = tmp_val;
 
-    return tmp_ret;
+    return ret;
 }
 
-int SSMSaveContrast(int offset, int rw_val)
+int SSMSaveDisplayMode(int offset, int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_CONTRAST_START, 1, &tmp_val, offset);
-}
-
-int SSMReadContrast(int offset, int *rw_val)
-{
-    int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_CONTRAST_START, 1, &tmp_val, offset);
-    *rw_val = tmp_val;
-
-    return tmp_ret;
-}
-
-int SSMSaveSaturation(int offset, int rw_val)
-{
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_SATURATION_START, 1, &tmp_val, offset);
-}
-
-int SSMReadSaturation(int offset, int *rw_val)
-{
-    int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_SATURATION_START, 1,
-                            &tmp_val, offset);
-    *rw_val = tmp_val;
-
-    return tmp_ret;
-}
-
-int SSMSaveHue(int offset, int rw_val)
-{
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_HUE_START, 1, &tmp_val, offset);
-}
-
-int SSMReadHue(int offset, int *rw_val)
-{
-    int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_HUE_START, 1, &tmp_val, offset);
-    *rw_val = tmp_val;
-
-    return tmp_ret;
-}
-
-int SSMSaveSharpness(int offset, int rw_val)
-{
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_SHARPNESS_START, 1, &tmp_val, offset);
-}
-
-int SSMReadSharpness(int offset, int *rw_val)
-{
-    int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_SHARPNESS_START, 1, &tmp_val, offset);
-    *rw_val = tmp_val;
-
-    return tmp_ret;
+    return TVSSMWriteNTypes(VPP_DATA_POS_DISPLAY_MODE_START, 1, rw_val, offset);
 }
 
 int SSMSaveSceneMode(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_SCENE_MODE_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_SCENE_MODE_START, 1, rw_val);
 }
 
 int SSMReadSceneMode(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_SCENE_MODE_START, 1, &tmp_val);
-    *rw_val = tmp_val;
-
-    return tmp_ret;
-}
-
-int SSMSavePictureMode(int offset, int rw_val)
-{
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_PICTURE_MODE_START, 1, &tmp_val, offset);
-}
-
-int SSMReadPictureMode(int offset, int *rw_val)
-{
-    int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_PICTURE_MODE_START, 1,
-                            &tmp_val, offset);
-    *rw_val = tmp_val;
-
-    return tmp_ret;
-}
-
-int SSMSaveColorTemperature(int offset, int rw_val)
-{
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_COLOR_TEMP_START, 1, &tmp_val, offset);
-}
-
-int SSMReadColorTemperature(int offset, int *rw_val)
-{
-    int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_COLOR_TEMP_START, 1,
-                            &tmp_val, offset);
-    *rw_val = tmp_val;
-
-    return tmp_ret;
-}
-
-int SSMSaveNoiseReduction(int offset, int rw_val)
-{
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_NOISE_REDUCTION_START, 1,
-                          &tmp_val, offset);
-}
-
-int SSMReadNoiseReduction(int offset, int *rw_val)
-{
-    int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_NOISE_REDUCTION_START, 1,
-                            &tmp_val, offset);
-    *rw_val = tmp_val;
-
-    return tmp_ret;
-}
-
-int SSMSaveDisplayMode(int offset, int rw_val)
-{
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_DISPLAY_MODE_START, 1, &tmp_val, offset);
-}
-
-int SSMReadDisplayMode(int offset, int *rw_val)
-{
-    int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_DISPLAY_MODE_START, 1,
-                            &tmp_val, offset);
-    *rw_val = tmp_val;
-
-    return tmp_ret;
-}
-
-int SSMSaveEyeProtectionMode(int rw_val)
-{
-    unsigned char tmp_val = rw_val;
-    return SSMWriteNTypes(VPP_DATA_EYE_PROTECTION_MODE_START, 1, &tmp_val);
-}
-
-int SSMReadEyeProtectionMode(int *rw_val)
-{
-    int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_EYE_PROTECTION_MODE_START, 1, &tmp_val);
-    *rw_val = tmp_val;
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_SCENE_MODE_START, 1, rw_val);
 
     return tmp_ret;
 }
 
 int SSMSaveBackLightVal(int offset, int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_BACKLIGHT_START, 1, &tmp_val, offset);
+    return TVSSMWriteNTypes(VPP_DATA_POS_BACKLIGHT_START, 1, rw_val, offset);
 }
 
 int SSMReadBackLightVal(int offset, int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_BACKLIGHT_START, 1, &tmp_val, offset);
-
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_BACKLIGHT_START, 1, rw_val, offset);
     //TODO
     if (tmp_ret < 0 || tmp_ret > 100) {
-        handler->SSMResetX(VPP_DATA_POS_BACKLIGHT_START);
+        int i = 0;
+        for (i = 0; i < SOURCE_MAX; i++) {
+            SSMSaveBackLightVal(i, DEFAULT_BACKLIGHT_BRIGHTNESS);
+        }
         tmp_ret = DEFAULT_BACKLIGHT_BRIGHTNESS;
     }
-
-    *rw_val = tmp_val;
 
     return tmp_ret;
 }
 
 int SSMSaveFBCN360BackLightVal(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_FBC_BACKLIGHT_START , 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_FBC_BACKLIGHT_START , 1, rw_val);
 }
 
 int SSMReadFBCN360BackLightVal(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_FBC_BACKLIGHT_START, 1, &tmp_val);
-    *rw_val = tmp_val;
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_FBC_BACKLIGHT_START, 1, rw_val);
 
     return tmp_ret;
 }
 
 int SSMSaveFBCN360ColorTempVal(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_FBC_COLORTEMP_START , 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_FBC_COLORTEMP_START , 1, rw_val);
 }
 
 int SSMReadFBCN360ColorTempVal(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_FBC_COLORTEMP_START, 1, &tmp_val);
-    *rw_val = tmp_val;
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_FBC_COLORTEMP_START, 1, rw_val);
 
     return tmp_ret;
 }
@@ -1806,645 +1416,748 @@ int SSMReadFBCN360ColorTempVal(int *rw_val)
 
 int SSMSaveFBCELECmodeVal(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-    return SSMWriteNTypes(VPP_DATA_POS_FBC_ELECMODE_START , 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_FBC_ELECMODE_START , 1, rw_val);
 }
 
 int SSMReadFBCELECmodeVal(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret =  SSMReadNTypes(VPP_DATA_POS_FBC_ELECMODE_START, 1, &tmp_val);
-    *rw_val = tmp_val;
+    tmp_ret =  TVSSMReadNTypes(VPP_DATA_POS_FBC_ELECMODE_START, 1, rw_val);
 
     return tmp_ret;
 }
 
-
-int SSMSaveColorDemoMode(unsigned char rw_val)
-{
-    return SSMWriteNTypes(VPP_DATA_POS_COLOR_DEMO_MODE_START, 1, &rw_val);
-}
-
-int SSMReadColorDemoMode(unsigned char *rw_val)
-{
-    return SSMReadNTypes(VPP_DATA_POS_COLOR_DEMO_MODE_START, 1, rw_val);
-}
-
-int SSMSaveColorBaseMode(unsigned char rw_val)
-{
-    return SSMWriteNTypes(VPP_DATA_POS_COLOR_BASE_MODE_START, 1, &rw_val);
-}
-
-int SSMReadColorBaseMode(unsigned char *rw_val)
-{
-    return SSMReadNTypes(VPP_DATA_POS_COLOR_BASE_MODE_START, 1, rw_val);
-}
-
-int SSMSaveRGBGainRStart(int offset, unsigned int rw_val)
-{
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_GAIN_R_START, 1, &rw_val, offset);
-}
-
-int SSMReadRGBGainRStart(int offset, unsigned int *rw_val)
-{
-    return SSMReadNTypes(VPP_DATA_POS_RGB_GAIN_R_START, 1, rw_val, offset);
-}
-
-int SSMSaveRGBGainGStart(int offset, unsigned int rw_val)
-{
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_GAIN_G_START, 1, &rw_val, offset);
-}
-
-int SSMReadRGBGainGStart(int offset, unsigned int *rw_val)
-{
-    return SSMReadNTypes(VPP_DATA_POS_RGB_GAIN_G_START, 1, rw_val, offset);
-}
-
-int SSMSaveRGBGainBStart(int offset, unsigned int rw_val)
-{
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_GAIN_B_START, 1, &rw_val, offset);
-}
-
-int SSMReadRGBGainBStart(int offset, unsigned int *rw_val)
-{
-    return SSMReadNTypes(VPP_DATA_POS_RGB_GAIN_B_START, 1, rw_val, offset);
-}
-
-int SSMSaveRGBPostOffsetRStart(int offset, int rw_val)
-{
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_POST_OFFSET_R_START, 1,
-                          &rw_val, offset);
-}
-
-int SSMReadRGBPostOffsetRStart(int offset, int *rw_val)
-{
-    return SSMReadNTypes(VPP_DATA_POS_RGB_POST_OFFSET_R_START, 1,
-                         rw_val, offset);
-}
-
-int SSMSaveRGBPostOffsetGStart(int offset, int rw_val)
-{
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_POST_OFFSET_G_START, 1,
-                          &rw_val, offset);
-}
-
-int SSMReadRGBPostOffsetGStart(int offset, int *rw_val)
-{
-    return SSMReadNTypes(VPP_DATA_POS_RGB_POST_OFFSET_G_START, 1,
-                         rw_val, offset);
-}
-
-int SSMSaveRGBPostOffsetBStart(int offset, int rw_val)
-{
-    return SSMWriteNTypes(VPP_DATA_POS_RGB_POST_OFFSET_B_START, 1,
-                          &rw_val, offset);
-}
-
-int SSMReadRGBPostOffsetBStart(int offset, int *rw_val)
-{
-    return SSMReadNTypes(VPP_DATA_POS_RGB_POST_OFFSET_B_START, 1,
-                         rw_val, offset);
-}
-
-int SSMSaveRGBValueStart(int offset, int8_t rw_val)
-{
-    return SSMWriteNTypes(VPP_DATA_RGB_START, 1, &rw_val, offset);
-}
-
-int SSMReadRGBValueStart(int offset, int8_t *rw_val)
-{
-    return SSMReadNTypes(VPP_DATA_RGB_START, 1, &rw_val, offset);
-}
-
 int SSMSaveDBCStart(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_DBC_START, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(VPP_DATA_POS_DBC_START, 1, tmp_val);
 }
 
 int SSMReadDBCStart(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_DBC_START, 1, rw_val);
-}
+    int tmp_val = 0;
+    int ret = 0;
 
-int SSMSaveColorSpaceStart(unsigned char rw_val)
-{
-    return SSMWriteNTypes(VPP_DATA_COLOR_SPACE_START, 1, &rw_val);
-}
+    ret = TVSSMReadNTypes(VPP_DATA_POS_DBC_START, 1, &tmp_val);
+    *rw_val = tmp_val;
 
-int SSMReadColorSpaceStart(unsigned char *rw_val)
-{
-    return SSMReadNTypes(VPP_DATA_COLOR_SPACE_START, 1, rw_val);
+    return ret;
 }
 
 int SSMSaveDnlpStart(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_DNLP_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_POS_DNLP_START, 1, tmp_val);
 }
 
 int SSMReadDnlpStart(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_DNLP_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_POS_DNLP_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSavePanoramaStart(int offset, unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_PANORAMA_START, 1, &rw_val, offset);
+    int tmp_val = tmp_val;
+    return TVSSMWriteNTypes(VPP_DATA_POS_PANORAMA_START, 1, tmp_val, offset);
 }
 
 int SSMReadPanoramaStart(int offset, unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_PANORAMA_START, 1, rw_val, offset);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_POS_PANORAMA_START, 1, &tmp_val, offset);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveTestPattern(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_TEST_PATTERN_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_POS_TEST_PATTERN_START, 1, tmp_val);
 }
 
 int SSMReadTestPattern(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_TEST_PATTERN_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+    ret = TVSSMReadNTypes(VPP_DATA_POS_TEST_PATTERN_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAPL(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_APL_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_APL_START, 1, tmp_val);
 }
 
 int SSMReadAPL(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_APL_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_APL_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAPL2(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_APL2_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_APL2_START, 1, tmp_val);
 }
 
 int SSMReadAPL2(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_APL2_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_APL2_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveBD(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_BD_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_BD_START, 1, tmp_val);
 }
 
 int SSMReadBD(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_BD_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_BD_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveBP(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_BP_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_BP_START, 1, tmp_val);
 }
 
 int SSMReadBP(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_BP_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_BP_START, 1, &tmp_val);\
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveDDRSSC(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_DDR_SSC_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_POS_DDR_SSC_START, 1, tmp_val);
 }
 
 int SSMReadDDRSSC(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_DDR_SSC_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_POS_DDR_SSC_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveLVDSSSC(unsigned char *rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_LVDS_SSC_START, 2, rw_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_LVDS_SSC_START, 1, *rw_val);
 }
 
 int SSMReadLVDSSSC(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_LVDS_SSC_START, 2, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_POS_LVDS_SSC_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveDreamPanel(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_DREAM_PANEL_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_POS_DREAM_PANEL_START, 1, tmp_val);
 }
 
 int SSMReadDreamPanel(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_DREAM_PANEL_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_POS_DREAM_PANEL_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveUserNatureLightSwitch(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_USER_NATURE_SWITCH_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_USER_NATURE_SWITCH_START, 1, tmp_val);
 }
 
 int SSMReadUserNatureLightSwitch(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_USER_NATURE_SWITCH_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_USER_NATURE_SWITCH_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveDBCBacklightEnable(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_DBC_BACKLIGHT_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_DBC_BACKLIGHT_START, 1, tmp_val);
 }
 
 int SSMReadDBCBacklightEnable(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_DBC_BACKLIGHT_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_DBC_BACKLIGHT_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveDBCBacklightStd(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_DBC_STANDARD_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_DBC_STANDARD_START, 1, tmp_val);
 }
 
 int SSMReadDBCBacklightStd(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_DBC_STANDARD_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_DBC_STANDARD_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveDBCEnable(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_DBC_ENABLE_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_DBC_ENABLE_START, 1, tmp_val);
 }
 
 int SSMReadDBCEnable(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_DBC_ENABLE_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_DBC_ENABLE_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveGammaValue(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_GAMMA_VALUE_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_GAMMA_VALUE_START, 1, rw_val);
 }
 
 int SSMReadGammaValue(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_GAMMA_VALUE_START, 1, &tmp_val);
-    *rw_val = tmp_val;
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_GAMMA_VALUE_START, 1, rw_val);
 
     return tmp_ret;
 }
 
 int SSMSaveBackLightReverse(unsigned char rw_val)
 {
-    return SSMWriteNTypes(VPP_DATA_POS_BACKLIGHT_REVERSE_START, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(VPP_DATA_POS_BACKLIGHT_REVERSE_START, 1, tmp_val);
 }
 
 int SSMReadBackLightReverse(unsigned char *rw_val)
 {
-    return SSMReadNTypes(VPP_DATA_POS_BACKLIGHT_REVERSE_START, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(VPP_DATA_POS_BACKLIGHT_REVERSE_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioMasterVolume(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_MASTR_VOLUME_VAL, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(SSM_AUD_MASTR_VOLUME_VAL, 1, tmp_val);
 }
 
 int SSMReadAudioMasterVolume(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_MASTR_VOLUME_VAL, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+    ret = TVSSMReadNTypes(SSM_AUD_MASTR_VOLUME_VAL, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioBalanceVal(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_BALANCE_VAL, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(SSM_AUD_BALANCE_VAL, 1, tmp_val);
 }
 
 int SSMReadAudioBalanceVal(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_BALANCE_VAL, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_BALANCE_VAL, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioSupperBassVolume(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_SUPPERBASS_VOLUME_VAL, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(SSM_AUD_SUPPERBASS_VOLUME_VAL, 1, tmp_val);
 }
 
 int SSMReadAudioSupperBassVolume(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_SUPPERBASS_VOLUME_VAL, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_SUPPERBASS_VOLUME_VAL, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioSupperBassSwitch(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_SUPPERBASS_SWITCH, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(SSM_AUD_SUPPERBASS_SWITCH, 1, tmp_val);
 }
 
 int SSMReadAudioSupperBassSwitch(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_SUPPERBASS_SWITCH, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_SUPPERBASS_SWITCH, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioSRSSurroundSwitch(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_SRS_SURROUND_SWITCH, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(SSM_AUD_SRS_SURROUND_SWITCH, 1, tmp_val);
 }
 
 int SSMReadAudioSRSSurroundSwitch(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_SRS_SURROUND_SWITCH, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_SRS_SURROUND_SWITCH, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioSRSDialogClaritySwitch(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_SRS_DIALOG_CLARITY_SWITCH, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(SSM_AUD_SRS_DIALOG_CLARITY_SWITCH, 1, tmp_val);
 }
 
 int SSMSaveAudioDbxTvValue(int son_value, int vol_value, int sur_value)
 {
-    int8_t rw_val = son_value;
-    SSMWriteNTypes(SSM_AUD_DBX_TV_SON, 1, &rw_val);
-    rw_val = vol_value;
-    SSMWriteNTypes(SSM_AUD_DBX_TV_VAL, 1, &rw_val);
-    rw_val = sur_value;
-    SSMWriteNTypes(SSM_AUD_DBX_TV_SUR, 1, &rw_val);
+    TVSSMWriteNTypes(SSM_AUD_DBX_TV_SON, 1, son_value);
+    TVSSMWriteNTypes(SSM_AUD_DBX_TV_VAL, 1, vol_value);
+    TVSSMWriteNTypes(SSM_AUD_DBX_TV_SUR, 1, sur_value);
     return 0;
 }
 
 int SSMReadAudioDbxTvValue(int *son_value, int *vol_value, int *sur_value)
 {
-    unsigned char rw_val;
-    SSMReadNTypes(SSM_AUD_DBX_TV_SON, 1, &rw_val);
+    int rw_val;
+    TVSSMReadNTypes(SSM_AUD_DBX_TV_SON, 1, &rw_val);
     *son_value = rw_val;
-    SSMReadNTypes(SSM_AUD_DBX_TV_VAL, 1, &rw_val);
+    TVSSMReadNTypes(SSM_AUD_DBX_TV_VAL, 1, &rw_val);
     *vol_value = rw_val;
-    SSMReadNTypes(SSM_AUD_DBX_TV_SUR, 1, &rw_val);
+    TVSSMReadNTypes(SSM_AUD_DBX_TV_SUR, 1, &rw_val);
     *sur_value = rw_val;
     return 0;
 }
 
 int SSMReadAudioSRSDialogClaritySwitch(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_SRS_DIALOG_CLARITY_SWITCH, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_SRS_DIALOG_CLARITY_SWITCH, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioSRSTruBassSwitch(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_SRS_TRUEBASS_SWITCH, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(SSM_AUD_SRS_TRUEBASS_SWITCH, 1, tmp_val);
 }
 
 int SSMReadAudioSRSTruBassSwitch(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_SRS_TRUEBASS_SWITCH, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_SRS_TRUEBASS_SWITCH, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioBassVolume(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_BASS_VOLUME_VAL, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(SSM_AUD_BASS_VOLUME_VAL, 1, tmp_val);
 }
 
 int SSMReadAudioBassVolume(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_BASS_VOLUME_VAL, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_BASS_VOLUME_VAL, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioTrebleVolume(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_TREBLE_VOLUME_VAL, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(SSM_AUD_TREBLE_VOLUME_VAL, 1, tmp_val);
 }
 
 int SSMReadAudioTrebleVolume(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_TREBLE_VOLUME_VAL, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_TREBLE_VOLUME_VAL, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioSoundModeVal(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_SOUND_MODE_VAL, 1, &rw_val);
+    int tmp_val = rw_val;
+    return TVSSMWriteNTypes(SSM_AUD_SOUND_MODE_VAL, 1, tmp_val);
 }
 
 int SSMReadAudioSoundModeVal(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_SOUND_MODE_VAL, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_SOUND_MODE_VAL, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioWallEffectSwitch(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_WALL_EFFCT_SWITCH, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(SSM_AUD_WALL_EFFCT_SWITCH, 1, tmp_val);
 }
 
 int SSMReadAudioWallEffectSwitch(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_WALL_EFFCT_SWITCH, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_WALL_EFFCT_SWITCH, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioSPDIFSwitchVal(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_SPDIF_SWITCH, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(SSM_AUD_SPDIF_SWITCH, 1, tmp_val);
 }
 
 int SSMReadAudioSPDIFSwitchVal(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_SPDIF_SWITCH, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    return TVSSMReadNTypes(SSM_AUD_SPDIF_SWITCH, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioSPDIFModeVal(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_SPDIF_MODE_VAL, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(SSM_AUD_SPDIF_MODE_VAL, 1, tmp_val);
 }
 
 int SSMReadAudioSPDIFModeVal(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_SPDIF_MODE_VAL, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_SPDIF_MODE_VAL, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioEQModeVal(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_EQ_MODE_VAL, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(SSM_AUD_EQ_MODE_VAL, 1, tmp_val);
 }
 
 int SSMReadAudioEQModeVal(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_EQ_MODE_VAL, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_EQ_MODE_VAL, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioEQGain(int offset, int size, int8_t tmp_buf[])
 {
-    return SSMWriteNTypes(SSM_AUD_EQ_GAIN, size, tmp_buf, offset);
+    int i = 0;
+    for (i=0;i<size;i++) {
+        TVSSMWriteNTypes(SSM_AUD_EQ_GAIN, 1, tmp_buf[i], offset);
+    }
+
+    return 0;
 }
 
 int SSMReadAudioEQGain(int offset __unused, int size, int8_t tmp_buf[])
 {
-    return SSMReadNTypes(SSM_AUD_EQ_GAIN, size, tmp_buf);
+    int data_buf[size];
+    int i = 0;
+    int ret = 0;
+    memset(data_buf, 0x0, sizeof(data_buf));
+
+    for (i=0;i<size;i++) {
+        ret = TVSSMReadNTypes(SSM_AUD_EQ_GAIN, 1, data_buf+i);
+        tmp_buf[i] = data_buf[i];
+    }
+
+    return ret;
 }
 
 int SSMSaveAudioAVOutMuteVal(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_AVOUT_MUTE, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(SSM_AUD_AVOUT_MUTE, 1, tmp_val);
 }
 
 int SSMReadAudioAVOutMuteVal(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_AVOUT_MUTE, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    return TVSSMReadNTypes(SSM_AUD_AVOUT_MUTE, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
 
 int SSMSaveAudioSPIDFMuteVal(int8_t rw_val)
 {
-    return SSMWriteNTypes(SSM_AUD_SPIDF_MUTE, 1, &rw_val);
+    int tmp_val = rw_val;
+
+    return TVSSMWriteNTypes(SSM_AUD_SPIDF_MUTE, 1, tmp_val);
 }
 
 int SSMReadAudioSPIDFMuteVal(int8_t *rw_val)
 {
-    return SSMReadNTypes(SSM_AUD_SPIDF_MUTE, 1, rw_val);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_AUD_SPIDF_MUTE, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
 }
+
 int SSMSaveBlackoutEnable(int8_t enable)
 {
-    return SSMWriteNTypes(SSM_RW_BLACKOUT_ENABLE_START, 1, &enable);
+    int tmp_val = enable;
+
+    return TVSSMWriteNTypes(SSM_RW_BLACKOUT_ENABLE_START, 1, tmp_val);
 }
 
 int SSMReadBlackoutEnable(int8_t *enable)
 {
-    return SSMReadNTypes(SSM_RW_BLACKOUT_ENABLE_START, 1, enable);
+    int tmp_val = 0;
+    int ret = 0;
+
+    ret = TVSSMReadNTypes(SSM_RW_BLACKOUT_ENABLE_START, 1, &tmp_val);
+    *enable = tmp_val;
+
+    return ret;
 }
+
 int SSMSaveFBCN310BackLightVal(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_FBC_N310_BACKLIGHT_START , 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_FBC_N310_BACKLIGHT_START , 1, rw_val);
 }
 
 int SSMReadFBCN310BackLightVal(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_FBC_N310_BACKLIGHT_START, 1, &tmp_val);
-    *rw_val = tmp_val;
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_FBC_N310_BACKLIGHT_START, 1, rw_val);
 
     return tmp_ret;
 }
 
 int SSMSaveFBCN310ColorTempVal(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_FBC_N310_COLORTEMP_START , 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_FBC_N310_COLORTEMP_START , 1, rw_val);
 }
 
 int SSMReadFBCN310ColorTempVal(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_FBC_N310_COLORTEMP_START, 1, rw_val);
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_FBC_N310_COLORTEMP_START, 1, &tmp_val);
-    *rw_val = tmp_val;
 
     return tmp_ret;
 }
 
 int SSMSaveFBCN310LightsensorVal(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_FBC_N310_LIGHTSENSOR_START , 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_FBC_N310_LIGHTSENSOR_START , 1, rw_val);
 }
 
 int SSMReadFBCN310LightsensorVal(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_FBC_N310_LIGHTSENSOR_START, 1, &tmp_val);
-    *rw_val = tmp_val;
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_FBC_N310_LIGHTSENSOR_START, 1, rw_val);
 
     return tmp_ret;
 }
 
 int SSMSaveFBCN310Dream_PanelVal(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_FBC_N310_DREAMPANEL_START , 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_FBC_N310_DREAMPANEL_START , 1, rw_val);
 }
 
 int SSMReadFBCN310Dream_PanelVal(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_FBC_N310_DREAMPANEL_START, 1, &tmp_val);
-    *rw_val = tmp_val;
-
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_FBC_N310_DREAMPANEL_START, 1, rw_val);
     return tmp_ret;
 }
 
 int SSMSaveFBCN310MULT_PQVal(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_FBC_N310_MULTI_PQ_START , 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_FBC_N310_MULTI_PQ_START , 1, rw_val);
 }
 
 int SSMReadFBCN310MULT_PQVal(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_FBC_N310_MULTI_PQ_START, 1, &tmp_val);
-    *rw_val = tmp_val;
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_FBC_N310_MULTI_PQ_START, 1, rw_val);
 
     return tmp_ret;
 }
 
 int SSMSaveFBCN310MEMCVal(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_FBC_N310_MEMC_START , 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_FBC_N310_MEMC_START , 1, rw_val);
 }
 
 int SSMReadFBCN310MEMCVal(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
-
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_FBC_N310_MEMC_START, 1, &tmp_val);
-    *rw_val = tmp_val;
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_FBC_N310_MEMC_START, 1, rw_val);
 
     return tmp_ret;
 }
 
 int SSMSaveN311_VbyOne_Spread_Spectrum_Val(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_N311_VBYONE_SPREAD_SPECTRUM_START , 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_N311_VBYONE_SPREAD_SPECTRUM_START , 1, rw_val);
 }
 
 int SSMReadN311_VbyOne_Spread_Spectrum_Val(int *rw_val)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_N311_VBYONE_SPREAD_SPECTRUM_START, 1, &tmp_val);
-    *rw_val = tmp_val;
-
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_N311_VBYONE_SPREAD_SPECTRUM_START, 1, rw_val);
     return tmp_ret;
 }
 int SSMSaveN311_Bluetooth_Vol(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return SSMWriteNTypes(VPP_DATA_POS_N311_BLUETOOTH_VAL_START , 1, &tmp_val);
+    return TVSSMWriteNTypes(VPP_DATA_POS_N311_BLUETOOTH_VAL_START , 1, rw_val);
 }
 
 int SSMReadN311_Bluetooth_Vol(void)
 {
     int tmp_ret = 0;
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
 
-    tmp_ret = SSMReadNTypes(VPP_DATA_POS_N311_BLUETOOTH_VAL_START, 1, &tmp_val);
+    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_N311_BLUETOOTH_VAL_START, 1, &tmp_val);
 
     if (tmp_ret < 0) {
         return 0;
@@ -2454,17 +2167,15 @@ int SSMReadN311_Bluetooth_Vol(void)
 }
 int SSMSave_DRC_ONOFF_Val(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-
-    return  SSMWriteNTypes(SSM_AUD_DRC_ONOFF , 1, &tmp_val);
+    return  TVSSMWriteNTypes(SSM_AUD_DRC_ONOFF , 1, rw_val);
 
 }
 int SSMRead_DRC_ONOFF_Val(void)
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
     int tmp_ret = 0;
 
-    tmp_ret = SSMReadNTypes(SSM_AUD_DRC_ONOFF, 1, &tmp_val);
+    tmp_ret = TVSSMReadNTypes(SSM_AUD_DRC_ONOFF, 1, &tmp_val);
 
     if (tmp_ret < 0) {
         return 0;
@@ -2476,14 +2187,13 @@ int SSMRead_DRC_ONOFF_Val(void)
 
 int SSMSave_PANEL_ID_Val(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-    return  SSMWriteNTypes(SSM_RW_PANEL_ID_START , 1, &tmp_val);
+    return  TVSSMWriteNTypes(SSM_RW_PANEL_ID_START , 1, rw_val);
 }
 int SSMRead_PANEL_ID_Val(void)
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
     int tmp_ret = 0;
-    tmp_ret = SSMReadNTypes(SSM_RW_PANEL_ID_START, 1, &tmp_val);
+    tmp_ret = TVSSMReadNTypes(SSM_RW_PANEL_ID_START, 1, &tmp_val);
     if (tmp_ret < 0) {
         return 0;
     }
@@ -2493,19 +2203,19 @@ int SSMRead_PANEL_ID_Val(void)
 int SSMSaveHDMIEdidMode(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t rw_val)
 {
     int ret = -1;
-    unsigned char tmp_val = rw_val;
+    int tmp_val = rw_val;
     switch (port) {
         case HDMI_PORT_1 :
-            ret = SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, 1, &tmp_val);
+            ret = TVSSMWriteNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, 1, tmp_val);
             break;
         case HDMI_PORT_2 :
-            ret = SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI2_EDID_START, 1, &tmp_val);
+            ret = TVSSMWriteNTypes(CUSTOMER_DATA_POS_HDMI2_EDID_START, 1, tmp_val);
             break;
         case HDMI_PORT_3 :
-            ret = SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI3_EDID_START, 1, &tmp_val);
+            ret = TVSSMWriteNTypes(CUSTOMER_DATA_POS_HDMI3_EDID_START, 1, tmp_val);
             break;
         case HDMI_PORT_4 :
-            ret = SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI4_EDID_START, 1, &tmp_val);
+            ret = TVSSMWriteNTypes(CUSTOMER_DATA_POS_HDMI4_EDID_START, 1, tmp_val);
         default:
             break;
     }
@@ -2514,11 +2224,11 @@ int SSMSaveHDMIEdidMode(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t rw_val)
 
 tv_hdmi_edid_version_t SSMReadHDMIEdidMode(tv_hdmi_port_id_t port)
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
     int tmp_ret = 0;
     switch (port) {
         case HDMI_PORT_1:
-            tmp_ret = SSMReadNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, 1, &tmp_val);
+            tmp_ret = TVSSMReadNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, 1, &tmp_val);
             if (tmp_ret < 0) {
                 tmp_val = 0;
             }
@@ -2527,7 +2237,7 @@ tv_hdmi_edid_version_t SSMReadHDMIEdidMode(tv_hdmi_port_id_t port)
             }
             break;
         case HDMI_PORT_2 :
-            tmp_ret = SSMReadNTypes(CUSTOMER_DATA_POS_HDMI2_EDID_START, 1, &tmp_val);
+            tmp_ret = TVSSMReadNTypes(CUSTOMER_DATA_POS_HDMI2_EDID_START, 1, &tmp_val);
             if (tmp_ret < 0) {
                 tmp_val = 0;
             }
@@ -2536,7 +2246,7 @@ tv_hdmi_edid_version_t SSMReadHDMIEdidMode(tv_hdmi_port_id_t port)
             }
             break;
         case HDMI_PORT_3 :
-            tmp_ret = SSMReadNTypes(CUSTOMER_DATA_POS_HDMI3_EDID_START, 1, &tmp_val);
+            tmp_ret = TVSSMReadNTypes(CUSTOMER_DATA_POS_HDMI3_EDID_START, 1, &tmp_val);
             if (tmp_ret < 0) {
                 tmp_val = 0;
             }
@@ -2545,7 +2255,7 @@ tv_hdmi_edid_version_t SSMReadHDMIEdidMode(tv_hdmi_port_id_t port)
             }
             break;
         case HDMI_PORT_4:
-            tmp_ret = SSMReadNTypes(CUSTOMER_DATA_POS_HDMI4_EDID_START, 1, &tmp_val);
+            tmp_ret = TVSSMReadNTypes(CUSTOMER_DATA_POS_HDMI4_EDID_START, 1, &tmp_val);
             if (tmp_ret < 0) {
                 tmp_val = 0;
             }
@@ -2563,15 +2273,14 @@ tv_hdmi_edid_version_t SSMReadHDMIEdidMode(tv_hdmi_port_id_t port)
 
 int SSMSaveHDMIHdcpSwitcher(int rw_val)
 {
-    unsigned char tmp_val = rw_val;
-    return SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START, 1, &tmp_val);
+    return TVSSMWriteNTypes(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START, 1, rw_val);
 }
 
 int SSMReadHDMIHdcpSwitcher(void)
 {
-    unsigned char tmp_val = 0;
+    int tmp_val = 0;
     int tmp_ret = 0;
-    tmp_ret = SSMReadNTypes(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START, 1, &tmp_val);
+    tmp_ret = TVSSMReadNTypes(CUSTOMER_DATA_POS_HDMI_HDCP_SWITCHER_START, 1, &tmp_val);
     if (tmp_ret < 0) {
         tmp_val = 0;
     }
@@ -2595,5 +2304,5 @@ int SSMHDMIEdidRestoreDefault(void)
         config_set_str(CFG_SECTION_TV, CS_HDMI_PORT4_EDID_FILE_PATH_CFG, "");
 
     int tmp_val = HDMI_EDID_VER_14;
-    return SSMWriteNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, SSMGetCustomerDataLen(), &tmp_val);
+    return TVSSMWriteNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, SSMGetCustomerDataLen(), tmp_val);
 }

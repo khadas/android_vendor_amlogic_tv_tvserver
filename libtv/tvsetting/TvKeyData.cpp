@@ -27,7 +27,6 @@
 //#include <netutils/dhcp.h>
 
 #include <tvconfig.h>
-#include "CTvSettingCfg.h"
 #include "../tvin/CTvin.h"
 
 #include "TvKeyData.h"

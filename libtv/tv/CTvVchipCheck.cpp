@@ -115,7 +115,7 @@ void *CTvVchipCheck::VchipCheckingThread (void *arg __unused)
 
 int CTvVchipCheck::stopVChipCheck()
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     LOGD ( "stopVChipCheck() and exit thread" );
     requestExit();
     return 0;
@@ -123,7 +123,7 @@ int CTvVchipCheck::stopVChipCheck()
 
 int CTvVchipCheck::pauseVChipCheck()
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     LOGD ( "pauseVChipCheck() set request pause flag, when flag true, thread loop go pause on condition" );
     m_request_pause_detect = true;
     return 0;
@@ -131,7 +131,7 @@ int CTvVchipCheck::pauseVChipCheck()
 
 int CTvVchipCheck::requestAndWaitPauseVChipCheck()
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     LOGD ( "requestAndWaitPauseVChipCheck(),first set pause flag to true, and wait when loop run to pause code segment" );
     m_request_pause_detect = true;
 
@@ -144,7 +144,7 @@ int CTvVchipCheck::requestAndWaitPauseVChipCheck()
 
 int CTvVchipCheck::resumeVChipCheck()
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     LOGD ( "resumeVChipCheck() first set flag false, and signal to paused condition, let run loop" );
     m_request_pause_detect = false;
     mDetectPauseCondition.signal();

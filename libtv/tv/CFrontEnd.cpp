@@ -67,7 +67,7 @@ CFrontEnd::~CFrontEnd()
 
 int CFrontEnd::Open(int mode)
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
 
     AM_FEND_OpenPara_t para;
     int rc = 0;
@@ -103,7 +103,7 @@ int CFrontEnd::Open(int mode)
 
 int CFrontEnd::Close()
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
 
     int rc = 0;
 
@@ -132,7 +132,7 @@ int CFrontEnd::Close()
 
 int CFrontEnd::setMode(int mode)
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
 
     int rc = 0;
     if (mCurMode == mode) return 0;
@@ -147,7 +147,7 @@ int CFrontEnd::setMode(int mode)
 
 int CFrontEnd::setProp(int cmd, int val)
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
 
     struct dtv_properties props;
     struct dtv_property prop;
@@ -225,7 +225,7 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
 
 int CFrontEnd::setPara(int mode, int freq, int para1, int para2)
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     char paras[128];
     convertParas(paras, mode, freq, freq, para1, para2);
     return setPara(paras);
@@ -324,7 +324,7 @@ int CFrontEnd::fineTune(int fineFreq)
 
 int CFrontEnd::fineTune(int fineFreq, bool force)
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
 
     int ret = 0;
     if (mCurFineFreq == fineFreq && !force) return -1;

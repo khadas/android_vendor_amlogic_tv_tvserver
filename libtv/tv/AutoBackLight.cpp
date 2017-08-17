@@ -71,7 +71,7 @@ void AutoBackLight::startAutoBacklight( tv_source_input_t tv_source_input )
 
     if (!mAutoBacklight_OnOff_Flag) {
         mAutoBacklight_OnOff_Flag = true;
-        this->run();
+        this->run("AutoBackLight");
     }
 }
 

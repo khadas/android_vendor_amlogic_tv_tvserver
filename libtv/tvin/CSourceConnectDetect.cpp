@@ -52,8 +52,7 @@ CSourceConnectDetect::~CSourceConnectDetect()
 
 int CSourceConnectDetect::startDetect()
 {
-    this->run();
-
+    this->run("CSourceConnectDetect");
     return 0;
 }
 

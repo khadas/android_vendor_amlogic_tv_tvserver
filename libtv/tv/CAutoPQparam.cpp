@@ -56,7 +56,7 @@ void CAutoPQparam::startAutoPQ( tv_source_input_t tv_source_input )
     LOGD("---------startAutoPQParameters  --------mAutoPQ_OnOff_Flag  = %d", mAutoPQ_OnOff_Flag);
     if (!mAutoPQ_OnOff_Flag) {
         mAutoPQ_OnOff_Flag = true;
-        this->run();
+        this->run("CAutoPQparam");
     }
 #else
     LOGD("AutoPQparam disable.\n");

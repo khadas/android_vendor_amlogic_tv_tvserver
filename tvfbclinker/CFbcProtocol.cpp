@@ -89,7 +89,7 @@ int CFbcProtocol::start(unsigned int baud_rate)
     //timeout for long
     mEpoll.setTimeout(3000);
 
-    this->run();
+    this->run("CFbcProtocol");
     return 0;
 }
 

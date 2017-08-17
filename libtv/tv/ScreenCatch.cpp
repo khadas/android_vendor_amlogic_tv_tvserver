@@ -269,7 +269,7 @@ namespace android {
     status_t ScreenCatch::start(MetaData *params)
     {
         LOGE("[%s %d] mWidth:%d mHeight:%d", __FUNCTION__, __LINE__, mWidth, mHeight);
-        Mutex::Autolock autoLock(mLock);
+        AutoMutex _l(mLock);
 
         status_t status;
         int64_t pts;
@@ -329,7 +329,7 @@ namespace android {
     status_t ScreenCatch::stop()
     {
         LOGV("[%s %d]", __FUNCTION__, __LINE__);
-        Mutex::Autolock autoLock(mLock);
+        AutoMutex _l(mLock);
         mStart = false;
 
         mThreadOutCondition.waitRelative(mLock, 1000000000000);
@@ -352,7 +352,7 @@ namespace android {
 
     status_t ScreenCatch::read(MediaBuffer **buffer)
     {
-        Mutex::Autolock autoLock(mLock);
+        AutoMutex _l(mLock);
 
         if (!mRawBufferQueue.empty()) {
             MediaBuffer *rawBuffer = *mRawBufferQueue.begin();
@@ -366,7 +366,7 @@ namespace android {
 
     status_t ScreenCatch::free(MediaBuffer *buffer)
     {
-        Mutex::Autolock autoLock(mLock);
+        AutoMutex _l(mLock);
         buffer->release();
         return OK;
     }

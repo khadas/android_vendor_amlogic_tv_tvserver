@@ -9,9 +9,10 @@
 
 #ifndef C_BOOT_VIDEO_STATUS_DETECT_H
 #define C_BOOT_VIDEO_STATUS_DETECT_H
-#include "../../tvutils/include/CThread.h"
+#include <utils/Thread.h>
 
-class CBootvideoStatusDetect: public CThread {
+using namespace android;
+class CBootvideoStatusDetect: public Thread {
 public:
     CBootvideoStatusDetect();
     ~CBootvideoStatusDetect();

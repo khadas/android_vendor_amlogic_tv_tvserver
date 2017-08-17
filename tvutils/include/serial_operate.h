@@ -9,9 +9,10 @@
 
 #ifndef __SERIAL_OPERATE_H__
 #define __SERIAL_OPERATE_H__
-#include "CThread.h"
+#include <utils/Thread.h>
 
-class CTv2d4GHeadSetDetect: public CThread {
+using namespace android;
+class CTv2d4GHeadSetDetect: public Thread {
 
 public:
     CTv2d4GHeadSetDetect();

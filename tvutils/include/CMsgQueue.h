@@ -7,7 +7,7 @@
  * Description: header file
  */
 
-#include "CThread.h"
+#include <utils/Thread.h>
 #include <utils/Vector.h>
 using namespace android;
 #if !defined(_C_MSG_QUEUE_H)
@@ -17,14 +17,14 @@ class CMessage {
 public:
     CMessage();
     ~CMessage();
-    nsecs_t_l mDelayMs;//delay times , MS
-    nsecs_t_l mWhenMs;//when, the msg will handle
+    nsecs_t mDelayMs;//delay times , MS
+    nsecs_t mWhenMs;//when, the msg will handle
     int mType;
     void *mpData;
     unsigned char mpPara[3382];
 };
 
-class CMsgQueueThread: public CThread {
+class CMsgQueueThread: public Thread {
 public:
     CMsgQueueThread();
     virtual ~CMsgQueueThread();
@@ -34,13 +34,13 @@ public:
     void clearMsg();
 private:
     bool  threadLoop();
-    nsecs_t_l getNowMs();//get system time , MS
+    nsecs_t getNowMs();//get system time , MS
     virtual void handleMessage(CMessage &msg) = 0;
 
     //
     Vector<CMessage> m_v_msg;
-    CCondition mGetMsgCondition;
-    CMutex   mLockQueue;
+    Condition mGetMsgCondition;
+    mutable Mutex mLockQueue;
 };
 
 /*class CHandler

@@ -18,9 +18,9 @@
 #include "CTvTime.h"
 #include "CTvEvent.h"
 #include "CTvLog.h"
-#include <CThread.h>
+#include <utils/Thread.h>
 // TV ATSC rating dimension
-class CTvVchipCheck: public CThread {
+class CTvVchipCheck: public Thread {
 public:
     CTvVchipCheck();
     ~CTvVchipCheck();
@@ -33,9 +33,9 @@ public:
     int requestAndWaitPauseVChipCheck();
 private:
     bool  threadLoop();
-    mutable CMutex           mLock;
-    CCondition       mDetectPauseCondition;
-    CCondition       mRequestPauseCondition;
+    mutable Mutex mLock;
+    Condition mDetectPauseCondition;
+    Condition mRequestPauseCondition;
     volatile bool m_request_pause_detect;
     enum DetectState {
         STATE_STOPED = 0,

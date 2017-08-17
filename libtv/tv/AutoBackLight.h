@@ -10,10 +10,10 @@
 #if !defined(_AUTOBACKLIGHT_H)
 #define _AUTOBACKLIGHT_H
 #include "../tvin/CTvin.h"
-#include "CThread.h"
+#include <utils/Thread.h>
 #include "../vpp/CVpp.h"
 
-class AutoBackLight: public CThread {
+class AutoBackLight: public Thread {
 private:
     tv_source_input_t mAutoBacklightSource;
     int mCur_source_default_backlight;

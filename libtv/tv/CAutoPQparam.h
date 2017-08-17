@@ -10,11 +10,11 @@
 #if !defined(_CAUTOPQPARAM_H)
 #define _CAUTOPQPARAM_H
 #include "CAv.h"
-#include <CThread.h>
+#include <utils/Thread.h>
 #include "../vpp/CVpp.h"
 #include <tvconfig.h>
 
-class CAutoPQparam: public CThread {
+class CAutoPQparam: public Thread {
 private:
     tv_source_input_t mAutoPQSource;
     bool mAutoPQ_OnOff_Flag;

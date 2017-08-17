@@ -29,7 +29,7 @@ int CBootvideoStatusDetect::startDetect()
 {
     LOGD("%s", __FUNCTION__);
     if (!mIsRunning)
-        this->run();
+        this->run("CBootvideoStatusDetect");
 
     return 0;
 }

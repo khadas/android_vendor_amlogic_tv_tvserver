@@ -10,7 +10,7 @@
 #ifndef C_SOURCE_CONNECT_DETECT_H
 #define C_SOURCE_CONNECT_DETECT_H
 
-#include <CThread.h>
+#include <utils/Thread.h>
 #include <CFile.h>
 #include <zepoll.h>
 
@@ -48,7 +48,8 @@ static const char *AVIN_DETECT_PATH = "/dev/avin_detect";
 static const char *HDMI_DETECT_PATH = "/dev/hdmirx0";
 static const char *VPP_POLL_PATCH = "/dev/amvideo_poll";
 
-class CSourceConnectDetect: public CThread {
+using namespace android;
+class CSourceConnectDetect: public Thread {
 public:
     CSourceConnectDetect();
     ~CSourceConnectDetect();
@@ -73,7 +74,7 @@ private:
 
     ISourceConnectObserver *mpObserver;
     Epoll       mEpoll;
-    mutable CMutex           mLock;
+    mutable Mutex mLock;
     epoll_event m_event;
     CFile mAvinDetectFile;
     CFile mHdmiDetectFile;

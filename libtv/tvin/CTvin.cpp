@@ -2051,7 +2051,7 @@ int CTvin::CTvinSigDetect::startDetect(bool bPause)
 
     m_request_pause_detect = bPause;
     initSigState();
-    this->run();
+    this->run("CTvinSigDetect");
     return mDetectState;
 }
 
@@ -2071,7 +2071,7 @@ int CTvin::CTvinSigDetect::initSigState()
 
 int CTvin::CTvinSigDetect::stopDetect()
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     LOGD ( "stopDetect()" );
     requestExit();
     return 0;
@@ -2079,7 +2079,7 @@ int CTvin::CTvinSigDetect::stopDetect()
 
 int CTvin::CTvinSigDetect::pauseDetect()
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     LOGD ( "pauseDetect()" );
     m_request_pause_detect = true;
     return 0;
@@ -2087,7 +2087,7 @@ int CTvin::CTvinSigDetect::pauseDetect()
 
 int CTvin::CTvinSigDetect::requestAndWaitPauseDetect()
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     LOGD ( "requestAndWaitPauseDetect()" );
 
     mKeepNosigTime = 0;
@@ -2114,7 +2114,7 @@ void CTvin::CTvinSigDetect::setCurSigFmt(tvin_sig_fmt_t sig_fmt)
 
 int CTvin::CTvinSigDetect::resumeDetect(int later)//ms
 {
-    CMutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     LOGD ( "resumeDetect()" );
     mResumeLaterTime = later;
     m_request_pause_detect = false;

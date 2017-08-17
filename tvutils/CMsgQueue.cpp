@@ -34,14 +34,14 @@ CMsgQueueThread::~CMsgQueueThread()
     requestExitAndWait();
 }
 
-nsecs_t_l CMsgQueueThread::getNowMs()
+nsecs_t CMsgQueueThread::getNowMs()
 {
     return systemTime(SYSTEM_TIME_MONOTONIC) / 1000000;
 }
 
 void CMsgQueueThread::sendMsg(CMessage &msg)
 {
-    CMutex::Autolock _l(mLockQueue);
+    AutoMutex _l(mLockQueue);
     msg.mWhenMs = getNowMs() + msg.mDelayMs;//
     int i = 0;
     while (i < (int)m_v_msg.size() && m_v_msg[i].mWhenMs <= msg.mWhenMs) i++; //find the index that will insert(i)
@@ -56,7 +56,7 @@ void CMsgQueueThread::sendMsg(CMessage &msg)
 //有个缺陷，只能根据消息类型移除，同类型消息会全部移除,但足够用了
 void CMsgQueueThread::removeMsg(CMessage &msg)
 {
-    CMutex::Autolock _l(mLockQueue);
+    AutoMutex _l(mLockQueue);
     int beforeSize = (int)m_v_msg.size();
     for (int i = 0; i < (int)m_v_msg.size(); i++) {
         const CMessage &_msg = m_v_msg.itemAt(i);
@@ -71,14 +71,14 @@ void CMsgQueueThread::removeMsg(CMessage &msg)
 
 void CMsgQueueThread::clearMsg()
 {
-    CMutex::Autolock _l(mLockQueue);
+    AutoMutex _l(mLockQueue);
     m_v_msg.clear();
 }
 
 int CMsgQueueThread::startMsgQueue()
 {
-    CMutex::Autolock _l(mLockQueue);
-    this->run();
+    AutoMutex _l(mLockQueue);
+    this->run("CMsgQueueThread");
     return 0;
 }
 
@@ -93,7 +93,7 @@ bool CMsgQueueThread::threadLoop()
         mLockQueue.unlock();
         //get delay time
         CMessage msg;
-        nsecs_t_l delayMs = 0, nowMS = 0;
+        nsecs_t delayMs = 0, nowMS = 0;
         do { //wait ,until , the lowest time msg's whentime is low nowtime, to go on
             if (m_v_msg.size() <= 0) {
                 LOGD("msg size is 0, break");

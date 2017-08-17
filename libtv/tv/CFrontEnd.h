@@ -15,7 +15,6 @@
 #include <string.h>
 #include "CTvLog.h"
 #include "CTvEv.h"
-#include "CMutex.h"
 
 #include "tvutils.h"
 
@@ -282,7 +281,7 @@ private:
     void saveCurrentParas(FEParas &paras);
 
 protected:
-    mutable CMutex mLock;
+    mutable Mutex mLock;
 };
 #endif // ANDROID_FRONTEND_H
 

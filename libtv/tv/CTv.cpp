@@ -558,7 +558,6 @@ int CTv::setTvObserver ( TvIObserver *ob )
 
 void CTv::sendTvEvent ( const CTvEv &ev )
 {
-    //AutoMutex lock(mLock);
     /* send sigstate to AutoBackLight */
     if (ev.getEvType() == CTvEv::TV_EVENT_SIGLE_DETECT) {
         TvEvent::SignalInfoEvent *pEv = (TvEvent::SignalInfoEvent *)(&ev);
@@ -590,7 +589,7 @@ int CTv::clearFrontEnd(int para)
 }
 
 int CTv::Scan(const char *feparas, const char *scanparas) {
-    AutoMutex lock(mLock);
+    AutoMutex _l(mLock);
     m_source_input = SOURCE_INVALID;
     SetAudioMuteForTv ( CC_AUDIO_MUTE );
     mTvAction = mTvAction | TV_ACTION_SCANNING;
@@ -628,7 +627,7 @@ int CTv::Scan(const char *feparas, const char *scanparas) {
 }
 
 int CTv::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2) {
-    AutoMutex lock(mLock);
+    AutoMutex _l(mLock);
     mTvAction = mTvAction | TV_ACTION_SCANNING;
     LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
     LOGD("mode[%#x], scan_mode[%#x], freq[%d-%d], para[%d,%d] %s",
@@ -699,7 +698,7 @@ int CTv::dtvManualScan (int beginFreq, int endFreq, int modulation)
 int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchType, int procMode)
 {
     int minScanFreq, maxScanFreq, vStd, aStd;
-    AutoMutex lock ( mLock );
+    AutoMutex _l( mLock );
     if ( !mATVDisplaySnow )
         mAv.DisableVideoWithBlueColor();
     mTvAction |= TV_ACTION_SCANNING;
@@ -778,7 +777,7 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
     aStd = audioStd;
     // }
 
-    AutoMutex lock ( mLock );
+    AutoMutex _l( mLock );
     if ( !mATVDisplaySnow )
         mAv.DisableVideoWithBlueColor();
     mTvAction |= TV_ACTION_SCANNING;
@@ -874,7 +873,7 @@ int CTv::getAudioFormatInfo ( int fmt[2], int sample_rate[2], int resolution[2],
 
 int CTv::stopScanLock()
 {
-    AutoMutex lock ( mLock );
+    AutoMutex _l( mLock );
     return stopScan();
 }
 
@@ -1131,7 +1130,7 @@ int CTv::setAudioAD (int enable, int aPid, int aFmt)
 int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int para2,
                           int vpid, int vfmt, int apid, int afmt, int pcr, int audioCompetation)
 {
-    AutoMutex lock ( mLock );
+    AutoMutex _l( mLock );
 
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
 
@@ -1301,7 +1300,7 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 
 int CTv::setFrontEnd ( const char *paras, bool force )
 {
-    Mutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
     if (mTvAction & TV_ACTION_SCANNING) {
         return -1;
@@ -1418,7 +1417,7 @@ int CTv::startPlayTv ( int source, int vid, int aid, int pcrid, int vfat, int af
 
 int CTv::stopPlayingLock()
 {
-    AutoMutex lock ( mLock );
+    AutoMutex _l( mLock );
     if (mSubtitle.sub_switch_status() == 1)
         mSubtitle.sub_stop_dvb_sub();
     return stopPlaying(true);
@@ -1562,7 +1561,7 @@ bool CTv::Tv_Start_Analyze_Ts ( int channelID )
     int freq, ret;
     CTvChannel channel;
 
-    AutoMutex lock ( mLock );
+    AutoMutex _l( mLock );
     mAv.StopTS ();
     mAv.DisableVideoWithBlueColor();
     ret = CTvChannel::selectByID ( channelID, channel );
@@ -1739,7 +1738,7 @@ int CTv::Tvin_GetTvinConfig ( void )
 
 TvRunStatus_t CTv::GetTvStatus()
 {
-    Mutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     return mTvStatus;
 }
 
@@ -1844,7 +1843,7 @@ int CTv::StartTvLock ()
     if (mTvStatus == TV_START_ED)
         return 0;
 
-    Mutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     mTvAction |= TV_ACTION_STARTING;
 
     //tvWriteSysfs("/sys/power/wake_lock", "tvserver.run");
@@ -1904,7 +1903,7 @@ int CTv::StopTvLock ( void )
 {
     LOGD("%s, call Tv_Stop status = %d \n", __FUNCTION__, mTvStatus);
     mSigDetectThread.requestAndWaitPauseDetect();
-    Mutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     mTvAction |= TV_ACTION_STOPING;
     mAv.DisableVideoWithBlackColor();
     stopPlaying(false);
@@ -2001,7 +2000,7 @@ bool CTv::isVirtualSourceInput(tv_source_input_t source_input) {
 
 int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
 {
-    Mutex::Autolock _l ( mLock );
+   AutoMutex _l( mLock );
 
     LOGD ( "%s, source input = %d", __FUNCTION__, source_input );
 
@@ -2014,7 +2013,7 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
 }
 
 int CTv::SetSourceSwitchInput(tv_source_input_t virtual_input, tv_source_input_t source_input) {
-    Mutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     return SetSourceSwitchInputLocked(virtual_input, source_input);
 }
 
@@ -2707,13 +2706,13 @@ int CTv::GetSourceConnectStatus(tv_source_input_t source_input)
 
 tv_source_input_t CTv::GetCurrentSourceInputLock ( void )
 {
-    Mutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     return m_source_input;
 }
 
 tv_source_input_t CTv::GetCurrentSourceInputVirtualLock ( void )
 {
-    Mutex::Autolock _l ( mLock );
+    AutoMutex _l( mLock );
     return m_source_input_virtual;
 }
 

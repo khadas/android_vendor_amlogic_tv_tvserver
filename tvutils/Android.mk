@@ -18,7 +18,6 @@ LOCAL_SRC_FILES := \
   CTvLog.cpp \
   CMsgQueue.cpp \
   CSqlite.cpp \
-  CThread.cpp \
   serial_base.cpp \
   serial_operate.cpp \
   tvutils.cpp \

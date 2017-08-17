@@ -50,7 +50,7 @@ CTv2d4GHeadSetDetect::~CTv2d4GHeadSetDetect()
 
 int CTv2d4GHeadSetDetect::startDetect()
 {
-    this->run();
+    this->run("CTv2d4GHeadSetDetect");
 
     return 0;
 }

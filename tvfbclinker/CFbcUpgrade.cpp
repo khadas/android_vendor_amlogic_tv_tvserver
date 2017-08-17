@@ -61,7 +61,7 @@ int CFbcUpgrade::start()
     if (mState == STATE_STOPED || mState == STATE_ABORT
         || mState == STATE_FINISHED) {
         mCfbcIns->SetUpgradeFlag(1);
-        this->run();
+        this->run("CFbcUpgrade");
     } else {
         mCfbcIns->SetUpgradeFlag(0);
         LOGD("%s, Upgrade is running now...\n", __FUNCTION__);

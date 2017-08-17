@@ -13,7 +13,7 @@
 #include <pthread.h>
 #include <cm.h>
 #include <ve.h>
-#include <CThread.h>
+#include <utils/Thread.h>
 #include "../tv/CFrontEnd.h"
 
 #define SYS_DISPLAY_MODE_PATH       "/sys/class/display/mode"
@@ -731,7 +731,7 @@ public:
     static CTvin *getInstance();
 
 public:
-    class CTvinSigDetect: public CThread {
+    class CTvinSigDetect: public Thread {
     public:
         static const int VDIN_NOSIG_DEFAULT_CHECK_TIMES = 1;
         CTvinSigDetect ();
@@ -788,9 +788,9 @@ public:
         tvin_info_t m_pre_sig_info;
         int mKeepNosigTime;
         bool mIsNosig;
-        mutable CMutex           mLock;
-        CCondition       mDetectPauseCondition;
-        CCondition       mRequestPauseCondition;
+        mutable Mutex mLock;
+        Condition mDetectPauseCondition;
+        Condition mRequestPauseCondition;
         volatile int m_sig_detect_status;
         volatile bool m_request_pause_detect;
         enum DetectState {

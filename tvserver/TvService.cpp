@@ -413,7 +413,7 @@ sp<ITv> TvService::connect(const sp<ITvClient> &tvClient)
     int callingPid = getCallingPid();
     LOGD("TvService::connect (pid %d, client %p)", callingPid, IInterface::asBinder(tvClient).get());
 
-    Mutex::Autolock lock(mServiceLock);
+    AutoMutex _l(mServiceLock);
     sp<Client> newclient;
     bool haveclient = false;
 
@@ -451,8 +451,7 @@ void TvService::removeClient(const sp<ITvClient> &tvClient)
 {
     int callingPid = getCallingPid();
 
-    Mutex::Autolock lock(mServiceLock);
-
+    AutoMutex _l(mServiceLock);
     int clientSize = mClients.size();
     for (int i = 0; i < clientSize; i++) {
         wp<Client> client = mClients[i];
@@ -528,7 +527,7 @@ status_t TvService::Client::lock()
 {
     int callingPid = getCallingPid();
     LOGD("lock from pid %d (mClientPid %d)", callingPid, mClientPid);
-    Mutex::Autolock _l(mLock);
+    AutoMutex _l(mLock);
     // lock tv to this client if the the tv is unlocked
     if (mClientPid == 0) {
         mClientPid = callingPid;
@@ -542,7 +541,7 @@ status_t TvService::Client::unlock()
 {
     int callingPid = getCallingPid();
     LOGD("unlock from pid %d (mClientPid %d)", callingPid, mClientPid);
-    Mutex::Autolock _l(mLock);
+    AutoMutex _l(mLock);
     // allow anyone to use tv
     status_t result = checkPid();
     if (result == NO_ERROR) {
@@ -560,7 +559,7 @@ status_t TvService::Client::connect(const sp<ITvClient> &client)
     LOGD("Client::connect E (pid %d, client %p)", callingPid, IInterface::asBinder(client).get());
 
     {
-        Mutex::Autolock _l(mLock);
+        AutoMutex _l(mLock);
         if (mClientPid != 0 && checkPid() != NO_ERROR) {
             LOGW("Tried to connect to locked tv (old pid %d, new pid %d)", mClientPid, callingPid);
             return -EBUSY;
@@ -586,7 +585,7 @@ void TvService::Client::disconnect()
 
     LOGD("Client::disconnect() E (pid %d client %p)", callingPid, IInterface::asBinder(getTvClient()).get());
 
-    Mutex::Autolock lock(mLock);
+    AutoMutex _l(mLock);
     if (mClientPid <= 0) {
         LOGE("tv is unlocked (mClientPid = %d), don't tear down hardware", mClientPid);
         return;
@@ -609,7 +608,7 @@ status_t TvService::Client::createVideoFrame(const sp<IMemory> &shareMem __unuse
     LOGD(" mem=%d size=%d", shareMem->pointer() == NULL, shareMem->size());
     LOGD("iSourceMode :%d iCapVideoLayerOnly = %d \n", iSourceMode, iCapVideoLayerOnly);
     int Len = 0;
-    Mutex::Autolock lock(mLock);
+    AutoMutex _l(mLock);
     mTvService->mCapVidFrame.InitVCap(shareMem);
 
     if ((1 == iSourceMode) && (1 == iCapVideoLayerOnly)) {
@@ -3456,8 +3455,7 @@ status_t TvService::dump(int fd, const Vector<String16>& args)
                 IPCThreadState::self()->getCallingUid());
         result.append(buffer);
     } else {
-        Mutex::Autolock lock(mServiceLock);
-
+        AutoMutex _l(mServiceLock);
         if (args.size() > 0) {
             for (int i = 0; i < (int)args.size(); i ++) {
                 if (args[i] == String16("-s")) {

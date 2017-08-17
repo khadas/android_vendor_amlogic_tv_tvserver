@@ -12,14 +12,14 @@
 
 #include "CFbcHelper.h"
 #include "CFbcProtocol.h"
-#include "CThread.h"
+#include <utils/Thread.h>
 #include <list>
 #include <string>
 
 #define CC_UPGRADE_MAX_BLOCK_LEN                      (0x10000)
 #define CC_UPGRADE_DATA_BUF_SIZE                      (CC_UPGRADE_MAX_BLOCK_LEN + 4)
 
-class CFbcUpgrade: public CThread {
+class CFbcUpgrade: public Thread {
 public:
     CFbcUpgrade();
     ~CFbcUpgrade();

@@ -16,13 +16,13 @@
 #include "CHdmiCecCmd.h"
 #include "CMsgQueue.h"
 #include "CSerialPort.h"
-#include "CThread.h"
+#include <utils/Thread.h>
 #include "CVirtualInput.h"
 #include "zepoll.h"
 
 
 typedef struct REQUEST_REPLY_CMD {
-    CCondition       WaitReplyCondition;
+    Condition WaitReplyCondition;
     int WaitDevNo;
     int WaitCmd;
     int WaitTimeOut;
@@ -30,7 +30,7 @@ typedef struct REQUEST_REPLY_CMD {
     int reDataLen;
 } REQUEST_REPLY_S;
 
-class CFbcProtocol: public CThread {
+class CFbcProtocol: public Thread {
 public:
     //friend class CTvMsgQueue;
     class CFbcMsgQueue: public CMsgQueueThread {
@@ -71,8 +71,8 @@ private:
     int mUpgradeFlag;
     CHdmiCec mHdmiCec;
     CSerialPort mSerialPort;
-    Epoll       mEpoll;
-    mutable CMutex           mLock;
+    Epoll mEpoll;
+    mutable Mutex mLock;
     REQUEST_REPLY_S mReplyList;
     //list
     epoll_event m_event;
@@ -84,7 +84,7 @@ private:
     int mbDownHaveSend;
 
     int mbFbcKeyEnterDown;
-    nsecs_t_l mFbcEnterKeyDownTime;
+    nsecs_t mFbcEnterKeyDownTime;
 };
 
 extern CFbcProtocol *GetFbcProtocolInstance(unsigned int baud_rate = 115200);

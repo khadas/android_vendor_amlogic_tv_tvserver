@@ -181,7 +181,7 @@ typedef enum tvin_port_e {
     TVIN_PORT_CVBS0   = 0x00001000,
     TVIN_PORT_CVBS1,
     TVIN_PORT_CVBS2,
-    TVIN_PORT_CVBS3,
+    TVIN_PORT_CVBS3,    //as atv demod to tvafe
     TVIN_PORT_CVBS4,
     TVIN_PORT_CVBS5,
     TVIN_PORT_CVBS6,
@@ -203,7 +203,10 @@ typedef enum tvin_port_e {
     TVIN_PORT_HDMI6,
     TVIN_PORT_HDMI7,
     TVIN_PORT_DVIN0   = 0x00008000,
-    TVIN_PORT_DTV     = 0x00010000,
+    TVIN_PORT_VIU     = 0x0000C000,
+    TVIN_PORT_MIPI    = 0x00010000,
+    TVIN_PORT_ISP     = 0x00020000,
+    TVIN_PORT_DTV     = 0x00040000,
     TVIN_PORT_MAX     = 0x80000000,
 } tvin_port_t;
 

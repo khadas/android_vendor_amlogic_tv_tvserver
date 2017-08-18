@@ -1396,7 +1396,15 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
 
         Vector<sp<CTvChannel>> vcp;
 
-        CTvRegion::getChannelListByName((char *)list_name, vcp);
+        //for FREQ_MODE
+        //freq1 == freq2 == 0 : full list auto search
+        //freq1 == freq2 != 0 : single freq manual search
+        //freq1 != freq2 : list(range) freq manual search
+        if (freq1 == freq2 && freq1 == 0)
+            CTvRegion::getChannelListByName((char *)list_name, vcp);
+        else
+            CTvRegion::getChannelListByNameAndFreqRange((char *)list_name, freq1, freq2, vcp);
+
         int size = vcp.size();
         LOGD("channel list size = %d", size);
 

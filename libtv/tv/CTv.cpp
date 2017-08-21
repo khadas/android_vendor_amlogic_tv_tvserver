@@ -73,15 +73,6 @@ using namespace android;
 
 static const int WALL_EFFECT_VALUE[CC_BAND_ITEM_CNT] = { 0, 0, 1, 2, 2, 0 };
 
-
-// Called each time a message is logged.
-static void sqliteLogCallback(void *data, int iErrCode, const char *zMsg)
-{
-	//TODO
-    UNUSED(data);
-    LOGD( "showbo sqlite (%d) %s\n", iErrCode, zMsg);
-}
-
 bool CTv::insertedFbcDevice()
 {
     bool ret = false;
@@ -119,7 +110,7 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     int len = property_get("tv.tvconfig.force_copy", buf, "true");
 
     if (isFileExist(TV_CONFIG_FILE_SYSTEM_PATH)) {
-        if (!isFileExist(TV_CONFIG_FILE_PARAM_PATH) || !strcmp(buf, "true")) {
+        if ( !isFileExist(TV_CONFIG_FILE_PARAM_PATH) ) {
             CFile file ( TV_CONFIG_FILE_SYSTEM_PATH );
 
             if ( file.copyTo ( TV_CONFIG_FILE_PARAM_PATH ) != 0 ) {
@@ -153,7 +144,6 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     mTvScanner = CTvScanner::getInstance();
     tv_config_load (TV_CONFIG_FILE_PATH);
     sqlite3_config (SQLITE_CONFIG_SERIALIZED);
-    //sqlite3_config(SQLITE_CONFIG_LOG, &sqliteLogCallback, (void*)1);
     sqlite3_soft_heap_limit(8 * 1024 * 1024);
     // Initialize SQLite.
     sqlite3_initialize();
@@ -162,8 +152,6 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
     if ( CTvDimension::isDimensionTblExist() == false ) {
         CTvDimension::builtinAtscDimensions();
     }
-
-    CTvSettingLoad();
 
     mFactoryMode.init();
     mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
@@ -236,7 +224,6 @@ CTv::CTv():mTvMsgQueue(this), mTvScannerDetectObserver(this)
 CTv::~CTv()
 {
     mpObserver = NULL;
-    CTvSettingunLoad();
     CTvDatabase::deleteTvDb();
     tv_config_unload();
     mAv.Close();
@@ -1872,14 +1859,12 @@ int CTv::StartTvLock ()
 int CTv::DoInstabootSuspend()
 {
     CTvDatabase::GetTvDb()->UnInitTvDb();
-    CTvSettingdoSuspend();
     return 0;
 }
 
 int CTv::DoInstabootResume()
 {
     CTvDatabase::GetTvDb()->InitTvDb(TV_DB_PATH);
-    CTvSettingdoResume();
     return 0;
 }
 

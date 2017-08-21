@@ -64,11 +64,7 @@ LOCAL_SRC_FILES := \
   audio/audio_alsa.cpp \
   audio/CAudioCustomerCtrl.cpp \
   tvsetting/audio_cfg.cpp \
-  tvsetting/CBlobDevice.cpp \
-  tvsetting/CBlobDeviceE2prom.cpp \
-  tvsetting/CBlobDeviceFile.cpp \
   tvsetting/CTvSetting.cpp  \
-  tvsetting/CTvSettingDeviceFactory.cpp  \
   tvsetting/TvKeyData.cpp \
   version/version.cpp \
   tvdb/CTvChannel.cpp \

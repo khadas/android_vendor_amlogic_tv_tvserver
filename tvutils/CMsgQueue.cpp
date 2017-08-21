@@ -104,12 +104,10 @@ bool CMsgQueueThread::threadLoop()
             mLockQueue.unlock();
 
             delayMs = msg.mWhenMs - getNowMs();
-            LOGD("threadLoop now = %lld mswhen = %lld delayMs = %lld msg type = %d", getNowMs(), msg.mWhenMs, delayMs, msg.mType);
             if (delayMs > 0) {
                 mLockQueue.lock();//get msg ,first lock.
                 int ret = mGetMsgCondition.waitRelative(mLockQueue, delayMs);
                 mLockQueue.unlock();
-                LOGD("msg queue  wait ret = %d", ret);
             } else {
                 break;
             }

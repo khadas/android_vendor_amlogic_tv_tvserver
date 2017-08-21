@@ -12,8 +12,7 @@
 
 #include <pthread.h>
 #include <stdint.h>
-
-#include "CTvSettingDeviceFactory.h"
+#include "../tvin/CTvin.h"
 #include "TvKeyData.h"
 #include <CTvLog.h>
 #include "PQSettingCfg.h"
@@ -23,11 +22,6 @@ using namespace android;
 extern "C" {
 #endif
 
-bool CTvSettingLoad();
-bool CTvSettingunLoad();
-
-int CTvSettingdoSuspend();
-int CTvSettingdoResume();
 int MiscSSMRestoreDefault();
 int MiscSSMFacRestoreDefault();
 int ReservedSSMRestoreDefault();
@@ -40,8 +34,6 @@ int SSMSaveEEP_N_N310_N311(int offset, int data_len, int *data_buf);
 int SSMReadEEP_N_N310_N311(int offset, int data_len, int *data_buf);
 //int EEPWriteNByte(int offset, int data_len, unsigned char * data_buf);
 //int EEPReadNByte(int offset, int data_len, unsigned char * data_buf);
-int SSMSaveFlash_One_N310_N311(int offset, int rw_val);
-int SSMReadFlash_One_N310_N311(int offset);
 int SSMSaveFlash_N_N310_N311(int offset, int data_len, int *data_buf);
 int SSMReadFlash_N_N310_N311(int offset, int data_len, int *data_buf);
 

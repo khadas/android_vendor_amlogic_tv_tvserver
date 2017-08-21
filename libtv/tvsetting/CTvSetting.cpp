@@ -37,42 +37,6 @@
 pthread_mutex_t ssm_r_w_op_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /************************ Start APIs For UI ************************/
-
-CTvSettingDeviceFactory *mpSettingDeviceFactory = NULL;
-CBlobDevice *mpCurDevice = NULL;
-
-bool CTvSettingLoad()
-{
-    mpSettingDeviceFactory = new CTvSettingDeviceFactory();
-    mpCurDevice = mpSettingDeviceFactory->getSaveDeviceFromConfigFile();
-    if (mpCurDevice == NULL) {
-        LOGD("%s, CTvSettingLoad = NULL", CFG_SECTION_TV);
-        return false;
-    } else {
-        mpCurDevice->OpenDevice();
-    }
-    return true;
-}
-
-bool CTvSettingunLoad()
-{
-    if (mpSettingDeviceFactory != NULL) {
-        delete mpSettingDeviceFactory;
-        mpSettingDeviceFactory = NULL;
-    }
-    return true;
-}
-
-int CTvSettingdoSuspend()
-{
-    return mpCurDevice->CloseDevice();
-}
-
-int CTvSettingdoResume()
-{
-    return mpCurDevice->OpenDevice();
-}
-
 int TVSSMWriteNTypes(int id, int data_len, int data_buf, int offset)
 {
     return tvSSMWriteNTypes(id, data_len, data_buf, offset);
@@ -83,287 +47,6 @@ int TVSSMReadNTypes(int id, int data_len, int *data_buf, int offset)
     return tvSSMReadNTypes(id, data_len, data_buf, offset);
 }
 
-int SSMSaveFlash_One_N310_N311(int offset, int rw_val)
-{
-    LOGD ( "~~~ SSMSaveFlash_One ~~~##offset %d##rw_val %d##" , offset, rw_val);
-
-    return TVSSMWriteNTypes(offset, 1, rw_val);
-}
-
-int SSMReadFlash_One_N310_N311(int offset)
-{
-    int tmp_val = 0;
-
-    if (TVSSMReadNTypes(offset, 1, &tmp_val) < 0) {
-        return -1;
-    }
-    LOGD ( "~~~ SSMReadFlash_One ~~~##offset %d##rw_val %d##" , offset, tmp_val);
-
-    return tmp_val;
-}
-
-int EEPWriteOneByte(int offset, unsigned char *data_buf)
-{
-    int fd = 0;
-    const char *device_path = config_get_str(CFG_SECTION_TV, "peripheral.eeprom.path", "/sys/devices/i2c-2/2-0050/eeprom");
-    pthread_mutex_lock(&ssm_r_w_op_mutex);
-
-    LOGD ( "~~~EEPWriteOneByte~~~##offset %d##rw_val %s##" , offset, data_buf);
-
-    if (data_buf == NULL) {
-        LOGE("%s, data_buf is NULL.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    fd = open(device_path, O_RDWR);
-
-    if (fd < 0) {
-        LOGE("%s, ####i2c test device open failed####.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    lseek(fd, offset, SEEK_SET);
-
-    if (write(fd, data_buf, 1) < 0) {
-        LOGE("%s, device WriteOneBytes error.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    close(fd);
-
-    LOGE("%s, device WriteOneBytes OK.\n", CFG_SECTION_TV);
-
-    pthread_mutex_unlock(&ssm_r_w_op_mutex);
-    return 0;
-}
-
-int EEPReadOneByte(int offset , unsigned char *data_buf)
-{
-    int fd = 0;
-    const char *device_path = config_get_str(CFG_SECTION_TV, "peripheral.eeprom.path", "/sys/devices/i2c-2/2-0050/eeprom");
-
-    pthread_mutex_lock(&ssm_r_w_op_mutex);
-
-    if (data_buf == NULL) {
-        LOGE("%s, data_buf is NULL.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    fd = open(device_path, O_RDWR);
-
-    if (fd < 0) {
-        LOGE("%s, ssm_device is NULL.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-    lseek(fd, offset, SEEK_SET);
-
-    if (read(fd, data_buf, 1) < 0) {
-        LOGE("%s, device ReadOneBytes error.\n", CFG_SECTION_TV);
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    close(fd);
-
-    LOGD ( "~~~EEPReadOneByte~~~##offset %d##rw_val %s##" , offset, data_buf);
-
-    pthread_mutex_unlock(&ssm_r_w_op_mutex);
-    return 0;
-}
-
-int EEPWriteNByte(int offset, int data_len, unsigned char *data_buf)
-{
-    int fd = 0;
-    const char *device_path = config_get_str(CFG_SECTION_TV, "peripheral.eeprom.path", "/sys/devices/i2c-2/2-0050/eeprom");
-    pthread_mutex_lock(&ssm_r_w_op_mutex);
-
-    LOGD ( "~~~EEPWriteNByte~~~##offset %d##data_len %d##" , offset, data_len);
-
-    if (data_buf == NULL) {
-        LOGE("%s, data_buf is NULL.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    fd = open(device_path, O_RDWR);
-
-    if (fd < 0) {
-        LOGE("%s, ####i2c test device open failed####.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    lseek(fd, offset, SEEK_SET);
-
-    if (write(fd, data_buf, data_len) < 0) {
-        LOGE("%s, device WriteNBytes error.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    close(fd);
-
-    LOGE("%s, device WriteNBytes OK.\n", CFG_SECTION_TV);
-
-    pthread_mutex_unlock(&ssm_r_w_op_mutex);
-    return 0;
-}
-int EEPReadNByte(int offset, int data_len, unsigned char *data_buf)
-{
-    int fd = 0;
-    const char *device_path = config_get_str(CFG_SECTION_TV, "peripheral.eeprom.path", "/sys/devices/i2c-2/2-0050/eeprom");
-    pthread_mutex_lock(&ssm_r_w_op_mutex);
-
-    if (data_buf == NULL) {
-        LOGE("%s, data_buf is NULL.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    fd = open(device_path, O_RDWR);
-
-    if (fd < 0) {
-        LOGE("%s, ssm_device is NULL.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-    lseek(fd, offset, SEEK_SET);
-
-    if (read(fd, data_buf, data_len) < 0) {
-        LOGE("%s, device ReadNBytes error.\n", CFG_SECTION_TV);
-
-        pthread_mutex_unlock(&ssm_r_w_op_mutex);
-        return -1;
-    }
-
-    close(fd);
-
-    LOGD ( "~~~EEPReadNByte~~~##offset %d##data_len %d##" , offset, data_len);
-
-    pthread_mutex_unlock(&ssm_r_w_op_mutex);
-    return 0;
-}
-
-
-int SSMSaveEEP_One_N310_N311(int offset, int rw_val)
-{
-    unsigned char tmp_val = rw_val;
-    const char *device_config = config_get_str(CFG_SECTION_TV, "peripheral.eeprom.device", "disable");
-
-    if (strcmp(device_config, "enable") != 0) {
-        LOGD ( "~~~ SSMSaveEEP_One ~~~##peripheral.eeprom.device error##");
-        return -1;
-    }
-    LOGD ( "~~~SSMSaveEEP_One~~~##offset %d##rw_val %d##" , offset, rw_val);
-
-    return EEPWriteOneByte(offset, &tmp_val);
-}
-
-int SSMReadEEP_One_N310_N311(int offset)
-{
-    unsigned char tmp_val = 0;
-    const char *device_config = config_get_str(CFG_SECTION_TV, "peripheral.eeprom.device", "disable");
-
-    if (strcmp(device_config, "enable") != 0) {
-        LOGD ( "~~~ SSMReadEEP_One ~~~##peripheral.eeprom.device error##");
-        return -1;
-    }
-
-    if (EEPReadOneByte(offset, &tmp_val) < 0) {
-        return -1;
-    }
-    LOGD ( "~~~SSMReadEEP_One~~~##offset %d##rw_val %d##" , offset, tmp_val);
-
-    return tmp_val;
-}
-
-int SSMSaveEEP_N_N310_N311(int offset, int data_len, int *data_buf)
-{
-    int i = 0;
-    unsigned char *ptr = NULL;
-    const char *device_config = config_get_str(CFG_SECTION_TV, "peripheral.eeprom.device", "disable");
-
-    if (strcmp(device_config, "enable") != 0) {
-        LOGD ( "~~~ SSMSaveEEP_N ~~~##peripheral.eeprom.device error##");
-        return -1;
-    }
-
-    ptr = new unsigned char[data_len];
-
-    if (ptr != NULL) {
-        for (i = 0; i < data_len; i++) {
-            ptr[i] = data_buf[i];
-        }
-    } else {
-        delete ptr;
-        ptr = NULL;
-
-        return -1;
-    }
-
-    if (EEPWriteNByte(offset, data_len, ptr) < 0) {
-        delete ptr;
-        ptr = NULL;
-
-        return -1;
-    }
-
-    delete ptr;
-    ptr = NULL;
-
-    return 0;
-}
-
-int SSMReadEEP_N_N310_N311(int offset, int data_len, int *data_buf)
-{
-    int i = 0;
-    unsigned char *ptr = NULL;
-    const char *device_config = config_get_str(CFG_SECTION_TV, "peripheral.eeprom.device", "disable");
-
-    if (strcmp(device_config, "enable") != 0) {
-        LOGD ( "~~~ SSMReadEEP_N ~~~##peripheral.eeprom.device error##");
-        return -1;
-    }
-    ptr = new unsigned char[data_len];
-
-    if (ptr != NULL) {
-        if (EEPReadNByte(offset, data_len, ptr) < 0) {
-            delete ptr;
-            ptr = NULL;
-
-            return -1;
-        }
-    } else {
-        delete ptr;
-        ptr = NULL;
-
-        return -1;
-    }
-
-    for (i = 0; i < data_len; i++) {
-        data_buf[i] = ptr[i];
-    }
-
-    delete ptr;
-    ptr = NULL;
-
-    return 0;
-}
 /************************ Start APIs For UI ************************/
 int MiscSSMRestoreDefault()
 {
@@ -398,9 +81,7 @@ int MiscSSMFacRestoreDefault()
 
 int ReservedSSMRestoreDefault()
 {
-    SSMSaveBurnWriteCharaterChar(CC_DEF_CHARACTER_CHAR_VAL);
-
-    return 0;
+    return SSMSaveBurnWriteCharaterChar(CC_DEF_CHARACTER_CHAR_VAL);
 }
 
 int SSMSaveBurnWriteCharaterChar(int rw_val)
@@ -466,10 +147,6 @@ int SSMReadLastSelectSourceInput()
     if (TVSSMReadNTypes(SSM_RW_LAST_SOURCE_INPUT_START, 1, &tmp_val) < 0) {
         return 0;
     }
-    if (tmp_val == CBlobDevice::CC_INIT_BYTE_VAL) {
-        tmp_val = 0;
-    }
-
     return tmp_val;
 }
 
@@ -485,11 +162,6 @@ int SSMReadSystemLanguage()
     if (TVSSMReadNTypes(SSM_RW_SYS_LANGUAGE_START, 1, &tmp_val) < 0) {
         return 0;
     }
-
-    if (tmp_val == CBlobDevice::CC_INIT_BYTE_VAL) {
-        tmp_val = 0;
-    }
-
     return tmp_val;
 }
 
@@ -505,11 +177,6 @@ int SSMReadAgingMode()
     if (TVSSMReadNTypes(SSM_RW_AGING_MODE_START, 4, &tmp_val) < 0) {
         return 0;
     }
-
-    if (tmp_val == CBlobDevice::CC_INIT_BYTE_VAL) {
-        tmp_val = 0;
-    }
-
     return tmp_val;
 }
 
@@ -525,11 +192,6 @@ int SSMReadPanelType()
     if (TVSSMReadNTypes(SSM_RW_PANEL_TYPE_START, 1, &tmp_val) < 0) {
         return 0;
     }
-
-    if (tmp_val == CBlobDevice::CC_INIT_BYTE_VAL) {
-        tmp_val = 0;
-    }
-
     return tmp_val;
 }
 
@@ -545,11 +207,6 @@ int SSMReadPowerOnMusicSwitch()
     if (TVSSMReadNTypes(SSM_RW_POWER_ON_MUSIC_SWITCH_START, 1, &tmp_val) < 0) {
         return 0;
     }
-
-    if (tmp_val == CBlobDevice::CC_INIT_BYTE_VAL) {
-        tmp_val = 0;
-    }
-
     return tmp_val;
 }
 
@@ -565,11 +222,6 @@ int SSMReadPowerOnMusicVolume()
     if (TVSSMReadNTypes(SSM_RW_POWER_ON_MUSIC_VOL_START, 1, &tmp_val) < 0) {
         return 0;
     }
-
-    if (tmp_val == CBlobDevice::CC_INIT_BYTE_VAL) {
-        tmp_val = 0;
-    }
-
     return tmp_val;
 }
 
@@ -1003,11 +655,6 @@ int SSMReadDisable3D()
     if (TVSSMReadNTypes(SSM_RW_DISABLE_3D_START, 1, &tmp_val) < 0) {
         return 0;
     }
-
-    if (tmp_val == CBlobDevice::CC_INIT_BYTE_VAL) {
-        tmp_val = 0;
-    }
-
     return tmp_val;
 }
 
@@ -1023,11 +670,6 @@ int SSMReadGlobalOgoEnable()
     if (TVSSMReadNTypes(SSM_RW_GLOBAL_OGO_ENABLE_START, 1, &tmp_val) < 0) {
         return 0;
     }
-
-    if (tmp_val == CBlobDevice::CC_INIT_BYTE_VAL) {
-        tmp_val = 0;
-    }
-
     return tmp_val;
 }
 
@@ -1252,10 +894,6 @@ int SSMReadSourceInput()
     if (TVSSMReadNTypes(TVIN_DATA_POS_SOURCE_INPUT_START, 1, &tmp_val) < 0) {
         return 0;
     }
-    if (tmp_val == CBlobDevice::CC_INIT_BYTE_VAL) {
-        tmp_val = 0;
-    }
-
     return tmp_val;
 }
 

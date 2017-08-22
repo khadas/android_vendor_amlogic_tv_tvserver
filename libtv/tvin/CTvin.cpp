@@ -2107,9 +2107,10 @@ tvin_info_t &CTvin::CTvinSigDetect::getCurSigInfo()
     return m_cur_sig_info;
 }
 
-void CTvin::CTvinSigDetect::setCurSigFmt(tvin_sig_fmt_t sig_fmt)
+void CTvin::CTvinSigDetect::setDTVSigInfo(tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt)
 {
     m_cur_sig_info.fmt = sig_fmt;
+    m_cur_sig_info.trans_fmt = trans_fmt;
 }
 
 int CTvin::CTvinSigDetect::resumeDetect(int later)//ms

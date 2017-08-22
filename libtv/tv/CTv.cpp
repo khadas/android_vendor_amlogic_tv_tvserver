@@ -2103,8 +2103,18 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         LoadAudioVirtualizer();
         mpTvin->setMpeg2Vdin(1);
         mAv.setLookupPtsForDtmb(1);
-        mSigDetectThread.setCurSigFmt(TVIN_SIG_FMT_HDMI_1920X1080P_60HZ);
-        CVpp::getInstance()->LoadVppSettings(SOURCE_DTV, mSigDetectThread.getCurSigInfo().fmt, INDEX_2D, TVIN_TFMT_2D);
+        mSigDetectThread.setDTVSigInfo(TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, TVIN_TFMT_2D);
+        tv_source_input_type_t source_type = mpTvin->Tvin_SourceInputToSourceInputType(m_source_input);
+        tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceType(source_type);
+        int ret = tvSetCurrentSourceInfo(m_source_input, source_type, source_port, mSigDetectThread.getCurSigInfo().fmt,
+                                         INDEX_2D, mSigDetectThread.getCurSigInfo().trans_fmt);
+        if (ret < 0) {
+            LOGE("%s Set CurrentSourceInfo error!\n");
+        }
+
+        CVpp::getInstance()->LoadVppSettings(SOURCE_DTV, mSigDetectThread.getCurSigInfo().fmt, INDEX_2D,
+                                             mSigDetectThread.getCurSigInfo().trans_fmt);
+
         Tv_SetAudioInSource ( source_input );
     } else {
         mpTvin->setMpeg2Vdin(0);
@@ -2179,8 +2189,18 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
 void CTv::onSigToStable()
 {
     LOGD ( "[source_switch_time]: %fs, onSigToStable start", getUptimeSeconds());
-    CVpp::getInstance()->LoadVppSettings (m_source_input,
-        mSigDetectThread.getCurSigInfo().fmt, INDEX_2D, mSigDetectThread.getCurSigInfo().trans_fmt );
+
+    tv_source_input_type_t source_type = mpTvin->Tvin_SourceInputToSourceInputType(m_source_input);
+    tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceType(source_type);
+    int ret = tvSetCurrentSourceInfo(m_source_input, source_type, source_port, mSigDetectThread.getCurSigInfo().fmt,
+                                     INDEX_2D, mSigDetectThread.getCurSigInfo().trans_fmt);
+    if (ret < 0) {
+        LOGE("%s Set CurrentSourceInfo error!\n");
+    }
+
+    CVpp::getInstance()->LoadVppSettings(m_source_input, mSigDetectThread.getCurSigInfo().fmt, INDEX_2D,
+                                         mSigDetectThread.getCurSigInfo().trans_fmt);
+
 
     if (mAutoSetDisplayFreq && !mPreviewEnabled) {
         int freq = 60;

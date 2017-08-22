@@ -97,6 +97,9 @@ int tvSetPLLValues(source_input_param_t source_input_param);
 int tvSetCVD2Values(source_input_param_t source_input_param);
 int tvSetDNLP(source_input_param_t source_input_param);
 int tvSetPQConfig(Set_Flag_Cmd_t id, int value);
+int tvSetCurrentSourceInfo(tv_source_input_t tv_source_input, tv_source_input_type_t source_type,tvin_port_t source_port,
+                                    tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
+
 //PQ end
 
 extern int Tv_MiscRegs(const char *cmd);

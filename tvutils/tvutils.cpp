@@ -925,6 +925,26 @@ int tvSetPQConfig(Set_Flag_Cmd_t id, int value)
     return -1;
 }
 
+int tvSetCurrentSourceInfo(tv_source_input_t tv_source_input, tv_source_input_type_t source_type,tvin_port_t source_port,
+                                    tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        source_input_param_t source_input_param;
+        source_input_param.source_input = tv_source_input;
+        source_input_param.source_type = source_type;
+        source_input_param.source_port = source_port;
+        source_input_param.sig_fmt = sig_fmt;
+        source_input_param.is3d = is3d;
+        source_input_param.trans_fmt = trans_fmt;
+
+        return sws->setCurrentSourceInfo(source_input_param);
+    }
+
+    return -1;
+}
+
 //PQ end
 int Tv_MiscRegs(const char *cmd)
 {

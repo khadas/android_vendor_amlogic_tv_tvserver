@@ -746,7 +746,7 @@ public:
         int requestAndWaitPauseDetect();
         //first pause detect? ok
         tvin_info_t &getCurSigInfo();
-        void setCurSigFmt(tvin_sig_fmt_t sig_fmt);
+        void setDTVSigInfo(tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt);
 
         class ISigDetectObserver {
         public:

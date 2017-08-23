@@ -296,33 +296,33 @@ int tvGetActualSize(int id)
 
 }
 
-int tvSetPQMode ( vpp_picture_mode_t mode, source_input_param_t source_input_param, int is_save )
+int tvSetPQMode ( vpp_picture_mode_t mode, int is_save )
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        sws->setPQmode(source_input_param, (int)mode, is_save);
+        sws->setPQmode((int)mode, is_save);
     }
 
     return 0;
 }
 
-vpp_picture_mode_t tvGetPQMode ( source_input_param_t source_input_param )
+vpp_picture_mode_t tvGetPQMode ( void )
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
     if (sws != 0) {
-        return (vpp_picture_mode_t)sws->getPQmode(source_input_param);
+        return (vpp_picture_mode_t)sws->getPQmode();
     }
 
     return VPP_PICTURE_MODE_MAX;
 }
 
-int tvSavePQMode ( vpp_picture_mode_t mode, source_input_param_t source_input_param )
+int tvSavePQMode ( vpp_picture_mode_t mode )
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->savePQmode(source_input_param, mode);
+        return sws->savePQmode(mode);
     }
 
     return -1;
@@ -350,198 +350,198 @@ int tvGetPQParams(source_input_param_t source_input_param, vpp_picture_mode_t pq
     return -1;
 }
 
-int tvSetBrightness(int brightness, source_input_param_t source_input_param, int is_save)
+int tvSetBrightness(int brightness, int is_save)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->setBrightness(source_input_param, brightness, is_save);
+        return sws->setBrightness(brightness, is_save);
     }
     return -1;
 }
 
-int tvGetBrightness ( source_input_param_t source_input_param )
+int tvGetBrightness ( void )
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->getBrightness(source_input_param);
-    }
-
-    return -1;
-}
-
-int tvSaveBrightness ( int brightness, source_input_param_t source_input_param )
-{
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
-        return sws->saveBrightness(source_input_param, brightness);
+        return sws->getBrightness();
     }
 
     return -1;
 }
 
-int tvSetContrast ( int contrast, source_input_param_t source_input_param,  int is_save )
+int tvSaveBrightness ( int brightness )
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->setContrast(source_input_param, contrast, is_save);
+        return sws->saveBrightness(brightness);
     }
 
     return -1;
 }
 
-int tvGetContrast ( source_input_param_t source_input_param )
+int tvSetContrast ( int contrast, int is_save )
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->getContrast(source_input_param);
+        return sws->setContrast(contrast, is_save);
     }
 
     return -1;
 }
 
-int tvSaveContrast ( int contrast, source_input_param_t source_input_param )
+int tvGetContrast (void)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->saveContrast(source_input_param, contrast);
+        return sws->getContrast();
     }
 
     return -1;
 }
 
-int tvSetSaturation ( int satuation, source_input_param_t source_input_param, int is_save )
+int tvSaveContrast (int contrast)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->setSaturation(source_input_param, satuation, is_save);
+        return sws->saveContrast(contrast);
     }
 
     return -1;
 }
 
-int tvGetSaturation ( source_input_param_t source_input_param )
+int tvSetSaturation (int satuation, int is_save)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->getSaturation(source_input_param);
+        return sws->setSaturation(satuation, is_save);
     }
 
     return -1;
 }
 
-int tvSaveSaturation ( int satuation, source_input_param_t source_input_param)
+int tvGetSaturation (void)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->saveSaturation(source_input_param, satuation);
+        return sws->getSaturation();
     }
 
     return -1;
 }
 
-int tvSetHue ( int hue, source_input_param_t source_input_param, int is_save )
+int tvSaveSaturation (int satuation)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->setHue(source_input_param, hue, is_save);
+        return sws->saveSaturation(satuation);
     }
 
     return -1;
 }
 
-int tvGetHue ( source_input_param_t source_input_param )
+int tvSetHue (int hue, int is_save)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->getHue(source_input_param);
+        return sws->setHue(hue, is_save);
     }
 
     return -1;
 }
 
-int tvSaveHue ( int hue, source_input_param_t source_input_param )
+int tvGetHue (void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getHue();
+    }
+
+    return -1;
+}
+
+int tvSaveHue (int hue)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
      if (sws != 0) {
-        return sws->saveHue(source_input_param, hue);
+        return sws->saveHue(hue);
     }
 
     return -1;
 }
 
-int tvSetSharpness ( int value, source_input_param_t source_input_param, int en, int is_save )
+int tvSetSharpness ( int value, int en, int is_save )
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->setSharpness(source_input_param, value, en, is_save);
+        return sws->setSharpness(value, en, is_save);
     }
 
     return -1;
 }
 
-int tvGetSharpness ( source_input_param_t source_input_param )
+int tvGetSharpness (void)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->getSharpness(source_input_param);
+        return sws->getSharpness();
     }
 
     return -1;
 }
 
-int tvSaveSharpness ( int value, source_input_param_t source_input_param)
+int tvSaveSharpness (int value)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        sws->saveSharpness(source_input_param, value);
+        sws->saveSharpness(value);
     }
 
     return -1;
 }
 
-int tvSetColorTemperature ( vpp_color_temperature_mode_t mode, source_input_param_t source_input_param, int is_save )
+int tvSetColorTemperature (vpp_color_temperature_mode_t mode, int is_save)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->setColorTemperature(source_input_param, mode, is_save);
+        return sws->setColorTemperature(mode, is_save);
     }
 
     return -1;
 }
 
-int tvGetColorTemperature ( source_input_param_t source_input_param )
+int tvGetColorTemperature (void)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->getColorTemperature(source_input_param);
+        return sws->getColorTemperature();
     }
 
     return -1;
 }
 
-int tvSaveColorTemperature ( vpp_color_temperature_mode_t mode, source_input_param_t source_input_param )
+int tvSaveColorTemperature (vpp_color_temperature_mode_t mode)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->saveColorTemperature(source_input_param, mode);
+        return sws->saveColorTemperature(mode);
     }
 
     return -1;
@@ -580,34 +580,34 @@ int tvSaveColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, tcon_rgb
     return -1;
 }
 
-int tvSetNoiseReductionMode ( vpp_noise_reduction_mode_t mode, source_input_param_t source_input_param, int is_save )
+int tvSetNoiseReductionMode (vpp_noise_reduction_mode_t mode, int is_save)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->setNoiseReductionMode(source_input_param, mode, is_save);
+        return sws->setNoiseReductionMode(mode, is_save);
     }
 
     return -1;
 }
 
-int tvGetNoiseReductionMode ( source_input_param_t source_input_param )
+int tvGetNoiseReductionMode (void)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->getNoiseReductionMode(source_input_param);
+        return sws->getNoiseReductionMode();
     }
 
     return -1;
 }
 
-int tvSaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, source_input_param_t source_input_param )
+int tvSaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->saveNoiseReductionMode(source_input_param, mode);
+        return sws->saveNoiseReductionMode(mode);
     }
 
     return -1;

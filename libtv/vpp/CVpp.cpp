@@ -210,39 +210,19 @@ int CVpp::Vpp_GetVppConfig(void)
 int CVpp::SetPQMode(vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input,
                     tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save)
 {
-
-    source_input_param_t source_input_param;
-    source_input_param.source_input = tv_source_input;
-    source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-    source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-    source_input_param.sig_fmt = sig_fmt;
-    source_input_param.is3d = is3d;
-    source_input_param.trans_fmt = trans_fmt;
-
-    return tvSetPQMode(pq_mode, source_input_param, is_save);
+    return tvSetPQMode(pq_mode, is_save);
 
 }
 
 vpp_picture_mode_t CVpp::GetPQMode(tv_source_input_t tv_source_input)
 {
-
-    source_input_param_t source_input_param;
-    source_input_param.source_input = tv_source_input;
-    source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-    source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-    return tvGetPQMode(source_input_param);
+    return tvGetPQMode();
 }
 
 int CVpp::SavePQMode(vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input)
 {
 
-    source_input_param_t source_input_param;
-    source_input_param.source_input = tv_source_input;
-    source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-    source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-    return tvSavePQMode(pq_mode, source_input_param);
+    return tvSavePQMode(pq_mode);
 }
 
 int CVpp::Vpp_GetPQModeValue(tv_source_input_t tv_source_input, vpp_picture_mode_t pq_mode,
@@ -282,235 +262,113 @@ void CVpp::enableMonitorMode(bool enable)
  int CVpp::SetBrightness(int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt,
                          tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-     source_input_param.sig_fmt = sig_fmt;
-     source_input_param.is3d = is3d;
-     source_input_param.trans_fmt = trans_fmt;
-
-     return tvSetBrightness(value, source_input_param, is_save);
+     return tvSetBrightness(value, is_save);
  }
 
  int CVpp::GetBrightness( tv_source_input_t tv_source_input)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-     return tvGetBrightness(source_input_param);
+     return tvGetBrightness();
  }
 
  int CVpp::SaveBrightness(int value, tv_source_input_t tv_source_input)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return tvSaveBrightness(value, source_input_param);
+     return tvSaveBrightness(value);
  }
 
  int CVpp::SetSaturation(int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt,
                          tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-     source_input_param.sig_fmt = sig_fmt;
-     source_input_param.is3d = is3d;
-     source_input_param.trans_fmt = trans_fmt;
-
-     return tvSetSaturation(value, source_input_param, is_save);
+     return tvSetSaturation(value, is_save);
  }
 
  int CVpp::GetSaturation(tv_source_input_t tv_source_input)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return tvGetSaturation(source_input_param);
+     return tvGetSaturation();
  }
 
  int CVpp::SaveSaturation(int value, tv_source_input_t tv_source_input)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return tvSaveSaturation(value, source_input_param);
+     return tvSaveSaturation(value);
  }
 
  int CVpp::SetColorTemperature(vpp_color_temperature_mode_t temp_mode, tv_source_input_t tv_source_input, int is_save)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return tvSetColorTemperature(temp_mode, source_input_param, is_save);
+     return tvSetColorTemperature(temp_mode, is_save);
  }
 
  vpp_color_temperature_mode_t CVpp::GetColorTemperature(tv_source_input_t tv_source_input)
  {
-
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return (vpp_color_temperature_mode_t)tvGetColorTemperature(source_input_param);
+     return (vpp_color_temperature_mode_t)tvGetColorTemperature();
  }
 
  int CVpp::SaveColorTemperature(vpp_color_temperature_mode_t temp_mode, tv_source_input_t tv_source_input)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-     return tvSaveColorTemperature(temp_mode, source_input_param);
+     return tvSaveColorTemperature(temp_mode);
  }
 
  int CVpp::SetNoiseReductionMode(vpp_noise_reduction_mode_t nr_mode,
                                  tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d,
                                  tvin_trans_fmt_t trans_fmt, int is_save)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-     source_input_param.sig_fmt = sig_fmt;
-     source_input_param.is3d = is3d;
-     source_input_param.trans_fmt = trans_fmt;
-
-     return tvSetNoiseReductionMode(nr_mode, source_input_param, is_save);
+     return tvSetNoiseReductionMode(nr_mode, is_save);
  }
 
  vpp_noise_reduction_mode_t CVpp::GetNoiseReductionMode(tv_source_input_t tv_source_input)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return (vpp_noise_reduction_mode_t)tvGetNoiseReductionMode(source_input_param);
+     return (vpp_noise_reduction_mode_t)tvGetNoiseReductionMode();
  }
 
  int CVpp::SaveNoiseReductionMode(vpp_noise_reduction_mode_t nr_mode, tv_source_input_t tv_source_input)
   {
-      source_input_param_t source_input_param;
-      source_input_param.source_input = tv_source_input;
-      source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-      source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-      return tvSaveNoiseReductionMode(nr_mode, source_input_param);
+      return tvSaveNoiseReductionMode(nr_mode);
   }
 
  int CVpp::SetSharpness(int value, tv_source_input_t tv_source_input, int is_enable,
                         is_3d_type_t is3d, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, int is_save)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-     source_input_param.sig_fmt = sig_fmt;
-     source_input_param.is3d = is3d;
-     source_input_param.trans_fmt = trans_fmt;
-
-     return tvSetSharpness(value, source_input_param, is_enable, is_save);
+     return tvSetSharpness(value, is_enable, is_save);
  }
 
  int CVpp::GetSharpness(tv_source_input_t tv_source_input)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return tvGetSharpness(source_input_param);
+     return tvGetSharpness();
  }
 
  int CVpp::SaveSharpness(int value, tv_source_input_t tv_source_input)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return tvSaveSharpness(value, source_input_param);
+     return tvSaveSharpness(value);
  }
 
  int CVpp::SetHue(int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt,
                   tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-     source_input_param.sig_fmt = sig_fmt;
-     source_input_param.is3d = is3d;
-     source_input_param.trans_fmt = trans_fmt;
-
-     return tvSetHue(value, source_input_param, is_save);
+     return tvSetHue(value, is_save);
  }
 
  int CVpp::GetHue(tv_source_input_t tv_source_input)
  {
-      source_input_param_t source_input_param;
-      source_input_param.source_input = tv_source_input;
-      source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-      source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return tvGetHue(source_input_param);
+     return tvGetHue();
  }
 
  int CVpp::SaveHue(int value, tv_source_input_t tv_source_input)
  {
-      source_input_param_t source_input_param;
-      source_input_param.source_input = tv_source_input;
-      source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-      source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return tvSaveHue(value, source_input_param);
+     return tvSaveHue(value);
  }
 
  int CVpp::SetContrast(int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt,
                        tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-     source_input_param.sig_fmt = sig_fmt;
-     source_input_param.is3d = is3d;
-     source_input_param.trans_fmt = trans_fmt;
-
-     return tvSetContrast(value, source_input_param, is_save);
+     return tvSetContrast(value, is_save);
  }
 
  int CVpp::GetContrast(tv_source_input_t tv_source_input)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return tvGetContrast(source_input_param);
+     return tvGetContrast();
  }
 
  int CVpp::SaveContrast(int value, tv_source_input_t tv_source_input)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return tvSaveContrast(value, source_input_param);
+     return tvSaveContrast(value);
  }
 
  int CVpp::SetEyeProtectionMode(tv_source_input_t tv_source_input, int enable)

@@ -93,10 +93,6 @@ public:
     int SaveContrast ( int value, tv_source_input_t tv_source_input );
     int SetEyeProtectionMode(tv_source_input_t tv_source_input, int enable);
     int GetEyeProtectionMode();
-    int SetDNLP ( tv_source_input_type_t source_type, tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int SetBaseColorMode ( vpp_color_basemode_t basemode , tvin_port_t source_port , tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
-    vpp_color_basemode_t GetBaseColorMode ( void );
-    int SaveBaseColorMode ( vpp_color_basemode_t basemode );
     int SetGammaValue(vpp_gamma_curve_t gamma_curve, int is_save);
     int GetGammaValue();
     vpp_display_mode_t GetDisplayMode ( tv_source_input_t tv_source_input );

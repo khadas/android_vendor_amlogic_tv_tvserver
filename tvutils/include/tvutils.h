@@ -16,8 +16,8 @@
 #include <utils/Mutex.h>
 #include <string>
 #include <map>
-
 #include "PQType.h"
+
 
 #define SYS_STR_LEN                         1024
 #define AUDIO_OUTMODE_PATH "/sys/module/atvdemod_fe/parameters/aud_mode"
@@ -67,16 +67,12 @@ int tvSetNoiseReductionMode ( vpp_noise_reduction_mode_t mode, source_input_para
 int tvGetNoiseReductionMode ( source_input_param_t source_input_param );
 int tvSaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, source_input_param_t source_input_param );
 int tvSetGamma(int gamma_curve, int is_save);
-int tvGetGamma();
-int tvSetBaseColorMode(int basemode, source_input_param_t source_input_param);
-int tvGetBaseColorMode(void);
-int tvSaveBaseColorMode(int basemode);
+int tvGetGamma(void);
 int tvSetEyeProtectionMode(source_input_param_t source_input_param, int enable);
 int tvGetEyeProtectionMode(void);
 int tvGetDisplayMode(source_input_param_t source_input_param);
 int tvFactoryResetNonlinear(void);
 int tvGetOverscanParam(source_input_param_t source_input_param, tvin_cutwin_param_t id);
-
 
 int tvFactoryResetPQMode(void);
 int tvFactoryResetColorTemp(void);
@@ -85,17 +81,17 @@ int tvFactoryGetPQParam(source_input_param_t source_input_param, int pq_mode, vp
 int tvFactorySetColorTemperatureParam(int colortemperature_mode, pq_color_param_t id, int value);
 int tvFactoryGetColorTemperatureParam(int colortemperature_mode, pq_color_param_t id);
 int tvFactorySaveColorTemperatureParam(int colortemperature_mode, pq_color_param_t id, int value);
-int tvFactorySetOverscanParam(source_input_param_t source_input_param, int value, int id);
+int tvFactorySetOverscanParam(source_input_param_t source_input_param, tvin_cutwin_t cutwin_t);
 int tvFactoryGetOverscanParam(source_input_param_t source_input_param, int id);
-int tvFactorySetNolineParams(source_input_param_t source_input_param, int type, int value, int id);
+int tvFactorySetNolineParams(source_input_param_t source_input_param, int type, noline_params_t noline_params);
 int tvFactoryGetNolineParams(source_input_param_t source_input_param, int type, int id);
+int tvFactorySetGamma(int gamma_r, int gamma_g, int gamma_b);
 int tvFactorySetParamsDefault(void);
 int tvFactorySSMRestore(void);
 int tvSSMRecovery(void);
 int tvGetSSMStatus(void);
 int tvSetPLLValues(source_input_param_t source_input_param);
 int tvSetCVD2Values(source_input_param_t source_input_param);
-int tvSetDNLP(source_input_param_t source_input_param);
 int tvSetPQConfig(Set_Flag_Cmd_t id, int value);
 int tvSetCurrentSourceInfo(tv_source_input_t tv_source_input, tv_source_input_type_t source_type,tvin_port_t source_port,
                                     tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);

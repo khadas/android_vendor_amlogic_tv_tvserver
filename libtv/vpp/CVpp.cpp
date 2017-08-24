@@ -529,42 +529,6 @@ void CVpp::enableMonitorMode(bool enable)
      return tvGetEyeProtectionMode();
  }
 
- int CVpp::SetDNLP(tv_source_input_type_t source_type, tvin_port_t source_port,
-                   tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
- {
-     source_input_param_t source_input_param;
-     source_input_param.source_type = source_type;
-     source_input_param.source_port = source_port;
-     source_input_param.sig_fmt = sig_fmt;
-     source_input_param.is3d = is3d;
-     source_input_param.trans_fmt = trans_fmt;
-
-     return tvSetDNLP(source_input_param);
- }
-
-
-int CVpp::SetBaseColorMode(vpp_color_basemode_t basemode, tvin_port_t source_port,
-                           tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
-{
-    source_input_param_t source_input_param;
-    source_input_param.source_port = source_port;
-    source_input_param.sig_fmt = sig_fmt;
-    source_input_param.is3d = is3d;
-    source_input_param.trans_fmt = trans_fmt;
-
-    return tvSetBaseColorMode((int)basemode, source_input_param);
-}
-
-vpp_color_basemode_t CVpp::GetBaseColorMode(void)
-{
-   return (vpp_color_basemode_t)tvGetBaseColorMode();
-}
-
-int CVpp::SaveBaseColorMode(vpp_color_basemode_t basemode)
-{
-    return tvSaveBaseColorMode((int)basemode);
-}
-
 int CVpp::VPP_SetNonLinearFactor(int value)
 {
     LOGD("VPP_SetNonLinearFactor /sys/class/video/nonlinear_factor : %d", value);
@@ -1068,12 +1032,7 @@ int CVpp::FactorySetNolineParams(int type, int tv_source_input, noline_params_t 
     source_input_param.source_input = (tv_source_input_t)tv_source_input;
     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
 
-    ret |= tvFactorySetNolineParams(source_input_param, type, noline_params.osd0, OSD_0);
-    ret |= tvFactorySetNolineParams(source_input_param, type, noline_params.osd25, OSD_25);
-    ret |= tvFactorySetNolineParams(source_input_param, type, noline_params.osd50, OSD_50);
-    ret |= tvFactorySetNolineParams(source_input_param, type, noline_params.osd75, OSD_75);
-    ret |= tvFactorySetNolineParams(source_input_param, type, noline_params.osd100, OSD_100);
-
+    ret |= tvFactorySetNolineParams(source_input_param, type, noline_params);
     return ret;
 }
 
@@ -1085,10 +1044,7 @@ int CVpp::FactorySetOverscan(int source_type, int fmt, int trans_fmt, tvin_cutwi
     source_input_param.sig_fmt = (tvin_sig_fmt_t)fmt;
     source_input_param.trans_fmt = (tvin_trans_fmt_t)trans_fmt;
 
-    ret |= tvFactorySetOverscanParam(source_input_param, cutwin_t.he, CUTWIN_HE);
-    ret |= tvFactorySetOverscanParam(source_input_param, cutwin_t.hs, CUTWIN_HS);
-    ret |= tvFactorySetOverscanParam(source_input_param, cutwin_t.ve, CUTWIN_VE);
-    ret |= tvFactorySetOverscanParam(source_input_param, cutwin_t.vs, CUTWIN_VS);
+    ret |= tvFactorySetOverscanParam(source_input_param, cutwin_t);
 
     return ret;
 }
@@ -1112,12 +1068,11 @@ tvin_cutwin_t CVpp::FactoryGetOverscan(int source_type, int fmt, is_3d_type_t is
 
 int CVpp::FactorySetGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b)
 {
-    int ret = 0;
+    int gamma_r_value = gamma_r.data[0];
+    int gamma_g_value = gamma_g.data[0];
+    int gamma_b_value = gamma_b.data[0];
     LOGD("%s", __FUNCTION__);
-    //ret |= VPP_SetGammaTbl_R((unsigned short *) gamma_r.data);
-    //ret |= VPP_SetGammaTbl_G((unsigned short *) gamma_g.data);
-    //ret |= VPP_SetGammaTbl_B((unsigned short *) gamma_b.data);
-    return ret;
+    return tvFactorySetGamma(gamma_r_value, gamma_g_value, gamma_b_value);
 }
 
 int CVpp::VPPSSMFacRestoreDefault()

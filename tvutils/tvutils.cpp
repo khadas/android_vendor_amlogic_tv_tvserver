@@ -633,36 +633,6 @@ int tvGetGamma(void)
     return -1;
 }
 
-int tvSetBaseColorMode(int basemode, source_input_param_t source_input_param)
-{
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
-        return sws->setBaseColorMode(basemode, source_input_param);
-    }
-
-    return -1;
-}
-
-int tvGetBaseColorMode(void)
-{
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
-        return sws->getBaseColorMode();
-    }
-
-    return -1;
-}
-
-int tvSaveBaseColorMode(int basemode)
-{
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
-        return sws->saveBaseColorMode(basemode);
-    }
-
-    return -1;
-}
-
 int tvSetEyeProtectionMode(source_input_param_t source_input_param, int enable)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
@@ -789,12 +759,12 @@ int tvFactorySaveColorTemperatureParam(int colortemperature_mode, pq_color_param
     return -1;
 }
 
-int tvFactorySetOverscanParam(source_input_param_t source_input_param, int value, int id)
+int tvFactorySetOverscanParam(source_input_param_t source_input_param, tvin_cutwin_t cutwin_t)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->factorySetOverscan(source_input_param, value, id);
+        return sws->factorySetOverscan(source_input_param, cutwin_t.he, cutwin_t.hs, cutwin_t.ve, cutwin_t.vs);
     }
 
     return -1;
@@ -811,12 +781,24 @@ int tvFactoryGetOverscanParam(source_input_param_t source_input_param, int id)
 
 }
 
-int tvFactorySetNolineParams(source_input_param_t source_input_param, int type, int value, int id)
+int tvFactorySetGamma(int gamma_r, int gamma_g, int gamma_b)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        return sws->factorySetNolineParams(source_input_param, type, value, id);
+        return sws->factorySetGamma(gamma_r, gamma_g, gamma_b);
+    }
+
+    return -1;
+}
+
+int tvFactorySetNolineParams(source_input_param_t source_input_param, int type, noline_params_t noline_params)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->factorySetNolineParams(source_input_param, type, noline_params.osd0, noline_params.osd25,
+                                           noline_params.osd50, noline_params.osd75, noline_params.osd100);
     }
 
     return -1;
@@ -901,17 +883,6 @@ int tvSetCVD2Values(source_input_param_t source_input_param)
 
     return -1;
 
-}
-
-int tvSetDNLP(source_input_param_t source_input_param)
-{
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
-        return sws->setDNLP(source_input_param);
-    }
-
-    return -1;
 }
 
 int tvSetPQConfig(Set_Flag_Cmd_t id, int value)

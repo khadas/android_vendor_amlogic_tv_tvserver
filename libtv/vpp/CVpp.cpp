@@ -83,7 +83,6 @@ int CVpp::Vpp_Init(const char *pq_db_path, bool hdmiOutFbc)
     else {
         LOGD ("Load local dimming regs failure!!!\n");
     }
-    LoadVppSettings(SOURCE_MPEG, TVIN_SIG_FMT_NULL, INDEX_2D, TVIN_TFMT_2D);
     return ret;
 }
 

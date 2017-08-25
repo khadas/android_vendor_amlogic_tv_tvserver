@@ -283,13 +283,6 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
     } else if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_NO_SIG ) { //作为信号消失
         LOGD("[source_switch_time]: %fs, fe unlock", getUptimeSeconds());
         if ((!(mTvAction & TV_ACTION_STOPING)) && m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //just playing
-            if ( iSBlackPattern ) {
-                mAv.DisableVideoWithBlackColor();
-            } else {
-                mAv.DisableVideoWithBlueColor();
-            }
-            SetAudioMuteForTv ( CC_AUDIO_MUTE );
-
             TvEvent::SignalInfoEvent ev;
             ev.mStatus = TVIN_SIG_STATUS_NOSIG;
             ev.mTrans_fmt = TVIN_TFMT_2D;

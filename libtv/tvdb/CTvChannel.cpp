@@ -106,6 +106,13 @@ void CTvChannel::createFromCursor(CTvDatabase::Cursor &c)
         frequency = freq;
         bandwidth = bw;
         mode = MODE_DTMB;
+    } else if (src == MODE_ISDBT) {
+        col = c.getColumnIndex("bw");
+        bw = c.getInt(col);
+
+        frequency = freq;
+        bandwidth = bw;
+        mode = MODE_ISDBT;
     }
 
     this->fendID = 0;
@@ -147,6 +154,11 @@ CTvChannel::CTvChannel(int dbID, int mode, int freq, int bw, int mod, int symb, 
         frequency = freq;
         bandwidth = bw;
         mode = MODE_DTMB;
+    } else if (mode == MODE_ISDBT) {
+        id = dbID;
+        frequency = freq;
+        bandwidth = bw;
+        mode = MODE_ISDBT;
     }
 }
 

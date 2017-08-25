@@ -44,6 +44,8 @@ public :
     /**DTMBÄ£Ê½*/
     static const int MODE_DTMB = 5;
 
+    static const int MODE_ISDBT = 6;
+
 
     /**8MHz´ø¿í*/
     static const int BANDWIDTH_8_MHZ = 0;

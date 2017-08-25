@@ -643,6 +643,10 @@ int CTv::dtvMode(const char *mode)
         return (FE_QPSK);
     else if ( strcmp ( mode, DTV_ATSC_MODE ) == 0 )
         return (FE_ATSC);
+    else if ( strcmp ( mode, DTV_DVBT_MODE ) == 0 )
+        return (FE_OFDM);
+    else if ( strcmp ( mode, DTV_ISDBT_MODE ) == 0 )
+        return (FE_ISDBT);
 
     return (FE_DTMB);
 }

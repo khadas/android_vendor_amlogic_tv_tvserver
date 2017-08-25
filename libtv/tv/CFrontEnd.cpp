@@ -189,6 +189,9 @@ int CFrontEnd::convertParas(char *paras, int mode, int freq1, int freq2, int par
                 stdAndColorToAudioEnum(para1),
                 para2);
             break;
+        case FE_ISDBT:
+            sprintf(p, ",\"bw\":%d,\"lyr\":%d}", para1, para2);
+            break;
         default:
             sprintf(p, "}");
             break;
@@ -221,6 +224,10 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
         case FE_ANALOG:
             mCurPara1 = enumToStdAndColor(mFEParas.getVideoStd(), mFEParas.getAudioStd());
             mCurPara2 = mFEParas.getAfc();
+            break;
+        case FE_ISDBT:
+            mCurPara1 = mFEParas.getBandwidth();
+            mCurPara2 = mFEParas.getLayer();
             break;
         default:
             break;

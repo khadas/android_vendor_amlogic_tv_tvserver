@@ -24,7 +24,7 @@ using namespace android;
 
 CTvDatabase *CTvDatabase::mpDb = NULL;
 
-const char CTvDatabase::feTypes[][32] = {"dvbs", "dvbc", "dvbt", "atsc", "analog", "dtmb"};
+const char CTvDatabase::feTypes[][32] = {"dvbs", "dvbc", "dvbt", "atsc", "analog", "dtmb", "isdbt"};
 const char CTvDatabase::srvTypes[][32] = {"other", "dtv", "radio", "atv", "other"};
 const char CTvDatabase::vidFmts[][32] = {"mpeg12", "mpeg4", "h264", "mjpeg", "real", "jpeg", "vc1", "avs"};
 const char CTvDatabase::audFmts[][32] = {"mpeg", "pcm_s16le", "aac", "ac3", "alaw", "mulaw", "dts", "pcm_s16be",

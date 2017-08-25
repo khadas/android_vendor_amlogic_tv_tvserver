@@ -62,6 +62,9 @@ static const char *TV_SSM_DATA_PARAM_PATH = "/param/ssm_data";
 #define DTV_DVBC_MODE        "dvbc"
 #define DTV_DVBS_MODE        "dvbs"
 #define DTV_ATSC_MODE        "atsc"
+#define DTV_DVBT_MODE        "dvbt"
+#define DTV_ISDBT_MODE       "isdbt"
+
 
 typedef enum tv_window_mode_e {
     NORMAL_WONDOW,

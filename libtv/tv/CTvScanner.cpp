@@ -1295,6 +1295,9 @@ const char *CTvScanner::getDtvScanListName(int mode)
                 list_name = (char *)"U.S.,ATSC Air";
                 break;
             }break;
+        case FE_ISDBT:
+            list_name = (char *)"BRAZIL,Default ISDBT";
+            break;
         default:
             list_name = (char *)"CHINA,Default DTMB ALL";
             LOGD("unknown scan mode %d, using default[%s]", mode, list_name);
@@ -1536,6 +1539,13 @@ int CTvScanner::createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEP
                 dtv_para.fe_paras[i].atsc.para.u.vsb.modulation = (fe_modulation_t)(vcp[i]->getModulation());
                 if (fp.getModulation() != -1)
                     dtv_para.fe_paras[i].atsc.para.u.vsb.modulation = (fe_modulation_t)(fe_modulation_t)fp.getModulation();
+                break;
+            case FE_ISDBT:
+                dtv_para.fe_paras[i].isdbt.para.frequency = vcp[i]->getFrequency();
+                dtv_para.fe_paras[i].isdbt.para.inversion = INVERSION_OFF;
+                dtv_para.fe_paras[i].isdbt.para.u.ofdm.bandwidth = (fe_bandwidth_t)(vcp[i]->getBandwidth());
+                if (fp.getBandwidth() != -1)
+                    dtv_para.fe_paras[i].isdbt.para.u.ofdm.bandwidth = (fe_bandwidth_t)fp.getBandwidth();
                 break;
         }
     }

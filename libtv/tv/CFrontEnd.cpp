@@ -225,7 +225,6 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
 
 int CFrontEnd::setPara(int mode, int freq, int para1, int para2)
 {
-    AutoMutex _l( mLock );
     char paras[128];
     convertParas(paras, mode, freq, freq, para1, para2);
     return setPara(paras);
@@ -238,6 +237,7 @@ int CFrontEnd::setPara(const char *paras)
 
 int CFrontEnd::setPara(const char *paras, bool force )
 {
+    AutoMutex _l( mLock );
     int ret = 0;
     FEParas feparas(paras);
 

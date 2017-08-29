@@ -1572,7 +1572,7 @@ int SSMReadAudioSPDIFSwitchVal(int8_t *rw_val)
     int tmp_val = 0;
     int ret = 0;
 
-    return TVSSMReadNTypes(SSM_AUD_SPDIF_SWITCH, 1, &tmp_val);
+    ret = TVSSMReadNTypes(SSM_AUD_SPDIF_SWITCH, 1, &tmp_val);
     *rw_val = tmp_val;
 
     return ret;
@@ -1651,7 +1651,7 @@ int SSMReadAudioAVOutMuteVal(int8_t *rw_val)
     int tmp_val = 0;
     int ret = 0;
 
-    return TVSSMReadNTypes(SSM_AUD_AVOUT_MUTE, 1, &tmp_val);
+    ret = TVSSMReadNTypes(SSM_AUD_AVOUT_MUTE, 1, &tmp_val);
     *rw_val = tmp_val;
 
     return ret;

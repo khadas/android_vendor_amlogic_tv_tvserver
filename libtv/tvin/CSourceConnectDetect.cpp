@@ -44,6 +44,12 @@ CSourceConnectDetect::CSourceConnectDetect()
         m_event.events = EPOLLIN | EPOLLET;
         mEpoll.add(mHdmiDetectFile.getFd(), &m_event);
     }
+    //signal status
+    if (CTvin::getInstance()->m_vdin_dev_fd > 0) {
+        m_event.data.fd = CTvin::getInstance()->m_vdin_dev_fd;
+        m_event.events = EPOLLIN | EPOLLET;
+        mEpoll.add(CTvin::getInstance()->m_vdin_dev_fd, &m_event);
+    }
 }
 
 CSourceConnectDetect::~CSourceConnectDetect()
@@ -248,10 +254,12 @@ bool CSourceConnectDetect::threadLoop()
                         mpObserver->onSourceConnect(source, plug);
                     }
                     m_hdmi_status = hdmi_status;
+                }else if ( fd == CTvin::getInstance()->m_vdin_dev_fd ) {
+                    if (mpObserver != NULL) {
+                        mpObserver->onVdinSignalChange();
+                    }
                 }
-                /**
-                 * EPOLLOUT event
-                 */
+
                 if ((mEpoll)[i].events & EPOLLOUT) {
 
                 }

@@ -87,6 +87,7 @@ CTvin::CTvin()
     mSourceInputToPortMap[SOURCE_DTV] = TVIN_PORT_DTV;
     mSourceInputToPortMap[SOURCE_IPTV] = TVIN_PORT_BT656;
     mSourceInputToPortMap[SOURCE_SPDIF] = TVIN_PORT_CVBS3;
+    init_vdin();
 }
 
 CTvin::~CTvin()
@@ -2030,192 +2031,89 @@ int CTvin::get_hdmi_sampling_rate()
 }
 
 //**************************************************************************
-CTvin::CTvinSigDetect::CTvinSigDetect ()
+CTvin::CHDMIAudioCheck::CHDMIAudioCheck ()
 {
-    mDetectState = STATE_STOPED;
+    mCheckState = STATE_STOPED;
     mpObserver = NULL;
-    initSigState();
+    initCheckState();
 }
 
-CTvin::CTvinSigDetect::~CTvinSigDetect()
+CTvin::CHDMIAudioCheck::~CHDMIAudioCheck()
 {
 }
 
-int CTvin::CTvinSigDetect::startDetect(bool bPause)
+int CTvin::CHDMIAudioCheck::initCheckState()
 {
-    LOGD ("startDetect detect state:%d", mDetectState);
-
-    if ( mDetectState == STATE_RUNNING || mDetectState == STATE_PAUSE ) {
-        return mDetectState;
-    }
-
-    m_request_pause_detect = bPause;
-    initSigState();
-    this->run("CTvinSigDetect");
-    return mDetectState;
-}
-
-int CTvin::CTvinSigDetect::initSigState()
-{
-    m_cur_sig_info.trans_fmt = TVIN_TFMT_2D;
-    m_cur_sig_info.fmt = TVIN_SIG_FMT_NULL;
-    m_cur_sig_info.status = TVIN_SIG_STATUS_NULL;
-    m_cur_sig_info.reserved = 0;
-    m_pre_sig_info = m_cur_sig_info;
-    mKeepNosigTime = 0;
-    mIsNosig = false;
     mResumeLaterTime = 0;
-    mTvinSigDetectEnable = true;
+    mHDMIAudioCheckEnable = true;
     return 0;
 }
 
-int CTvin::CTvinSigDetect::stopDetect()
+int CTvin::CHDMIAudioCheck::startCheck(bool bPause)
+{
+    LOGD ("startCheck--Check state:%d", mCheckState);
+
+    if ( mCheckState == STATE_RUNNING || mCheckState == STATE_PAUSE ) {
+        return mCheckState;
+    }
+
+    m_request_pause_check = bPause;
+    initCheckState();
+    this->run("startCheck");
+    return mCheckState;
+}
+
+int CTvin::CHDMIAudioCheck::stopCheck()
 {
     AutoMutex _l( mLock );
-    LOGD ( "stopDetect()" );
+    LOGD ( "stopCheck()" );
     requestExit();
     return 0;
 }
 
-int CTvin::CTvinSigDetect::pauseDetect()
+int CTvin::CHDMIAudioCheck::pauseCheck()
 {
     AutoMutex _l( mLock );
-    LOGD ( "pauseDetect()" );
-    m_request_pause_detect = true;
+    LOGD ( "pauseCheck()" );
+    m_request_pause_check = true;
     return 0;
 }
 
-int CTvin::CTvinSigDetect::requestAndWaitPauseDetect()
+int CTvin::CHDMIAudioCheck::resumeCheck(int later)//ms
 {
     AutoMutex _l( mLock );
-    LOGD ( "requestAndWaitPauseDetect()" );
+    LOGD ( "resumeCheck()" );
+    mResumeLaterTime = later;
+    m_request_pause_check = false;
+    mCheckPauseCondition.signal();
+    return 0;
+}
 
-    mKeepNosigTime = 0;
-    mIsNosig = false;
+int CTvin::CHDMIAudioCheck::requestAndWaitPauseCheck()
+{
+    AutoMutex _l( mLock );
+    LOGD ( "requestAndWaitPauseCheck()" );
 
-    m_request_pause_detect = true;
+    m_request_pause_check = true;
 
-    if ( mDetectState == STATE_RUNNING ) {
+    if ( mCheckState == STATE_RUNNING ) {
         mRequestPauseCondition.wait ( mLock );
     }
 
     return 0;
 }
 
-tvin_info_t &CTvin::CTvinSigDetect::getCurSigInfo()
-{
-    return m_cur_sig_info;
-}
-
-void CTvin::CTvinSigDetect::setDTVSigInfo(tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt)
-{
-    m_cur_sig_info.fmt = sig_fmt;
-    m_cur_sig_info.trans_fmt = trans_fmt;
-}
-
-int CTvin::CTvinSigDetect::resumeDetect(int later)//ms
-{
-    AutoMutex _l( mLock );
-    LOGD ( "resumeDetect()" );
-    mResumeLaterTime = later;
-    m_request_pause_detect = false;
-    mDetectPauseCondition.signal();
-    return 0;
-}
-
-void CTvin::CTvinSigDetect::setTvinSigDetectEnable(bool enable)
+void CTvin::CHDMIAudioCheck::setHDMIAudioCheckEnable(bool enable)
 {
     if (enable)
-        LOGD("setTvinSigDetectEnable enable");
+        LOGD("setHDMIAudioCheck enable");
     else
-        LOGD("setTvinSigDetectEnable disable");
-    mTvinSigDetectEnable = enable;
+        LOGD("setHDMIAudioCheck disable");
+
+    mHDMIAudioCheckEnable = enable;
 }
 
-void CTvin::CTvinSigDetect::setVdinNoSigCheckKeepTimes(int times, bool isOnce __unused)
-{
-    LOGD("setVdinNoSigCheckKeepTimes mKeepNosigTime = %d, times = %d", mKeepNosigTime, times);
-    mKeepNosigTime = times;
-}
-
-int CTvin::CTvinSigDetect::Tv_TvinSigDetect ( int &sleeptime )
-{
-    CTvin::getInstance()->VDIN_GetSignalInfo ( &m_cur_sig_info ); //get info
-
-    if (m_cur_sig_info.status == TVIN_SIG_STATUS_NOSIG
-        || m_cur_sig_info.status == TVIN_SIG_STATUS_NULL) {
-        if (mKeepNosigTime < 20) {
-            mKeepNosigTime++;
-        }
-        mIsNosig = true;
-    } else {
-        mKeepNosigTime = 0;
-        mIsNosig = false;
-    }
-
-    //if state change
-    if ( m_cur_sig_info.status != m_pre_sig_info.status ) {
-        sleeptime = 20;
-
-        if ( m_cur_sig_info.status == TVIN_SIG_STATUS_STABLE ) { // to stable
-            mpObserver->onSigToStable();
-        } else if ( m_pre_sig_info.status == TVIN_SIG_STATUS_STABLE && m_cur_sig_info.status == TVIN_SIG_STATUS_UNSTABLE ) { //stable to unstable
-            //mVpp.Tvin_SetVideoScreenColorType ( TV_SIGNAL_BLACK_PATTERN );
-            mpObserver->onSigStableToUnstable();
-        } else if ( m_pre_sig_info.status == TVIN_SIG_STATUS_STABLE && m_cur_sig_info.status == TVIN_SIG_STATUS_NOTSUP ) {
-            mpObserver->onSigStableToUnSupport();
-        } else if ( m_pre_sig_info.status == TVIN_SIG_STATUS_STABLE && m_cur_sig_info.status == TVIN_SIG_STATUS_NOSIG ) {
-            mpObserver->onSigStableToNoSig();
-        } else if ( m_pre_sig_info.status == TVIN_SIG_STATUS_UNSTABLE && m_cur_sig_info.status == TVIN_SIG_STATUS_NOTSUP ) {
-            mpObserver->onSigUnStableToUnSupport();
-        } else if ( m_pre_sig_info.status == TVIN_SIG_STATUS_UNSTABLE && m_cur_sig_info.status == TVIN_SIG_STATUS_NOSIG ) {
-            mpObserver->onSigUnStableToNoSig();
-        } else if ( m_pre_sig_info.status == TVIN_SIG_STATUS_NULL && m_cur_sig_info.status == TVIN_SIG_STATUS_NOSIG ) {
-            mpObserver->onSigNullToNoSig();
-        } else if ( m_pre_sig_info.status == TVIN_SIG_STATUS_NOSIG && m_cur_sig_info.status == TVIN_SIG_STATUS_UNSTABLE ) {
-            mpObserver->onSigNoSigToUnstable();
-        }
-    } else { //state not change
-        sleeptime = 20;
-
-        switch ( m_cur_sig_info.status ) {
-        case TVIN_SIG_STATUS_STABLE:
-            mpObserver->onSigStillStable();
-            if ( m_cur_sig_info.trans_fmt != m_pre_sig_info.trans_fmt ) {
-                mpObserver->onStableTransFmtChange();
-            }
-            if (m_cur_sig_info.fmt != m_pre_sig_info.fmt) {
-                mpObserver->onStableSigFmtChange();
-            }
-            break;
-
-        case TVIN_SIG_STATUS_NOTSUP:
-            mpObserver->onSigStillNoSupport();
-            break;
-
-        case TVIN_SIG_STATUS_UNSTABLE:
-            mpObserver->onSigStillUnstable();
-            break;
-
-        case TVIN_SIG_STATUS_NOSIG:
-            if (mKeepNosigTime == 20 && mIsNosig) {
-                mpObserver->onSigStillNosig();
-                mKeepNosigTime++;
-            }
-            break;
-
-        case TVIN_SIG_STATUS_NULL:
-        default:
-            mpObserver->onSigStillNull();
-            break;
-        }
-    }
-
-    m_pre_sig_info = m_cur_sig_info;//backup info
-    return sleeptime;
-}
-
-bool CTvin::CTvinSigDetect::threadLoop()
+bool CTvin::CHDMIAudioCheck::threadLoop()
 {
     //enter onStart()
     if ( mpObserver == NULL ) {
@@ -2223,41 +2121,42 @@ bool CTvin::CTvinSigDetect::threadLoop()
     }
 
     int sleeptime = 200;//ms
-    mDetectState = STATE_RUNNING;
-    mpObserver->onSigDetectEnter();
+    mCheckState = STATE_RUNNING;
 
     while ( !exitPending() ) { //requietexit() or requietexitWait() not call
-        while ( m_request_pause_detect ) {
+       while ( m_request_pause_check ) {
             mLock.lock();
             mRequestPauseCondition.broadcast();
-            mDetectState = STATE_PAUSE;
-            mDetectPauseCondition.wait ( mLock ); //first unlock,when return,lock again,so need,call unlock
-            mDetectState = STATE_RUNNING;
+            mCheckState = STATE_PAUSE;
+            mCheckPauseCondition.wait ( mLock ); //first unlock,when return,lock again,so need,call unlock
+            mCheckState = STATE_RUNNING;
             mLock.unlock();
             //
-            while (!m_request_pause_detect && mResumeLaterTime > 0) {
-                //LOGD("mResumeLaterTime = %d", mResumeLaterTime);
-                usleep(10 * 1000);
+            while (!m_request_pause_check && mResumeLaterTime > 0) {
+                 usleep(10 * 1000);
                 mResumeLaterTime -= 10;
             }
         }
-
         mResumeLaterTime = 0;
-        mpObserver->onSigDetectLoop();
-        if (mTvinSigDetectEnable)
-            Tv_TvinSigDetect ( sleeptime );
-        //可以优化
-        if ( !m_request_pause_detect ) {
+        mpObserver->onHDMIAudioCheckLoop();
+        if (mHDMIAudioCheckEnable) {
+             sleeptime = 20;
+        }
+
+        if ( !m_request_pause_check ) {
             usleep ( sleeptime * 1000 );
         }
     }
 
-    mDetectState = STATE_STOPED;
+    mCheckState = STATE_STOPED;
     mRequestPauseCondition.broadcast();
-    //exit
-    //return true, run again, return false,not run.
+    /*exit
+    true:  run again;
+    false,not run.
+    */
     return false;
 }
+
 
 v4l2_std_id CTvin::CvbsFtmToV4l2ColorStd(tvin_sig_fmt_t fmt)
 {

@@ -92,10 +92,10 @@ typedef enum TvRunStatus_s {
     TV_CLOSE_ED,
 } TvRunStatus_t;
 
-class CTv : public CTvin::CTvinSigDetect::ISigDetectObserver, public CSourceConnectDetect::ISourceConnectObserver, public IUpgradeFBCObserver, public CTvSubtitle::IObserver, public CBootvideoStatusDetect::IBootvideoStatusObserver, public  CTv2d4GHeadSetDetect::IHeadSetObserver {
+class CTv : public CTvin::CHDMIAudioCheck::IHDMIAudioCheckObserver, public CSourceConnectDetect::ISourceConnectObserver, public IUpgradeFBCObserver, public CTvSubtitle::IObserver, public CBootvideoStatusDetect::IBootvideoStatusObserver, public CTv2d4GHeadSetDetect::IHeadSetObserver {
 public:
     static const int TV_ACTION_NULL = 0x0000;
-    static const int TV_ACTION_STARTING = 0x0001;
+    static const int TV_ACTION_IN_VDIN = 0x0001;
     static const int TV_ACTION_STOPING = 0x0002;
     static const int TV_ACTION_SCANNING = 0x0004;
     static const int TV_ACTION_PLAYING = 0x0008;
@@ -105,6 +105,7 @@ public:
     static const int OPEN_DEV_FOR_SCAN_ATV = 1;
     static const int OPEN_DEV_FOR_SCAN_DTV = 2;
     static const int CLOSE_DEV_FOR_SCAN = 3;
+    tvin_info_t m_cur_sig_info;
 
 public:
     class TvIObserver {
@@ -133,6 +134,7 @@ public:
     virtual tv_source_input_t GetCurrentSourceInputLock ( void );
     virtual tv_source_input_t GetCurrentSourceInputVirtualLock ( void );
     bool isVirtualSourceInput(tv_source_input_t source_input);
+    virtual void InitCurrenSignalInfo ( void );
     virtual tvin_info_t GetCurrentSignalInfo ( void );
     int setPreviewWindowMode(bool mode);
     virtual int SetPreviewWindow ( tvin_window_pos_t pos );
@@ -231,7 +233,7 @@ public:
     virtual void onHeadSetDetect(int state, int para);
 
     CTvFactory mFactoryMode;
-    CTvin::CTvinSigDetect mSigDetectThread;
+    CTvin::CHDMIAudioCheck mHDMIAudioCheckThread;
     CSourceConnectDetect mSourceConnectDetectThread;
     CBootvideoStatusDetect *mBootvideoStatusDetectThread;
     CHDMIRxManager mHDMIRxManager;
@@ -548,19 +550,6 @@ protected:
         CTv *mpTv;
     };
 
-    class CTvDetectObserverForScanner: public CTvin::CTvinSigDetect::ISigDetectObserver {
-    public:
-        CTvDetectObserverForScanner(CTv *);
-        ~CTvDetectObserverForScanner() {};
-        virtual void onSigToStable();
-        virtual void onSigStableToUnstable();
-        virtual void onSigStableToNoSig();
-        virtual void onSigUnStableToNoSig();
-        virtual void onSigStillStable();
-    private:
-        CTv *mpTv;
-        int m_sig_stable_nums;
-    };
     bool isTvViewBlocked();
     void onEnableVideoLater(int framecount);
     void onVideoAvailableLater(int framecount);
@@ -593,25 +582,15 @@ protected:
     void Tv_SetAVOutPut_Input_gain(tv_source_input_t source_input);
     /*********************** Audio end **********************/
 
-    virtual void onSigToStable();
-    virtual void onSigStableToUnstable();
-    virtual void onSigStableToUnSupport();
-    virtual void onSigStableToNoSig();
-    virtual void onSigUnStableToUnSupport();
-    virtual void onSigUnStableToNoSig();
-    virtual void onSigNullToNoSig();
-    virtual void onSigNoSigToUnstable();
-    virtual void onSigStillStable();
-    virtual void onSigStillUnstable();
-    virtual void onSigStillNosig();
-    virtual void onSigStillNoSupport();
-    virtual void onSigStillNull();
-    virtual void onStableSigFmtChange();
-    virtual void onStableTransFmtChange();
-    virtual void onSigDetectEnter();
-    virtual void onSigDetectLoop();
+    void onSigToStable();
+    void onSigToUnstable();
+    void onSigToUnSupport();
+    void onSigToNoSig();
+    void onSigStillStable();
+    void onHDMIAudioCheckLoop();
 
     virtual void onSourceConnect(int source_type, int connect_status);
+    virtual void onVdinSignalChange();
     virtual void onUpgradeStatus(int status, int progress);
     virtual void onThermalDetect(int state);
 
@@ -630,7 +609,6 @@ protected:
     CTvDmx mTvDmx;
     CTvMsgQueue mTvMsgQueue;
     AutoBackLight mAutoBackLight;
-    CTvDetectObserverForScanner mTvScannerDetectObserver;
     //
     volatile int mTvAction;
     volatile TvRunStatus_t mTvStatus;
@@ -651,7 +629,6 @@ protected:
     tv_dtv_scan_running_status_t mDtvScanRunningStatus;
     volatile tv_config_t gTvinConfig;
     bool mAutoSetDisplayFreq;
-    int m_sig_stable_nums;
     int m_sig_spdif_nums;
     bool mSetHdmiEdid;
     /** for HDMI-in sampling detection. **/

@@ -62,8 +62,8 @@ public:
     public:
         ISourceConnectObserver() {};
         virtual ~ISourceConnectObserver() {};
-        virtual void onSourceConnect(int source __unused, int connect_status __unused) {
-        };
+        virtual void onSourceConnect(int source __unused, int connect_status __unused) {};
+        virtual void onVdinSignalChange() {};
     };
 
     void setObserver ( ISourceConnectObserver *pOb ) {

@@ -730,83 +730,57 @@ public:
 
     static CTvin *getInstance();
 
+    int m_vdin_dev_fd;
+
 public:
-    class CTvinSigDetect: public Thread {
+    class CHDMIAudioCheck: public Thread {
     public:
-        static const int VDIN_NOSIG_DEFAULT_CHECK_TIMES = 1;
-        CTvinSigDetect ();
-        ~CTvinSigDetect();
-        int startDetect(bool bPause = true);
-        int stopDetect();
-        int pauseDetect();
-        int resumeDetect(int later = 0);
-        int initSigState();
-        void setTvinSigDetectEnable(bool enable = true);
-        void setVdinNoSigCheckKeepTimes(int times, bool isOnce);//times is time, ms
-        int requestAndWaitPauseDetect();
+        CHDMIAudioCheck ();
+        ~CHDMIAudioCheck();
+        int startCheck(bool bPause = true);
+        int stopCheck();
+        int pauseCheck();
+        int resumeCheck(int later = 0);
+        int initCheckState();
+        void setHDMIAudioCheckEnable(bool enable = true);
+        int requestAndWaitPauseCheck();
         //first pause detect? ok
-        tvin_info_t &getCurSigInfo();
-        void setDTVSigInfo(tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt);
 
-        class ISigDetectObserver {
+        class IHDMIAudioCheckObserver {
         public:
-            ISigDetectObserver()
+            IHDMIAudioCheckObserver()
             {};
-            virtual ~ISigDetectObserver()
+            virtual ~IHDMIAudioCheckObserver()
             {};
-            virtual void onSigToStable()
-            {};
-            virtual void onSigStableToUnstable() {};
-            virtual void onSigStableToUnSupport() {};
-            virtual void onSigStableToNoSig() {};
-            virtual void onSigUnStableToUnSupport() {};
-            virtual void onSigUnStableToNoSig() {};
-            virtual void onSigNullToNoSig() {};
-            virtual void onSigNoSigToUnstable() {};
-
-            virtual void onSigStillStable() {};
-            virtual void onSigStillUnstable() {};
-            virtual void onSigStillNosig() {};
-            virtual void onSigStillNoSupport() {};
-            virtual void onSigStillNull() {};
-            virtual void onStableSigFmtChange() {};
-            virtual void onStableTransFmtChange() {};
-
-            virtual void onSigDetectEnter() {};
-            virtual void onSigDetectLoop() {};
+            virtual void onHDMIAudioCheckEnter() {};
+            virtual void onHDMIAudioCheckLoop() {};
         };
-        void setObserver ( ISigDetectObserver *pOb )
+        void setObserver ( IHDMIAudioCheckObserver *pOb )
         {
             mpObserver = pOb;
         };
+
     private:
         bool threadLoop();
-        int Tv_TvinSigDetect ( int &args );
 
         //member
-        tvin_info_t m_cur_sig_info;
-        tvin_info_t m_pre_sig_info;
-        int mKeepNosigTime;
-        bool mIsNosig;
         mutable Mutex mLock;
-        Condition mDetectPauseCondition;
+        Condition mCheckPauseCondition;
         Condition mRequestPauseCondition;
-        volatile int m_sig_detect_status;
-        volatile bool m_request_pause_detect;
-        enum DetectState {
+        volatile bool m_request_pause_check;
+        enum CheckState {
             STATE_STOPED = 0,
             STATE_RUNNING,
             STATE_PAUSE
         };
-        int mDetectState;
+        int mCheckState;
         int mResumeLaterTime;
-        bool mTvinSigDetectEnable;
-        ISigDetectObserver *mpObserver;
-    };//
+        bool mHDMIAudioCheckEnable;
+        IHDMIAudioCheckObserver *mpObserver;
+    };
 
 private:
     static CTvin *mInstance;
-    int m_vdin_dev_fd;
     int afe_dev_fd;
     tvin_parm_t m_tvin_param;
     tvin_parm_t gTvinVDINParam;

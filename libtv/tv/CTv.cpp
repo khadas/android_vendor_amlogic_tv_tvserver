@@ -5221,11 +5221,8 @@ void CTv::LoadAudioCtl()
 }
 
 bool CTv::isBootvideoStopped() {
-    char prop_value[PROPERTY_VALUE_MAX];
-    memset(prop_value, '\0', PROPERTY_VALUE_MAX);
-    property_get("init.svc.bootvideo", prop_value, "null");
-    LOGD("%s, init.svc.bootvideo = %s", __FUNCTION__, prop_value);
-    return (strcmp(prop_value, "stopped") == 0) ? true : false;
+    return mBootvideoStatusDetectThread == NULL
+            || mBootvideoStatusDetectThread->isBootvideoStopped();
 }
 
 void CTv::InitSetAudioCtl()

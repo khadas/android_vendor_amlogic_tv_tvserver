@@ -279,6 +279,7 @@ private:
     FEParas mFEParas;
     static void dmd_fend_callback(long dev_no, int event_type, void *param, void *user_data);
     void saveCurrentParas(FEParas &paras);
+    int setPropLocked(int cmd, int val);
 
 protected:
     mutable Mutex mLock;

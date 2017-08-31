@@ -148,7 +148,11 @@ int CFrontEnd::setMode(int mode)
 int CFrontEnd::setProp(int cmd, int val)
 {
     AutoMutex _l( mLock );
+    return setPropLocked(cmd, val);
+}
 
+int CFrontEnd::setPropLocked(int cmd, int val)
+{
     struct dtv_properties props;
     struct dtv_property prop;
 
@@ -304,13 +308,14 @@ int CFrontEnd::setPara(const char *paras, bool force )
         return -1;
     }
 
-    if (mFEParas.getFEMode().getGen()) {
-        ret = setProp(DTV_DVBT2_PLP_ID, mFEParas.getPlp());
+    if (mFEParas.getFEMode().getBase() == FE_OFDM
+            && mFEParas.getFEMode().getGen()) {
+        ret = setPropLocked(DTV_DVBT2_PLP_ID, mFEParas.getPlp());
         if (ret != 0)
             return -1;
     }
     if (dvbfepara.m_type == FE_ISDBT) {
-        ret = setProp(DTV_ISDBT_LAYER_ENABLED, mFEParas.getLayer());
+        ret = setPropLocked(DTV_ISDBT_LAYER_ENABLED, mFEParas.getLayer());
         if (ret != 0)
             return -1;
     }

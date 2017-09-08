@@ -1501,6 +1501,25 @@ int CTvScanner::createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEP
         size = vcp.size();
     }
 
+    int air_on_cable = getParamOption("air_on_cable.enable");
+    AM_Bool_t is_air_on_cable = (air_on_cable == -1)? false : (air_on_cable != 0);
+    if (dtv_para.source == FE_ATSC && is_air_on_cable && size) {
+        int cnt = 0;
+        int i;
+        for (i = 0; i < size; i++) {
+            fe_modulation_t mod = (fe_modulation_t)(vcp[i]->getModulation());
+            if (mod >= QAM_16 && mod <= QAM_AUTO) {
+                vcp.push_back(new CTvChannel(
+                        vcp[i]->getID(), vcp[i]->getMode(), vcp[i]->getFrequency(),
+                        vcp[i]->getBandwidth(), VSB_8,
+                        vcp[i]->getSymbolRate(), 0, 0));
+                cnt++;
+            }
+        }
+        size = vcp.size();
+        LOGD("Feature[air on cable] on, list size more: %d, total:%d", cnt, size);
+    }
+
     if (!(dtv_para.fe_paras = static_cast<AM_FENDCTRL_DVBFrontendParameters_t *>(calloc(size, sizeof(AM_FENDCTRL_DVBFrontendParameters_t)))))
         return -1;
 

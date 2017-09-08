@@ -256,6 +256,10 @@ public:
     void setATVAudioFormat();
     void setATVFreq();
     void setATVAfcData();
+    void setModulation(int modulation)
+    {
+        this->modulation = modulation;
+    }
     //
 private:
     friend class LightRefBase<CTvChannel>;

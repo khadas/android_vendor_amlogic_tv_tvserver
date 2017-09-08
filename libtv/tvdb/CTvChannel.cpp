@@ -130,25 +130,25 @@ CTvChannel::CTvChannel(int dbID, int mode, int freq, int bw, int mod, int symb, 
         frequency = freq;
         modulation = mod;
         symbolRate = symb;
-        mode = MODE_QAM;
+        this->mode = MODE_QAM;
     } else if (mode == MODE_OFDM) {
         id = dbID;
         frequency = freq;
         bandwidth = bw;
-        mode = MODE_OFDM;
+        this->mode = MODE_OFDM;
     } else if (mode == MODE_ATSC) {
         id = dbID;
         frequency = freq;
         modulation = mod;
         logicalChannelNum = channelNum;
-        mod = MODE_ATSC;
+        this->mode = MODE_ATSC;
     } else if (mode == MODE_ANALOG) {
         id = dbID;
         frequency = freq;
         audio     = 0;
         standard  = 0;
         afc_data  = 0;
-        mode = MODE_ANALOG;
+        this->mode = MODE_ANALOG;
     } else if (mode == MODE_DTMB) {
         id = dbID;
         frequency = freq;
@@ -166,8 +166,25 @@ CTvChannel::~CTvChannel()
 {
 }
 
-CTvChannel::CTvChannel(const CTvChannel& UNUSED(channel))
+CTvChannel::CTvChannel(const CTvChannel& channel)
 {
+    id = channel.id;
+    dvbTSID = channel.dvbTSID;
+    dvbOrigNetID = channel.dvbOrigNetID;
+    fendID = channel.fendID;
+    tsSourceID = channel.tsSourceID;
+
+    mode = channel.mode;
+    frequency = channel.frequency;
+    symbolRate = channel.symbolRate;
+    modulation = channel.modulation;
+    bandwidth = channel.bandwidth;
+    audio = channel.audio;
+    standard = channel.standard;
+    afc_data = channel.afc_data;
+    sat_id = channel.sat_id;
+    logicalChannelNum = channel.logicalChannelNum;
+    sat_polarisation = channel.sat_polarisation;
 }
 //TODO
 CTvChannel& CTvChannel::operator= (const CTvChannel& UNUSED(channel))

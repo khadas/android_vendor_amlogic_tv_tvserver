@@ -1908,6 +1908,14 @@ int CTv::StopTvLock ( void )
     m_last_source_input = SOURCE_INVALID;
     m_source_input = SOURCE_INVALID;
     m_source_input_virtual = SOURCE_INVALID;
+
+    tv_source_input_type_t source_type = mpTvin->Tvin_SourceInputToSourceInputType(m_source_input);
+    tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceType(source_type);
+    int ret = tvSetCurrentSourceInfo(m_source_input, source_type, source_port, TVIN_SIG_FMT_NULL, INDEX_2D, TVIN_TFMT_2D);
+    if (ret < 0) {
+        LOGE("%s Set CurrentSourceInfo error!\n");
+    }
+
     mFrontDev->Close();
     mTvAction &= ~TV_ACTION_STOPING;
     mTvStatus = TV_STOP_ED;

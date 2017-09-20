@@ -5299,9 +5299,12 @@ int CTv::autoSwitchToMonitorMode()
             || (m_cur_sig_info.fmt == TVIN_SIG_FMT_HDMI_2880X288P_50HZ)
             || ((m_cur_sig_info.fmt >= TVIN_SIG_FMT_HDMI_800X600_00HZ)
                 && (m_cur_sig_info.fmt <= TVIN_SIG_FMT_HDMI_1680X1050_00HZ))){
+            LOGD("switch to monitor mode!\n");
             CVpp::getInstance()->enableMonitorMode(true);
-            CVpp::getInstance()->SavePQMode(VPP_PICTURE_MODE_MONITOR, m_source_input);
+            CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_MONITOR, m_source_input, m_cur_sig_info.fmt,
+                                           m_cur_sig_info.trans_fmt, INDEX_2D, 1);
         } else if (CVpp::getInstance()->GetPQMode(m_source_input) == VPP_PICTURE_MODE_MONITOR) {
+            LOGD("switch to standard mode!\n");
             CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_STANDARD, m_source_input, m_cur_sig_info.fmt,
                                            m_cur_sig_info.trans_fmt, INDEX_2D, 1);
         }

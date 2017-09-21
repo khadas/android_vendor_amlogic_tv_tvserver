@@ -3220,11 +3220,13 @@ int CTv::SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_t tv_
 {
     tv_source_input_type_t source_type;
     source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-    LOGD("SetDisplayMode, display_mode = %d, source_type = %d fmt = %d  tranfmt = %d\n",  display_mode, source_type, sig_fmt, m_cur_sig_info.trans_fmt);
+    LOGD("SetDisplayMode, display_mode = %d, source_type = %d sigfmt = %d  tranfmt = %d\n",
+         display_mode, source_type, sig_fmt, m_cur_sig_info.trans_fmt);
 
-    tvin_cutwin_t cutwin = CVpp::getInstance()->GetOverscan ( tv_source_input, sig_fmt,
-        INDEX_2D, m_cur_sig_info.trans_fmt);
+    tvin_cutwin_t cutwin = CVpp::getInstance()->GetOverscan(tv_source_input, sig_fmt,
+                                                            INDEX_2D, m_cur_sig_info.trans_fmt);
     LOGD("SetDisplayMode , get crop %d %d %d %d \n", cutwin.vs, cutwin.hs, cutwin.ve, cutwin.he);
+
     int video_screen_mode = CAv::VIDEO_WIDEOPTION_16_9;
     tvin_window_pos_t win_pos;
     int display_resolution = Vpp_GetDisplayResolutionInfo(&win_pos);
@@ -3285,8 +3287,10 @@ int CTv::SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_t tv_
         cutwin.he = cutwin.he + 12;
     }
     if (source_type == SOURCE_TYPE_HDMI) {
-        if ((IsDVISignal()) || (mpTvin->GetITContent() == 1) ||
-            (display_mode == VPP_DISPLAY_MODE_FULL_REAL)) {
+        if ((IsDVISignal())
+            || (mpTvin->GetITContent() == 1)
+            || (display_mode == VPP_DISPLAY_MODE_FULL_REAL)
+            || (CVpp::getInstance()->GetPQMode(tv_source_input) == VPP_PICTURE_MODE_MONITOR)) {
             cutwin.vs = 0;
             cutwin.hs = 0;
             cutwin.ve = 0;
@@ -3294,7 +3298,6 @@ int CTv::SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_t tv_
         }
     }
 
-    //mAv.setVideoAxis ( win_pos.x1, win_pos.y1, win_pos.x2, win_pos.y2 );
     mAv.setVideoScreenMode(video_screen_mode);
     CVpp::getInstance()->VPP_SetVideoCrop(cutwin.vs, cutwin.hs, cutwin.ve, cutwin.he);
     return 0;

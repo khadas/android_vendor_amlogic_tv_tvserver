@@ -241,7 +241,6 @@ void CVpp::enableMonitorMode(bool enable)
     CHDMIRxManager manager;
 
     if (enable) {
-        VPP_SetVideoCrop(0, 0, 0, 0);
         tvWriteSysfs(DI_NR2_ENABLE, "0");
         tvWriteSysfs(AMVECM_PC_MODE, "0");
         manager.SetHdmiPcMode_Monitor(1);

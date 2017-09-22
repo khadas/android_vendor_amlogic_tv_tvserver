@@ -68,12 +68,6 @@
 #define CFG_FBC_PANEL_INFO                      "fbc.get.panelinfo"
 #define CFG_FBC_USED                            "platform.havefbc"
 
-
-#define CFG_PQ_DB_PATH                          "pq_db_path"
-//if do not exist destination db, need copy default source db firstly
-#define DEF_DES_PQ_DB_PATH                      "/param/pq.db"
-#define DEF_SRC_PQ_DB_PATH                      "/system/etc/pq.db"
-
 #define CFG_CAHNNEL_DB                          "tv.channel.db"
 #define DEF_VALUE_CAHNNEL_DB                    "/param/dtv.db"
 

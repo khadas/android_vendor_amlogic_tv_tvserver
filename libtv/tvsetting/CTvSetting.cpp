@@ -1319,19 +1319,6 @@ int SSMReadDBCEnable(unsigned char *rw_val)
     return ret;
 }
 
-int SSMSaveGammaValue(int rw_val)
-{
-    return TVSSMWriteNTypes(VPP_DATA_GAMMA_VALUE_START, 1, rw_val);
-}
-
-int SSMReadGammaValue(int *rw_val)
-{
-    int tmp_ret = 0;
-    tmp_ret = TVSSMReadNTypes(VPP_DATA_GAMMA_VALUE_START, 1, rw_val);
-
-    return tmp_ret;
-}
-
 int SSMSaveBackLightReverse(unsigned char rw_val)
 {
     int tmp_val = rw_val;

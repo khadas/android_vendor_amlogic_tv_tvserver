@@ -1759,8 +1759,7 @@ int CTv::OpenTv ( void )
     mpTvin->OpenTvin();
     mpTvin->Tv_init_afe();
 
-    const char *path = config_get_str(CFG_SECTION_TV, CFG_PQ_DB_PATH, DEF_DES_PQ_DB_PATH);
-    CVpp::getInstance()->Vpp_Init(path, mHdmiOutFbc);
+    CVpp::getInstance()->Vpp_Init(mHdmiOutFbc);
     TvAudioOpen();
     SetAudioVolDigitLUTTable(SOURCE_MPEG);
 

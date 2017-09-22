@@ -50,7 +50,7 @@ CVpp::~CVpp()
 
 }
 
-int CVpp::Vpp_Init(const char *pq_db_path, bool hdmiOutFbc)
+int CVpp::Vpp_Init(bool hdmiOutFbc)
 {
     int ret = -1;
     int backlight = DEFAULT_BACKLIGHT_BRIGHTNESS;

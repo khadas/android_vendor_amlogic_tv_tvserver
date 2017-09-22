@@ -59,7 +59,7 @@ class CVpp {
 public:
     CVpp();
     ~CVpp();
-    int Vpp_Init ( const char *pq_db_path, bool hdmiOutFbc);
+    int Vpp_Init(bool hdmiOutFbc);
     int Vpp_ResetLastVppSettingsSourceType(void);
     int LoadVppLdimRegs();
     int LoadVppSettings ( tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );

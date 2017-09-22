@@ -514,16 +514,6 @@ int KeyData_ReadProjectID()
     return tmp_val;
 }
 
-int SSMSaveRGBOGOValue(int offset, int size, unsigned char data_buf[])
-{
-    return SaveRGBOGOToFile(offset, size, data_buf);
-}
-
-int SSMReadRGBOGOValue(int offset, int size, unsigned char data_buf[])
-{
-    return GetRGBOGOFromFile(offset, size, data_buf);
-}
-
 int SSMSaveAudioNoLinePoints(int offset, int size, unsigned char tmp_buf[])
 {
     return SaveAudioNoLinePointsDataToFile(offset, size, tmp_buf);
@@ -1231,41 +1221,6 @@ static int HandleRWData(RWDataInfo *data_info)
     }
 
     return RealRWData(&tmpInfo);
-}
-
-int GetRGBOGOFromFile(int rd_off, int rd_size,
-                      unsigned char data_buf[])
-{
-    RWDataInfo tmpInfo;
-
-    tmpInfo.op_type = CC_OP_TYPE_READ;
-    tmpInfo.data_type = CC_DATA_TYPE_CHAR;
-    tmpInfo.max_size = SSM_CR_RGBOGO_LEN + SSM_CR_RGBOGO_CHKSUM_LEN;
-    tmpInfo.rw_off = rd_off;
-    tmpInfo.rw_size = rd_size;
-    tmpInfo.data_buf = data_buf;
-    tmpInfo.path_cfg_name = (char *) CS_RGBOGO_FILE_PATH_CFG;
-    tmpInfo.off_cfg_name = (char *) CS_RGBOGO_FILE_OFFSET_CFG;
-    tmpInfo.op_cb = ReadDataFromFile;
-
-    return HandleRWData(&tmpInfo);
-}
-
-int SaveRGBOGOToFile(int wr_off, int wr_size, unsigned char data_buf[])
-{
-    RWDataInfo tmpInfo;
-
-    tmpInfo.op_type = CC_OP_TYPE_SAVE;
-    tmpInfo.data_type = CC_DATA_TYPE_CHAR;
-    tmpInfo.max_size = SSM_CR_RGBOGO_LEN + SSM_CR_RGBOGO_CHKSUM_LEN;
-    tmpInfo.rw_off = wr_off;
-    tmpInfo.rw_size = wr_size;
-    tmpInfo.data_buf = data_buf;
-    tmpInfo.path_cfg_name = (char *) CS_RGBOGO_FILE_PATH_CFG;
-    tmpInfo.off_cfg_name = (char *) CS_RGBOGO_FILE_OFFSET_CFG;
-    tmpInfo.op_cb = SaveDataToFile;
-
-    return HandleRWData(&tmpInfo);
 }
 
 int GetAudioNoLinePointsDataFromFile(int rd_off, int rd_size,

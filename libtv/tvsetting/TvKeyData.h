@@ -73,9 +73,6 @@
 
 #define CS_HDMI_EDID_FILE_OFFSET_CFG            "ssm.handle.hdmi.edid.file.offset"
 
-#define CS_RGBOGO_FILE_PATH_CFG                 "ssm.rgbogo.file.path"
-#define CS_RGBOGO_FILE_OFFSET_CFG               "ssm.rgbogo.file.offset"
-
 #define CS_AUDIO_NOLINEPOINTS_FILE_PATH_CFG     "ssm.audio.nolinepoints.file.path"
 #define CS_AUDIO_NOLINEPOINTS_FILE_OFFSET_CFG   "ssm.audio.nolinepoints.file.offset"
 int ReadKeyData(const char *key_name, unsigned char data_buf[]);
@@ -102,9 +99,6 @@ int SSMRefreshHDCPKey();
 int SSMReadHDMIEdid(int port, unsigned char hdmi_edid_buf[]);
 int SSMSetHDMIEdid(int port);
 
-int SSMSaveRGBOGOValue(int offset, int size, unsigned char data_buf[]);
-int SSMReadRGBOGOValue(int offset, int size, unsigned char data_buf[]);
-
 int SSMReadAudioNoLinePoints(int offset, int size, unsigned char tmp_buf[]);
 int SSMSaveAudioNoLinePoints(int offset, int size, unsigned char tmp_buf[]);
 int CreateMacAddressStartWorkThread();
@@ -120,9 +114,6 @@ int GetHDMIEdidFromFile(int rd_off, int rd_size, int port, unsigned char data_bu
 int RealHandleHDMIEdid(unsigned char hdmi_edid_buf[]);
 int GetSSMHandleHDMIEdidByCustomerEnableCFG();
 int AppendEdidPrefixCode(unsigned char customer_hdmi_edid_buf[], unsigned char hdmi_edid_buf[]);
-
-int GetRGBOGOFromFile(int rd_off, int rd_size, unsigned char data_buf[]);
-int SaveRGBOGOToFile(int wr_off, int wr_size, unsigned char data_buf[]);
 
 int GetAudioNoLinePointsDataFromFile(int offset, int size, unsigned char data_buf[]);
 int SaveAudioNoLinePointsDataToFile(int offset, int size, unsigned char data_buf[]);

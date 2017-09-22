@@ -33,8 +33,6 @@ int SSMSaveEEP_One_N310_N311(int offset, int rw_val) ;
 int SSMReadEEP_One_N310_N311(int offset);
 int SSMSaveEEP_N_N310_N311(int offset, int data_len, int *data_buf);
 int SSMReadEEP_N_N310_N311(int offset, int data_len, int *data_buf);
-//int EEPWriteNByte(int offset, int data_len, unsigned char * data_buf);
-//int EEPReadNByte(int offset, int data_len, unsigned char * data_buf);
 int SSMSaveFlash_N_N310_N311(int offset, int data_len, int *data_buf);
 int SSMReadFlash_N_N310_N311(int offset, int data_len, int *data_buf);
 
@@ -110,9 +108,7 @@ int SSMRestoreDeviceMarkValues();
 int SSMHandlePreCopying();
 int SSMSaveDTVType(int rw_val);
 int SSMReadDTVType(int *rw_val);
-
 int GetSSMCfgBufferData(const char *key_str, int *buf_item_count, int radix, unsigned char data_buf[]);
-
 int SSMSaveSourceInput(unsigned char rw_val);
 int SSMReadSourceInput();
 int SSMSaveCVBSStd(unsigned char rw_val);
@@ -125,62 +121,20 @@ int SSMSave3DDepth(unsigned char rw_val);
 int SSMRead3DDepth(unsigned char *rw_val);
 int SSMSave3DTO2D(unsigned char rw_val);
 int SSMRead3DTO2D(unsigned char *rw_val);
-int SSMSaveBrightness(int offset, int rw_val);
-int SSMReadBrightness(int offset, int *rw_val);
-int SSMSaveContrast(int offset, int rw_val);
-int SSMReadContrast(int offset, int *rw_val);
-int SSMSaveSaturation(int offset, int rw_val);
-int SSMReadSaturation(int offset, int *rw_val);
-int SSMSaveHue(int offset, int rw_val);
-int SSMReadHue(int offset, int *rw_val);
-int SSMSaveSharpness(int offset, int rw_val);
-int SSMReadSharpness(int offset, int *rw_val);
 int SSMSaveSceneMode(int rw_val);
 int SSMReadSceneMode(int *rw_val);
-int SSMSavePictureMode(int offset, int rw_val);
-int SSMReadPictureMode(int offset, int *rw_val);
-int SSMSaveColorTemperature(int offset, int rw_val);
-int SSMReadColorTemperature(int offset, int *rw_val);
-int SSMSaveNoiseReduction(int offset, int rw_val);
-int SSMReadNoiseReduction(int offset, int *rw_val);
 int SSMSaveDisplayMode(int offset, int rw_val);
 int SSMReadDisplayMode(int offset, int *rw_val);
 int SSMSaveBackLightVal(int offset, int rw_val);
 int SSMReadBackLightVal(int offset, int *rw_val);
-int SSMSaveEyeProtectionMode(int rw_val);
-int SSMReadEyeProtectionMode(int *rw_val);
-
 int SSMReadFBCN360BackLightVal(int *rw_val);
 int SSMSaveFBCN360BackLightVal(int rw_val);
 int SSMSaveFBCELECmodeVal(int rw_val);
 int SSMReadFBCELECmodeVal(int *rw_val);
 int SSMSaveFBCN360ColorTempVal(int rw_val);
 int SSMReadFBCN360ColorTempVal(int *rw_val);
-
-
-
-int SSMSaveColorDemoMode(unsigned char rw_val);
-int SSMReadColorDemoMode(unsigned char *rw_val);
-int SSMSaveColorBaseMode(unsigned char rw_val);
-int SSMReadColorBaseMode(unsigned char *rw_val);
-int SSMSaveRGBGainRStart(int offset, unsigned int rw_val);
-int SSMReadRGBGainRStart(int offset, unsigned int *rw_val);
-int SSMSaveRGBGainGStart(int offset, unsigned int rw_val);
-int SSMReadRGBGainGStart(int offset, unsigned int *rw_val);
-int SSMSaveRGBGainBStart(int offset, unsigned int rw_val);
-int SSMReadRGBGainBStart(int offset, unsigned int *rw_val);
-int SSMSaveRGBPostOffsetRStart(int offset, int rw_val);
-int SSMReadRGBPostOffsetRStart(int offset, int *rw_val);
-int SSMSaveRGBPostOffsetGStart(int offset, int rw_val);
-int SSMReadRGBPostOffsetGStart(int offset, int *rw_val);
-int SSMSaveRGBPostOffsetBStart(int offset, int rw_val);
-int SSMReadRGBPostOffsetBStart(int offset, int *rw_val);
-int SSMSaveRGBValueStart(int offset, int8_t rw_val);
-int SSMReadRGBValueStart(int offset, int8_t *rw_val);
 int SSMSaveDBCStart(unsigned char rw_val);
 int SSMReadDBCStart(unsigned char *rw_val);
-int SSMSaveColorSpaceStart(unsigned char rw_val);
-int SSMReadColorSpaceStart(unsigned char *rw_val);
 int SSMSaveDnlpStart(unsigned char rw_val);
 int SSMReadDnlpStart(unsigned char *rw_val);
 int SSMSavePanoramaStart(int offset, unsigned char rw_val);
@@ -209,11 +163,9 @@ int SSMSaveDBCBacklightStd(unsigned char rw_val);
 int SSMReadDBCBacklightStd(unsigned char *rw_val);
 int SSMSaveDBCEnable(unsigned char rw_val);
 int SSMReadDBCEnable(unsigned char *rw_val);
-int SSMSaveGammaValue(int rw_val);
-int SSMReadGammaValue(int *rw_val);
 int SSMSaveBackLightReverse(unsigned char rw_val);
 int SSMReadBackLightReverse(unsigned char *rw_val);
-
+//audio
 int SSMSaveAudioMasterVolume(int8_t rw_val);
 int SSMReadAudioMasterVolume(int8_t *rw_val);
 int SSMSaveAudioBalanceVal(int8_t rw_val);
@@ -250,7 +202,7 @@ int SSMSaveAudioAVOutMuteVal(int8_t rw_val);
 int SSMReadAudioAVOutMuteVal(int8_t *rw_val);
 int SSMSaveAudioSPIDFMuteVal(int8_t rw_val);
 int SSMReadAudioSPIDFMuteVal(int8_t *rw_val);
-
+//hdmi
 int SSMSaveBlackoutEnable(int8_t enable);
 int SSMReadBlackoutEnable(int8_t *enable);
 int SSMSaveFBCN310BackLightVal(int rw_val);

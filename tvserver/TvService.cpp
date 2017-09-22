@@ -2150,7 +2150,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     case SSM_READ_HDMI_EDID_VER: {
         int ret = -1;
         int port_id = p.readInt32();
-        ret = SSMReadHDMIEdidMode((tv_hdmi_port_id_t)port_id);
+        ret = SSMReadHDMIEdidVersion((tv_hdmi_port_id_t)port_id);
         r->writeInt32(ret);
         break;
     }

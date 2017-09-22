@@ -2978,9 +2978,12 @@ int CTv::Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t ve
 
     config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "customer_edid");
     if ( HDMI_EDID_VER_14== version ) {
-        sprintf(edid_path, "/system/etc/port%d.bin", port);
+        sprintf(edid_path, "/system/etc/port_%d.bin", 14);
+    } else if (HDMI_EDID_VER_20== version) {
+        sprintf(edid_path, "/system/etc/port_%d.bin", 20);
     } else {
-        sprintf(edid_path, "/system/etc/port%d_%d.bin", port,20);
+        LOGE("%s HDMI EDID VERSION error!\n", __FUNCTION__);
+        sprintf(edid_path, "/system/etc/port_%d.bin", 14);
     }
     sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
     if (access(edid_path, 0) < 0) {
@@ -2995,7 +2998,7 @@ int CTv::Tv_HandeHDMIEDIDFilePathConfig()
     if (1 == GetSSMHandleHDMIEdidByCustomerEnableCFG()) {
         //set file's path for hdmi edid of each port
         for (int i = 1; i <= SSM_HDMI_PORT_MAX; i++) {
-            Tv_HDMIEDIDFileSelect((tv_hdmi_port_id_t)i, SSMReadHDMIEdidMode((tv_hdmi_port_id_t)i));
+            Tv_HDMIEDIDFileSelect((tv_hdmi_port_id_t)i, SSMReadHDMIEdidVersion((tv_hdmi_port_id_t)i));
         }
     }
     mSetHdmiEdid = true;

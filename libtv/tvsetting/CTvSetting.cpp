@@ -1847,7 +1847,7 @@ int SSMSaveHDMIEdidMode(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t rw_val)
     return ret;
 }
 
-tv_hdmi_edid_version_t SSMReadHDMIEdidMode(tv_hdmi_port_id_t port)
+tv_hdmi_edid_version_t SSMReadHDMIEdidVersion(tv_hdmi_port_id_t port)
 {
     int tmp_val = 0;
     int tmp_ret = 0;

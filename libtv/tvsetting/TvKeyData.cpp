@@ -969,20 +969,7 @@ int AppendEdidPrefixCode(unsigned char customer_hdmi_edid_buf[],
     customer_hdmi_edid_buf[3] = 'D';
     memcpy(customer_hdmi_edid_buf + 4, hdmi_edid_buf,
            CC_CUSTOMER_HDMI_EDID_TOTAL_SIZE - 4);
-    /*
-     LOGD("%s, customer_hdmi_edid_buf: %c,%c,%c,%c,%x,%x,%x,%x.\n", __FUNCTION__,
-     customer_hdmi_edid_buf[0],customer_hdmi_edid_buf[1],customer_hdmi_edid_buf[2],customer_hdmi_edid_buf[3],
-     customer_hdmi_edid_buf[12],customer_hdmi_edid_buf[13],customer_hdmi_edid_buf[14],customer_hdmi_edid_buf[15]);*/
-    /*
-     LOGD("%s, customer_hdmi_edid_buf: \n", __FUNCTION__);
-     int i, j;
-     for (i = 0; i < 16; i++) {
-     LOGD("[%2d] ", i);
-     for (j = 0; j < 16; j++) {
-     LOGD("0x%02lx, ", customer_hdmi_edid_buf[4 + (i*16 + j)]);
-     }
-     LOGD("\n");
-     }*/
+
     return 0;
 }
 

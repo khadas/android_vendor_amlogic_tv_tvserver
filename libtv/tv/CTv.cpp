@@ -1917,9 +1917,6 @@ int CTv::StopTvLock ( void )
     mAv.ClearVideoBuffer();
     mAv.EnableVideoBlackout();
     SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
-
-    //tvWriteSysfs("/sys/power/wake_unlock", "tvserver.run");
-
     return 0;
 }
 
@@ -2115,14 +2112,6 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
             || source_input == SOURCE_HDMI4) {
             m_hdmi_sampling_rate = 0;
             m_hdmi_audio_data = 0;
-        } else if (source_input == SOURCE_SPDIF) {
-            InitTvAudio(48000, CC_IN_USE_SPDIF_DEVICE);
-            HanldeAudioInputSr(48000);
-            //SetAudioMuteForSystem(CC_AUDIO_UNMUTE);
-            //SetAudioMuteForTv(CC_AUDIO_UNMUTE);
-        } else {
-            InitTvAudio(48000, CC_IN_USE_I2S_DEVICE);
-            HanldeAudioInputSr(-1);
         }
 
         if (mpTvin->SwitchPort ( cur_port ) == 0) { //ok
@@ -2170,6 +2159,14 @@ void CTv::onSigToStable()
                                      INDEX_2D, m_cur_sig_info.trans_fmt);
     if (ret < 0) {
         LOGE("%s Set CurrentSourceInfo error!\n");
+    }
+
+    if (m_source_input == SOURCE_SPDIF) {
+        InitTvAudio(48000, CC_IN_USE_SPDIF_DEVICE);
+        HanldeAudioInputSr(48000);
+    } else {
+        InitTvAudio(48000, CC_IN_USE_I2S_DEVICE);
+        HanldeAudioInputSr(-1);
     }
 
     CVpp::getInstance()->LoadVppSettings(m_source_input, m_cur_sig_info.fmt, INDEX_2D,
@@ -3414,7 +3411,6 @@ void CTv::AudioCtlUninit()
     int oldMuteStatus = mAudioMuteStatusForTv;
     SetAudioMuteForTv(CC_AUDIO_MUTE);
 
-    //AudioCtlUninit();
     AudioSetAudioInSource (CC_AUDIO_IN_SOURCE_HDMI);
     SetDAC_Digital_PlayBack_Volume(255);
     AudioSetAudioSourceType (AUDIO_MPEG_SOURCE);

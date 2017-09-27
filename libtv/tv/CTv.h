@@ -36,7 +36,7 @@
 #include "AutoBackLight.h"
 #include "CAutoPQparam.h"
 #include "CBootvideoStatusDetect.h"
-#include "tvin/CSourceConnectDetect.h"
+#include "tvin/CDevicesPollStatusDetect.h"
 #include "fbcutils/fbcutils.h"
 #include "CTvGpio.h"
 
@@ -92,7 +92,7 @@ typedef enum TvRunStatus_s {
     TV_CLOSE_ED,
 } TvRunStatus_t;
 
-class CTv : public CTvin::CHDMIAudioCheck::IHDMIAudioCheckObserver, public CSourceConnectDetect::ISourceConnectObserver, public IUpgradeFBCObserver, public CTvSubtitle::IObserver, public CBootvideoStatusDetect::IBootvideoStatusObserver, public CTv2d4GHeadSetDetect::IHeadSetObserver {
+class CTv : public CTvin::CHDMIAudioCheck::IHDMIAudioCheckObserver, public CDevicesPollStatusDetect::ISourceConnectObserver, public IUpgradeFBCObserver, public CTvSubtitle::IObserver, public CBootvideoStatusDetect::IBootvideoStatusObserver, public CTv2d4GHeadSetDetect::IHeadSetObserver {
 public:
     static const int TV_ACTION_NULL = 0x0000;
     static const int TV_ACTION_IN_VDIN = 0x0001;
@@ -234,7 +234,7 @@ public:
 
     CTvFactory mFactoryMode;
     CTvin::CHDMIAudioCheck mHDMIAudioCheckThread;
-    CSourceConnectDetect mSourceConnectDetectThread;
+    CDevicesPollStatusDetect mDevicesPollStatusDetectThread;
     CBootvideoStatusDetect *mBootvideoStatusDetectThread;
     CHDMIRxManager mHDMIRxManager;
 

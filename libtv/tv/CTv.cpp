@@ -3205,8 +3205,8 @@ int CTv::Tv_SaveColorTemperature ( vpp_color_temperature_mode_t mode, tv_source_
 
 int CTv::Tv_SetDisplayMode ( vpp_display_mode_t mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t fmt, int is_save )
 {
-    int ret = SetDisplayMode((vpp_display_mode_t)mode, tv_source_input, (tvin_sig_fmt_t)fmt);
-    //ret = SetDisplayMode(VPP_DISPLAY_MODE_PERSON, (tv_source_input_type_t)source_type, (tvin_sig_fmt_t)fmt);
+    int ret = SetDisplayMode((vpp_display_mode_t)mode, tv_source_input, GetCurrentSignalInfo().fmt);
+
     if (ret == 0) {
         if (is_save == 1) {
             ret = ret | SSMSaveDisplayMode ( tv_source_input, (int)mode );

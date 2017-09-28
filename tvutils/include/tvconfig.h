@@ -28,7 +28,6 @@
 #define CFG_SSM_HDMI_AV_DETECT                  "ssm.hdmi_av.hotplug.detect.en"
 #define CFG_SSM_HDMI_EDID_EN                    "ssm.handle.hdmi.edid.en"
 
-
 #define CFG_ATV_FREQ_LIST                       "atv.get.min.max.freq"
 #define CFG_DTV_SCAN_SORT_MODE                  "dtv.scan.sort.mode"
 
@@ -46,7 +45,6 @@
 #define CFG_TVIN_THERMAL_FBC_COLD_VALUE         "tvin.thermal.fbc.cold.value"
 #define CFG_TVIN_ATV_DISPLAY_SNOW               "tvin.atv.display.snow"
 
-
 #define CFG_AUDIO_SRS_SOURROUND_GAIN            "audio.srs.sourround.gain"
 #define CFG_AUDIO_SRS_INPUT_GAIN                "audio.srs.input.gain"
 #define CFG_AUDIO_SRS_OUTPUT_GAIN               "audio.srs.output.gain"
@@ -54,16 +52,17 @@
 #define CFG_AUDIO_SRS_TRUBASS_SPEAKERSIZE       "audio.srs.trubass.speakersize"
 #define CFG_AUDIO_SRS_CLARITY_GAIN              "audio.srs.dialogclarity.gain"
 #define CFG_AUDIO_SRS_DEFINITION_GAIN           "audio.srs.definition.gain"
-
 #define CFG_AUDIO_SRS_SOURROUND_MASTER_GAIN     "audio.srs.sourround.ampmaster.gain"
 #define CFG_AUDIO_SRS_CLARITY_MASTER_GAIN       "audio.srs.dialogclarity.ampmaster.gain"
 #define CFG_AUDIO_SRS_TRUBASS_MASTER_GAIN       "audio.srs.trubass.ampmaster.gain"
 #define CFG_AUDIO_SRS_TRUBASS_CLARITY_MASTER_GAIN "audio.srs.trubass.dialogclarity.ampmaster.gain"
+
 #define CFG_AUDIO_PRE_GAIN_FOR_ATV              "audio.pre.gain.for.atv"
 #define CFG_AUDIO_PRE_GAIN_FOR_DTV              "audio.pre.gain.for.dtv"
 #define CFG_AUDIO_PRE_GAIN_FOR_AV               "audio.pre.gain.for.av"
 #define CFG_AUDIO_PRE_GAIN_FOR_HDMI             "audio.pre.gain.for.hdmi"
 #define CFG_AUDIO_MASTER_VOL                    "audio.master.vol"
+#define CFG_AUDIO_BALANCE_MAX_VOL               "audio.balance.max.vol"
 
 #define CFG_FBC_PANEL_INFO                      "fbc.get.panelinfo"
 #define CFG_FBC_USED                            "platform.havefbc"
@@ -81,7 +80,6 @@
 #define UBOOTENV_CONSOLE                        "ubootenv.var.console"
 #define UBOOTENV_PROJECT_INFO                   "ubootenv.var.project_info"
 #define UBOOTENV_AMPINDEX                       "ubootenv.var.ampindex"
-
 
 //for tv sysfs
 #define SYS_SPDIF_MODE_DEV_PATH                 "/sys/class/audiodsp/digital_raw"
@@ -101,19 +99,16 @@
 #define CFG_AUDIO_VIRTUAL_ENABLE                "audio.virtual.enable"
 #define CFG_AUDIO_VIRTUAL_LEVEL                 "audio.virtual.level"
 
-
 extern int tv_config_load(const char *file_name);
 extern int tv_config_unload();
 extern int tv_config_save();
 
 //[TV] section
-
 extern int config_set_str(const char *section, const char *key, const char *value);
 extern const char *config_get_str(const char *section, const char *key, const char *def_value);
 extern int config_get_int(const char *section, const char *key, const int def_value);
 extern int config_set_int(const char *section, const char *key, const int value);
 extern float config_get_float(const char *section, const char *key, const float def_value);
 extern int config_set_float(const char *section, const char *key, const int value);
-
 
 #endif //__TVCONFIG_API_H__

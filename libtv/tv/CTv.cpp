@@ -3718,6 +3718,7 @@ int CTv::SetAudioBalance(int tmp_val)
     mCustomAudioBalance = tmp_val;
 
     int aud_arch_type = GetAudioArchitectureTypeCFG();
+    int max_vol = config_get_int(CFG_SECTION_TV, CFG_AUDIO_BALANCE_MAX_VOL, 255);
 
     mMainVolumeBalanceVal = tmp_val;
 
@@ -3728,7 +3729,7 @@ int CTv::SetAudioBalance(int tmp_val)
     } else {
         int tmp_ret = 0;
         int vol_buf[2] = {0, 0};
-        mAudioAlsa.CalculateBalanceVol(255, mMainVolumeBalanceVal, vol_buf);
+        mAudioAlsa.CalculateBalanceVol(max_vol, mMainVolumeBalanceVal, vol_buf);
 
         tmp_ret |= mAudioAlsa.SetExternalDacChannelVolume(1, vol_buf[0]);
         tmp_ret |= mAudioAlsa.SetExternalDacChannelVolume(2, vol_buf[1]);

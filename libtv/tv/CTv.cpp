@@ -165,7 +165,7 @@ CTv::CTv():mTvMsgQueue(this)
 
     m_hdmi_audio_data = 0;
     mHDMIAudioCheckThread.setObserver(this);
-    mSourceConnectDetectThread.setObserver ( this );
+    mDevicesPollStatusDetectThread.setObserver ( this );
     mFrontDev->setObserver ( &mTvMsgQueue );
     if (mHdmiOutFbc) {
         fbcIns = GetSingletonFBC();
@@ -1791,7 +1791,7 @@ int CTv::OpenTv ( void )
     mFrontDev->autoLoadFE();
     mAv.Open();
     resetDmxAndAvSource();
-    mSourceConnectDetectThread.startDetect();
+    mDevicesPollStatusDetectThread.startDetect();
     ClearAnalogFrontEnd();
     InitCurrenSignalInfo();
 
@@ -2443,7 +2443,7 @@ void CTv::onSourceConnect(int source_type, int connect_status)
 
 int CTv::GetSourceConnectStatus(tv_source_input_t source_input)
 {
-    return mSourceConnectDetectThread.GetSourceConnectStatus((tv_source_input_t)source_input);
+    return mDevicesPollStatusDetectThread.GetSourceConnectStatus((tv_source_input_t)source_input);
 }
 
 tv_source_input_t CTv::GetCurrentSourceInputLock ( void )

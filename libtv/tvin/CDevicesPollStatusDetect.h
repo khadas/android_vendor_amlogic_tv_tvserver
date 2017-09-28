@@ -49,10 +49,10 @@ static const char *HDMI_DETECT_PATH = "/dev/hdmirx0";
 static const char *VPP_POLL_PATCH = "/dev/amvideo_poll";
 
 using namespace android;
-class CSourceConnectDetect: public Thread {
+class CDevicesPollStatusDetect: public Thread {
 public:
-    CSourceConnectDetect();
-    ~CSourceConnectDetect();
+    CDevicesPollStatusDetect();
+    ~CDevicesPollStatusDetect();
     int startDetect();
     int GetSourceConnectStatus(tv_source_input_t source_input);
     int SourceInputMaptoChipHdmiPort(tv_source_input_t source_input);

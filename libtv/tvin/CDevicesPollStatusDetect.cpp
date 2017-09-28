@@ -8,7 +8,7 @@
  */
 
 #define LOG_TAG "tvserver"
-#define LOG_TV_TAG "CSourceConnectDetect"
+#define LOG_TV_TAG "CDevicesPollStatusDetect"
 
 #include "CTvin.h"
 #include <CTvLog.h>
@@ -24,9 +24,9 @@
 #include <tvutils.h>
 #include <tvconfig.h>
 
-#include "CSourceConnectDetect.h"
+#include "CDevicesPollStatusDetect.h"
 
-CSourceConnectDetect::CSourceConnectDetect()
+CDevicesPollStatusDetect::CDevicesPollStatusDetect()
 {
     mpObserver = NULL;
     if (mEpoll.create() < 0) {
@@ -52,17 +52,17 @@ CSourceConnectDetect::CSourceConnectDetect()
     }
 }
 
-CSourceConnectDetect::~CSourceConnectDetect()
+CDevicesPollStatusDetect::~CDevicesPollStatusDetect()
 {
 }
 
-int CSourceConnectDetect::startDetect()
+int CDevicesPollStatusDetect::startDetect()
 {
-    this->run("CSourceConnectDetect");
+    this->run("CDevicesPollStatusDetect");
     return 0;
 }
 
-int CSourceConnectDetect::SourceInputMaptoChipHdmiPort(tv_source_input_t source_input)
+int CDevicesPollStatusDetect::SourceInputMaptoChipHdmiPort(tv_source_input_t source_input)
 {
     tvin_port_t source_port = TVIN_PORT_NULL;
     source_port = CTvin::getInstance()->Tvin_GetSourcePortBySourceInput(source_input);
@@ -86,7 +86,7 @@ int CSourceConnectDetect::SourceInputMaptoChipHdmiPort(tv_source_input_t source_
 
 }
 
-tv_source_input_t CSourceConnectDetect::ChipHdmiPortMaptoSourceInput(int port)
+tv_source_input_t CDevicesPollStatusDetect::ChipHdmiPortMaptoSourceInput(int port)
 {
     switch (port) {
     case HDMI_DETECT_STATUS_BIT_A:
@@ -107,7 +107,7 @@ tv_source_input_t CSourceConnectDetect::ChipHdmiPortMaptoSourceInput(int port)
     }
 }
 
-int CSourceConnectDetect::GetSourceConnectStatus(tv_source_input_t source_input)
+int CDevicesPollStatusDetect::GetSourceConnectStatus(tv_source_input_t source_input)
 {
     int PlugStatus = -1;
     int hdmi_status = 0;
@@ -159,7 +159,7 @@ int CSourceConnectDetect::GetSourceConnectStatus(tv_source_input_t source_input)
     return PlugStatus;
 }
 
-bool CSourceConnectDetect::threadLoop()
+bool CDevicesPollStatusDetect::threadLoop()
 {
     if ( mpObserver == NULL ) {
         return false;
@@ -167,11 +167,11 @@ bool CSourceConnectDetect::threadLoop()
 
     LOGD("%s, entering...\n", "TV");
 
-    prctl(PR_SET_NAME, (unsigned long)"CSourceConnectDetect thread loop");
+    prctl(PR_SET_NAME, (unsigned long)"CDevicesPollStatusDetect thread loop");
     //init status
     mHdmiDetectFile.readFile((void *)(&m_hdmi_status), sizeof(int));
     mAvinDetectFile.readFile((void *)(&m_avin_status), sizeof(struct report_data_s) * 2);
-    LOGD("CSourceConnectDetect Loop, get init hdmi = 0x%x  avin[0].status = %d, avin[1].status = %d", m_hdmi_status, m_avin_status[0].status, m_avin_status[1].status);
+    LOGD("CDevicesPollStatusDetect Loop, get init hdmi = 0x%x  avin[0].status = %d, avin[1].status = %d", m_hdmi_status, m_avin_status[0].status, m_avin_status[1].status);
 
     while (!exitPending()) { //requietexit() or requietexitWait() not call
         int num = mEpoll.wait();
@@ -267,7 +267,7 @@ bool CSourceConnectDetect::threadLoop()
         }
     }//exit
 
-    LOGD("%s, exiting...\n", "CSourceConnectDetect");
+    LOGD("%s, exiting...\n", "CDevicesPollStatusDetect");
     //return true, run again, return false,not run.
     return false;
 }

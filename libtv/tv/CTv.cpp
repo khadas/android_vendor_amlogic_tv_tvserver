@@ -510,8 +510,8 @@ void CTv::onHdmiSrChanged(int sr, bool bInit)
 {
     if (bInit) {
         LOGD ( "%s, Init HDMI audio, sampling rate:%d", __FUNCTION__,  sr );
-        sr = HanldeAudioInputSr(sr);
         InitTvAudio (sr, CC_IN_USE_SPDIF_DEVICE);
+        sr = HanldeAudioInputSr(sr);
     } else {
         LOGD ( "%s, Reset HDMI sampling rate to %d", __FUNCTION__,  sr );
         AudioChangeSampleRate ( sr );
@@ -2112,6 +2112,9 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
             || source_input == SOURCE_HDMI4) {
             m_hdmi_sampling_rate = 0;
             m_hdmi_audio_data = 0;
+        } else if (source_input == SOURCE_SPDIF) {
+            InitTvAudio(48000, CC_IN_USE_SPDIF_DEVICE);
+            HanldeAudioInputSr(48000);
         }
 
         if (mpTvin->SwitchPort ( cur_port ) == 0) { //ok
@@ -2161,10 +2164,7 @@ void CTv::onSigToStable()
         LOGE("%s Set CurrentSourceInfo error!\n");
     }
 
-    if (m_source_input == SOURCE_SPDIF) {
-        InitTvAudio(48000, CC_IN_USE_SPDIF_DEVICE);
-        HanldeAudioInputSr(48000);
-    } else {
+    if (SOURCE_TV <= m_source_input && m_source_input <= SOURCE_AV2) {
         InitTvAudio(48000, CC_IN_USE_I2S_DEVICE);
         HanldeAudioInputSr(-1);
     }

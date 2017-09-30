@@ -2187,7 +2187,14 @@ void CTv::onSigToStable()
             } else {
                 freq = 50;
             }
+
+            if (CVpp::getInstance()->Vpp_GetAutoSwitchPCModeFlag() == 1) {
+                MnoNeedAutoSwitchToMonitorMode = false;
+            } else {
+                MnoNeedAutoSwitchToMonitorMode = true;
+            }
             autoSwitchToMonitorMode();
+
         } else if ( CTvin::Tvin_is50HzFrameRateFmt ( m_cur_sig_info.fmt ) ) {
             freq = 50;
         }
@@ -3086,47 +3093,11 @@ int CTv::Tv_SaveHue ( int hue, tv_source_input_t tv_source_input )
     return CVpp::getInstance()->SaveHue(hue, tv_source_input);
 }
 
-int CTv::processMonitorMode(tv_source_input_t tv_source_input, vpp_picture_mode_t mode) {
-    vpp_picture_mode_t cur_mode = Tv_GetPQMode(tv_source_input);
-    if (cur_mode == mode)//don't set again
-        return 0;
-    if ((tv_source_input < SOURCE_HDMI1) ||  (tv_source_input > SOURCE_HDMI4))//must source must be HDMI
-        return -1;
-    if (cur_mode == VPP_PICTURE_MODE_MONITOR) {
-        SetAudioMuteForTv ( CC_AUDIO_MUTE );
-        CVpp::getInstance()->enableMonitorMode(false);
-        tvin_port_t cur_port = mpTvin->Tvin_GetSourcePortBySourceInput(m_source_input);
-        mHDMIAudioCheckThread.requestAndWaitPauseCheck();
-        mpTvin->SwitchPort(cur_port);
-        CVpp::getInstance()->Vpp_ResetLastVppSettingsSourceType();
-        mHDMIAudioCheckThread.initCheckState();
-        mHDMIAudioCheckThread.resumeCheck(1000);
-    } else if (mode == VPP_PICTURE_MODE_MONITOR) {
-        SetAudioMuteForTv ( CC_AUDIO_MUTE );
-        CVpp::getInstance()->enableMonitorMode(true);
-        tvin_port_t cur_port = mpTvin->Tvin_GetSourcePortBySourceInput(m_source_input);
-        mHDMIAudioCheckThread.requestAndWaitPauseCheck();
-        mpTvin->SwitchPort(cur_port);
-        mHDMIAudioCheckThread.initCheckState();
-        mHDMIAudioCheckThread.resumeCheck(1000);
-        return 0;
-    }
-    return -1;
-}
-
 int CTv::Tv_SetPQMode ( vpp_picture_mode_t mode, tv_source_input_t tv_source_input, int is_save )
 {
-    MnoNeedAutoSwitchToMonitorMode = true;
-    if (processMonitorMode(tv_source_input, mode) == 0) {
-        if (is_save) {
-            CVpp::getInstance()->SavePQMode(mode, tv_source_input);
-        }
-        return 0;
-    }
-    return CVpp::getInstance()->SetPQMode((vpp_picture_mode_t)mode,
-        (tv_source_input_t)tv_source_input, m_cur_sig_info.fmt,
-        m_cur_sig_info.trans_fmt,
-        INDEX_2D, is_save);
+    return CVpp::getInstance()->SetPQMode((vpp_picture_mode_t)mode, (tv_source_input_t)tv_source_input,
+                                    m_cur_sig_info.fmt, m_cur_sig_info.trans_fmt, INDEX_2D, is_save, 0);
+
 }
 
 vpp_picture_mode_t CTv::Tv_GetPQMode ( tv_source_input_t tv_source_input )
@@ -5291,10 +5262,9 @@ int CTv::KillMediaServerClient()
 
 int CTv::autoSwitchToMonitorMode()
 {
-    LOGD("[ctv] %s, CurSigInfo.cfmt is %d , CurSigInfo.fmt is %x \n", __FUNCTION__,
-            m_cur_sig_info.cfmt, m_cur_sig_info.fmt);
-
-    if ( !MnoNeedAutoSwitchToMonitorMode) {
+    LOGD("%s, CurSigInfo.cfmt is %d , CurSigInfo.fmt is %x \n", __FUNCTION__, m_cur_sig_info.cfmt, m_cur_sig_info.fmt);
+    int ret = -1;
+    if (!MnoNeedAutoSwitchToMonitorMode) {
         if ((m_cur_sig_info.cfmt == TVIN_YUV444)
             || (m_cur_sig_info.cfmt == TVIN_RGB444)
             || (1 == IsDVISignal())//iS DVI
@@ -5306,16 +5276,19 @@ int CTv::autoSwitchToMonitorMode()
             || ((m_cur_sig_info.fmt >= TVIN_SIG_FMT_HDMI_800X600_00HZ)
                 && (m_cur_sig_info.fmt <= TVIN_SIG_FMT_HDMI_1680X1050_00HZ))){
             LOGD("switch to monitor mode!\n");
-            CVpp::getInstance()->enableMonitorMode(true);
-            CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_MONITOR, m_source_input, m_cur_sig_info.fmt,
-                                           m_cur_sig_info.trans_fmt, INDEX_2D, 1);
+            ret = CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_MONITOR, m_source_input, m_cur_sig_info.fmt,
+                                           m_cur_sig_info.trans_fmt, INDEX_2D, 1, 1);
         } else if (CVpp::getInstance()->GetPQMode(m_source_input) == VPP_PICTURE_MODE_MONITOR) {
             LOGD("switch to standard mode!\n");
-            CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_STANDARD, m_source_input, m_cur_sig_info.fmt,
-                                           m_cur_sig_info.trans_fmt, INDEX_2D, 1);
+            ret = CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_STANDARD, m_source_input, m_cur_sig_info.fmt,
+                                           m_cur_sig_info.trans_fmt, INDEX_2D, 1, 1);
+        } else {
+            LOGD("%s, Signal don't match autoswitch condition!\n", __FUNCTION__);
         }
+    }else {
+        LOGD("%s, PQ mode set by user!\n", __FUNCTION__);
     }
-    return 0;
+    return ret;
 }
 
 void CTv::onVdinSignalChange()
@@ -5344,6 +5317,27 @@ void CTv::onVdinSignalChange()
         onSigToNoSig();
     } else {
         InitCurrenSignalInfo();
+    }
+}
+
+void CTv::onSetPQPCMode(int source, int status)
+{
+    LOGD("source = %d, m_source_input = %d, status = %d\n",source, m_source_input, status);
+    if ((source == -1 ) || (source == (int)m_source_input)) {
+        SetAudioMuteForTv(CC_AUDIO_MUTE);
+
+        if (status == 0) {
+            CVpp::getInstance()->enableMonitorMode(false);
+        }else {
+            CVpp::getInstance()->enableMonitorMode(true);
+        }
+
+        tvin_port_t cur_port = mpTvin->Tvin_GetSourcePortBySourceInput(m_source_input);
+        mHDMIAudioCheckThread.requestAndWaitPauseCheck();
+        mpTvin->SwitchPort(cur_port);
+        CVpp::getInstance()->Vpp_ResetLastVppSettingsSourceType();
+        mHDMIAudioCheckThread.initCheckState();
+        mHDMIAudioCheckThread.resumeCheck(1000);
     }
 }
 

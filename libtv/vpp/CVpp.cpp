@@ -207,10 +207,10 @@ int CVpp::Vpp_GetVppConfig(void)
     return 0;
 }
 
-int CVpp::SetPQMode(vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input,
-                    tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save)
+int CVpp::SetPQMode(vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt,
+                        tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save, int is_autoswitch)
 {
-    return tvSetPQMode(pq_mode, is_save);
+    return tvSetPQMode(pq_mode, is_save, is_autoswitch);
 
 }
 
@@ -236,21 +236,22 @@ int CVpp::Vpp_GetPQModeValue(tv_source_input_t tv_source_input, vpp_picture_mode
     return tvGetPQParams(source_input_param, pq_mode, pq_para);
 }
 
+int CVpp::Vpp_GetAutoSwitchPCModeFlag(void)
+{
+    return tvGetAutoSwitchPCModeFlag();
+}
+
 void CVpp::enableMonitorMode(bool enable)
 {
-    CHDMIRxManager manager;
-
     if (enable) {
         tvWriteSysfs(DI_NR2_ENABLE, "0");
         tvWriteSysfs(AMVECM_PC_MODE, "0");
-        manager.SetHdmiPcMode_Monitor(1);
         if (mHdmiOutFbc && fbcIns) {
             fbcIns->cfbc_EnterPCMode(0);
         }
     } else {
         tvWriteSysfs(DI_NR2_ENABLE, "1");
         tvWriteSysfs(AMVECM_PC_MODE, "1");
-        manager.SetHdmiPcMode_Monitor(0);
         if (mHdmiOutFbc && fbcIns) {
             fbcIns->cfbc_EnterPCMode(1);
         }

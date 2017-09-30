@@ -64,10 +64,11 @@ public:
     int LoadVppLdimRegs();
     int LoadVppSettings ( tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int Vpp_GetVppConfig();
-    int SetPQMode ( vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
+    int SetPQMode ( vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save, int is_autoswitch);
     vpp_picture_mode_t GetPQMode ( tv_source_input_t tv_source_input );
     int SavePQMode ( vpp_picture_mode_t pq_mode,  tv_source_input_t tv_source_input );
     int Vpp_GetPQModeValue ( tv_source_input_t, vpp_picture_mode_t, vpp_pq_para_t * );
+    int Vpp_GetAutoSwitchPCModeFlag(void);
     void enableMonitorMode(bool enable);
     int SetBrightness ( int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
     int GetBrightness ( tv_source_input_t tv_source_input );

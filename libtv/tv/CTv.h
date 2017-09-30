@@ -479,8 +479,7 @@ private:
 
     bool isBootvideoStopped();
 
-	int processMonitorMode(tv_source_input_t source_type, vpp_picture_mode_t mode);
-	int autoSwitchToMonitorMode();
+    int autoSwitchToMonitorMode();
 
     CAudioAlsa mAudioAlsa;
     CAudioEffect mAudioEffect;
@@ -520,8 +519,8 @@ private:
     int mMainVolumeBalanceVal;
     //end audio
     bool mATVDisplaySnow;
-	bool iSBlackPattern;
-	bool MnoNeedAutoSwitchToMonitorMode;
+    bool iSBlackPattern;
+    bool MnoNeedAutoSwitchToMonitorMode;
 
 protected:
     class CTvMsgQueue: public CMsgQueueThread, public CAv::IObserver, public CTvScanner::IObserver , public CTvEpg::IObserver, public CFrontEnd::IObserver {
@@ -594,6 +593,7 @@ protected:
 
     virtual void onSourceConnect(int source_type, int connect_status);
     virtual void onVdinSignalChange();
+    virtual void onSetPQPCMode(int source, int status);
     virtual void onUpgradeStatus(int status, int progress);
     virtual void onThermalDetect(int state);
 

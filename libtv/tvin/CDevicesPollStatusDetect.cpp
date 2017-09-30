@@ -253,6 +253,10 @@ bool CDevicesPollStatusDetect::threadLoop()
                         }
                         mpObserver->onSourceConnect(source, plug);
                     }
+
+                    int pc_mode_status = (hdmi_status >> 4);
+                    mpObserver->onSetPQPCMode(source, pc_mode_status);//pc_mode_status：1 PC mode on；0 PC mode off；
+
                     m_hdmi_status = hdmi_status;
                 }else if ( fd == CTvin::getInstance()->m_vdin_dev_fd ) {
                     if (mpObserver != NULL) {

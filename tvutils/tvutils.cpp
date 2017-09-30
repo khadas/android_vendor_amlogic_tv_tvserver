@@ -296,12 +296,12 @@ int tvGetActualSize(int id)
 
 }
 
-int tvSetPQMode ( vpp_picture_mode_t mode, int is_save )
+int tvSetPQMode ( vpp_picture_mode_t mode, int is_save, int is_autoswitch)
 {
     const sp<ISystemControlService> &sws = getSystemControlService();
 
     if (sws != 0) {
-        sws->setPQmode((int)mode, is_save);
+        sws->setPQmode((int)mode, is_save, is_autoswitch);
     }
 
     return 0;
@@ -345,6 +345,17 @@ int tvGetPQParams(source_input_param_t source_input_param, vpp_picture_mode_t pq
         *pq_para = tmp_value;
 
         return 0;
+    }
+
+    return -1;
+}
+
+int tvGetAutoSwitchPCModeFlag(void)
+{
+    const sp<ISystemControlService> &sws = getSystemControlService();
+
+    if (sws != 0) {
+        return sws->getAutoSwitchPCModeFlag();
     }
 
     return -1;

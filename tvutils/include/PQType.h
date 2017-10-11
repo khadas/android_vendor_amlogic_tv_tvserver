@@ -715,7 +715,6 @@ typedef struct tvpq_nonlinear_s {
 } tvpq_nonlinear_t;
 
 typedef struct di_mode_param_s {
-    const char *tablename;
     vpp_mcdi_mode_t mcdi_mode;
     vpp_deblock_mode_t deblock_mode;
     vpp_noise_reduction2_mode_t nr_mode;

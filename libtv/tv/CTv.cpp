@@ -510,8 +510,8 @@ void CTv::onHdmiSrChanged(int sr, bool bInit)
 {
     if (bInit) {
         LOGD ( "%s, Init HDMI audio, sampling rate:%d", __FUNCTION__,  sr );
-        InitTvAudio (sr, CC_IN_USE_SPDIF_DEVICE);
         sr = HanldeAudioInputSr(sr);
+        InitTvAudio (sr, CC_IN_USE_SPDIF_DEVICE);
     } else {
         LOGD ( "%s, Reset HDMI sampling rate to %d", __FUNCTION__,  sr );
         AudioChangeSampleRate ( sr );

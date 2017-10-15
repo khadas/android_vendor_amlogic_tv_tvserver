@@ -10,274 +10,272 @@
 #define LOG_TAG "tvserver"
 #define LOG_TV_TAG "CTvRecord"
 
-#include <string.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <am_debug.h>
-#include <am_dmx.h>
-#include <am_av.h>
-
-#include <am_misc.h>
-
-#include <am_fend.h>
-#include <am_dvr.h>
-#include <errno.h>
-#include "CTvProgram.h"
-#include <tvconfig.h>
+#include <tvutils.h>
 #include "CTvRecord.h"
+#include "CTvLog.h"
 
 #define FEND_DEV_NO 0
 #define DVR_DEV_NO 0
 #define DVR_BUF_SIZE 1024*1024
 #define DVR_DEV_COUNT      (2)
 
-typedef struct {
-    int id;
-    char file_name[256];
-    pthread_t thread;
-    int running;
-    int fd;
-} DVRData;
-
-static DVRData data_threads[DVR_DEV_COUNT];
-int pvr_init = 0;
 CTvRecord::CTvRecord()
 {
-    AM_DVR_OpenPara_t dpara;
-    memset(&dpara, 0, sizeof(dpara));
-    AM_DVR_Open(DVR_DEV_NO, &dpara);
-    data_threads[DVR_DEV_NO].id = 0;
-    data_threads[DVR_DEV_NO].fd = -1;
-    data_threads[DVR_DEV_NO].running = 0;
-
-    AM_DVR_SetSource(DVR_DEV_NO, AM_DVR_SRC_ASYNC_FIFO0);
-    AM_DVR_SetBufferSize(DVR_DEV_NO, DVR_BUF_SIZE);
-
-    memset(filename, 0, sizeof(filename));
-    progid = 0xFFFF;
-    vpid = 0x1fff;
-    apid = 0x1fff;
+    memset(&mCreateParam, 0, sizeof(mCreateParam));
+    memset(&mRecParam, 0, sizeof(mRecParam));
+    memset(&mRecInfo, 0, sizeof(mRecInfo));
+    mCreateParam.fend_dev = FEND_DEV_NO;
+    mCreateParam.dvr_dev = DVR_DEV_NO;
+    mCreateParam.async_fifo_id = 0;
+    mRec = NULL;
 }
+
 CTvRecord::~CTvRecord()
 {
-    AM_DVR_Close(DVR_DEV_NO);
-
-}
-void CTvRecord::dvr_init(void)
-{
-    AM_DVR_OpenPara_t para;
-    char buf[32];
-
-    if (pvr_init)
-        return;
-
-    memset(&para, 0, sizeof(para));
-    LOGD("%s,%d", "TV", __LINE__);
-
-    AM_DVR_Open(DVR_DEV_NO, &para);
-    AM_DVR_SetSource(DVR_DEV_NO, AM_DVR_SRC_ASYNC_FIFO0);
-    AM_DVR_SetBufferSize(DVR_DEV_NO, DVR_BUF_SIZE);
-
-    snprintf(buf, sizeof(buf), "%d", (512 * 1024));
-    AM_FileEcho("/sys/class/dmx/asyncfifo_len", buf);
-
-    pvr_init = 1;
-}
-
-char *CTvRecord::GetRecordFileName()
-{
-    return filename;
-}
-void CTvRecord::SetRecordFileName(char *name)
-{
-    strcpy(filename, name);
-}
-void CTvRecord::SetCurRecProgramId(int id)
-{
-    progid = id;
-}
-
-int CTvRecord::dvr_data_write(int fd, uint8_t *buf, int size)
-{
-    int ret;
-    int left = size;
-    uint8_t *p = buf;
-    LOGD("%s,%d", "TV", __LINE__);
-
-    while (left > 0) {
-        ret = write(fd, p, left);
-        if (ret == -1) {
-            if (errno != EINTR) {
-                LOGD("Write DVR data failed: %s", strerror(errno));
-                break;
-            }
-            ret = 0;
-        }
-
-        left -= ret;
-        p += ret;
+    if (mId)
+        free((void*)mId);
+    if (mRec) {
+        AM_REC_Destroy(mRec);
+        mRec = NULL;
     }
-
-    return (size - left);
-}
-void *CTvRecord::dvr_data_thread(void *arg)
-{
-    DVRData *dd = (DVRData *)arg;
-    int cnt;
-    uint8_t buf[256 * 1024];
-
-    LOGD("Data thread for DVR%d start ,record file will save to '%s'", dd->id, dd->file_name);
-    LOGD("%s,%d", "TV", __LINE__);
-
-    while (dd->running) {
-        cnt = AM_DVR_Read(dd->id, buf, sizeof(buf), 1000);
-        if (cnt <= 0) {
-            LOGD("No data available from DVR%d", dd->id);
-            usleep(200 * 1000);
-            continue;
-        }
-        //AM_DEBUG(1, "read from DVR%d return %d bytes", dd->id, cnt);
-        if (dd->fd != -1) {
-            dvr_data_write(dd->fd, buf, cnt);
-        }
-    }
-
-    if (dd->fd != -1) {
-        close(dd->fd);
-        dd->fd = -1;
-    }
-    LOGD("Data thread for DVR%d now exit", dd->id);
-
-    return NULL;
 }
 
-void CTvRecord::start_data_thread(int dev_no)
+int CTvRecord::setFilePath(const char *name)
 {
-    DVRData *dd = &data_threads[dev_no];
-
-    if (dd->running)
-        return;
-    LOGD("%s,%d,dev=%d", "TV", __LINE__, dev_no);
-    dd->fd = open(dd->file_name, O_TRUNC | O_WRONLY | O_CREAT, 0666);
-    if (dd->fd == -1) {
-        LOGD("Cannot open record file '%s' for DVR%d, %s", dd->file_name, dd->id, strerror(errno));
-        return;
-    }
-    dd->running = 1;
-    pthread_create(&dd->thread, NULL, dvr_data_thread, dd);
-}
-void CTvRecord::get_cur_program_pid(int progId)
-{
-    CTvProgram prog;
-    int aindex;
-    CTvProgram::Audio *pA;
-    CTvProgram::Video *pV;
-    int ret = CTvProgram::selectByID(progId, prog);
-    if (ret != 0) return;
-
-    LOGD("%s,%d", "TV", __LINE__);
-    pV = prog.getVideo();
-    if (pV != NULL) {
-        setvpid(pV->getPID());
-    }
-
-    aindex = prog.getCurrAudioTrackIndex();
-    if (-1 == aindex) { //db is default
-        aindex = prog.getCurrentAudio(String8("eng"));
-        if (aindex >= 0) {
-            prog.setCurrAudioTrackIndex(progId, aindex);
-        }
-    }
-
-    if (aindex >= 0) {
-        pA = prog.getAudio(aindex);
-        if (pA != NULL) {
-            setapid(pA->getPID());
-        }
-    }
-
-}
-int CTvRecord::start_dvr()
-{
-    AM_DVR_StartRecPara_t spara;
-    int pid_cnt;
-    int pids[2];
-
-    /**仅测试最多8个PID*/
-    get_cur_program_pid(progid);
-    pids[0] = getvpid();
-    pids[1] = getapid();
-
-    strcpy(data_threads[DVR_DEV_NO].file_name, GetRecordFileName());
-    LOGD("%s,%d", "TV", __LINE__);
-    //sprintf(data_threads[DVR_DEV_NO].file_name,"%s","/storage/external_storage/sda4/testdvr.ts");
-    spara.pid_count = 2;
-    memcpy(&spara.pids, pids, sizeof(pids));
-
-    if (AM_DVR_StartRecord(DVR_DEV_NO, &spara) == AM_SUCCESS) {
-        start_data_thread(DVR_DEV_NO);
-    }
-
+    LOGD("setFilePath(%s)", toReadable(name));
+    strncpy(mCreateParam.store_dir, name, AM_REC_PATH_MAX);
+    mCreateParam.store_dir[AM_REC_PATH_MAX-1] = 0;
     return 0;
 }
-void CTvRecord::stop_data_thread(int dev_no)
-{
-    DVRData *dd = &data_threads[dev_no];
-    LOGD("%s,%d", "TV", __LINE__);
 
-    if (! dd->running)
+int CTvRecord::setFileName(const char *prefix, const char *suffix)
+{
+    LOGD("setFileName(%s,%s)", toReadable(prefix), toReadable(suffix));
+    strncpy(mRecParam.prefix_name, prefix, AM_REC_NAME_MAX);
+    mRecParam.prefix_name[AM_REC_NAME_MAX-1] = 0;
+    strncpy(mRecParam.suffix_name, suffix, AM_REC_SUFFIX_MAX);
+    mRecParam.suffix_name[AM_REC_SUFFIX_MAX-1] = 0;
+    return 0;
+}
+
+int CTvRecord::setMediaInfo(AM_REC_MediaInfo_t *info)
+{
+    LOGD("setMediaInfo()" );
+    memcpy(&mRecParam.media_info, info, sizeof(AM_REC_MediaInfo_t));
+    return 0;
+}
+
+int CTvRecord::setMediaInfoExt(int type, int val)
+{
+    LOGD("setMediaInfoExt(%d,%d)", type, val );
+    switch (type) {
+        case REC_EXT_TYPE_PMTPID:
+            mRecParam.program.i_pid = val;
+            break;
+        case REC_EXT_TYPE_PN:
+            mRecParam.program.i_number = val;
+            break;
+        case REC_EXT_TYPE_ADD_PID:
+            mExtPids.add(val);
+        case REC_EXT_TYPE_REMOVE_PID:
+            mExtPids.add(val);
+        default:
+            return -1;
+            break;
+    }
+    return 0;
+}
+
+int CTvRecord::setTimeShiftMode(bool enable, int duration, int size)
+{
+    LOGD("setTimeShiftMode(%d, duration:%d - size:%d)", enable, duration, size );
+    mRecParam.is_timeshift = enable? AM_TRUE : AM_FALSE;
+    mRecParam.total_time = enable ? duration : 0;
+    mRecParam.total_size = enable ? size : 0;
+    return 0;
+}
+
+int CTvRecord::setDev(int type, int id)
+{
+    LOGD("setDev(%d,%d)", type, id );
+    switch (type) {
+        case REC_DEV_TYPE_FE:
+            mCreateParam.fend_dev = id;
+            break;
+        case REC_DEV_TYPE_DVR:
+            mCreateParam.dvr_dev = id;
+            break;
+        case REC_DEV_TYPE_FIFO:
+            mCreateParam.async_fifo_id = id;
+            break;
+        default:
+            return -1;
+            break;
+    }
+    return 0;
+}
+
+void CTvRecord::rec_evt_cb(long dev_no, int event_type, void *param, void *data)
+{
+    CTvRecord *rec;
+
+    AM_REC_GetUserData((AM_REC_Handle_t)dev_no, (void**)&rec);
+    if (!rec)
         return;
-    dd->running = 0;
-    pthread_join(dd->thread, NULL);
-    LOGD("Data thread for DVR%d has exit", dd->id);
+
+    switch (event_type) {
+        case AM_REC_EVT_RECORD_END :{
+            AM_REC_RecEndPara_t *endpara = (AM_REC_RecEndPara_t*)param;
+            rec->mEvent.type = RecEvent::EVENT_REC_STOP;
+            rec->mEvent.id = std::string((const char*)data);
+            rec->mEvent.error = endpara->error_code;
+            rec->mEvent.size = endpara->total_size;
+            rec->mEvent.time = endpara->total_time;
+            rec->mpObserver->onEvent(rec->mEvent);
+            }break;
+        case AM_REC_EVT_RECORD_START: {
+            rec->mEvent.type = RecEvent::EVENT_REC_START;
+            rec->mEvent.id = std::string((const char*)data);
+            rec->mpObserver->onEvent(rec->mEvent);
+            }break;
+        default:
+            break;
+    }
+    LOGD ( "rec_evt_callback : dev_no %ld type %d param = %ld\n",
+        dev_no, event_type, (long)param);
 }
 
-
-void CTvRecord::StartRecord(int id)
+int CTvRecord::start(const char *param)
 {
-    AM_DVR_OpenPara_t dpara;
-    fe_status_t status;
-    char buf[32];
+    LOGD("start(%s:%s)", toReadable(mId), toReadable(param));
+    int ret = AM_REC_Create(&mCreateParam, &mRec);
+    if (ret != AM_SUCCESS) {
+        LOGD("create fail(%d)", ret);
+        mRec = NULL;
+        return ret;
+    }
+    AM_REC_SetUserData(mRec, this);
+    AM_EVT_Subscribe((long)mRec, AM_REC_EVT_RECORD_START, rec_evt_cb, (void*)getId());
+    AM_EVT_Subscribe((long)mRec, AM_REC_EVT_RECORD_END, rec_evt_cb, (void*)getId());
 
-    AM_FEND_GetStatus(FEND_DEV_NO, &status);
-
-    if (status & FE_HAS_LOCK) {
-        LOGD("locked\n");
+    AM_REC_SetTFile(mRec, NULL, REC_TFILE_FLAG_AUTO_CREATE);
+    ret = AM_REC_StartRecord(mRec, &mRecParam);
+    if (ret != AM_SUCCESS) {
+        LOGD("start fail(%d)", ret);
+        AM_EVT_Unsubscribe((long)mRec, AM_REC_EVT_RECORD_START, rec_evt_cb, (void*)getId());
+        AM_EVT_Unsubscribe((long)mRec, AM_REC_EVT_RECORD_END, rec_evt_cb, (void*)getId());
+        AM_REC_Destroy(mRec);
+        mRec = NULL;
     } else {
-        LOGD("unlocked\n");
-        return ;
+        LOGD("start ok.");
     }
-    SetCurRecProgramId(id);
-    start_dvr();
-
-    return;
+    return ret;
 }
-void CTvRecord::StopRecord()
+
+int CTvRecord::stop(const char *param)
 {
-    int i = 0;
-    LOGD("stop record for %d", DVR_DEV_NO);
-    AM_DVR_StopRecord(DVR_DEV_NO);
+    LOGD("stop(%s:%s)", toReadable(mId), toReadable(param));
+    if (!mRec)
+        return -1;
 
-    //for (i=0; i< DVR_DEV_COUNT; i++)
-    {
-        if (data_threads[DVR_DEV_NO].running)
-            stop_data_thread(DVR_DEV_NO);
-        //LOGD("Closing DMX%d...", i);
-    }
+    AM_EVT_Subscribe((long)mRec, AM_REC_EVT_RECORD_START, rec_evt_cb, (void*)getId());
+    AM_EVT_Subscribe((long)mRec, AM_REC_EVT_RECORD_END, rec_evt_cb, (void*)getId());
 
-
+    return AM_REC_StopRecord(mRec);
 }
-void CTvRecord::SetRecCurTsOrCurProgram(int sel)
+
+int CTvRecord::setRecCurTsOrCurProgram(int sel)
 {
-    int i = 0;
-    char buf[50];
+    LOGD("setRecCurTsOrCurProgram(%s:%d)", toReadable(mId), sel);
+
+    char buf[64];
     memset(buf, 0, sizeof(buf));
-    for (; i < 3; i++) {
-        snprintf(buf, sizeof(buf), "/sys/class/stb/dvr%d_mode", i);
-        if (sel)
-            AM_FileEcho(buf, "ts");
-        else
-            AM_FileEcho(buf, "pid");
+    snprintf(buf, sizeof(buf), "/sys/class/stb/dvr%d_mode", mCreateParam.dvr_dev);
+    if (sel)
+        tvWriteSysfs(buf, "ts");
+    else
+        tvWriteSysfs(buf, "pid");
+    return 0;
+}
+
+int CTvRecord::getInfo(AM_REC_RecInfo_t *info)
+{
+    if (!mRec || !info)
+        return -1;
+    return AM_REC_GetRecordInfo(mRec, info);
+}
+
+bool CTvRecord::equals(CTvRecord &recorder)
+{
+    return mCreateParam.fend_dev == recorder.mCreateParam.fend_dev
+        && mCreateParam.dvr_dev == recorder.mCreateParam.dvr_dev
+        && mCreateParam.async_fifo_id == recorder.mCreateParam.async_fifo_id;
+}
+
+AM_TFile_t CTvRecord::getFileHandler()
+{
+    if (!mRec)
+        return NULL;
+
+    AM_TFile_t file = NULL;
+    AM_ErrorCode_t err = AM_SUCCESS;
+    err = AM_REC_GetTFile(mRec, &file, NULL);
+    if (err != AM_SUCCESS)
+        return NULL;
+    return file;
+}
+
+AM_TFile_t CTvRecord::detachFileHandler()
+{
+    if (!mRec)
+        return NULL;
+
+    AM_TFile_t file = NULL;
+    int flag;
+    AM_ErrorCode_t err = AM_SUCCESS;
+    err = AM_REC_GetTFile(mRec, &file, &flag);
+    if (err != AM_SUCCESS) {
+        LOGD("get tfile fail(%d)", err);
+        return NULL;
     }
+    AM_REC_SetTFile(mRec, file, flag |REC_TFILE_FLAG_DETACH);
+    return file;
+}
+
+int CTvRecord::getStartPosition()
+{
+    if (!mRec)
+        return 0;
+    return 0;
+}
+
+int CTvRecord::getWritePosition()
+{
+    return 0;
+}
+
+int CTvRecord::setupDefault(const char *param)
+{
+    setDev(CTvRecord::REC_DEV_TYPE_FE, paramGetInt(param, NULL, "fe", 0));
+    setDev(CTvRecord::REC_DEV_TYPE_DVR, paramGetInt(param, NULL, "dvr", 0));
+    setDev(CTvRecord::REC_DEV_TYPE_FIFO, paramGetInt(param, NULL, "fifo", 0));
+    setFilePath(paramGetString(param, NULL, "path", "/storage").c_str());
+    setFileName(paramGetString(param, NULL, "prefix", "REC").c_str(), paramGetString(param, NULL, "suffix", "ts").c_str());
+    AM_REC_MediaInfo_t info;
+    info.duration = 0;
+    info.vid_pid = paramGetInt(param, "v", "pid", -1);
+    info.vid_fmt = paramGetInt(param, "v", "fmt", -1);
+    info.aud_cnt = 1;
+    info.audios[0].pid = paramGetInt(param, "a", "pid", -1);
+    info.audios[0].fmt = paramGetInt(param, "a", "fmt", -1);
+    info.sub_cnt = 0;
+    info.ttx_cnt = 0;
+    memset(info.program_name, 0, sizeof(info.program_name));
+    setMediaInfo(&info);
+    setTimeShiftMode(
+        paramGetInt(param, NULL, "timeshift", 0) ? true : false,
+        paramGetInt(param, "max", "time", 60),
+        paramGetInt(param, "max", "size", -1));
+    return 0;
 }
 

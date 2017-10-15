@@ -11,9 +11,9 @@
 #define LOG_TV_TAG "CTvDmx"
 
 #include "CTvDmx.h"
-CTvDmx::CTvDmx()
+CTvDmx::CTvDmx(int id)
 {
-    mDmxDevId = 0;
+    mDmxDevId = id;
 }
 
 CTvDmx::~CTvDmx()

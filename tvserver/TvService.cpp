@@ -404,6 +404,51 @@ void TvService::onTvEvent(const CTvEv &ev)
         }
         break;
     }
+
+    case CTvEv::TV_EVENT_FRONTEND: {
+        TvEvent::FrontendEvent *pEv = (TvEvent::FrontendEvent *)(&ev);
+        for (int i = 0; i < (int)mClients.size(); i++) {
+            wp<Client> client = mClients[i];
+            if (client != 0) {
+                sp<Client> c = client.promote();
+                if (c != 0) {
+                    Parcel p;
+                    p.writeInt32(pEv->mStatus);
+                    p.writeInt32(pEv->mFrequency);
+                    p.writeInt32(pEv->mParam1);
+                    p.writeInt32(pEv->mParam2);
+                    p.writeInt32(pEv->mParam3);
+                    p.writeInt32(pEv->mParam4);
+                    p.writeInt32(pEv->mParam5);
+                    p.writeInt32(pEv->mParam6);
+                    p.writeInt32(pEv->mParam7);
+                    p.writeInt32(pEv->mParam8);
+                    c->getTvClient()->notifyCallback(FRONTEND_EVENT_CALLBACK, p);
+                }
+            }
+        }
+        break;
+    }
+
+    case CTvEv::TV_EVENT_RECORDER: {
+        TvEvent::RecorderEvent *pEv = (TvEvent::RecorderEvent *)(&ev);
+        for (int i = 0; i < (int)mClients.size(); i++) {
+            wp<Client> client = mClients[i];
+            if (client != 0) {
+                sp<Client> c = client.promote();
+                if (c!= 0) {
+                    Parcel p;
+                    p.writeString16(String16(pEv->mId));
+                    p.writeInt32(pEv->mStatus);
+                    p.writeInt32(pEv->mError);
+                    c->getTvClient()->notifyCallback(RECORDER_EVENT_CALLBACK, p);
+                }
+            }
+        }
+        break;
+    }
+
+
     default:
         break;
     }
@@ -3351,14 +3396,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     break;
 
-    case DTV_START_RECORD: {
-        mpTv->SetRecordFileName((char *)String8(p.readString16()).string());
-        mpTv->StartToRecord();
-    }
-    break;
-    case DTV_STOP_RECORD:
-        mpTv->StopRecording();
-        break;
     case HDMIAV_HOTPLUGDETECT_ONOFF: {
         int flag = mpTv->GetHdmiAvHotplugDetectOnoff();
         r->writeInt32(flag);
@@ -3461,6 +3498,17 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         break;
     }
     // EXTAR END
+
+    //NEWPLAY/RECORDING
+    case DTV_RECORDING_CMD: {
+        int ret = mpTv->doRecordingCommand(p.readInt32(), String8(p.readString16()).string(), String8(p.readString16()).string());
+        r->writeInt32(ret);
+    }break;
+    case DTV_PLAY_CMD: {
+        int ret = mpTv->doPlayCommand(p.readInt32(), String8(p.readString16()).string(), String8(p.readString16()).string());
+        r->writeInt32(ret);
+    }break;
+
     default:
         LOGD("default");
         break;

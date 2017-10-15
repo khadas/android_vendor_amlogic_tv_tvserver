@@ -172,4 +172,12 @@ public:
 
 float getUptimeSeconds();
 
+extern int jsonGetInt(const char *json, const char *obj, const char *value, int def);
+extern const std::string jsonGetString(const char *json, const char *obj, const char *value, const char *def);
+
+extern int paramGetInt(const char *param, const char *section, const char *value, int def);
+extern const std::string paramGetString(const char *param, const char *section, const char *value, const char *def);
+
+inline const char *toReadable(const char *s) { return s? s : "null"; }
+
 #endif  //__TV_MISC_H__

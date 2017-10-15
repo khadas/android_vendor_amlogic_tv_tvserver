@@ -69,6 +69,7 @@ int CAv::Open()
     AM_EVT_Subscribe ( mTvPlayDevId, AM_AV_EVT_AUDIO_SCAMBLED, av_evt_callback, this );
     AM_EVT_Subscribe ( mTvPlayDevId, AM_AV_EVT_VIDEO_NOT_SUPPORT, av_evt_callback, this );
     AM_EVT_Subscribe ( mTvPlayDevId, AM_AV_EVT_VIDEO_AVAILABLE, av_evt_callback, this );
+    AM_EVT_Subscribe ( mTvPlayDevId, AM_AV_EVT_PLAYER_UPDATE_INFO, av_evt_callback, this );
 
     return rt;
 }
@@ -423,6 +424,16 @@ void CAv::av_evt_callback ( long dev_no, int event_type, void *param, void *user
         pAv->mpObserver->onEvent(pAv->mCurAvEvent);
         break;
     }
+    case AM_AV_EVT_PLAYER_UPDATE_INFO: {
+        AM_AV_TimeshiftInfo_t *info = (AM_AV_TimeshiftInfo_t*)param;
+        if (info) {
+            pAv->mCurAvEvent.type = AVEvent::EVENT_PLAY_UPDATE;
+            pAv->mCurAvEvent.param = info->current_time;
+            pAv->mCurAvEvent.status = info->status;
+            pAv->mpObserver->onEvent(pAv->mCurAvEvent);
+        }
+        break;
+    }
     default:
         break;
     }
@@ -439,4 +450,64 @@ int CAv::setLookupPtsForDtmb(int enable)
     tvWriteSysfs(PATH_MEPG_DTMB_LOOKUP_PTS_FLAG, value);
     return 0;
 }
+
+int CAv::startTimeShift(const AM_AV_TimeshiftPara_t *para)
+{
+    LOGD("startTimeShift");
+    return AM_AV_StartTimeshift(mTvPlayDevId, para);
+}
+
+int CAv::stopTimeShift()
+{
+    LOGD ("stopTimeShift");
+    return AM_AV_StopTimeshift(mTvPlayDevId);
+}
+
+int CAv::pauseTimeShift()
+{
+    LOGD ( "pauseTimeShift");
+    return AM_AV_PauseTimeshift (mTvPlayDevId);
+}
+
+int CAv::resumeTimeShift()
+{
+    LOGD ( "resumeTimeShift");
+    return AM_AV_ResumeTimeshift (mTvPlayDevId);
+}
+
+int CAv::seekTimeShift(int pos, AM_Bool_t start)
+{
+    LOGD ( "seekTimeShift [pos:%d start:%d]", pos, start);
+    return AM_AV_SeekTimeshift (mTvPlayDevId, pos, start);
+}
+
+int CAv::setTimeShiftSpeed(int speed)
+{
+    LOGD ( "setTimeShiftSpeed [%d]", speed);
+    int ret = 0;
+    if (speed < 0)
+        ret = AM_AV_FastBackwardTimeshift(mTvPlayDevId, -speed);
+    else
+        ret = AM_AV_FastForwardTimeshift(mTvPlayDevId, speed);
+    return ret;
+}
+
+int CAv::switchTimeShiftAudio(int apid, int afmt)
+{
+    LOGD ( "switchTimeShiftAudio [pid:%d, fmt:%d]", apid, afmt);
+    return AM_AV_SwitchTimeshiftAudio (mTvPlayDevId, apid, afmt);
+}
+
+int CAv::playTimeShift()
+{
+    LOGD ( "playTimeShift");
+    return AM_AV_PlayTimeshift (mTvPlayDevId);
+}
+
+int CAv::getTimeShiftInfo(AM_AV_TimeshiftInfo_t *info)
+{
+    LOGD ( "getTimeShiftInfo");
+    return AM_AV_GetTimeshiftInfo (mTvPlayDevId, info);
+}
+
 

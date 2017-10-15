@@ -38,6 +38,8 @@ public:
     static const int TV_EVENT_AV = 18;
     static const int TV_EVENT_SUBTITLE = 19;
     static const int TV_EVENT_SCANNING_FRAME_STABLE = 20;
+    static const int TV_EVENT_FRONTEND = 21;
+    static const int TV_EVENT_RECORDER = 22;
 
     CTvEv(int type);
     virtual ~CTvEv() {};
@@ -110,6 +112,11 @@ namespace  TvEvent {
         static const int EVENT_AV_UNSUPPORT             = 4;
         static const int EVENT_AV_VIDEO_AVAILABLE       = 5;
 
+        static const int EVENT_AV_TIMESHIFT_REC_FAIL = 6;
+        static const int EVENT_AV_TIMESHIFT_PLAY_FAIL = 7;
+        static const int EVENT_AV_TIMESHIFT_START_TIME_CHANGED = 8;
+        static const int EVENT_AV_TIMESHIFT_CURRENT_TIME_CHANGED = 9;
+
         int mMsgType;
         int mProgramId;
     };
@@ -157,6 +164,39 @@ namespace  TvEvent {
         ~ScanningFrameStableEvent() {}
         int CurScanningFreq;
     };
+
+    class FrontendEvent: public CTvEv {
+    public:
+        FrontendEvent() : CTvEv ( CTvEv::TV_EVENT_FRONTEND ) {}
+        ~FrontendEvent() {}
+        static const int EVENT_FE_HAS_SIG = 0x01;
+        static const int EVENT_FE_NO_SIG = 0x02;
+        static const int EVENT_FE_INIT = 0x03;
+
+        int mStatus;
+        int mFrequency;
+        int mParam1;
+        int mParam2;
+        int mParam3;
+        int mParam4;
+        int mParam5;
+        int mParam6;
+        int mParam7;
+        int mParam8;
+    };
+
+    class RecorderEvent: public CTvEv {
+    public:
+        RecorderEvent() : CTvEv ( CTvEv::TV_EVENT_RECORDER) {}
+        ~RecorderEvent() {}
+        static const int EVENT_RECORD_START = 0x01;
+        static const int EVENT_RECORD_STOP = 0x02;
+
+        String8 mId;
+        int mStatus;
+        int mError;
+    };
+
 };
 #endif
 

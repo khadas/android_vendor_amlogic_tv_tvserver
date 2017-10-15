@@ -54,6 +54,7 @@ LOCAL_SRC_FILES := \
   tv/CAv.cpp \
   tv/CTvDmx.cpp \
   tv/CTvFactory.cpp \
+  tv/CTvPlayer.cpp \
   tvin/CTvin.cpp \
   tvin/CDevicesPollStatusDetect.cpp \
   tvin/CHDMIRxManager.cpp \

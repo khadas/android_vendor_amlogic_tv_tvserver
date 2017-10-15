@@ -100,7 +100,7 @@ bool CTv::insertedFbcDevice()
     return ret;
 }
 
-CTv::CTv():mTvMsgQueue(this)
+CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
 {
     mAudioMuteStatusForTv = CC_AUDIO_UNMUTE;
     mAudioMuteStatusForSystem = CC_AUDIO_UNMUTE;
@@ -390,9 +390,43 @@ void CTv::onEvent(const CAv::AVEvent &ev)
         LOGD("To AVS or AVS+ format");//just avs format,  not unsupport, and avs avs+
         break;
     }
+    case CAv::AVEvent::EVENT_PLAY_UPDATE: {
+        //fix me: get the player, [only one player can run concurrently]
+        //the av event should be handled by player..
+        //need refactoring here
+        CDTVTvPlayer *player = (CDTVTvPlayer *)PlayerManager::getInstance().getFirstDevWithIdContains("atsc");
+        if (player)
+            player->onPlayUpdate(ev);
+        else {
+            LOGD("no atsc player found");
+        }
+        break;
+    }
 
     default:
         break;
+    }
+}
+
+void CTv::onEvent(const CTvRecord::RecEvent &ev)
+{
+    LOGD ( "RecEvent = %d", ev.type);
+    switch ( ev.type ) {
+        case CTvRecord::RecEvent::EVENT_REC_START: {
+            TvEvent::RecorderEvent RecorderEvent;
+            RecorderEvent.mStatus = TvEvent::RecorderEvent::EVENT_RECORD_START;
+            RecorderEvent.mError = (int)ev.error;
+            sendTvEvent(RecorderEvent);
+            }break;
+        case CTvRecord::RecEvent::EVENT_REC_STOP: {
+            TvEvent::RecorderEvent RecorderEvent;
+            RecorderEvent.mStatus = TvEvent::RecorderEvent::EVENT_RECORD_STOP;
+            RecorderEvent.mError = (int)ev.error;
+            RecorderEvent.mId = String8(ev.id.c_str());
+            sendTvEvent(RecorderEvent);
+            }break;
+        default:
+            break;
     }
 }
 
@@ -465,6 +499,11 @@ void CTv::CTvMsgQueue::handleMessage ( CMessage &msg )
         break;
     }
 
+    case TV_MSG_RECORD_EVENT: {
+        mpTv->onEvent(*((CTvRecord::RecEvent *)(msg.mpPara)));
+        break;
+    }
+
     default:
         break;
     }
@@ -502,6 +541,15 @@ void CTv::CTvMsgQueue::onEvent(const CAv::AVEvent &ev)
     CMessage msg;
     msg.mDelayMs = 0;
     msg.mType = CTvMsgQueue::TV_MSG_AV_EVENT;
+    memcpy(msg.mpPara, (void*)&ev, sizeof(ev));
+    this->sendMsg ( msg );
+}
+
+void CTv::CTvMsgQueue::onEvent(const CTvRecord::RecEvent &ev)
+{
+    CMessage msg;
+    msg.mDelayMs = 0;
+    msg.mType = CTvMsgQueue::TV_MSG_RECORD_EVENT;
     memcpy(msg.mpPara, (void*)&ev, sizeof(ev));
     this->sendMsg ( msg );
 }
@@ -1109,6 +1157,7 @@ int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int
                           int vpid, int vfmt, int apid, int afmt, int pcr, int audioCompetation)
 {
     AutoMutex _l( mLock );
+    int ret = 0;
 
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
 
@@ -1131,7 +1180,7 @@ int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int
         }
     }
     mTvAction |= TV_ACTION_PLAYING;
-    startPlayTv ( SOURCE_DTV, vpid, apid, pcr, vfmt, afmt );
+    ret = startPlayTv ( SOURCE_DTV, vpid, apid, pcr, vfmt, afmt );
 
     CMessage msg;
     msg.mDelayMs = 2000;
@@ -1149,6 +1198,36 @@ int CTv::playDtvProgram(int mode, int freq, int para1, int para2, int vpid, int 
 int CTv::playDtvProgram(const char* feparas, int vpid, int vfmt, int apid,
         int afmt, int pcr, int audioCompetation) {
     return playDtvProgram(feparas, 0, 0, 0, 0, vpid, vfmt, apid, afmt, pcr, audioCompetation);
+}
+
+
+int CTv::playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int audioCompetation)
+{
+    AutoMutex _l( mLock );
+    int ret = 0;
+
+    SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
+
+    if (mBlackoutEnable)
+        mAv.EnableVideoBlackout();
+    else
+        mAv.DisableVideoBlackout();
+
+    mAv.ClearVideoBuffer();
+
+    if (feparas) {
+        mFrontDev->Open(FE_AUTO);
+        if (!(mTvAction & TV_ACTION_SCANNING)) {
+            mFrontDev->setPara(feparas);
+        }
+    }
+
+    mTvAction |= TV_ACTION_PLAYING;
+    AM_FileEcho ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
+    ret = mAv.startTimeShift(para);
+
+    SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
+    return ret;
 }
 
 int CTv::playDtmbProgram ( int progId )
@@ -1345,6 +1424,10 @@ int CTv::resetDmxAndAvSource()
     memset ( &para, 0, sizeof ( para ) );
     mTvDmx.Open (para);
     mTvDmx.SetSource(curdmxSource );
+    mTvDmx1.Open(para);
+    mTvDmx1.SetSource(curdmxSource);
+    mTvDmx2.Open(para);
+    mTvDmx2.SetSource(curdmxSource);
     AM_AV_TSSource_t ts_source = ( AM_AV_TSSource_t ) curdmxSource;
     mAv.SetTSSource (ts_source );
     return 0;
@@ -1388,9 +1471,9 @@ int CTv::startPlayTv ( int source, int vid, int aid, int pcrid, int vfat, int af
     if ( source == SOURCE_DTV ) {
         AM_FileEcho ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
         LOGD ( "%s, startPlayTv", __FUNCTION__);
-        mAv.StartTS (vid, aid, pcrid, ( AM_AV_VFormat_t ) vfat, ( AM_AV_AFormat_t ) afat );
+        return mAv.StartTS (vid, aid, pcrid, ( AM_AV_VFormat_t ) vfat, ( AM_AV_AFormat_t ) afat );
     }
-    return 0;
+    return -1;
 }
 
 int CTv::stopPlayingLock()
@@ -1876,6 +1959,7 @@ int CTv::StopTvLock ( void )
     AutoMutex _l( mLock );
     mTvAction |= TV_ACTION_STOPING;
     mAv.DisableVideoWithBlackColor();
+    tryReleasePlayer(false, m_source_input);
     stopPlaying(false);
     mpTvin->Tvin_StopDecoder();
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
@@ -1974,11 +2058,24 @@ bool CTv::isVirtualSourceInput(tv_source_input_t source_input) {
     return false;
 }
 
+int CTv::tryReleasePlayer(bool isEnter, tv_source_input_t si)
+{
+    if ((isEnter && si != SOURCE_ADTV && si != SOURCE_TV && si != SOURCE_DTV)
+        ||(!isEnter && (si == SOURCE_ADTV || si == SOURCE_TV || si == SOURCE_DTV))){
+        LOGD("remove all Player & Recorder");
+        PlayerManager::getInstance().releaseAll();
+        RecorderManager::getInstance().releaseAll();
+    }
+    return 0;
+}
+
 int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
 {
    AutoMutex _l( mLock );
 
     LOGD ( "%s, source input = %d", __FUNCTION__, source_input );
+
+    tryReleasePlayer(true, source_input);
 
     m_source_input_virtual = source_input;
 
@@ -2859,23 +2956,6 @@ void CTv::setSourceSwitchAndPlay()
 }
 
 //==============vchip end================================
-
-//----------------DVR API============================
-void CTv::SetRecordFileName ( char *name )
-{
-    mTvRec.SetRecordFileName (name);
-}
-
-void CTv::StartToRecord()
-{
-    int progID = getDTVProgramID();
-    mTvRec.StartRecord ( progID );
-}
-
-void CTv::StopRecording()
-{
-    mTvRec.StopRecord();
-}
 
 int CTv::GetHdmiHdcpKeyKsvInfo(int data_buf[])
 {
@@ -5374,6 +5454,205 @@ void CTv::onSetPQPCMode(int source, int status)
         }
     }
 }
+
+CTvRecord *CTv::getRecorder(const char *id, const char *param) {
+    CTvRecord *recorder = RecorderManager::getInstance().getDev(id);
+    if (recorder) {
+        recorder->stop(NULL);
+        recorder->setupDefault(param);
+        return recorder;
+    }
+    recorder = new CTvRecord();
+    recorder->setupDefault(param);
+    recorder->setId(id);
+    int err = RecorderManager::getInstance().addDev(*recorder);
+    if (err) {
+        LOGE("create Recorder(%s) fail(%d)", toReadable(id), err);
+        delete recorder;
+        recorder = NULL;
+    }
+    return recorder;
+}
+
+int CTv::prepareRecording(const char *id, const char *param)
+{
+    //validate param
+    if (!getRecorder(id, param))
+        return -1;
+    return 0;
+}
+
+int CTv::startRecording(const char *id, const char *param, CTvRecord::IObserver *observer)
+{
+    CTvRecord *recorder = NULL;
+    int ret = -1;
+    if (!(recorder = getRecorder(id, param))) {
+        LOGD("recorder(%s) not found", toReadable(id));
+        return -1;
+    }
+    recorder->setObserver(observer);
+    ret = recorder->start(param);
+    if (ret != 0)
+        RecorderManager::getInstance().removeDev(id);
+    return ret;
+}
+
+int CTv::stopRecording(const char *id, const char *param)
+{
+    CTvRecord *recorder = NULL;
+    if (!(recorder = RecorderManager::getInstance().getDev(id))) {
+        LOGD("recorder(%s) not found", toReadable(id));
+        return -1;
+    }
+    recorder->stop(param);
+    recorder->setObserver(NULL);
+    RecorderManager::getInstance().removeDev(id);
+    return 0;
+}
+
+int CTv::doRecordingCommand(int cmd, const char *id, const char *param)
+{
+    LOGD("doRec(cmd:%d, id:%s, para:%s)", cmd, id, param);
+    int ret = -10;
+    switch (cmd) {
+        case RECORDING_CMD_PREPARE:
+        ret = prepareRecording(id, param);
+        break;
+        case RECORDING_CMD_START:
+        ret = startRecording(id, param, &mTvMsgQueue);
+        break;
+        case RECORDING_CMD_STOP:
+        ret = stopRecording(id, param);
+        break;
+    }
+    return ret;
+}
+
+CTvPlayer *CTv::getPlayer(const char *id, const char *param) {
+    CTvPlayer *player = PlayerManager::getInstance().getDev(id);
+    if (player) {
+        player->stop(NULL);
+        player->setupDefault(param);
+        return player;
+    }
+
+    if (PlayerManager::singleMode)
+        PlayerManager::getInstance().releaseAll();
+
+    std::string type = paramGetString(param, NULL, "type", "dtv");
+    if (type.compare("dtv") == 0)
+        player = new CDTVTvPlayer(this);
+    else if (type.compare("atv") == 0)
+        player = new CATVTvPlayer(this);
+
+    if (player) {
+        player->setupDefault(param);
+        player->setId(id);
+        int err = PlayerManager::getInstance().addDev(*player);
+        if (err) {
+            LOGE("create Player(%s) fail(%d)", toReadable(id), err);
+            delete player;
+            player = NULL;
+        }
+    }
+    return player;
+}
+
+int CTv::startPlay(const char *id, const char *param)
+{
+    int ret = -1;
+    CTvPlayer *player = NULL;
+    if (!(player = getPlayer(id, param))) {
+        LOGD("player(%s) not found", toReadable(id));
+        return -1;
+    }
+    ret =  player->start(param);
+    if (ret != 0)
+        RecorderManager::getInstance().removeDev(id);
+    return ret;
+}
+
+int CTv::stopPlay(const char *id, const char *param)
+{
+    CTvPlayer *player = NULL;
+    if (!(player = PlayerManager::getInstance().getDev(id))) {
+        LOGD("player(%s) not found", toReadable(id));
+        return -1;
+    }
+    player->stop(param);
+    PlayerManager::getInstance().removeDev(id);
+    return 0;
+}
+
+int CTv::pausePlay(const char *id, const char *param)
+{
+    CTvPlayer *player = NULL;
+    if (!(player = PlayerManager::getInstance().getDev(id))) {
+        LOGD("player(%s) not found", toReadable(id));
+        return -1;
+    }
+    return player->pause(param);
+}
+
+int CTv::resumePlay(const char *id, const char *param)
+{
+    CTvPlayer *player = NULL;
+    if (!(player = PlayerManager::getInstance().getDev(id))) {
+        LOGD("player(%s) not found", toReadable(id));
+        return -1;
+    }
+    return player->resume(param);
+}
+
+int CTv::seekPlay(const char *id, const char *param)
+{
+    CTvPlayer *player = NULL;
+    if (!(player = PlayerManager::getInstance().getDev(id))) {
+        LOGD("player(%s) not found", toReadable(id));
+        return -1;
+    }
+    return player->seek(param);
+}
+
+int CTv::setPlayParam(const char *id, const char *param)
+{
+    CTvPlayer *player = NULL;
+    if (!(player = PlayerManager::getInstance().getDev(id))) {
+        LOGD("player(%s) not found", toReadable(id));
+        return -1;
+    }
+    return player->set(param);
+}
+
+int CTv::doPlayCommand(int cmd, const char *id, const char *param)
+{
+    LOGD("doPlay(cmd:%d, id:%s, para:%s)", cmd, id, param);
+    int ret = -10;
+    switch (cmd) {
+        case PLAY_CMD_START:
+        ret = startPlay(id, param);
+        break;
+        case PLAY_CMD_STOP:
+        ret = stopPlay(id, param);
+        break;
+        case PLAY_CMD_PAUSE:
+        ret = pausePlay(id, param);
+        break;
+        case PLAY_CMD_RESUME:
+        ret = resumePlay(id, param);
+        break;
+        case PLAY_CMD_SEEK:
+        ret = seekPlay(id, param);
+        break;
+        case PLAY_CMD_SETPARAM:
+        ret = setPlayParam(id, param);
+        break;
+    }
+    return ret;
+}
+
+ANDROID_SINGLETON_STATIC_INSTANCE(RecorderManager);
+ANDROID_SINGLETON_STATIC_INSTANCE(PlayerManager);
 
 void CTv::dump(String8 &result)
 {

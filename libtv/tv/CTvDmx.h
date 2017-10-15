@@ -15,7 +15,7 @@
 
 class CTvDmx {
 public:
-    CTvDmx();
+    CTvDmx(int id);
     ~CTvDmx();
     int Open(AM_DMX_OpenPara_t &para);
     int Close();

@@ -1426,3 +1426,52 @@ float getUptimeSeconds() {
     return (float)(ts.tv_sec +(float)ts.tv_nsec / 1000000000);
 }
 
+int jsonGetInt(const char *json, const char *obj, const char *value, int def)
+{
+    Json::Reader reader;
+    Json::Value root;
+
+    if (!reader.parse(json, json + strlen(json), root)) {
+        LOGD("parse fail:(%s)", json);
+        return def;
+    }
+    if (obj && strlen(obj))
+        return root.get(obj, Json::Value()).get(value, def).asInt();
+    return root.get(value, def).asInt();
+}
+
+static const std::string toString(Json::Value v)
+{
+    if (!v.isObject())
+        return v.asString();
+
+    Json::FastWriter writer;
+    writer.omitEndingLineFeed();
+    return writer.write(v);
+}
+
+const std::string jsonGetString(const char *json, const char *obj, const char *value, const char *def)
+{
+    Json::Reader reader;
+    Json::Value root;
+
+    if (!reader.parse(json, json + strlen(json), root)) {
+        LOGD("parse fail:(%s)", json);
+        return def;
+    }
+    if (obj && strlen(obj))
+        return toString(root.get(obj, Json::Value()).get(value, def));
+    return toString(root.get(value, def));
+}
+
+int paramGetInt(const char *param, const char *section, const char *value, int def) {
+    if (!param || !strlen(param))
+        return def;
+    return jsonGetInt(param, section, value, def);
+}
+const std::string paramGetString(const char *param, const char *section, const char *value, const char *def) {
+    if (!param || !strlen(param))
+        return def;
+    return jsonGetString(param, section, value, def);
+}
+

@@ -10,10 +10,12 @@
 #if !defined(_CDTV_H)
 #define _CDTV_H
 #include <stdint.h>
+#include <string.h>
 #include <sys/time.h>
 #include <am_epg.h>
 #include <am_mem.h>
 #include <utils/threads.h>
+
 #include "CTvProgram.h"
 #include "CTvEpg.h"
 #include "CTvScanner.h"
@@ -41,6 +43,8 @@
 #include "CTvGpio.h"
 
 #include <CTvFactory.h>
+
+#include "CTvPlayer.h"
 
 using namespace android;
 
@@ -95,7 +99,17 @@ typedef enum TvRunStatus_s {
     TV_CLOSE_ED,
 } TvRunStatus_t;
 
-class CTv : public CTvin::CHDMIAudioCheck::IHDMIAudioCheckObserver, public CDevicesPollStatusDetect::ISourceConnectObserver, public IUpgradeFBCObserver, public CTvSubtitle::IObserver, public CBootvideoStatusDetect::IBootvideoStatusObserver, public CTv2d4GHeadSetDetect::IHeadSetObserver {
+class CTvPlayer;
+class CDTVTvPlayer;
+class CATVTvPlayer;
+
+class CTv : public CTvin::CHDMIAudioCheck::IHDMIAudioCheckObserver,
+            public CDevicesPollStatusDetect::ISourceConnectObserver,
+            public IUpgradeFBCObserver,
+            public CTvSubtitle::IObserver,
+            public CBootvideoStatusDetect::IBootvideoStatusObserver,
+            public CTv2d4GHeadSetDetect::IHeadSetObserver,
+            public CTvRecord::IObserver {
 public:
     static const int TV_ACTION_NULL = 0x0000;
     static const int TV_ACTION_IN_VDIN = 0x0001;
@@ -109,6 +123,17 @@ public:
     static const int OPEN_DEV_FOR_SCAN_DTV = 2;
     static const int CLOSE_DEV_FOR_SCAN = 3;
     tvin_info_t m_cur_sig_info;
+
+    static const int RECORDING_CMD_STOP = 0;
+    static const int RECORDING_CMD_PREPARE = 1;
+    static const int RECORDING_CMD_START = 2;
+
+    static const int PLAY_CMD_STOP = 0;
+    static const int PLAY_CMD_START = 1;
+    static const int PLAY_CMD_PAUSE = 2;
+    static const int PLAY_CMD_RESUME = 3;
+    static const int PLAY_CMD_SEEK = 4;
+    static const int PLAY_CMD_SETPARAM = 5;
 
 public:
     class TvIObserver {
@@ -161,15 +186,13 @@ public:
     virtual void setSourceSwitchAndPlay();
     virtual int atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd, int store_Type = 0, int channel_num = 0 );
     virtual int stopScanLock();
-    virtual void SetRecordFileName ( char *name );
-    virtual  void StartToRecord();
-    virtual void StopRecording();
     virtual int playDvbcProgram ( int progId );
     virtual int playDtmbProgram ( int progId );
     virtual int playAtvProgram ( int, int, int, int, int);
     virtual int playDtvProgram ( int, int, int, int, int, int, int, int, int, int);
     virtual int playDtvProgram(const char *, int, int, int, int, int, int, int, int, int, int);
     virtual int playDtvProgram(const char *, int, int, int, int, int, int);
+    virtual int playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int audioCompetation);
     virtual int stopPlayingLock();
     virtual int resetFrontEndPara ( frontend_para_set_t feParms );
     virtual int SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt );
@@ -209,6 +232,10 @@ public:
     int getRadioProgramID ( void );
 
     int getATVMinMaxFreq ( int *scanMinFreq, int *scanMaxFreq );
+
+    int doRecordingCommand(int cmd, const char *id, const char *param);
+    int doPlayCommand(int cmd, const char *id, const char *param);
+
     int getAverageLuma();
     int setAutobacklightData(const char *value);
     int getAutoBacklightData(int *data);
@@ -485,6 +512,23 @@ private:
 
     int autoSwitchToMonitorMode();
 
+    static int prepareRecording(const char *id, const char *param);
+    static int startRecording(const char *id, const char *param, CTvRecord::IObserver *observer);
+    static int stopRecording(const char *id, const char *param);
+
+    static CTvRecord *getRecorder(const char *id, const char *param);
+
+    int startPlay(const char *id, const char *param);
+    int stopPlay(const char *id, const char *param);
+    int pausePlay(const char *id, const char *param);
+    int resumePlay(const char *id, const char *param);
+    int seekPlay(const char *id, const char *param);
+    int setPlayParam(const char *id, const char *param);
+
+    CTvPlayer *getPlayer(const char *id, const char *param);
+
+    int tryReleasePlayer(bool isEnter, tv_source_input_t si);
+
     CAudioAlsa mAudioAlsa;
     CAudioEffect mAudioEffect;
 
@@ -527,7 +571,8 @@ private:
     bool MnoNeedAutoSwitchToMonitorMode;
 
 protected:
-    class CTvMsgQueue: public CMsgQueueThread, public CAv::IObserver, public CTvScanner::IObserver , public CTvEpg::IObserver, public CFrontEnd::IObserver {
+    class CTvMsgQueue: public CMsgQueueThread, public CAv::IObserver, public CTvScanner::IObserver , public CTvEpg::IObserver, public CFrontEnd::IObserver
+			, public CTvRecord::IObserver {
     public:
         static const int TV_MSG_COMMON = 0;
         static const int TV_MSG_STOP_ANALYZE_TS = 1;
@@ -541,6 +586,8 @@ protected:
         static const int TV_MSG_ENABLE_VIDEO_LATER = 9;
         static const int TV_MSG_SCANNING_FRAME_STABLE = 10;
         static const int TV_MSG_VIDEO_AVAILABLE_LATER = 11;
+        static const int TV_MSG_RECORD_EVENT = 12;
+
         CTvMsgQueue(CTv *tv);
         ~CTvMsgQueue();
         //scan observer
@@ -551,6 +598,8 @@ protected:
         void onEvent ( const CFrontEnd::FEEvent &ev );
         //AV
         void onEvent(const CAv::AVEvent &ev);
+        //Record
+        void onEvent(const CTvRecord::RecEvent &ev);
     private:
         virtual void handleMessage ( CMessage &msg );
         CTv *mpTv;
@@ -573,6 +622,9 @@ protected:
     void onEvent ( const CFrontEnd::FEEvent &ev );
     //AV
     void onEvent(const CAv::AVEvent &ev);
+    //Record
+    void onEvent(const CTvRecord::RecEvent &ev);
+
     bool Tv_Start_Analyze_Ts ( int channelID );
     bool Tv_Stop_Analyze_Ts();
     int Tvin_Stop ( void );
@@ -614,6 +666,8 @@ protected:
     CTvSubtitle mTvSub;
     CAv mAv;
     CTvDmx mTvDmx;
+    CTvDmx mTvDmx1;
+    CTvDmx mTvDmx2;
     CTvMsgQueue mTvMsgQueue;
     AutoBackLight mAutoBackLight;
     //
@@ -652,6 +706,11 @@ protected:
     CTvGpio *pGpio;
 
     bool mPreviewEnabled;
+
+public:
+    friend CTvPlayer;
+    friend CDTVTvPlayer;
+    friend CATVTvPlayer;
 };
 
 #endif  //_CDTV_H

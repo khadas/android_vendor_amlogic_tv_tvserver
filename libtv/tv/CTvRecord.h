@@ -6,48 +6,101 @@
  *
  * Description: header file
  */
+#if !defined(_CTVRECORD_H_)
+#define _CTVRECORD_H_
+
+#include "am_rec.h"
+#include "CTvEv.h"
+
+#include <utils/Vector.h>
+
+using namespace android;
 
 class CTvRecord {
-private :
-    char filename[256];
-    int progid;
-    int vpid;
-    int apid;
-    static void dvr_init(void);
-    void setvpid(int vid)
-    {
-        this->vpid = vid;
-    }
-    int getvpid()
-    {
-        return vpid;
-    }
-    void setapid(int aid)
-    {
-        this->apid = aid;
-    }
-    int getapid()
-    {
-        return apid;
-    }
-    static int dvr_data_write(int fd, uint8_t *buf, int size);
-    static void *dvr_data_thread(void *arg);
-    char *GetRecordFileName();
-    void SetCurRecProgramId(int id);
-    void start_data_thread(int dev_no);
-    void get_cur_program_pid(int progId);
-    int start_dvr(void);
-    void stop_data_thread(int dev_no);
-
-
 public:
     CTvRecord();
     ~CTvRecord();
-    void SetRecordFileName(char *name);
-    void StartRecord(int id);
-    void StopRecord();
-    void SetRecCurTsOrCurProgram(int sel);  // 1: all program in the Ts; 0:current program
 
+    void setId(const char* id) { mId = strdup(id); }
+    const char* getId() { return mId; }
 
+    int setFilePath(const char *name);
+
+    int setFileName(const char *prefix, const char *suffix);
+
+    int setMediaInfo(AM_REC_MediaInfo_t *info);
+
+    static const int REC_EXT_TYPE_PMTPID = 0;
+    static const int REC_EXT_TYPE_PN = 1;
+    static const int REC_EXT_TYPE_ADD_PID = 2;
+    static const int REC_EXT_TYPE_REMOVE_PID = 3;
+    int setMediaInfoExt(int type, int val);
+
+    int setTimeShiftMode(bool enable, int duration, int size);
+
+    static const int REC_DEV_TYPE_FE = 0;
+    static const int REC_DEV_TYPE_DVR = 1;
+    static const int REC_DEV_TYPE_FIFO = 2;
+    int setDev(int type, int id);
+
+    int setupDefault(const char *param);
+
+    int start(const char *param);
+
+    int stop(const char *param);
+
+    int setRecCurTsOrCurProgram(int sel);  // 1: all program in the Ts; 0:current program
+
+    int getInfo(AM_REC_RecInfo_t *info);
+
+    //for timeshifting
+    int getStartPosition();
+    int getWritePosition();
+
+    AM_TFile_t getFileHandler();
+    AM_TFile_t detachFileHandler();
+
+    bool equals(CTvRecord &recorder);
+
+    class RecEvent : public CTvEv {
+    public:
+        RecEvent(): CTvEv(CTvEv::TV_EVENT_RECORDER) { }
+        ~RecEvent() {}
+        static const int EVENT_REC_START=1;
+        static const int EVENT_REC_STOP=2;
+        static const int EVENT_REC_STARTPOSITION_CHANGED=3;
+        std::string id;
+	int type;
+	int error;
+	int size;
+	long time;
+    };
+
+    class IObserver {
+    public:
+        IObserver() {};
+        virtual ~IObserver() {};
+        virtual void onEvent(const RecEvent &ev) = 0;
+    };
+
+    int setObserver(IObserver *ob) {
+        mpObserver = ob;
+        return 0;
+    }
+
+    AM_REC_CreatePara_t mCreateParam;
+private :
+
+    char *mId;
+    AM_REC_Handle_t mRec;
+    AM_REC_RecPara_t mRecParam;
+    AM_REC_RecInfo_t mRecInfo;
+    Vector<int> mExtPids;
+    IObserver *mpObserver;
+    RecEvent mEvent;
+
+    static void rec_evt_cb(long dev_no, int event_type, void *param, void *data);
 
 };
+
+#endif //_CTVRECORD_H_

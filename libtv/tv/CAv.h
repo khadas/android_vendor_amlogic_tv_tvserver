@@ -73,8 +73,11 @@ public:
         static const int EVENT_AV_SCAMBLED         = 3;
         static const int EVENT_AV_UNSUPPORT        = 4;
         static const int EVENT_AV_VIDEO_AVAILABLE  = 5;
+        static const int EVENT_PLAY_UPDATE  = 6;
+        std::string player;
         int type;
         long param;
+        int status;
     };
 
     class IObserver {
@@ -131,6 +134,18 @@ public:
 
     int setLookupPtsForDtmb(int enable);
     tvin_sig_fmt_t getVideoResolutionToFmt();
+
+    /*TimeShifting*/
+    int startTimeShift(const AM_AV_TimeshiftPara_t *para);
+    int stopTimeShift();
+    int playTimeShift();
+    int pauseTimeShift();
+    int resumeTimeShift();
+    int seekTimeShift(int pos, AM_Bool_t start);
+    int setTimeShiftSpeed(int speed);
+    int switchTimeShiftAudio(int apid, int afmt);
+    int getTimeShiftInfo(AM_AV_TimeshiftInfo_t *info);
+
 private:
     static void av_evt_callback ( long dev_no, int event_type, void *param, void *user_data );
     int getVideoFrameCount();

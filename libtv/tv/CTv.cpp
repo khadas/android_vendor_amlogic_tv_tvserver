@@ -5323,21 +5323,23 @@ void CTv::onVdinSignalChange()
 void CTv::onSetPQPCMode(int source, int status)
 {
     LOGD("source = %d, m_source_input = %d, status = %d\n",source, m_source_input, status);
-    if ((source == -1 ) || (source == (int)m_source_input)) {
-        SetAudioMuteForTv(CC_AUDIO_MUTE);
+    if (( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_HDMI ) ) {
+        if ((source == -1 ) || (source == (int)m_source_input)) {
+            SetAudioMuteForTv(CC_AUDIO_MUTE);
 
-        if (status == 0) {
-            CVpp::getInstance()->enableMonitorMode(false);
-        }else {
-            CVpp::getInstance()->enableMonitorMode(true);
+            if (status == 0) {
+                CVpp::getInstance()->enableMonitorMode(false);
+            }else {
+                CVpp::getInstance()->enableMonitorMode(true);
+            }
+
+            tvin_port_t cur_port = mpTvin->Tvin_GetSourcePortBySourceInput(m_source_input);
+            mHDMIAudioCheckThread.requestAndWaitPauseCheck();
+            mpTvin->SwitchPort(cur_port);
+            CVpp::getInstance()->Vpp_ResetLastVppSettingsSourceType();
+            mHDMIAudioCheckThread.initCheckState();
+            mHDMIAudioCheckThread.resumeCheck(1000);
         }
-
-        tvin_port_t cur_port = mpTvin->Tvin_GetSourcePortBySourceInput(m_source_input);
-        mHDMIAudioCheckThread.requestAndWaitPauseCheck();
-        mpTvin->SwitchPort(cur_port);
-        CVpp::getInstance()->Vpp_ResetLastVppSettingsSourceType();
-        mHDMIAudioCheckThread.initCheckState();
-        mHDMIAudioCheckThread.resumeCheck(1000);
     }
 }
 

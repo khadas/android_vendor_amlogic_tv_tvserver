@@ -3428,6 +3428,10 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int ret = GetAudioOutmode();
         r->writeInt32(ret);
     }
+    case GET_AUDIO_STREAM_OUTMODE: {
+        int ret = GetAudioStreamOutmode();
+        r->writeInt32(ret);
+    }
     // EXTAR END
     default:
         LOGD("default");

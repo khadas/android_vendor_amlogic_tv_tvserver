@@ -22,7 +22,7 @@
 #define SYS_STR_LEN                         1024
 #define AUDIO_OUTMODE_PATH "/sys/module/atvdemod_fe/parameters/aud_mode"
 #define ATVDEMODE_DEBUG_PATH "/sys/class/amlatvdemod/atvdemod_debug"
-
+#define AUDIO_STREAM_OUTMODE_PATH "/sys/module/atvdemod_fe/parameters/signal_audmode"
 
 int tvReadSysfs(const char *path, char *value);
 int tvWriteSysfs(const char *path, const char *value);
@@ -110,6 +110,7 @@ extern int TvMisc_SetSystemPetEnable(int enable);
 extern int TvMisc_SetSystemPetCounter(int count);
 extern int SetAudioOutmode(int mode);
 extern int GetAudioOutmode();
+extern int GetAudioStreamOutmode();
 
 extern void TvMisc_EnableWDT(bool kernelpet_disable, unsigned int userpet_enable, unsigned int kernelpet_timeout, unsigned int userpet_timeout, unsigned int userpet_reset);
 extern void TvMisc_DisableWDT(unsigned int userpet_enable);

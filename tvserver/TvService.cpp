@@ -448,6 +448,21 @@ void TvService::onTvEvent(const CTvEv &ev)
         break;
     }
 
+    case CTvEv::TV_EVENT_RRT: {
+        CTvRrt::RrtEvent *pRrtEvent = (CTvRrt::RrtEvent *) (&ev);
+        for (int i = 0; i < (int)mClients.size(); i++) {
+            wp<Client> client = mClients[i];
+            if (client != 0) {
+                sp<Client> c = client.promote();
+                if (c != 0) {
+                    Parcel p;
+                    p.writeInt32(pRrtEvent->satus);
+                    c->getTvClient()->notifyCallback(RRT_EVENT_CALLBACK, p);
+                }
+            }
+        }
+        break;
+    }
 
     default:
         break;
@@ -3495,6 +3510,38 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int source = p.readInt32();
         int volume = mpTv->getSaveAmAudioVolume(source);
         r->writeInt32(volume);
+        break;
+    }
+    case DTV_UPDATE_RRT: {
+        int freq = p.readInt32();
+        int modulation = p.readInt32();
+        int ret = mpTv->tv_RrtUpdate(freq, modulation);
+        r->writeInt32(ret);
+        break;
+    }
+    case DTV_SEARCH_RRT: {
+        int rating_region_id = p.readInt32();
+        int dimension_id = p.readInt32();
+        int value_id = p.readInt32();
+        rrt_select_info_t rrt_info;
+        int ret = mpTv->tv_RrtSearch(rating_region_id, dimension_id, value_id, &rrt_info);
+        r->writeInt32(rrt_info.dimensions_name_count);
+        int count = rrt_info.dimensions_name_count;
+        if (count != 0) {
+            r->writeString16(String16(rrt_info.dimensions_name));
+        }
+        r->writeInt32(rrt_info.rating_region_name_count);
+        count = rrt_info.rating_region_name_count;
+        if (count != 0) {
+            r->writeString16(String16(rrt_info.rating_region_name));
+        }
+        r->writeInt32(rrt_info.rating_value_text_count);
+        count = rrt_info.rating_value_text_count;
+        if (count != 0) {
+            r->writeString16(String16(rrt_info.rating_value_text));
+        }
+
+        r->writeInt32(ret);
         break;
     }
     // EXTAR END

@@ -102,6 +102,7 @@ public:
             mAcnt = 0;
             mScnt = 0;
             mVctType = 0;
+            mVct[0] = '\0';
 
             memset(&mLcnInfo, 0, sizeof(ScannerLcnInfo));
 
@@ -181,6 +182,7 @@ public:
         char mHidden;
         char mHideGuide;
         char mVctType;
+        char mVct[1024];
     };
 
     class IObserver {
@@ -293,6 +295,7 @@ private:
         int tsid;
         CFrontEnd::FEParas fe;
         int dtvstd;
+        char vct[1024];
     } SCAN_TsInfo_t;
 
     typedef std::list<SCAN_TsInfo_t*> ts_list_t;

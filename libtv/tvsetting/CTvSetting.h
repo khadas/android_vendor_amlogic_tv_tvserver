@@ -231,6 +231,9 @@ int SSMSaveHDMIHdcpSwitcher(int rw_val);
 int SSMReadHDMIHdcpSwitcher(void);
 int SSMHDMIEdidRestoreDefault(void);
 
+int SSMSaveAmAudioVal(int rw_val, int source);
+int SSMReadAmAudioVal(int *rw_val, int source);
+
 #ifdef __cplusplus
 }
 #endif

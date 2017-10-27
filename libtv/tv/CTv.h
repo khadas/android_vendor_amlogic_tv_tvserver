@@ -395,6 +395,10 @@ public:
     int AudioLineInSelectChannel(int audio_channel);
     int AudioSetLineInCaptureVolume(int l_vol, int r_vol);
     int setAudioPcmPlaybackVolume(int val);
+    int setAmAudioVolume(float volume);
+    float getAmAudioVolume();
+    int saveAmAudioVolume(int volume, int source);
+    int getSaveAmAudioVolume(int volume);
     int setAmAudioPreGain(float pre_gain);
     float getAmAudioPreGain();
     int setAmAudioPreMute(int mute);

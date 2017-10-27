@@ -3423,14 +3423,41 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int mode = p.readInt32();
         int ret = SetAudioOutmode(mode);
         r->writeInt32(ret);
+        break;
     }
     case GET_AUDIO_OUTMODE: {
         int ret = GetAudioOutmode();
         r->writeInt32(ret);
+        break;
     }
     case GET_AUDIO_STREAM_OUTMODE: {
         int ret = GetAudioStreamOutmode();
         r->writeInt32(ret);
+        break;
+    }
+    case SET_AMAUDIO_VOLUME: {
+        int volume = p.readInt32();
+        int ret = mpTv->setAmAudioVolume(float (volume));
+        r->writeInt32(ret);
+        break;
+    }
+    case GET_AMAUDIO_VOLUME: {
+        float volume = mpTv->getAmAudioVolume();
+        r->writeInt32(int (volume));
+        break;
+    }
+    case SAVE_AMAUDIO_VOLUME: {
+        int volume = p.readInt32();
+        int source = p.readInt32();
+        int ret = mpTv->saveAmAudioVolume(volume, source);
+        r->writeInt32(ret);
+        break;
+    }
+    case GET_SAVE_AMAUDIO_VOLUME: {
+        int source = p.readInt32();
+        int volume = mpTv->getSaveAmAudioVolume(source);
+        r->writeInt32(volume);
+        break;
     }
     // EXTAR END
     default:

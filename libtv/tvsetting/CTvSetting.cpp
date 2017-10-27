@@ -1931,3 +1931,13 @@ int SSMHDMIEdidRestoreDefault(void)
     int tmp_val = HDMI_EDID_VER_14;
     return TVSSMWriteNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, SSMGetCustomerDataLen(), tmp_val);
 }
+
+int SSMSaveAmAudioVal(int rw_val, int source)
+{
+    return TVSSMWriteNTypes(SSM_AM_AUDIO_VOLUME, 1, rw_val, source);
+}
+
+int SSMReadAmAudioVal(int *rw_val, int source)
+{
+    return TVSSMReadNTypes(SSM_AM_AUDIO_VOLUME, 1, rw_val, source);
+}

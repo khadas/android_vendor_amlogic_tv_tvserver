@@ -4748,6 +4748,35 @@ int CTv::getAmAudioPreMute()
     return mute;
 }
 
+int CTv::setAmAudioVolume(float volume)
+{
+    float gain = 0;
+    gain = 20 * log10f(volume / 100);
+
+    return setAmAudioPreGain(gain);
+}
+
+float CTv::getAmAudioVolume()
+{
+    float volume = getAmAudioPreGain();
+    volume = powf(10, volume / 20);
+
+    return volume * 100;
+}
+
+int CTv::saveAmAudioVolume(int volume, int source)
+{
+    return SSMSaveAmAudioVal(volume, source);
+}
+
+int CTv::getSaveAmAudioVolume(int source)
+{
+    int volume = 0;
+    SSMReadAmAudioVal(&volume, source);
+
+    return volume;
+}
+
 int CTv::setAmAudioPreGain(float pre_gain)
 {
     int ret = -1;

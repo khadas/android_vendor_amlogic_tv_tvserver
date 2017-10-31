@@ -610,7 +610,8 @@ int CAudioAlsa::SetHardwareResample(int sr)
     int i = 0, set_val = 0, tmp_val = 0;
     int diff_val = 0x7FFFFFFF, diff_ind = -1;
     char *match_names = NULL;
-    int sample_buf[CC_SAMPLE_BUF_SIZE] = {48000, 44100, 32000, -1};
+    int sample_buf[CC_SAMPLE_BUF_SIZE] =
+        {32000, 44100, 48000, 88200, 96000, 176400, 192000, -1};
 
     if (sr < 0) {
         set_val = 0;

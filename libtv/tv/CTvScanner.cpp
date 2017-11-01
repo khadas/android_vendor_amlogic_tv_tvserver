@@ -1392,10 +1392,13 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
     if (atv_para.mode == AM_SCAN_ATVMODE_NONE)
         return 0;
 
+    int analog_auto = getParamOption("analog.auto");
+    AM_Bool_t is_analog_auto = (analog_auto == -1)? false : (analog_auto != 0);
+
     int freq1, freq2;
     freq1 = scp.getAtvFrequency1();
     freq2 = scp.getAtvFrequency2();
-    if ((atv_para.mode != AM_SCAN_ATVMODE_FREQ && (freq1 <= 0 || freq2 <= 0))
+    if ((atv_para.mode != AM_SCAN_ATVMODE_FREQ && (freq1 <= 0 || freq2 <= 0) && is_analog_auto)
             || (atv_para.mode == AM_SCAN_ATVMODE_MANUAL && freq1 == freq2)
             || (atv_para.mode == AM_SCAN_ATVMODE_AUTO && freq1 > freq2)
             || (atv_para.mode == AM_SCAN_ATVMODE_FREQ && freq1 > freq2)) {
@@ -1413,15 +1416,16 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
     atv_para.channel_id = -1;
     atv_para.afc_range = 2000000;
 
-    int analog_auto = getParamOption("analog.auto");
-    AM_Bool_t is_analog_auto = (analog_auto == -1)? false : (analog_auto != 0);
-
     if (mAtvIsAtsc && !is_analog_auto) {// atsc scan with list-mode, not auto mode
         int mode = scp.getAtvModifier(CFrontEnd::FEParas::FEP_MODE, -1);
         if (mode == -1)
             mode = fp.getFEMode().getMode();
         const char *list_name = getDtvScanListName(mode);
         LOGD("Using Region List [%s] for ATV", list_name);
+
+        int f1 = scp.getAtvModifier(CFrontEnd::FEParas::FEP_FREQ, -1);
+        if (f1 != -1)
+             freq1 = freq2 = f1;
 
         Vector<sp<CTvChannel>> vcp;
 

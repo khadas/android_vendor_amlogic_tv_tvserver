@@ -303,6 +303,8 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
     mCurEv.mFEParas = srv->tsinfo->fe;
     mCurEv.mFrequency = mCurEv.mFEParas.getFrequency();
 
+    strncpy(mCurEv.mVct, srv->tsinfo->vct, sizeof(mCurEv.mVct));
+
     int feType = mCurEv.mFEParas.getFEMode().getBase();
     if (feType != FE_ANALOG) {
         mCurEv.mServiceId = srv->srv_id;
@@ -443,6 +445,7 @@ void CTvScanner::processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
 
     ts_info->nid = -1;
     ts_info->tsid = -1;
+    ts_info->vct[0] = 0;
 
     if (ts->type == AM_SCAN_TS_ANALOG) {
         CFrontEnd::FEMode mode(mFEParas.getFEMode());
@@ -478,6 +481,29 @@ void CTvScanner::processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
         ts_info->fe.fromFENDCTRLParameters(mode, &ts->digital.fend_para);
     }
     ts_info->dtvstd = result->start_para->dtv_para.standard;
+
+    /* Build VCT string.*/
+    if (ts_info->dtvstd == AM_SCAN_DTV_STD_ATSC) {
+        dvbpsi_atsc_vct_t *vct;
+        dvbpsi_atsc_vct_channel_t *vcinfo;
+        char *ptr  = ts_info->vct;
+        int   left = sizeof(ts_info->vct) - 1;
+        int   r;
+        LOGD("vct buffer set start");
+        AM_SI_LIST_BEGIN(ts->digital.vcts, vct)
+        AM_SI_LIST_BEGIN(vct->p_first_channel, vcinfo)
+             r = snprintf(ptr, left, (ptr == ts_info->vct) ? "%d:%d-%d" : ",%d:%d-%d", vcinfo->i_source_id, vcinfo->i_major_number, vcinfo->i_minor_number);
+             if (r >= left) {
+                 LOGD("vct buffer is too small");
+             } else {
+                 ptr  += r;
+                 left -= r;
+             }
+        AM_SI_LIST_END()
+        AM_SI_LIST_END()
+        LOGD("vct buffer set end [%s]", ts_info->vct);
+        *ptr = 0;
+    }
 }
 
 
@@ -1756,6 +1782,7 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
     pT->mCurEv.clear();
     memset(pT->mCurEv.mProgramName, '\0', sizeof(pT->mCurEv.mProgramName));
     memset(pT->mCurEv.mParas, '\0', sizeof(pT->mCurEv.mParas));
+    memset(pT->mCurEv.mVct, '\0', sizeof(pT->mCurEv.mVct));
     if (event_type == AM_SCAN_EVT_PROGRESS) {
         AM_SCAN_Progress_t *evt = (AM_SCAN_Progress_t *)param;
         LOGD("progress evt:%d [%d%%]", evt->evt, pT->mCurEv.mPercent);

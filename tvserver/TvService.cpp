@@ -171,6 +171,7 @@ void TvService::onTvEvent(const CTvEv &ev)
                 p.writeInt32(pScannerEv->mAccessControlled);
                 p.writeInt32(pScannerEv->mHidden);
                 p.writeInt32(pScannerEv->mHideGuide);
+                p.writeString16(String16(pScannerEv->mVct));
 
                 ScannerClient->notifyCallback(SCAN_EVENT_CALLBACK, p);
             }

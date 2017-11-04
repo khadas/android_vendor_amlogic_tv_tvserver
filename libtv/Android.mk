@@ -43,6 +43,7 @@ LOCAL_SRC_FILES := \
   tv/CTvEv.cpp \
   tv/CTvEpg.cpp \
   tv/CTvRrt.cpp \
+  tv/CTvEas.cpp \
   tv/CTvRecord.cpp \
   tv/CTvSubtitle.cpp \
   tv/CTvScanner.cpp \

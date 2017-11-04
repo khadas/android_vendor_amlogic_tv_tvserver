@@ -15,10 +15,10 @@
 #include <am_epg.h>
 #include <am_mem.h>
 #include <utils/threads.h>
-
 #include "CTvProgram.h"
 #include "CTvEpg.h"
 #include "CTvRrt.h"
+#include "CTvEas.h"
 #include "CTvScanner.h"
 #include "CTvLog.h"
 #include "CTvTime.h"
@@ -109,6 +109,7 @@ class CTv : public CTvin::CHDMIAudioCheck::IHDMIAudioCheckObserver,
             public CBootvideoStatusDetect::IBootvideoStatusObserver,
             public CTv2d4GHeadSetDetect::IHeadSetObserver,
             public CTvRecord::IObserver {
+
 public:
     static const int TV_ACTION_NULL = 0x0000;
     static const int TV_ACTION_IN_VDIN = 0x0001;
@@ -461,6 +462,8 @@ public:
     int SetVideoAxis(int x, int y, int width, int heigth);
     int tv_RrtUpdate(int freq, int modulation);
     int tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info);
+    int Tv_StartEasupdate();
+    int Tv_StopEasupdate();
     void dump(String8 &result);
 private:
     int SendCmdToOffBoardFBCExternalDac(int, int);
@@ -572,7 +575,7 @@ private:
 
 protected:
     class CTvMsgQueue: public CMsgQueueThread, public CAv::IObserver, public CTvScanner::IObserver , public CTvEpg::IObserver, public CFrontEnd::IObserver
-			, public CTvRecord::IObserver, public CTvRrt::IObserver {
+        , public CTvRecord::IObserver, public CTvRrt::IObserver, public CTvEas::IObserver {
     public:
         static const int TV_MSG_COMMON = 0;
         static const int TV_MSG_STOP_ANALYZE_TS = 1;
@@ -588,6 +591,8 @@ protected:
         static const int TV_MSG_VIDEO_AVAILABLE_LATER = 11;
         static const int TV_MSG_RECORD_EVENT = 12;
         static const int TV_MSG_RRT_EVENT = 13;
+        static const int TV_MSG_EAS_EVENT = 14;
+
         CTvMsgQueue(CTv *tv);
         ~CTvMsgQueue();
         //scan observer
@@ -602,6 +607,8 @@ protected:
         void onEvent(const CTvRecord::RecEvent &ev);
         //rrt observer
         void onEvent (const CTvRrt::RrtEvent &ev);
+        //eas observer
+        void onEvent (const CTvEas::EasEvent &ev);
     private:
         virtual void handleMessage ( CMessage &msg );
         CTv *mpTv;
@@ -628,6 +635,8 @@ protected:
     void onEvent(const CTvRecord::RecEvent &ev);
     //rrt observer
     void onEvent (const CTvRrt::RrtEvent &ev);
+    //eas observer
+    void onEvent (const CTvEas::EasEvent &ev);
 
     bool Tv_Start_Analyze_Ts ( int channelID );
     bool Tv_Stop_Analyze_Ts();
@@ -669,6 +678,7 @@ protected:
     CFrontEnd *mFrontDev;
     CTvDimension mTvVchip;
     CTvSubtitle mTvSub;
+    CTvEas *mTvEas;
     CAv mAv;
     CTvDmx mTvDmx;
     CTvDmx mTvDmx1;

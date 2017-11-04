@@ -169,6 +169,8 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     mHDMIAudioCheckThread.setObserver(this);
     mDevicesPollStatusDetectThread.setObserver ( this );
     mFrontDev->setObserver ( &mTvMsgQueue );
+    mTvEas = CTvEas::GetInstance();
+    mTvEas->setObserver(&mTvMsgQueue);
     if (mHdmiOutFbc) {
         fbcIns = GetSingletonFBC();
         setUpgradeFbcObserver(this);
@@ -176,7 +178,6 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     }
     mSubtitle.setObserver(this);
     mHeadSet.setObserver(this);
-
     mAv.setObserver(&mTvMsgQueue);
     mMainVolLutTableExtraName[0] = '\0';
     //-----------------------------------------------------------
@@ -262,6 +263,11 @@ void CTv::onEvent ( const CTvScanner::ScannerEvent &ev )
     } else {
         sendTvEvent ( ev );
     }
+}
+
+void CTv::onEvent ( const CTvEas::EasEvent &ev )
+{
+    sendTvEvent(ev);
 }
 
 void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
@@ -516,6 +522,11 @@ void CTv::CTvMsgQueue::handleMessage ( CMessage &msg )
         break;
     }
 
+    case TV_MSG_EAS_EVENT: {
+        mpTv->onEvent(*((CTvEas::EasEvent *)(msg.mpPara)));
+        break;
+    }
+
     default:
         break;
     }
@@ -571,6 +582,16 @@ void CTv::CTvMsgQueue::onEvent ( const CTvRrt::RrtEvent &ev )
     CMessage msg;
     msg.mDelayMs = 0;
     msg.mType = CTvMsgQueue::TV_MSG_RRT_EVENT;
+    memcpy(msg.mpPara, (void*)&ev, sizeof(ev));
+    this->sendMsg ( msg );
+}
+
+void CTv::CTvMsgQueue::onEvent ( const CTvEas::EasEvent &ev )
+{
+    CMessage msg;
+    msg.mDelayMs = 0;
+    msg.mType = CTvMsgQueue::TV_MSG_EAS_EVENT;
+    LOGD("event size = %d\n",sizeof(ev));
     memcpy(msg.mpPara, (void*)&ev, sizeof(ev));
     this->sendMsg ( msg );
 }
@@ -1203,6 +1224,7 @@ int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int
     mTvAction |= TV_ACTION_PLAYING;
     ret = startPlayTv ( SOURCE_DTV, vpid, apid, pcr, vfmt, afmt );
     tv_RrtUpdate(freq, para1);
+    Tv_StartEasupdate();
 
     CMessage msg;
     msg.mDelayMs = 2000;
@@ -1249,6 +1271,8 @@ int CTv::playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int
     ret = mAv.startTimeShift(para);
 
     SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
+
+    Tv_StartEasupdate();
     return ret;
 }
 
@@ -3475,6 +3499,11 @@ int CTv::Tv_SaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_
 vpp_noise_reduction_mode_t CTv::Tv_GetNoiseReductionMode ( tv_source_input_t tv_source_input )
 {
     return CVpp::getInstance()->GetNoiseReductionMode((tv_source_input_t)tv_source_input);
+}
+
+int CTv::Tv_StartEasupdate()
+{
+    return mTvEas->StartEasUpdate();
 }
 
 //audio

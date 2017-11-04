@@ -41,10 +41,11 @@ public:
     static const int TV_EVENT_FRONTEND = 21;
     static const int TV_EVENT_RECORDER = 22;
     static const int TV_EVENT_RRT = 23;//RRT
+    static const int TV_EVENT_EAS = 24;//EAS
 
     CTvEv(int type);
     virtual ~CTvEv() {};
-	int getEvType() const {
+    int getEvType() const {
         return mEvType;
     };
 private:

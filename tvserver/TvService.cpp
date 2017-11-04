@@ -464,6 +464,79 @@ void TvService::onTvEvent(const CTvEv &ev)
         break;
     }
 
+    case CTvEv::TV_EVENT_EAS: {
+        CTvEas::EasEvent *pEasEvent = (CTvEas::EasEvent *) (&ev);
+        for (int i = 0; i < (int)mClients.size(); i++) {
+            wp<Client> client = mClients[i];
+            if (client != 0) {
+                sp<Client> c = client.promote();
+                if (c != 0) {
+                    Parcel p;
+                    int j, k;
+                    p.writeInt32(pEasEvent->eas_section_count);
+                    p.writeInt32(pEasEvent->table_id);
+                    p.writeInt32(pEasEvent->extension);
+                    p.writeInt32(pEasEvent->version);
+                    p.writeInt32(pEasEvent->current_next);
+                    p.writeInt32(pEasEvent->sequence_num);
+                    p.writeInt32(pEasEvent->protocol_version);
+                    p.writeInt32(pEasEvent->eas_event_id);
+                    p.writeInt32(pEasEvent->eas_orig_code[0]);
+                    p.writeInt32(pEasEvent->eas_orig_code[1]);
+                    p.writeInt32(pEasEvent->eas_orig_code[2]);
+                    p.writeInt32(pEasEvent->eas_event_code_len);
+                    for (j=0;j<pEasEvent->eas_event_code_len;j++) {
+                        p.writeInt32(pEasEvent->eas_event_code[j]);
+                    }
+                    p.writeInt32(pEasEvent->alert_message_time_remaining);
+                    p.writeInt32(pEasEvent->event_start_time);
+                    p.writeInt32(pEasEvent->event_duration);
+                    p.writeInt32(pEasEvent->alert_priority);
+                    p.writeInt32(pEasEvent->details_OOB_source_ID);
+                    p.writeInt32(pEasEvent->details_major_channel_number);
+                    p.writeInt32(pEasEvent->details_minor_channel_number);
+                    p.writeInt32(pEasEvent->audio_OOB_source_ID);
+                    p.writeInt32(pEasEvent->location_count);
+                    for (j=0;j<pEasEvent->location_count;j++) {
+                        p.writeInt32(pEasEvent->location[j].i_state_code);
+                        p.writeInt32(pEasEvent->location[j].i_country_subdiv);
+                        p.writeInt32(pEasEvent->location[j].i_country_code);
+                    }
+                    p.writeInt32(pEasEvent->exception_count);
+                    for (j=0;j<pEasEvent->exception_count;j++) {
+                        p.writeInt32(pEasEvent->exception[j].i_in_band_refer);
+                        p.writeInt32(pEasEvent->exception[j].i_exception_major_channel_number);
+                        p.writeInt32(pEasEvent->exception[j].i_exception_minor_channel_number);
+                        p.writeInt32(pEasEvent->exception[j].exception_OOB_source_ID);
+                    }
+                    p.writeInt32(pEasEvent->multi_text_count);
+                    for (j=0;j<pEasEvent->multi_text_count;j++) {
+                        p.writeInt32(pEasEvent->multi_text[j].lang[0]);
+                        p.writeInt32(pEasEvent->multi_text[j].lang[1]);
+                        p.writeInt32(pEasEvent->multi_text[j].lang[2]);
+                        p.writeInt32(pEasEvent->multi_text[j].i_type);
+                        p.writeInt32(pEasEvent->multi_text[j].i_compression_type);
+                        p.writeInt32(pEasEvent->multi_text[j].i_mode);
+                        p.writeInt32(pEasEvent->multi_text[j].i_number_bytes);
+                        for (k=0;k<pEasEvent->multi_text[j].i_number_bytes;j++) {
+                            p.writeInt32(pEasEvent->multi_text[j].compressed_str[k]);
+                        }
+                    }
+                    p.writeInt32(pEasEvent->descriptor_text_count);
+                    for (j=0;j<pEasEvent->descriptor_text_count;j++) {
+                        p.writeInt32(pEasEvent->descriptor[j].i_tag);
+                        p.writeInt32(pEasEvent->descriptor[j].i_length);
+                        for (k=0;k<pEasEvent->descriptor[j].i_length;k++) {
+                            p.writeInt32(pEasEvent->descriptor[j].p_data[k]);
+                        }
+                    }
+                    c->getTvClient()->notifyCallback(EAS_EVENT_CALLBACK, p);
+                }
+            }
+        }
+        break;
+    }
+
     default:
         break;
     }
@@ -3540,7 +3613,12 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         if (count != 0) {
             r->writeString16(String16(rrt_info.rating_value_text));
         }
+        r->writeInt32(ret);
+        break;
+    }
 
+    case DTV_UPDATE_EAS: {
+        int ret = mpTv->Tv_StartEasupdate();
         r->writeInt32(ret);
         break;
     }

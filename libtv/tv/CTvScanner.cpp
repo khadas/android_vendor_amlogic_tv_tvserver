@@ -1665,7 +1665,8 @@ int CTvScanner::startVBI()
         goto error;
 
     memset(&spara, 0, sizeof(spara));
-    spara.caption = AM_CC_CAPTION_CC1;
+    spara.caption1 = AM_CC_CAPTION_XDS;
+    spara.caption2 = AM_CC_CAPTION_NONE;
     ret = AM_CC_Start(mVbi, &spara);
     if (ret != AM_SUCCESS)
         goto error;

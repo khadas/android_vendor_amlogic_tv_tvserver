@@ -2217,7 +2217,7 @@ void CTv::onSigStillStable()
 {
     if ( !(mTvAction & TV_ACTION_SCANNING) ) {
         LOGD("still stable , to start decoder");
-        if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
+        if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow && mpTvin->getSnowStatus()) {
             mpTvin->Tvin_StopDecoder();
             mpTvin->SwitchSnow( false );
         }
@@ -2337,6 +2337,7 @@ void CTv::onSigToUnstable()
 {
     LOGD ( "%s, signal to Unstable\n", __FUNCTION__);
     SetAudioMuteForTv(CC_AUDIO_MUTE);
+/*
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
         mpTvin->SwitchSnow( true );
         mpTvin->Tvin_StartDecoder ( m_cur_sig_info );
@@ -2345,6 +2346,8 @@ void CTv::onSigToUnstable()
         mAv.DisableVideoWithBlackColor();
         mpTvin->Tvin_StopDecoder();
     }
+    mpTvin->Tvin_StopDecoder();
+*/
 }
 
 void CTv::onSigToUnSupport()

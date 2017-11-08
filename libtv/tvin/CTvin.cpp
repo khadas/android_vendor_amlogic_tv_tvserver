@@ -64,6 +64,7 @@ CTvin::CTvin()
 {
     m_vdin_dev_fd = -1;
     afe_dev_fd = -1;
+    m_snow_status = false;
 
     m_tvin_param.index = 0;
     mDecoderStarted = false;
@@ -1840,12 +1841,12 @@ int CTvin::Tvin_StartDecoder ( tvin_info_t &info )
 int CTvin::SwitchSnow(bool enable)
 {
     int ret = -1;
-    static bool last_status = false;
+    //static bool last_status = false;
 
-    if ( last_status == enable ) {
+    if ( m_snow_status == enable ) {
         return 0;
     } else {
-        last_status = enable;
+        m_snow_status = enable;
     }
     if ( enable ) {
         ret = AFE_DeviceIOCtl( TVIN_IOC_S_AFE_SONWON );
@@ -1856,6 +1857,11 @@ int CTvin::SwitchSnow(bool enable)
     }
 
     return ret;
+}
+
+bool CTvin::getSnowStatus()
+{
+    return m_snow_status;
 }
 
 int CTvin::SwitchPort (tvin_port_t source_port )

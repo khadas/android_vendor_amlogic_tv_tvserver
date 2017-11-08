@@ -644,6 +644,7 @@ public:
     int get_hdmi_sampling_rate();
     int SwitchPort (tvin_port_t source_port );
     int SwitchSnow(bool enable);
+    bool getSnowStatus(void);
     int Tvin_WaitPathInactive ( tv_path_type_t pathtype );
     int VDIN_AddPath ( const char *videopath );
     int VDIN_RmDefPath ( void );
@@ -731,6 +732,7 @@ public:
     static CTvin *getInstance();
 
     int m_vdin_dev_fd;
+    bool m_snow_status;
 
 public:
     class CHDMIAudioCheck: public Thread {

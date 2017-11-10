@@ -40,6 +40,7 @@ public:
     static const int TV_EVENT_SCANNING_FRAME_STABLE = 20;
     static const int TV_EVENT_FRONTEND = 21;
     static const int TV_EVENT_RECORDER = 22;
+    static const int TV_EVENT_RRT = 23;//RRT
 
     CTvEv(int type);
     virtual ~CTvEv() {};

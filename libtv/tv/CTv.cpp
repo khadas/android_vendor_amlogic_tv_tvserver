@@ -142,6 +142,8 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     mFrontDev = CFrontEnd::getInstance();
     mpTvin = CTvin::getInstance();
     mTvScanner = CTvScanner::getInstance();
+    mTvRrt = CTvRrt::getInstance();
+    mTvRrt->setObserver(&mTvMsgQueue);
     tv_config_load (TV_CONFIG_FILE_PATH);
     sqlite3_config (SQLITE_CONFIG_SERIALIZED);
     sqlite3_soft_heap_limit(8 * 1024 * 1024);
@@ -430,6 +432,11 @@ void CTv::onEvent(const CTvRecord::RecEvent &ev)
     }
 }
 
+void CTv::onEvent (const CTvRrt::RrtEvent &ev)
+{
+    sendTvEvent ( ev );
+}
+
 CTv::CTvMsgQueue::CTvMsgQueue(CTv *tv)
 {
     mpTv = tv;
@@ -504,6 +511,11 @@ void CTv::CTvMsgQueue::handleMessage ( CMessage &msg )
         break;
     }
 
+    case TV_MSG_RRT_EVENT: {
+        mpTv->onEvent(*((CTvRrt::RrtEvent *)(msg.mpPara)));
+        break;
+    }
+
     default:
         break;
     }
@@ -550,6 +562,15 @@ void CTv::CTvMsgQueue::onEvent(const CTvRecord::RecEvent &ev)
     CMessage msg;
     msg.mDelayMs = 0;
     msg.mType = CTvMsgQueue::TV_MSG_RECORD_EVENT;
+    memcpy(msg.mpPara, (void*)&ev, sizeof(ev));
+    this->sendMsg ( msg );
+}
+
+void CTv::CTvMsgQueue::onEvent ( const CTvRrt::RrtEvent &ev )
+{
+    CMessage msg;
+    msg.mDelayMs = 0;
+    msg.mType = CTvMsgQueue::TV_MSG_RRT_EVENT;
     memcpy(msg.mpPara, (void*)&ev, sizeof(ev));
     this->sendMsg ( msg );
 }
@@ -1181,6 +1202,7 @@ int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int
     }
     mTvAction |= TV_ACTION_PLAYING;
     ret = startPlayTv ( SOURCE_DTV, vpid, apid, pcr, vfmt, afmt );
+    tv_RrtUpdate(freq, para1);
 
     CMessage msg;
     msg.mDelayMs = 2000;
@@ -5656,6 +5678,32 @@ int CTv::doPlayCommand(int cmd, const char *id, const char *param)
 
 ANDROID_SINGLETON_STATIC_INSTANCE(RecorderManager);
 ANDROID_SINGLETON_STATIC_INSTANCE(PlayerManager);
+
+int CTv::tv_RrtUpdate(int freq, int modulation)
+{
+    fe_status_t status = (fe_status_t)mFrontDev->getStatus();
+    LOGD("signal lock status = %x", status);
+    if (status & FE_HAS_LOCK) {
+        return mTvRrt->StartRrtUpdate();
+    } else {
+        mFrontDev->setPara(FE_ATSC, freq, modulation, 0);
+        return mTvRrt->StartRrtUpdate();
+    }
+}
+
+int CTv::tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info)
+{
+    int ret;
+    rrt_select_info_t tmp;
+    ret = mTvRrt->GetRRTRating(rating_region_id, dimension_id, value_id, &tmp);
+    if (ret < 0) {
+        LOGD("tv_RrtSearch error!\n");
+    }
+
+    *rrt_select_info = tmp;
+
+    return ret;
+}
 
 void CTv::dump(String8 &result)
 {

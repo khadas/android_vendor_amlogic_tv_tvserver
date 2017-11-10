@@ -18,6 +18,7 @@
 
 #include "CTvProgram.h"
 #include "CTvEpg.h"
+#include "CTvRrt.h"
 #include "CTvScanner.h"
 #include "CTvLog.h"
 #include "CTvTime.h"
@@ -54,8 +55,6 @@ static const char *TV_CONFIG_FILE_SYSTEM_PATH = "/system/etc/tvconfig.conf";
 static const char *TV_CONFIG_FILE_PARAM_PATH = "/param/tvconfig.conf";
 static const char *TV_CHANNEL_LIST_SYSTEM_PATH = "/system/etc/tv_default.xml";
 static const char *TV_CHANNEL_LIST_PARAM_PATH = "/param/tv_default.xml";
-static const char *TV_SSM_DATA_SYSTEM_PATH = "/system/etc/ssm_data";
-static const char *TV_SSM_DATA_PARAM_PATH = "/param/ssm_data";
 
 #define LCD_ENABLE "/sys/class/lcd/enable"
 #define BL_LOCAL_DIMING_FUNC_ENABLE "/sys/class/aml_ldim/func_en"
@@ -460,7 +459,8 @@ public:
     int SetHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);
     int SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable);
     int SetVideoAxis(int x, int y, int width, int heigth);
-
+    int tv_RrtUpdate(int freq, int modulation);
+    int tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info);
     void dump(String8 &result);
 private:
     int SendCmdToOffBoardFBCExternalDac(int, int);
@@ -572,7 +572,7 @@ private:
 
 protected:
     class CTvMsgQueue: public CMsgQueueThread, public CAv::IObserver, public CTvScanner::IObserver , public CTvEpg::IObserver, public CFrontEnd::IObserver
-			, public CTvRecord::IObserver {
+			, public CTvRecord::IObserver, public CTvRrt::IObserver {
     public:
         static const int TV_MSG_COMMON = 0;
         static const int TV_MSG_STOP_ANALYZE_TS = 1;
@@ -587,7 +587,7 @@ protected:
         static const int TV_MSG_SCANNING_FRAME_STABLE = 10;
         static const int TV_MSG_VIDEO_AVAILABLE_LATER = 11;
         static const int TV_MSG_RECORD_EVENT = 12;
-
+        static const int TV_MSG_RRT_EVENT = 13;
         CTvMsgQueue(CTv *tv);
         ~CTvMsgQueue();
         //scan observer
@@ -600,6 +600,8 @@ protected:
         void onEvent(const CAv::AVEvent &ev);
         //Record
         void onEvent(const CTvRecord::RecEvent &ev);
+        //rrt observer
+        void onEvent (const CTvRrt::RrtEvent &ev);
     private:
         virtual void handleMessage ( CMessage &msg );
         CTv *mpTv;
@@ -624,6 +626,8 @@ protected:
     void onEvent(const CAv::AVEvent &ev);
     //Record
     void onEvent(const CTvRecord::RecEvent &ev);
+    //rrt observer
+    void onEvent (const CTvRrt::RrtEvent &ev);
 
     bool Tv_Start_Analyze_Ts ( int channelID );
     bool Tv_Stop_Analyze_Ts();
@@ -657,6 +661,7 @@ protected:
     virtual void onBootvideoStopped();
 
     CTvEpg mTvEpg;
+    CTvRrt *mTvRrt;
     CTvScanner *mTvScanner;
     mutable Mutex mLock;
     CTvTime mTvTime;

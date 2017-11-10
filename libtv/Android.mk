@@ -42,6 +42,7 @@ LOCAL_SRC_FILES := \
   tv/CBootvideoStatusDetect.cpp \
   tv/CTvEv.cpp \
   tv/CTvEpg.cpp \
+  tv/CTvRrt.cpp \
   tv/CTvRecord.cpp \
   tv/CTvSubtitle.cpp \
   tv/CTvScanner.cpp \

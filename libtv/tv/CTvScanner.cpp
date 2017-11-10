@@ -414,7 +414,8 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
             mCurEv.mFrequency, mCurEv.mFEParas.getVideoStd(), mCurEv.mFEParas.getAudioStd());
     }
 
-    getInstance()->sendEvent(mCurEv);
+    if ((feType == FE_ANALOG) || (mCurEv.mVid != 0x1fff) || mCurEv.mAcnt)
+        getInstance()->sendEvent(mCurEv);
 }
 
 void CTvScanner::sendEvent(ScannerEvent &evt)

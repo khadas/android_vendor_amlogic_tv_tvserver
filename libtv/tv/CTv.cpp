@@ -2443,8 +2443,11 @@ void CTv::onSigToUnstable()
         mAv.DisableVideoWithBlackColor();
         mpTvin->Tvin_StopDecoder();
     }
-    mpTvin->Tvin_StopDecoder();
 */
+    if (SOURCE_TV != m_source_input) {
+        mAv.DisableVideoWithBlackColor();
+        mpTvin->Tvin_StopDecoder();
+    }
 }
 
 void CTv::onSigToUnSupport()

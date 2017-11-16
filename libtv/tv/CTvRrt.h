@@ -16,7 +16,7 @@
 #if !defined(_CDTVRRT_H)
 #define _CDTVRRT_H
 
-#define TV_RRT_DEFINE_FILE_PATH  "/param/tv_rrt_define.xml"
+#define TV_RRT_DEFINE_FILE_PATH          "/param/tv_rrt_define.xml"
 
 typedef struct rrt_info
 {
@@ -118,7 +118,6 @@ private:
     static void rrt_table_callback(AM_EPG_Handle_t handle, int type, void * tables, void * user_data);
     void rrt_table_update(AM_EPG_Handle_t handle, int type, void * tables, void * user_data);
     void atsc_multiple_string_parser(atsc_multiple_string_t atsc_multiple_string, char *ret);
-
     static CTvRrt *mInstance;
     IObserver *mpObserver;
     RrtEvent mCurRrtEv;

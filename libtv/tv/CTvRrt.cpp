@@ -31,7 +31,7 @@ CTvRrt::CTvRrt()
     mRrtScanStatus      = INVALID_ID;
     mDmx_id             = INVALID_ID;
 
-    int ret = RrtCreate(0, 0, 0, NULL);
+    int ret = RrtCreate(0, 2, 0, NULL);
     if (ret < 0) {
         LOGE("RrtCreate failed!\n");
     }
@@ -87,9 +87,10 @@ int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, r
 
     TiXmlDocument *pRRTFile = new TiXmlDocument(TV_RRT_DEFINE_FILE_PATH);
     if (!pRRTFile->LoadFile()) {
-        LOGD("load %s error!\n",TV_RRT_DEFINE_FILE_PATH);
+        LOGD("load %s error!\n", TV_RRT_DEFINE_FILE_PATH);
         return -1;
     }
+
     memset(ret, 0, sizeof(rrt_select_info_t));
     TiXmlElement* pTmpElement = pRRTFile->RootElement()->FirstChildElement();
     if (pTmpElement != NULL) {
@@ -138,6 +139,7 @@ int CTvRrt::RrtCreate(int fend_id, int dmx_id, int src, char * textLangs)
     mDmx_id = dmx_id;
 
     memset(&dmx_para, 0, sizeof(dmx_para));
+    LOGD("Opening demux%d ...", dmx_id);
     ret = AM_DMX_Open(mDmx_id, &dmx_para);
     if (ret != AM_SUCCESS) {
         LOGD("AM_DMX_Open failed");
@@ -415,14 +417,14 @@ void CTvRrt::rrt_table_update(AM_EPG_Handle_t handle, int type, void * tables, v
         INT8U i, j;
         rrt_info_t rrt_info;
         memset(&rrt_info, 0, sizeof(rrt_info_t));
-
+        #if 0
         //check rrt_define_file exist
         struct stat tmp_st;
         if (stat(TV_RRT_DEFINE_FILE_PATH, &tmp_st) == 0) {
             LOGD("file exist,delete it!\n");
             remove(TV_RRT_DEFINE_FILE_PATH);
         }
-
+        #endif
         //open xml file
         TiXmlDocument *pRRTFile = OpenXmlFile();
         if (pRRTFile == NULL) {

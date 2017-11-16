@@ -132,6 +132,16 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
         }
     }
 
+    if (isFileExist(TV_RRT_DEFINE_SYSTEM_PATH)) {
+        if (!isFileExist(TV_RRT_DEFINE_PARAM_PATH)) {
+            CFile file ( TV_RRT_DEFINE_SYSTEM_PATH );
+
+            if ( file.copyTo ( TV_RRT_DEFINE_PARAM_PATH ) != 0 ) {
+                LOGE ( "%s, copy file = %s , error", __FUNCTION__, TV_RRT_DEFINE_PARAM_PATH );
+            }
+        }
+    }
+
     AM_EVT_Init();
 
     mpObserver = NULL;
@@ -1272,6 +1282,9 @@ int CTv::playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int
 
     SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
 
+    int mode, freq, para1, para2;
+    mFrontDev->getPara(&mode, &freq, &para1, &para2);
+    tv_RrtUpdate(freq, mode);
     Tv_StartEasupdate();
     return ret;
 }

@@ -76,7 +76,11 @@ int CTvEas::EasCreate(int fend_id, int dmx_id, int src, char *textLangs)
     LOGD("Opening demux%d ...", dmx_id);
     mDmxId = dmx_id;
     memset(&dmx_para, 0, sizeof(dmx_para));
-    AM_DMX_Open(dmx_id, &dmx_para);
+    ret = AM_DMX_Open(dmx_id, &dmx_para);
+    if (ret != AM_SUCCESS) {
+        LOGD("AM_DMX_Open failed");
+        return - 1;
+    }
 
     para.fend_dev = fend_id;
     para.dmx_dev  = dmx_id;

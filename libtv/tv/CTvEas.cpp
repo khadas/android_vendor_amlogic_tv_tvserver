@@ -28,21 +28,31 @@ CTvEas::CTvEas()
     mEasScanHandle      = NULL;
     mpObserver          = NULL;
     mDmxId              = INVALID_ID;
-    EasCreate(0, 2, 0, NULL);
 }
 
 CTvEas::~CTvEas()
 {
-    EasDestroy();
-
     if (mInstance != NULL) {
         delete mInstance;
         mInstance = NULL;
     }
 }
 
+/**
+ * @Function: StartEasUpdate
+ * @Description: Start Update EAS info
+ * @Param:
+ * @Return:0 success, -1 fail
+ */
 int CTvEas::StartEasUpdate()
 {
+    int val = 0;
+    val = EasCreate(0, 2, 0, NULL);    //2 is demux id which according to DVB moudle!
+    if (val < 0) {
+        LOGD("EasCreate failed!\n");
+        return -1;
+    }
+
     AM_ErrorCode_t ret;
     ret = AM_EPG_ChangeMode(mEasScanHandle, MODE_ADD, SCAN_PSIP_CEA);
     if (ret != AM_SUCCESS) {
@@ -54,6 +64,12 @@ int CTvEas::StartEasUpdate()
     }
 }
 
+/**
+ * @Function: StopEasUpdate
+ * @Description: Stop Update EAS info
+ * @Param:
+ * @Return: 0 success, -1 fail
+ */
 int CTvEas::StopEasUpdate()
 {
     AM_ErrorCode_t ret;
@@ -65,8 +81,24 @@ int CTvEas::StopEasUpdate()
         LOGD("StopEasUpdate success!\n");
         return 0;
     }
+
+    int val = 0;
+    val = EasDestroy();
+    if (val < 0) {
+        LOGD("EasDestroy failed!\n");
+        return -1;
+    }
 }
 
+/**
+ * @Function: EasCreate
+ * @Description: open dev for EAS and set EAS event
+ * @Param: fend_id: fend dev id;
+           dmx_id:  demux dev id;
+           src:     source;
+           textLangs:language;
+ * @Return: 0 success, -1 fail
+ */
 int CTvEas::EasCreate(int fend_id, int dmx_id, int src, char *textLangs)
 {
     AM_EPG_CreatePara_t para;
@@ -105,6 +137,12 @@ int CTvEas::EasCreate(int fend_id, int dmx_id, int src, char *textLangs)
     return 0;
 }
 
+/**
+ * @Function: EasDestroy
+ * @Description: close dev for EAS and reset EAS event
+ * @Param:
+ * @Return: 0 success, -1 fail
+ */
 int CTvEas::EasDestroy()
 {
     if (mEasScanHandle != NULL) {
@@ -116,15 +154,26 @@ int CTvEas::EasDestroy()
             LOGD("AM_EPG_SetUserData failed!\n");
             return -1;
         }
+        mEasScanHandle = NULL;
     }
 
     if (mDmxId != INVALID_ID) {
         AM_DMX_Close(mDmxId);
+        mDmxId = INVALID_ID;
     }
 
     return 0;
 }
 
+/**
+ * @Function: EasEvtCallback
+ * @Description: EAS event callback function
+ * @Param:dev_no: dev id
+          event_type:RRT event type
+          param:callback data
+          user_data:
+ * @Return:
+ */
 void CTvEas::EasEvtCallback(long dev_no, int event_type, void *param, void *user_data __unused)
 {
     CTvEas *pEas;
@@ -235,6 +284,12 @@ void CTvEas::EasEvtCallback(long dev_no, int event_type, void *param, void *user
     }
 }
 
+/**
+ * @Function: GetSectionCount
+ * @Description: Get EAS Section Count
+ * @Param:pData:Address of atsc eas string which need to check count
+ * @Return:count result
+ */
 int CTvEas::GetSectionCount(dvbpsi_atsc_cea_t *pData)
 {
     int count  = 0;
@@ -246,6 +301,12 @@ int CTvEas::GetSectionCount(dvbpsi_atsc_cea_t *pData)
     return count;
 }
 
+/**
+ * @Function: GetDescCount
+ * @Description: Get EAS descriptor string Count
+ * @Param:pData:Address of atsc eas descriptor string which need to check count
+ * @Return:count result
+ */
 int CTvEas::GetDescCount(dvbpsi_descriptor_t *pData)
 {
     int count  = 0;
@@ -257,7 +318,12 @@ int CTvEas::GetDescCount(dvbpsi_descriptor_t *pData)
     return count;
 }
 
-
+/**
+ * @Function: GetMultiCount
+ * @Description: Get EAS multi string Count
+ * @Param:pData:Address of atsc eas multi string which need to check count
+ * @Return:count result
+ */
 int CTvEas::GetMultiCount(dvbpsi_atsc_cea_multi_str_t *pData)
 {
     int count  = 0;

@@ -12,6 +12,7 @@
 #include <tinyxml.h>
 #include "CTvRrt.h"
 
+pthread_mutex_t rrt_update_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 CTvRrt *CTvRrt::mInstance;
 CTvRrt *CTvRrt::getInstance()
@@ -30,50 +31,87 @@ CTvRrt::CTvRrt()
     mpNewRrt            = NULL;
     mRrtScanStatus      = INVALID_ID;
     mDmx_id             = INVALID_ID;
-
-    int ret = RrtCreate(0, 2, 0, NULL);
-    if (ret < 0) {
-        LOGE("RrtCreate failed!\n");
-    }
+    mScanResult         = 0;
 }
 
 CTvRrt::~CTvRrt()
 {
-    int ret = RrtDestroy();
-    if (ret < 0) {
-        LOGE("RrtDestroy failed!\n");
-    }
-
     if (mInstance != NULL) {
         delete mInstance;
         mInstance = NULL;
     }
 }
 
-int CTvRrt::StartRrtUpdate(void)
+/**
+ * @Function: StartRrtUpdate
+ * @Description: Start Update rrt info
+ * @Param:mode:RRT_AUTO_SEARCH:auto search;    RRT_MANU_SEARCH:manual search
+ * @Return: 0 success, -1 fail
+ */
+int CTvRrt::StartRrtUpdate(rrt_search_mode_t mode)
 {
     int ret;
+    pthread_mutex_lock(&rrt_update_mutex);
+
+    ret = RrtCreate(0, 2, 0, NULL);    //2 is demux id which according to DVB moudle!
+    if (ret < 0) {
+        LOGD("RrtCreate failed!\n");
+        pthread_mutex_unlock(&rrt_update_mutex);
+        return 0;
+    }
+
     ret = RrtScanStart();
     if (ret < 0) {
         LOGD("RrtScanStart failed!\n");
+        pthread_mutex_unlock(&rrt_update_mutex);
+        return 0;
+    } else {
+        if (mode == RRT_MANU_SEARCH) {//manual
+            mRrtScanStatus = RrtEvent::EVENT_RRT_SCAN_SCANING;
+            sleep(5);//scan 5s
+            mRrtScanStatus = RrtEvent::EVENT_RRT_SCAN_END;
+            LOGD("ScanResult = %d!\n", mScanResult);
+            pthread_mutex_unlock(&rrt_update_mutex);
+            return mScanResult;
+        } else {//auto
+            pthread_mutex_unlock(&rrt_update_mutex);
+            return 1;
+        }
     }
-
-    return ret;
 }
 
+/**
+ * @Function: StopRrtUpdate
+ * @Description: Stop Update rrt info
+ * @Param:
+ * @Return: 0 success, -1 fail
+ */
 int CTvRrt::StopRrtUpdate(void)
 {
     int ret = -1;
 
     ret = RrtScanStop();
-
     if (ret < 0) {
         LOGD("RrtScanStop failed!\n");
+    }
+
+    ret = RrtDestroy();
+    if (ret < 0) {
+        LOGE("RrtDestroy failed!\n");
     }
 
     return ret;
 }
 
+/**
+ * @Function: GetRRTRating
+ * @Description: search data for livetv from RRT file
+ * @Param: rating_region_id: rating region id;
+           dimension_id:  dimension id;
+           value_id:     value id;
+           ret:search results
+ * @Return: 0 success, -1 fail
+ */
 int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *ret)
 {
     LOGD("rating_region_id = %d, dimension_id = %d, value_id = %d\n",rating_region_id, dimension_id, value_id);
@@ -97,16 +135,13 @@ int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, r
         do {
             if ((pTmpElement->FirstAttribute()->Next()->IntValue() ==rating_region_id) &&
                 (pTmpElement->LastAttribute()->IntValue() == dimension_id )) {
-                LOGD("selectChildElect: %s\n",pTmpElement->Value());
                 LOGD("%s\n",pTmpElement->FirstAttribute()->Next()->Next()->Value());
                 int RationSize = strlen(pTmpElement->FirstAttribute()->Next()->Next()->Value());
-                LOGD("RationSize: %d\n",RationSize);
                 ret->rating_region_name_count = RationSize;
                 const char *rating_region_name = pTmpElement->FirstAttribute()->Next()->Next()->Value();
                 memcpy(ret->rating_region_name, rating_region_name, RationSize+1);
                 LOGD("%s\n",pTmpElement->FirstAttribute()->Value());
                 int DimensionSize = strlen(pTmpElement->FirstAttribute()->Value());
-                LOGD("DimensionSize: %d\n",DimensionSize);
                 ret->dimensions_name_count = DimensionSize;
                 memcpy(ret->dimensions_name, pTmpElement->FirstAttribute()->Value(), DimensionSize+1);
 
@@ -114,7 +149,6 @@ int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, r
                 for (pElement=pTmpElement->FirstChildElement();pElement;pElement = pElement->NextSiblingElement()) {
                     if (pElement->LastAttribute()->IntValue() == value_id ) {
                         int ValueSize = strlen(pElement->FirstAttribute()->Value());
-                        LOGD("ValueSize: %d\n",ValueSize);
                         ret->rating_value_text_count = ValueSize;
                         LOGD("%s\n",pElement->FirstAttribute()->Value());
                         memcpy(ret->rating_value_text, pElement->FirstAttribute()->Value(), ValueSize+1);
@@ -131,6 +165,15 @@ int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, r
     }
 }
 
+/**
+ * @Function: RrtCreate
+ * @Description: open dev for RRT and set RRT event
+ * @Param: fend_id: fend dev id;
+           dmx_id:  demux dev id;
+           src:     source;
+           textLangs:language;
+ * @Return: 0 success, -1 fail
+ */
 int CTvRrt::RrtCreate(int fend_id, int dmx_id, int src, char * textLangs)
 {
     AM_EPG_CreatePara_t para;
@@ -159,38 +202,31 @@ int CTvRrt::RrtCreate(int fend_id, int dmx_id, int src, char * textLangs)
         return - 1;
     }
 
-    /*disable internal default table procedure*/
-    AM_EPG_DisableDefProc(mRrtScanHandle, AM_TRUE);
-    if (ret != AM_SUCCESS) {
-        LOGD("AM_EPG_DisableDefProc failed");
-        return - 1;
-    }
-
     /*register eit events notifications*/
-    AM_EVT_Subscribe((long)mRrtScanHandle, AM_EPG_EVT_NEW_RRT, rrt_evt_callback, NULL);
+    AM_EVT_Subscribe((long)mRrtScanHandle, AM_EPG_EVT_NEW_RRT, RrtEventCallback, NULL);
     AM_EPG_SetUserData(mRrtScanHandle, (void *)this);
-
-    /*handle tables directly by user*/
-    AM_EPG_SetTablesCallback(mRrtScanHandle, AM_EPG_TAB_RRT, rrt_table_callback, NULL);
-    if (ret != AM_SUCCESS) {
-        LOGD("AM_EPG_SetTablesCallback failed");
-        return - 1;
-    }
 
     return 0;
 }
 
+/**
+ * @Function: RrtDestroy
+ * @Description: close dev for RRT and reset RRT event
+ * @Param:
+ * @Return: 0 success, -1 fail
+ */
 int CTvRrt::RrtDestroy()
 {
     AM_ErrorCode_t  ret;
 
     if (mRrtScanHandle != NULL) {
-        AM_EVT_Unsubscribe((long)mRrtScanHandle, AM_EPG_EVT_NEW_RRT, rrt_evt_callback, NULL);
+        AM_EVT_Unsubscribe((long)mRrtScanHandle, AM_EPG_EVT_NEW_RRT, RrtEventCallback, NULL);
         ret = AM_EPG_Destroy(mRrtScanHandle);
         if (ret != AM_SUCCESS) {
             LOGD("AM_EPG_Destroy failed");
             return - 1;
         }
+        mRrtScanHandle = NULL;
     }
 
     if (mDmx_id != INVALID_ID) {
@@ -200,11 +236,19 @@ int CTvRrt::RrtDestroy()
             LOGD("AM_DMX_Close failed");
             return - 1;
         }
+        mDmx_id = INVALID_ID;
     }
 
     return 0;
 }
 
+/**
+ * @Function: RrtChangeMode
+ * @Description: change epg mode
+ * @Param: op: epg modul;
+           mode:  epg mode;
+ * @Return: 0 success, -1 fail
+ */
 int CTvRrt::RrtChangeMode(int op, int mode)
 {
     AM_ErrorCode_t  ret;
@@ -218,38 +262,79 @@ int CTvRrt::RrtChangeMode(int op, int mode)
     return 0;
 }
 
+/**
+ * @Function: RrtScanStart
+ * @Description: start scan RRT info
+ * @Param:
+ * @Return: 0 success, -1 fail
+ */
 int CTvRrt::RrtScanStart(void)
 {
     int ret = -1;
-    mRrtScanStatus = RrtEvent::EVENT_RRT_SCAN_START;
     ret = RrtChangeMode(MODE_ADD, SCAN_RRT);
 
     return ret;
 }
 
+/**
+ * @Function: RrtScanStop
+ * @Description: stop scan RRT info
+ * @Param:
+ * @Return: 0 success, -1 fail
+ */
 int CTvRrt::RrtScanStop(void)
 {
     int ret = -1;
-    mRrtScanStatus = RrtEvent::EVENT_RRT_SCAN_END;
     ret = RrtChangeMode(MODE_REMOVE, SCAN_RRT);
     return ret;
 }
 
-void CTvRrt::rrt_evt_callback(long dev_no, int event_type, void *param, void *user_data __unused)
+/**
+ * @Function: RrtEventCallback
+ * @Description: RRT event callback function
+ * @Param:dev_no: dev id
+          event_type:RRT event type
+          param:callback data
+          user_data:
+ * @Return:
+ */
+void CTvRrt::RrtEventCallback(long dev_no, int event_type, void *param, void *user_data)
 {
-    CTvRrt *pRrt;
+    AM_EPG_GetUserData((AM_EPG_Handle_t)dev_no, (void **)&mInstance);
 
-    AM_EPG_GetUserData((AM_EPG_Handle_t)dev_no, (void **)&pRrt);
+    if (mInstance == NULL) {
+        LOGD("rrt mInstance is NULL!\n");
+        return;
+    }
 
-    if ((pRrt == NULL) || (pRrt->mpObserver == NULL)) {
-        LOGD("rrt_evt_callback: Rrt event is NULL!\n");
+    if (mInstance->mpObserver == NULL) {
+        LOGD("rrt mpObserver is NULL!\n");
+        return;
+    }
+
+    if (!param) {
+        LOGD("rrt data is NULL!\n");
+        if (mInstance->mRrtScanStatus == RrtEvent::EVENT_RRT_SCAN_SCANING) {
+            mInstance->mScanResult = 0;
+        }
+
         return;
     }
 
     switch (event_type) {
     case AM_EPG_EVT_NEW_RRT: {
-        pRrt->mCurRrtEv.satus = mInstance->mRrtScanStatus;
-        pRrt->mpObserver->onEvent(pRrt->mCurRrtEv);
+        if (mInstance->mRrtScanStatus == RrtEvent::EVENT_RRT_SCAN_SCANING) {
+            mInstance->mScanResult = 1;
+        }
+
+        mInstance->mCurRrtEv.satus = CTvRrt::RrtEvent::EVENT_RRT_SCAN_START;
+        mInstance->mpObserver->onEvent(mInstance->mCurRrtEv);
+
+        mInstance->RrtDataUpdate(dev_no, event_type, param, user_data);
+
+        mInstance->mCurRrtEv.satus = CTvRrt::RrtEvent::EVENT_RRT_SCAN_END;
+        mInstance->mpObserver->onEvent(mInstance->mCurRrtEv);
+
         break;
     }
     default:
@@ -257,23 +342,13 @@ void CTvRrt::rrt_evt_callback(long dev_no, int event_type, void *param, void *us
     }
 }
 
-void CTvRrt::rrt_table_callback(AM_EPG_Handle_t handle, int type, void * tables, void * user_data)
-{
-    if (!tables) {
-        LOGD("rrt_table_callback: tables is NULL!\n");
-        return;
-    }
-
-    switch (type) {
-    case AM_EPG_TAB_RRT: {
-        mInstance->rrt_table_update(handle, type, tables, user_data);
-        break;
-    }
-    default:
-        break;
-    }
-}
-
+/**
+ * @Function: GetElementPointerByName
+ * @Description: search data from RRT file for save RRT data
+ * @Param: pRootElement: Root element of RRT xml file;
+           ElementName:  name of TiXmlElement need been search
+ * @Return: the TiXmlElement which has been search
+ */
 TiXmlElement *GetElementPointerByName(TiXmlElement* pRootElement, char *ElementName)
 {
     if (strcmp(ElementName, pRootElement->Value()) == 0) {
@@ -294,6 +369,12 @@ TiXmlElement *GetElementPointerByName(TiXmlElement* pRootElement, char *ElementN
     }
 }
 
+/**
+ * @Function: OpenXmlFile
+ * @Description: Open XML file
+ * @Param:
+ * @Return: The pRRTFile which has been opened
+ */
 TiXmlDocument *OpenXmlFile(void)
 {
     // define TiXmlDocument
@@ -327,6 +408,13 @@ TiXmlDocument *OpenXmlFile(void)
     return pRRTFile;
 }
 
+/**
+ * @Function: SaveDataToXml
+ * @Description: Save data to XML file
+ * @Param:pRRTFile:The pRRTFile which has been opened
+          rrt_info:Charge for GetRRTRating
+ * @Return: true:save success;    false:save failed
+ */
 bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
 {
     if (pRRTFile == NULL) {
@@ -400,7 +488,7 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
     }
 
     char sysCmd[1024];
-    sprintf(sysCmd, "chmod 755 %s", TV_RRT_DEFINE_FILE_PATH);
+    sprintf(sysCmd, "chmod 640 %s", TV_RRT_DEFINE_FILE_PATH);
     if (system(sysCmd)) {
        LOGE("exec cmd:%s fail\n", sysCmd);
     }
@@ -408,23 +496,24 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
     return true;
 }
 
-void CTvRrt::rrt_table_update(AM_EPG_Handle_t handle, int type, void * tables, void * user_data)
+/**
+ * @Function: RrtDataUpdate
+ * @Description: RRT data parser
+ * @Param:dev_no: dev id
+          event_type:RRT event type
+          param:callback data
+          user_data:
+ * @Return:
+ */
+void CTvRrt::RrtDataUpdate(long dev_no, int event_type, void *param, void *user_data)
 {
-    switch (type) {
-    case AM_EPG_TAB_RRT: {
-        mRrtScanStatus = RrtEvent::EVENT_RRT_SCAN_SCANING;
-        mpNewRrt = (rrt_section_info_t *)tables;
+    switch (event_type) {
+    case AM_EPG_EVT_NEW_RRT: {
+        mpNewRrt = (rrt_section_info_t *)param;
         INT8U i, j;
         rrt_info_t rrt_info;
         memset(&rrt_info, 0, sizeof(rrt_info_t));
-        #if 0
-        //check rrt_define_file exist
-        struct stat tmp_st;
-        if (stat(TV_RRT_DEFINE_FILE_PATH, &tmp_st) == 0) {
-            LOGD("file exist,delete it!\n");
-            remove(TV_RRT_DEFINE_FILE_PATH);
-        }
-        #endif
+
         //open xml file
         TiXmlDocument *pRRTFile = OpenXmlFile();
         if (pRRTFile == NULL) {
@@ -440,22 +529,22 @@ void CTvRrt::rrt_table_update(AM_EPG_Handle_t handle, int type, void * tables, v
             rrt_info.rating_region = mpNewRrt->rating_region;
 
             //parser rating_region_name
-            atsc_multiple_string_parser(mpNewRrt->rating_region_name, rrt_info.rating_region_name);
+            MultipleStringParser(mpNewRrt->rating_region_name, rrt_info.rating_region_name);
 
             //parser dimensions_info
             rrt_dimensions_info  *dimensions_info = mpNewRrt->dimensions_info;
 
             while (dimensions_info != NULL) {
                 //parser dimensions_name
-                atsc_multiple_string_parser(dimensions_info->dimensions_name, rrt_info.dimensions_name);
+                MultipleStringParser(dimensions_info->dimensions_name, rrt_info.dimensions_name);
                 LOGD("graduated_scale[%d] values_defined[%d]\n", mpNewRrt->dimensions_info->graduated_scale,mpNewRrt->dimensions_info->values_defined);
 
                 //paser and save data to xml
                 for (j=1;j<dimensions_info->values_defined;j++) {
                     //save rating_id
                     rrt_info.rating_value_id = j;
-                    atsc_multiple_string_parser(dimensions_info->rating_value[j].abbrev_rating_value_text, rrt_info.abbrev_rating_value_text);
-                    atsc_multiple_string_parser(dimensions_info->rating_value[j].rating_value_text, rrt_info.rating_value_text);
+                    MultipleStringParser(dimensions_info->rating_value[j].abbrev_rating_value_text, rrt_info.abbrev_rating_value_text);
+                    MultipleStringParser(dimensions_info->rating_value[j].rating_value_text, rrt_info.rating_value_text);
 
                     bool ret = SaveDataToXml(pRRTFile, rrt_info);
                     if (ret) {
@@ -471,7 +560,6 @@ void CTvRrt::rrt_table_update(AM_EPG_Handle_t handle, int type, void * tables, v
             }
             mpNewRrt = mpNewRrt->p_next;
         }
-        mRrtScanStatus = RrtEvent::EVENT_RRT_SCAN_END;
         break;
     }
     default:
@@ -479,7 +567,14 @@ void CTvRrt::rrt_table_update(AM_EPG_Handle_t handle, int type, void * tables, v
     }
 }
 
-void CTvRrt::atsc_multiple_string_parser(atsc_multiple_string_t atsc_multiple_string, char *ret)
+/**
+ * @Function: MultipleStringParser
+ * @Description: Multiple string data parser
+ * @Param:atsc_multiple_string: Multiple string data
+          ret: data after parser
+ * @Return:
+ */
+void CTvRrt::MultipleStringParser(atsc_multiple_string_t atsc_multiple_string, char *ret)
 {
     int i;
     for (i=0;i<atsc_multiple_string.i_string_count;i++) {

@@ -518,7 +518,7 @@ void TvService::onTvEvent(const CTvEv &ev)
                         p.writeInt32(pEasEvent->multi_text[j].i_compression_type);
                         p.writeInt32(pEasEvent->multi_text[j].i_mode);
                         p.writeInt32(pEasEvent->multi_text[j].i_number_bytes);
-                        for (k=0;k<pEasEvent->multi_text[j].i_number_bytes;j++) {
+                        for (k=0;k<pEasEvent->multi_text[j].i_number_bytes;k++) {
                             p.writeInt32(pEasEvent->multi_text[j].compressed_str[k]);
                         }
                     }
@@ -3588,7 +3588,8 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     case DTV_UPDATE_RRT: {
         int freq = p.readInt32();
         int modulation = p.readInt32();
-        int ret = mpTv->tv_RrtUpdate(freq, modulation);
+        int mode = p.readInt32();
+        int ret = mpTv->Tv_RrtUpdate(freq, modulation, mode);
         r->writeInt32(ret);
         break;
     }
@@ -3597,7 +3598,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int dimension_id = p.readInt32();
         int value_id = p.readInt32();
         rrt_select_info_t rrt_info;
-        int ret = mpTv->tv_RrtSearch(rating_region_id, dimension_id, value_id, &rrt_info);
+        int ret = mpTv->Tv_RrtSearch(rating_region_id, dimension_id, value_id, &rrt_info);
         r->writeInt32(rrt_info.dimensions_name_count);
         int count = rrt_info.dimensions_name_count;
         if (count != 0) {
@@ -3618,7 +3619,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
 
     case DTV_UPDATE_EAS: {
-        int ret = mpTv->Tv_StartEasupdate();
+        int ret = mpTv->Tv_Easupdate();
         r->writeInt32(ret);
         break;
     }

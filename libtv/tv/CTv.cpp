@@ -131,13 +131,18 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
             }
         }
     }
-
     if (isFileExist(TV_RRT_DEFINE_SYSTEM_PATH)) {
         if (!isFileExist(TV_RRT_DEFINE_PARAM_PATH)) {
             CFile file ( TV_RRT_DEFINE_SYSTEM_PATH );
 
             if ( file.copyTo ( TV_RRT_DEFINE_PARAM_PATH ) != 0 ) {
                 LOGE ( "%s, copy file = %s , error", __FUNCTION__, TV_RRT_DEFINE_PARAM_PATH );
+            }
+
+            char sysCmd[1024];
+            sprintf(sysCmd, "chmod 640 %s", TV_RRT_DEFINE_PARAM_PATH);
+            if (system(sysCmd)) {
+               LOGE("exec cmd:%s fail\n", sysCmd);
             }
         }
     }
@@ -1233,8 +1238,6 @@ int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int
     }
     mTvAction |= TV_ACTION_PLAYING;
     ret = startPlayTv ( SOURCE_DTV, vpid, apid, pcr, vfmt, afmt );
-    tv_RrtUpdate(freq, para1);
-    Tv_StartEasupdate();
 
     CMessage msg;
     msg.mDelayMs = 2000;
@@ -1282,10 +1285,6 @@ int CTv::playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int
 
     SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
 
-    int mode, freq, para1, para2;
-    mFrontDev->getPara(&mode, &freq, &para1, &para2);
-    tv_RrtUpdate(freq, mode);
-    Tv_StartEasupdate();
     return ret;
 }
 
@@ -1470,6 +1469,12 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         mFrontDev->Open(FE_AUTO);
         mFrontDev->setPara ( paras, force );
     }
+
+
+    int mode, freq, para1, para2;
+    mFrontDev->getPara(&mode, &freq, &para1, &para2);
+    Tv_RrtUpdate(freq, mode, 0);
+    Tv_Easupdate();
     return 0;
 }
 
@@ -3514,8 +3519,17 @@ vpp_noise_reduction_mode_t CTv::Tv_GetNoiseReductionMode ( tv_source_input_t tv_
     return CVpp::getInstance()->GetNoiseReductionMode((tv_source_input_t)tv_source_input);
 }
 
-int CTv::Tv_StartEasupdate()
+int CTv::Tv_Easupdate()
 {
+    int ret = 0;
+    if (mTvEas->mEasScanHandle != NULL) {
+        ret = mTvEas->StopEasUpdate();
+        if (ret < 0) {
+            LOGD("StopEasUpdate error!\n");
+            return ret;
+        }
+    }
+
     return mTvEas->StartEasUpdate();
 }
 
@@ -5721,25 +5735,38 @@ int CTv::doPlayCommand(int cmd, const char *id, const char *param)
 ANDROID_SINGLETON_STATIC_INSTANCE(RecorderManager);
 ANDROID_SINGLETON_STATIC_INSTANCE(PlayerManager);
 
-int CTv::tv_RrtUpdate(int freq, int modulation)
+int CTv::Tv_RrtUpdate(int freq, int modulation, int mode)
 {
-    fe_status_t status = (fe_status_t)mFrontDev->getStatus();
-    LOGD("signal lock status = %x", status);
-    if (status & FE_HAS_LOCK) {
-        return mTvRrt->StartRrtUpdate();
-    } else {
-        mFrontDev->setPara(FE_ATSC, freq, modulation, 0);
-        return mTvRrt->StartRrtUpdate();
+    int ret = 0;
+    if (mTvRrt->mRrtScanHandle != NULL) {
+        ret = mTvRrt->StopRrtUpdate();
+        if (ret < 0) {
+            LOGD("Tv_RrtUpdate error!\n");
+            return 0;
+        }
+    }
+
+    if (mode == RRT_MANU_SEARCH) {//manual
+        fe_status_t status = (fe_status_t)mFrontDev->getStatus();
+        if (status & FE_HAS_LOCK) {
+            return mTvRrt->StartRrtUpdate(RRT_MANU_SEARCH);
+        }else {
+            mFrontDev->setPara(FE_ATSC, freq, modulation, 0);
+            return mTvRrt->StartRrtUpdate(RRT_MANU_SEARCH);
+        }
+    } else {//auto
+        return mTvRrt->StartRrtUpdate(RRT_AUTO_SEARCH);
     }
 }
 
-int CTv::tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info)
+int CTv::Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info)
 {
-    int ret;
+    int ret = 0;
     rrt_select_info_t tmp;
+    memset(&tmp, 0, sizeof(rrt_select_info_t));
     ret = mTvRrt->GetRRTRating(rating_region_id, dimension_id, value_id, &tmp);
     if (ret < 0) {
-        LOGD("tv_RrtSearch error!\n");
+        LOGD("Tv_RrtSearch error!\n");
     }
 
     *rrt_select_info = tmp;

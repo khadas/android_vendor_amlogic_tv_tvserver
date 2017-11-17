@@ -117,6 +117,7 @@ public :
     int StopEasUpdate();
 
     static CTvEas *mInstance;
+    AM_EPG_Handle_t mEasScanHandle;
 
 private:
     int EasCreate(int fend_id, int dmx_id, int src, char *textLangs);
@@ -127,7 +128,6 @@ private:
     int GetMultiCount(dvbpsi_atsc_cea_multi_str_t *pData);
 
     IObserver *mpObserver;
-    AM_EPG_Handle_t mEasScanHandle;
     int mDmxId ;
     EasEvent mCurEasEv;
 };

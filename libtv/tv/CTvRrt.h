@@ -39,36 +39,20 @@ typedef struct rrt_select_info_s
     char rating_value_text[2048];
 } rrt_select_info_t;
 
+typedef enum rrt_search_mode_e
+{
+    RRT_AUTO_SEARCH = 0,
+    RRT_MANU_SEARCH,
+} rrt_search_mode_t;
+
 class CTvRrt
 {
 public:
     static const int MODE_ADD            = 0;
     static const int MODE_REMOVE         = 1;
-    static const int MODE_SET            = 2;
 
-    static const int SCAN_PAT            = 0x01;
-    static const int SCAN_PMT            = 0x02;
-    static const int SCAN_CAT            = 0x04;
-    static const int SCAN_SDT            = 0x08;
-    static const int SCAN_NIT            = 0x10;
-    static const int SCAN_TDT            = 0x20;
-    static const int SCAN_EIT_PF_ACT     = 0x40;
-    static const int SCAN_EIT_PF_OTH     = 0x80;
-    static const int SCAN_EIT_SCHE_ACT   = 0x100;
-    static const int SCAN_EIT_SCHE_OTH   = 0x200;
-    static const int SCAN_MGT            = 0x400;
-    static const int SCAN_VCT            = 0x800;
-    static const int SCAN_STT            = 0x1000;
     static const int SCAN_RRT            = 0x2000;
-    static const int SCAN_PSIP_EIT       = 0x4000;
-    static const int SCAN_PSIP_ETT       = 0x8000;
-    static const int SCAN_EIT_PF_ALL     = SCAN_EIT_PF_ACT | SCAN_EIT_PF_OTH;
-    static const int SCAN_EIT_SCHE_ALL   = SCAN_EIT_SCHE_ACT | SCAN_EIT_SCHE_OTH;
-    static const int SCAN_EIT_ALL        = SCAN_EIT_PF_ALL | SCAN_EIT_SCHE_ALL;
-    static const int SCAN_ALL            = SCAN_PAT | SCAN_PMT | SCAN_CAT | SCAN_SDT |SCAN_NIT | SCAN_TDT | SCAN_EIT_ALL |
-                                           SCAN_MGT | SCAN_VCT | SCAN_STT | SCAN_RRT | SCAN_PSIP_EIT | SCAN_PSIP_ETT;
-
-    static const int INVALID_ID = -1;
+    static const int INVALID_ID          = -1;
 
     class RrtEvent : public CTvEv {
         public:
@@ -104,7 +88,7 @@ public:
     static CTvRrt *getInstance();
     CTvRrt();
     ~CTvRrt();
-    int StartRrtUpdate(void);
+    int StartRrtUpdate(rrt_search_mode_t mode);
     int StopRrtUpdate(void);
     int GetRRTRating(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *ret);
 
@@ -114,16 +98,16 @@ private:
     int RrtChangeMode(int op, int mode);
     int RrtScanStart(void);
     int RrtScanStop(void);
-    static void rrt_evt_callback(long dev_no, int event_type, void *param, void *user_data);
-    static void rrt_table_callback(AM_EPG_Handle_t handle, int type, void * tables, void * user_data);
-    void rrt_table_update(AM_EPG_Handle_t handle, int type, void * tables, void * user_data);
-    void atsc_multiple_string_parser(atsc_multiple_string_t atsc_multiple_string, char *ret);
+    static void RrtEventCallback(long dev_no, int event_type, void *param, void *user_data);
+    void RrtDataUpdate(long dev_no, int event_type, void *param, void *user_data);
+    void MultipleStringParser(atsc_multiple_string_t atsc_multiple_string, char *ret);
     static CTvRrt *mInstance;
     IObserver *mpObserver;
     RrtEvent mCurRrtEv;
 public:
     rrt_section_info_t *mpNewRrt;
     int mRrtScanStatus;
+    int mScanResult;
     int mDmx_id ;
     AM_EPG_Handle_t mRrtScanHandle;
 };

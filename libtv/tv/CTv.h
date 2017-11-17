@@ -462,10 +462,9 @@ public:
     int SetHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);
     int SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable);
     int SetVideoAxis(int x, int y, int width, int heigth);
-    int tv_RrtUpdate(int freq, int modulation);
-    int tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info);
-    int Tv_StartEasupdate();
-    int Tv_StopEasupdate();
+    int Tv_RrtUpdate(int freq, int modulation, int mode);
+    int Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info);
+    int Tv_Easupdate();
     void dump(String8 &result);
 private:
     int SendCmdToOffBoardFBCExternalDac(int, int);

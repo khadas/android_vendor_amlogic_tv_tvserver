@@ -191,7 +191,7 @@ int CTvDatabase::importXmlToDB(const char *xmlPath)
             cmd += String8::format("%d", StringToIndex(mods, channel_entry->Attribute("modulation"))) + String8(",");
             cmd += String8::format("%d", StringToIndex(bandwidths, channel_entry->Attribute("bandwidth"))) + String8(",");
             cmd += String8::format("%d", StringToIndex(ofdmModes, channel_entry->Attribute("ofdm_mode"))) + String8(",");
-            channel_entry->Attribute("logical_channel_num", &channelNum);
+            channel_entry->Attribute("id", &channelNum);
             cmd += String8::format("%d", channelNum) + String8(")");
             exeSql(cmd.string());
         }

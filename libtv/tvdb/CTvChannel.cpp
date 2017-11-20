@@ -148,6 +148,7 @@ CTvChannel::CTvChannel(int dbID, int mode, int freq, int bw, int mod, int symb, 
         audio     = 0;
         standard  = 0;
         afc_data  = 0;
+        logicalChannelNum = channelNum;
         this->mode = MODE_ANALOG;
     } else if (mode == MODE_DTMB) {
         id = dbID;

@@ -976,9 +976,9 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
             Vector<sp<CTvChannel>> vcp;
             CTvRegion::getChannelListByName(const_cast<char*>(list_name), vcp);
             for (int i = 0; i < (int)vcp.size(); i++) {
-                int diff = vcp[i]->getFrequency() - tsinfo->fe.getFrequency();
+                int diff = abs(vcp[i]->getFrequency() - tsinfo->fe.getFrequency());
                 if (diff >= 0 && diff <= 2000000) { // 2M tolerance
-                    psrv_info->major_chan_num = i+2;
+                    psrv_info->major_chan_num = vcp[i]->getLogicalChannelNum();
                     psrv_info->minor_chan_num = 0;
                     psrv_info->chan_num = (psrv_info->major_chan_num<<16) | (psrv_info->minor_chan_num&0xffff);
                     psrv_info->hidden = 0;
@@ -1345,7 +1345,7 @@ AM_Bool_t CTvScanner::checkAtvCvbsLock(v4l2_std_id  *colorStd)
         if (cvbs_lock_status == TVAFE_CVBS_VIDEO_HV_LOCKED)
             /*||cvbs_lock_status == TVAFE_CVBS_VIDEO_V_LOCKED
             ||cvbs_lock_status == TVAFE_CVBS_VIDEO_H_LOCKED)*/ {
-            usleep(2000 * 1000);
+            //usleep(2000 * 1000);
             tvin_info_t info;
             CTvin::getInstance()->VDIN_GetSignalInfo(&info);
             *colorStd = CTvin::CvbsFtmToV4l2ColorStd(info.fmt);

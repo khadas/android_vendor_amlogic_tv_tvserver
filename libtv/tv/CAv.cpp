@@ -224,10 +224,7 @@ int CAv::EnableVideoNow(bool IsShowTestScreen)
         LOGD("DisableVideoWithBlackColor");
         SetVideoScreenColor ( 0, 16, 128, 128 );
     }
-    /*enable-video-force may be deprecated.
     return AM_AV_EnableVideo(mTvPlayDevId);
-    */
-    return ClearVideoBuffer();
 }
 
 int CAv::WaittingVideoPlaying(int minFrameCount , int waitTime )

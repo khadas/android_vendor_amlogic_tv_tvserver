@@ -966,7 +966,11 @@ int CTv::stopScan()
     if ( ( SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
         mpTvin->Tvin_StopDecoder();
         mpTvin->SwitchSnow( false );
-        mAv.DisableVideoWithBlackColor();
+        if ( iSBlackPattern ) {
+            mAv.DisableVideoWithBlackColor();
+        } else {
+            mAv.DisableVideoWithBlueColor();
+        }
     } else {
         if ( iSBlackPattern ) {
             mAv.DisableVideoWithBlackColor();
@@ -1396,10 +1400,10 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
         mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
 
         //set TUNER
-        usleep(400 * 1000);
+        //usleep(400 * 1000);
         mFrontDev->Open(FE_ANALOG);
         mFrontDev->setPara ( FE_ANALOG, tmpFreq, stdAndColor, 1 );
-        usleep(400 * 1000);
+        //usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
             mFrontDev->fineTune ( tmpfineFreq / 1000 );
         }
@@ -1446,10 +1450,10 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
 
         //set TUNER
-        usleep(400 * 1000);
+        //usleep(400 * 1000);
         mFrontDev->Open(FE_AUTO);
         mFrontDev->setPara ( paras, force );
-        usleep(400 * 1000);
+        //usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
             mFrontDev->fineTune ( tmpfineFreq / 1000, force );
         }
@@ -1553,6 +1557,8 @@ int CTv::stopPlaying(bool isShowTestScreen, bool resetFE)
         LOGD("%s, stopplay cur action = %x not playing , return", __FUNCTION__, mTvAction);
         return 0;
     }
+
+    LOGD("%s, isShowTestScreen = %d, resetFE = %d", __FUNCTION__, isShowTestScreen, resetFE);
 
     if (m_source_input == SOURCE_TV) {
         //first mute
@@ -2153,8 +2159,8 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
 {
     tvin_port_t cur_port;
 
-    LOGD ( "[source_switch_time]: %fs, %s, virtual source input = %d source input = %d",
-        getUptimeSeconds(), __FUNCTION__, virtual_input, source_input );
+    LOGD ( "[source_switch_time]: %fs, %s, virtual source input = %d source input = %d m_source_input = %d",
+        getUptimeSeconds(), __FUNCTION__, virtual_input, source_input, m_source_input );
 
     m_source_input_virtual = virtual_input;
 
@@ -2518,7 +2524,11 @@ void CTv::onSigToUnSupport()
         mpTvin->Tvin_StartDecoder ( m_cur_sig_info );
         mAv.EnableVideoNow( false );
     } else {
-        mAv.DisableVideoWithBlackColor();
+        if ( iSBlackPattern ) {
+            mAv.DisableVideoWithBlackColor();
+        } else {
+            mAv.DisableVideoWithBlueColor();
+        }
         mpTvin->Tvin_StopDecoder();
     }
 
@@ -5598,8 +5608,8 @@ int CTv::doRecordingCommand(int cmd, const char *id, const char *param)
 CTvPlayer *CTv::getPlayer(const char *id, const char *param) {
     CTvPlayer *player = PlayerManager::getInstance().getDev(id);
     if (player) {
-        player->stop(NULL);
         player->setupDefault(param);
+        player->stop(param);
         return player;
     }
 

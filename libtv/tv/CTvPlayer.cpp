@@ -156,7 +156,7 @@ int CDTVTvPlayer::stop(const char *param) {
         }
     }
 
-    ret = pTv->stopPlaying(true);
+    ret = pTv->stopPlaying(true, false);
     ret = pTv->mAv.stopTimeShift();
 
     if (ret == 0)
@@ -700,10 +700,13 @@ int CATVTvPlayer::start(const char *param) {
 int CATVTvPlayer::stop(const char *param) {
     LOGD("stop(%s:%s)", toReadable(getId()), toReadable(param));
     int ret = -1;
-    ret = pTv->stopPlaying(true);
+
+    ret = pTv->stopPlaying(true, false);
+
     LOGD("stop(%s)=%d", toReadable(param), ret);
     return ret;
 }
+
 int CATVTvPlayer::set(const char *param)
 {
     LOGD("set(%s:%s)", toReadable(getId()), toReadable(param));

@@ -686,7 +686,7 @@ void CTvScanner::extractSrvInfoFromSdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *s
 
 void CTvScanner::extractSrvInfoFromVc(AM_SCAN_Result_t *result, dvbpsi_atsc_vct_channel_t *vcinfo, SCAN_ServiceInfo_t *srv_info)
 {
-    char name[14] = {0};
+    char name[22] = {0};
 
     UNUSED(result);
 
@@ -700,7 +700,7 @@ void CTvScanner::extractSrvInfoFromVc(AM_SCAN_Result_t *result, dvbpsi_atsc_vct_
     memcpy(srv_info->name, "xxx", 3);
 
     char const *coding = "utf-16";
-    if (AM_SI_ConvertToUTF8((char*)vcinfo->i_short_name, 14, name, 14, (char*)coding) != AM_SUCCESS)
+    if (AM_SI_ConvertToUTF8((char*)vcinfo->i_short_name, 14, name, 22, (char*)coding) != AM_SUCCESS)
         strcpy(name, "No Name");
     memcpy(srv_info->name+3, name, sizeof(name));
     srv_info->name[sizeof(name)+3] = 0;

@@ -31,6 +31,9 @@ CTvRrt::CTvRrt()
     mpNewRrt            = NULL;
     mRrtScanStatus      = INVALID_ID;
     mDmx_id             = INVALID_ID;
+    mLastRatingRegion   = INVALID_ID;
+    mLastDimensionsDefined = INVALID_ID;
+    mLastVersion        = INVALID_ID;
     mScanResult         = 0;
 }
 
@@ -118,14 +121,14 @@ int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, r
 
     //check rrt_define_file exist
     struct stat tmp_st;
-    if (stat(TV_RRT_DEFINE_FILE_PATH, &tmp_st) != 0) {
+    if (stat(TV_RRT_DEFINE_PARAM_PATH, &tmp_st) != 0) {
         LOGD("file don't exist!\n");
         return -1;
     }
 
-    TiXmlDocument *pRRTFile = new TiXmlDocument(TV_RRT_DEFINE_FILE_PATH);
+    TiXmlDocument *pRRTFile = new TiXmlDocument(TV_RRT_DEFINE_PARAM_PATH);
     if (!pRRTFile->LoadFile()) {
-        LOGD("load %s error!\n", TV_RRT_DEFINE_FILE_PATH);
+        LOGD("load %s error!\n", TV_RRT_DEFINE_PARAM_PATH);
         return -1;
     }
 
@@ -323,18 +326,24 @@ void CTvRrt::RrtEventCallback(long dev_no, int event_type, void *param, void *us
 
     switch (event_type) {
     case AM_EPG_EVT_NEW_RRT: {
-        if (mInstance->mRrtScanStatus == RrtEvent::EVENT_RRT_SCAN_SCANING) {
-            mInstance->mScanResult = 1;
+        rrt_section_info_t *tmp = (rrt_section_info_t *)param;
+        LOGD("RatingRegion:[0x%04x] DimensionsDefined:[0x%04x] Version:[0x%x]\n",
+              tmp->rating_region, tmp->dimensions_defined, tmp->version_number);
+        if (mInstance->RrtUpdataCheck(tmp->rating_region, tmp->dimensions_defined, tmp->version_number)) {
+            LOGD("Same RRT data,no need update!\n");
+        } else {
+            if (mInstance->mRrtScanStatus == RrtEvent::EVENT_RRT_SCAN_SCANING) {
+                mInstance->mScanResult = 1;
+            }
+
+            mInstance->mCurRrtEv.satus = CTvRrt::RrtEvent::EVENT_RRT_SCAN_START;
+            mInstance->mpObserver->onEvent(mInstance->mCurRrtEv);
+
+            mInstance->RrtDataUpdate(dev_no, event_type, param, user_data);
+
+            mInstance->mCurRrtEv.satus = CTvRrt::RrtEvent::EVENT_RRT_SCAN_END;
+            mInstance->mpObserver->onEvent(mInstance->mCurRrtEv);
         }
-
-        mInstance->mCurRrtEv.satus = CTvRrt::RrtEvent::EVENT_RRT_SCAN_START;
-        mInstance->mpObserver->onEvent(mInstance->mCurRrtEv);
-
-        mInstance->RrtDataUpdate(dev_no, event_type, param, user_data);
-
-        mInstance->mCurRrtEv.satus = CTvRrt::RrtEvent::EVENT_RRT_SCAN_END;
-        mInstance->mpObserver->onEvent(mInstance->mCurRrtEv);
-
         break;
     }
     default:
@@ -482,17 +491,6 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
         }
     }
 
-    if (!pRRTFile->SaveFile(TV_RRT_DEFINE_FILE_PATH)) {
-        LOGD("save RRTFile error!\n");
-        return false;
-    }
-
-    char sysCmd[1024];
-    sprintf(sysCmd, "chmod 644 %s", TV_RRT_DEFINE_FILE_PATH);
-    if (system(sysCmd)) {
-       LOGE("exec cmd:%s fail\n", sysCmd);
-    }
-
     return true;
 }
 
@@ -509,10 +507,11 @@ void CTvRrt::RrtDataUpdate(long dev_no, int event_type, void *param, void *user_
 {
     switch (event_type) {
     case AM_EPG_EVT_NEW_RRT: {
-        mpNewRrt = (rrt_section_info_t *)param;
         INT8U i, j;
         rrt_info_t rrt_info;
         memset(&rrt_info, 0, sizeof(rrt_info_t));
+
+        mpNewRrt = (rrt_section_info_t *)param;
 
         //open xml file
         TiXmlDocument *pRRTFile = OpenXmlFile();
@@ -547,10 +546,8 @@ void CTvRrt::RrtDataUpdate(long dev_no, int event_type, void *param, void *user_
                     MultipleStringParser(dimensions_info->rating_value[j].rating_value_text, rrt_info.rating_value_text);
 
                     bool ret = SaveDataToXml(pRRTFile, rrt_info);
-                    if (ret) {
-                        LOGD("save XML data to file success!\n");
-                    } else {
-                        LOGD("save XML data to file failed!\n");
+                    if (!ret) {
+                        LOGD("Save XML element error!\n");
                     }
                 }
                 //save dimensions_id
@@ -559,6 +556,12 @@ void CTvRrt::RrtDataUpdate(long dev_no, int event_type, void *param, void *user_
                 dimensions_info = dimensions_info->p_next;
             }
             mpNewRrt = mpNewRrt->p_next;
+        }
+
+        if (!pRRTFile->SaveFile(TV_RRT_DEFINE_PARAM_PATH)) {
+            LOGD("save RRT XML File error!\n");
+        } else {
+            LOGD("save RRT XML File success!\n");
         }
         break;
     }
@@ -585,4 +588,26 @@ void CTvRrt::MultipleStringParser(atsc_multiple_string_t atsc_multiple_string, c
     }
 
     return;
+}
+
+/**
+ * @Function: RrtUpdataCheck
+ * @Description: Check RRT xml file need update or not
+ * @Param:atsc_multiple_string: Multiple string data
+          ret: data after parser
+ * @Return:
+ */
+
+bool CTvRrt::RrtUpdataCheck(int rating_region, int dimensions_defined, int version_number)
+{
+    if ((mLastRatingRegion == rating_region)
+        && (mLastDimensionsDefined == dimensions_defined)
+        && (mLastVersion == version_number)){
+        return true;
+    } else {
+        mLastRatingRegion = rating_region;
+        mLastDimensionsDefined = dimensions_defined;
+        mLastVersion =version_number;
+        return false;
+    }
 }

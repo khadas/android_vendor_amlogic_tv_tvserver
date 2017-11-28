@@ -56,7 +56,6 @@ static const char *TV_CONFIG_FILE_PARAM_PATH = "/param/tvconfig.conf";
 static const char *TV_CHANNEL_LIST_SYSTEM_PATH = "/system/etc/tv_default.xml";
 static const char *TV_CHANNEL_LIST_PARAM_PATH = "/param/tv_default.xml";
 static const char *TV_RRT_DEFINE_SYSTEM_PATH = "/system/etc/tv_rrt_define.xml";
-static const char *TV_RRT_DEFINE_PARAM_PATH =  "/param/tv_rrt_define.xml";
 
 #define LCD_ENABLE "/sys/class/lcd/enable"
 #define BL_LOCAL_DIMING_FUNC_ENABLE "/sys/class/aml_ldim/func_en"

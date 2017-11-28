@@ -16,7 +16,7 @@
 #if !defined(_CDTVRRT_H)
 #define _CDTVRRT_H
 
-#define TV_RRT_DEFINE_FILE_PATH          "/param/tv_rrt_define.xml"
+#define TV_RRT_DEFINE_PARAM_PATH          "/param/tv_rrt_define.xml"
 
 typedef struct rrt_info
 {
@@ -101,6 +101,7 @@ private:
     static void RrtEventCallback(long dev_no, int event_type, void *param, void *user_data);
     void RrtDataUpdate(long dev_no, int event_type, void *param, void *user_data);
     void MultipleStringParser(atsc_multiple_string_t atsc_multiple_string, char *ret);
+    bool RrtUpdataCheck(int rating_region, int dimensions_defined, int version_number);
     static CTvRrt *mInstance;
     IObserver *mpObserver;
     RrtEvent mCurRrtEv;
@@ -109,6 +110,9 @@ public:
     int mRrtScanStatus;
     int mScanResult;
     int mDmx_id ;
+    int mLastRatingRegion;
+    int mLastDimensionsDefined;
+    int mLastVersion;
     AM_EPG_Handle_t mRrtScanHandle;
 };
 

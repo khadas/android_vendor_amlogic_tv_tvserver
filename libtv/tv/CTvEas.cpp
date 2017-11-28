@@ -76,10 +76,8 @@ int CTvEas::StopEasUpdate()
     ret = AM_EPG_ChangeMode(mEasScanHandle, MODE_REMOVE, SCAN_PSIP_CEA);
     if (ret != AM_SUCCESS) {
         LOGD("StopEasUpdate failed!\n");
-        return -1;
     } else {
         LOGD("StopEasUpdate success!\n");
-        //return 0;
     }
 
     int val = 0;

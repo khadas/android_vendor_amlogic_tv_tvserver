@@ -140,7 +140,7 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
             }
 
             char sysCmd[1024];
-            sprintf(sysCmd, "chmod 640 %s", TV_RRT_DEFINE_PARAM_PATH);
+            sprintf(sysCmd, "chmod 644 %s", TV_RRT_DEFINE_PARAM_PATH);
             if (system(sysCmd)) {
                LOGE("exec cmd:%s fail\n", sysCmd);
             }

@@ -488,7 +488,7 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
     }
 
     char sysCmd[1024];
-    sprintf(sysCmd, "chmod 640 %s", TV_RRT_DEFINE_FILE_PATH);
+    sprintf(sysCmd, "chmod 644 %s", TV_RRT_DEFINE_FILE_PATH);
     if (system(sysCmd)) {
        LOGE("exec cmd:%s fail\n", sysCmd);
     }

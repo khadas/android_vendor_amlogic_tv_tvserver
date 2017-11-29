@@ -180,4 +180,7 @@ extern const std::string paramGetString(const char *param, const char *section, 
 
 inline const char *toReadable(const char *s) { return s? s : "null"; }
 
+extern bool propertyGetBool(const char *prop, bool def);
+extern int propertyGetInt(const char *prop, int def);
+
 #endif  //__TV_MISC_H__

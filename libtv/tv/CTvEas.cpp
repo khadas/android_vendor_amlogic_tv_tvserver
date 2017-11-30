@@ -88,6 +88,8 @@ int CTvEas::StopEasUpdate()
         LOGD("EasDestroy failed!\n");
         return -1;
     }
+
+    return 0;
 }
 
 /**

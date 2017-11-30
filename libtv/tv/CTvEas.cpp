@@ -79,7 +79,7 @@ int CTvEas::StopEasUpdate()
         return -1;
     } else {
         LOGD("StopEasUpdate success!\n");
-        return 0;
+        //return 0;
     }
 
     int val = 0;

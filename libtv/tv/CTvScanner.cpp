@@ -1349,7 +1349,7 @@ AM_Bool_t CTvScanner::checkAtvCvbsLock(v4l2_std_id  *colorStd)
             tvin_info_t info;
             CTvin::getInstance()->VDIN_GetSignalInfo(&info);
             *colorStd = CTvin::CvbsFtmToV4l2ColorStd(info.fmt);
-            LOGD("checkAtvCvbsLock locked and cvbs fmt = %d std = 0x%zx", info.fmt, *colorStd);
+            LOGD("checkAtvCvbsLock locked and cvbs fmt = %d std = 0x%x", info.fmt, (unsigned int) *colorStd);
             return true;
         }
         usleep(50 * 1000);

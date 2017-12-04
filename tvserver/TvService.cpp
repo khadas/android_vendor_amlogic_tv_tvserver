@@ -2480,6 +2480,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         for (int i = 0; i < (int)out.size(); i++) {
             r->writeInt32(out[i]->getID());
             r->writeInt32(out[i]->getFrequency());
+            r->writeInt32(out[i]->getLogicalChannelNum());
         }
         r->writeInt32(tmpRet);
         break;
@@ -2492,6 +2493,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         for (int i = 0; i < (int)out.size(); i++) {
             r->writeInt32(out[i]->getID());
             r->writeInt32(out[i]->getFrequency());
+            r->writeInt32(out[i]->getLogicalChannelNum());
         }
         r->writeInt32(tmpRet);
         break;

@@ -98,8 +98,8 @@ private:
     int RrtChangeMode(int op, int mode);
     int RrtScanStart(void);
     int RrtScanStop(void);
-    static void RrtEventCallback(long dev_no, int event_type, void *param, void *user_data);
-    void RrtDataUpdate(long dev_no, int event_type, void *param, void *user_data);
+    static void RrtTableCallback(AM_EPG_Handle_t dev_no, int event_type, void *param, void *user_data);
+    void RrtDataUpdate(AM_EPG_Handle_t dev_no, int event_type, void *param, void *user_data);
     void MultipleStringParser(atsc_multiple_string_t atsc_multiple_string, char *ret);
     bool RrtUpdataCheck(int rating_region, int dimensions_defined, int version_number);
     static CTvRrt *mInstance;

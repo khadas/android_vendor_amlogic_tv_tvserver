@@ -12,6 +12,7 @@
 #include <tinyxml.h>
 #include "CTvRrt.h"
 
+pthread_mutex_t rrt_search_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t rrt_update_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 CTvRrt *CTvRrt::mInstance;
@@ -54,19 +55,19 @@ CTvRrt::~CTvRrt()
 int CTvRrt::StartRrtUpdate(rrt_search_mode_t mode)
 {
     int ret;
-    pthread_mutex_lock(&rrt_update_mutex);
+    pthread_mutex_lock(&rrt_search_mutex);
 
     ret = RrtCreate(0, 2, 0, NULL);    //2 is demux id which according to DVB moudle!
     if (ret < 0) {
         LOGD("RrtCreate failed!\n");
-        pthread_mutex_unlock(&rrt_update_mutex);
+        pthread_mutex_unlock(&rrt_search_mutex);
         return 0;
     }
 
     ret = RrtScanStart();
     if (ret < 0) {
         LOGD("RrtScanStart failed!\n");
-        pthread_mutex_unlock(&rrt_update_mutex);
+        pthread_mutex_unlock(&rrt_search_mutex);
         return 0;
     } else {
         if (mode == RRT_MANU_SEARCH) {//manual
@@ -74,10 +75,10 @@ int CTvRrt::StartRrtUpdate(rrt_search_mode_t mode)
             sleep(5);//scan 5s
             mRrtScanStatus = RrtEvent::EVENT_RRT_SCAN_END;
             LOGD("ScanResult = %d!\n", mScanResult);
-            pthread_mutex_unlock(&rrt_update_mutex);
+            pthread_mutex_unlock(&rrt_search_mutex);
             return mScanResult;
         } else {//auto
-            pthread_mutex_unlock(&rrt_update_mutex);
+            pthread_mutex_unlock(&rrt_search_mutex);
             return 1;
         }
     }
@@ -205,9 +206,19 @@ int CTvRrt::RrtCreate(int fend_id, int dmx_id, int src, char * textLangs)
         return - 1;
     }
 
-    /*register eit events notifications*/
-    AM_EVT_Subscribe((long)mRrtScanHandle, AM_EPG_EVT_NEW_RRT, RrtEventCallback, NULL);
-    AM_EPG_SetUserData(mRrtScanHandle, (void *)this);
+    /*disable internal default table procedure*/
+    ret = AM_EPG_DisableDefProc(mRrtScanHandle, AM_TRUE);
+    if (ret != AM_SUCCESS) {
+        LOGD("AM_EPG_DisableDefProc failed");
+        return - 1;
+    }
+
+    /*handle tables directly by user*/
+    ret = AM_EPG_SetTablesCallback(mRrtScanHandle, AM_EPG_TAB_RRT, RrtTableCallback, NULL);
+    if (ret != AM_SUCCESS) {
+        LOGD("AM_EPG_SetTablesCallback failed");
+        return - 1;
+    }
 
     return 0;
 }
@@ -223,7 +234,6 @@ int CTvRrt::RrtDestroy()
     AM_ErrorCode_t  ret;
 
     if (mRrtScanHandle != NULL) {
-        AM_EVT_Unsubscribe((long)mRrtScanHandle, AM_EPG_EVT_NEW_RRT, RrtEventCallback, NULL);
         ret = AM_EPG_Destroy(mRrtScanHandle);
         if (ret != AM_SUCCESS) {
             LOGD("AM_EPG_Destroy failed");
@@ -293,18 +303,16 @@ int CTvRrt::RrtScanStop(void)
 }
 
 /**
- * @Function: RrtEventCallback
+ * @Function: RrtTableCallback
  * @Description: RRT event callback function
- * @Param:dev_no: dev id
+ * @Param:AM_EPG_Handle_t: dev handle
           event_type:RRT event type
           param:callback data
           user_data:
  * @Return:
  */
-void CTvRrt::RrtEventCallback(long dev_no, int event_type, void *param, void *user_data)
+void CTvRrt::RrtTableCallback(AM_EPG_Handle_t handle, int event_type, void *param, void *user_data)
 {
-    AM_EPG_GetUserData((AM_EPG_Handle_t)dev_no, (void **)&mInstance);
-
     if (mInstance == NULL) {
         LOGD("rrt mInstance is NULL!\n");
         return;
@@ -325,25 +333,19 @@ void CTvRrt::RrtEventCallback(long dev_no, int event_type, void *param, void *us
     }
 
     switch (event_type) {
-    case AM_EPG_EVT_NEW_RRT: {
-        rrt_section_info_t *tmp = (rrt_section_info_t *)param;
-        LOGD("RatingRegion:[0x%04x] DimensionsDefined:[0x%04x] Version:[0x%x]\n",
-              tmp->rating_region, tmp->dimensions_defined, tmp->version_number);
-        if (mInstance->RrtUpdataCheck(tmp->rating_region, tmp->dimensions_defined, tmp->version_number)) {
-            LOGD("Same RRT data,no need update!\n");
-        } else {
-            if (mInstance->mRrtScanStatus == RrtEvent::EVENT_RRT_SCAN_SCANING) {
-                mInstance->mScanResult = 1;
-            }
-
-            mInstance->mCurRrtEv.satus = CTvRrt::RrtEvent::EVENT_RRT_SCAN_START;
-            mInstance->mpObserver->onEvent(mInstance->mCurRrtEv);
-
-            mInstance->RrtDataUpdate(dev_no, event_type, param, user_data);
-
-            mInstance->mCurRrtEv.satus = CTvRrt::RrtEvent::EVENT_RRT_SCAN_END;
-            mInstance->mpObserver->onEvent(mInstance->mCurRrtEv);
+    case AM_EPG_TAB_RRT: {
+        if (mInstance->mRrtScanStatus == RrtEvent::EVENT_RRT_SCAN_SCANING) {
+            mInstance->mScanResult = 1;
         }
+
+        mInstance->mCurRrtEv.satus = CTvRrt::RrtEvent::EVENT_RRT_SCAN_START;
+        mInstance->mpObserver->onEvent(mInstance->mCurRrtEv);
+
+        mInstance->RrtDataUpdate(handle, event_type, param, user_data);
+
+        mInstance->mCurRrtEv.satus = CTvRrt::RrtEvent::EVENT_RRT_SCAN_END;
+        mInstance->mpObserver->onEvent(mInstance->mCurRrtEv);
+
         break;
     }
     default:
@@ -430,12 +432,14 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
         LOGE("xml file don't open!\n");
         return false;
     }
+    pthread_mutex_lock(&rrt_update_mutex);
 
     TiXmlElement *pRootElement = pRRTFile->RootElement();
     if (pRootElement->FirstChildElement() == NULL) {
         TiXmlElement *pRatingSystemElement = new TiXmlElement("rating-system-definition");
         if (NULL == pRatingSystemElement) {
             LOGD("create pRatingSystemElement error!\n");
+            pthread_mutex_unlock(&rrt_update_mutex);
             return false;
         }
         pRootElement->LinkEndChild(pRatingSystemElement);
@@ -446,6 +450,7 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
 
         TiXmlElement *pNewElement = new TiXmlElement("rating-definition");
         if (NULL == pNewElement) {
+            pthread_mutex_unlock(&rrt_update_mutex);
             return false;
         }
         pRatingSystemElement->LinkEndChild(pNewElement);
@@ -461,6 +466,7 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
             LOGD("add new rating-definition to rating-system-definition!\n");
             TiXmlElement *pNewElement = new TiXmlElement("rating-definition");
             if (NULL == pNewElement) {
+                pthread_mutex_unlock(&rrt_update_mutex);
                 return false;
             }
             pTmpElement->LinkEndChild(pNewElement);
@@ -472,6 +478,7 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
             TiXmlElement *pRatingSystemElement = new TiXmlElement("rating-system-definition");
             if (NULL == pRatingSystemElement) {
                 LOGD("create pRatingSystemElement error!\n");
+                pthread_mutex_unlock(&rrt_update_mutex);
                 return false;
             }
             pRootElement->LinkEndChild(pRatingSystemElement);
@@ -482,6 +489,7 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
 
             TiXmlElement *pNewElement = new TiXmlElement("rating-definition");
             if (NULL == pNewElement) {
+                pthread_mutex_unlock(&rrt_update_mutex);
                 return false;
             }
             pRatingSystemElement->LinkEndChild(pNewElement);
@@ -491,6 +499,13 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
         }
     }
 
+    if (!pRRTFile->SaveFile(TV_RRT_DEFINE_PARAM_PATH)) {
+        LOGD("save error!\n");
+        pthread_mutex_unlock(&rrt_update_mutex);
+        return false;
+    }
+
+    pthread_mutex_unlock(&rrt_update_mutex);
     return true;
 }
 
@@ -503,10 +518,10 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
           user_data:
  * @Return:
  */
-void CTvRrt::RrtDataUpdate(long dev_no, int event_type, void *param, void *user_data)
+void CTvRrt::RrtDataUpdate(AM_EPG_Handle_t dev_no, int event_type, void *param, void *user_data)
 {
     switch (event_type) {
-    case AM_EPG_EVT_NEW_RRT: {
+    case AM_EPG_TAB_RRT: {
         INT8U i, j;
         rrt_info_t rrt_info;
         memset(&rrt_info, 0, sizeof(rrt_info_t));
@@ -558,11 +573,6 @@ void CTvRrt::RrtDataUpdate(long dev_no, int event_type, void *param, void *user_
             mpNewRrt = mpNewRrt->p_next;
         }
 
-        if (!pRRTFile->SaveFile(TV_RRT_DEFINE_PARAM_PATH)) {
-            LOGD("save RRT XML File error!\n");
-        } else {
-            LOGD("save RRT XML File success!\n");
-        }
         break;
     }
     default:

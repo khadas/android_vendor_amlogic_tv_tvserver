@@ -131,11 +131,13 @@ CTvChannel::CTvChannel(int dbID, int mode, int freq, int bw, int mod, int symb, 
         modulation = mod;
         symbolRate = symb;
         this->mode = MODE_QAM;
+        logicalChannelNum = channelNum;
     } else if (mode == MODE_OFDM) {
         id = dbID;
         frequency = freq;
         bandwidth = bw;
         this->mode = MODE_OFDM;
+        logicalChannelNum = channelNum;
     } else if (mode == MODE_ATSC) {
         id = dbID;
         frequency = freq;
@@ -155,11 +157,13 @@ CTvChannel::CTvChannel(int dbID, int mode, int freq, int bw, int mod, int symb, 
         frequency = freq;
         bandwidth = bw;
         mode = MODE_DTMB;
+        logicalChannelNum = channelNum;
     } else if (mode == MODE_ISDBT) {
         id = dbID;
         frequency = freq;
         bandwidth = bw;
         mode = MODE_ISDBT;
+        logicalChannelNum = channelNum;
     }
 }
 

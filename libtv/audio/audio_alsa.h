@@ -112,6 +112,7 @@ public:
     int SetDigitalVolume(int, int);
     int SetDigitalMainVolume(int, int);
     int SetDigitalMute(int);
+    int SetAudioARCSwitch(int on_off);
 private:
     int get_aml_card();
     int AudioControlSetValue(int val_count, int data_buf[], char *match_names);

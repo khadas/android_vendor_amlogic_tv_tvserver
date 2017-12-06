@@ -298,6 +298,7 @@ int CAudioAlsa::GetLineOutMaxVol()
 #define CC_GET_ALSA_CTL_PCM_PLAYBACK_SWITCH                               (20)
 #define CC_GET_ALSA_CTL_SETOUTPUT_SWAP                                    (21)
 #define CC_GET_ALSA_CTL_AUDIO_IN_SWITCH                                   (22)
+#define CC_SET_AUDIO_ARC_SWITCH                                           (23)
 
 static  char  gG9AlsaNames[32][48] = {
     {"Audio In Source"},//0
@@ -323,6 +324,7 @@ static  char  gG9AlsaNames[32][48] = {
     {"PCM Playback Switch"},
     {"Output Swap"},
     {"AudioIn Switch"},//22
+    {"HDMI ARC Switch"},
 };
 
 
@@ -861,5 +863,16 @@ int CAudioAlsa::SetDigitalMute(int mute_status)
     }
 
     return 0;
+}
+
+int CAudioAlsa::SetAudioARCSwitch(int on_off)
+{
+    int status = 0;
+    char *match_names = GetAlsaControlName(CC_SET_AUDIO_ARC_SWITCH);
+    if (on_off != 0 && on_off != 1) {
+        return -1;
+    }
+    status = on_off;
+    return AudioControlSetValue(1, &status, match_names);
 }
 

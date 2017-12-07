@@ -101,11 +101,17 @@ int CDTVTvPlayer::setParam(const char *param) {
     return 0;
 }
 
+
 int CDTVTvPlayer::start(const char *param) {
     LOGD("start(%s:%s) current mode(%d)", toReadable(getId()), toReadable(param), mMode);
     int ret = -1;
     switch (mMode) {
         case PLAY_MODE_LIVE: {//start play live and rec in the backgroud
+            if (!mDisableTimeShifting) {
+                mDisableTimeShifting = propertyGetBool("tv.dtv.tf.disable", false);
+                LOGD("prop tv.dtv.tf.disable:%s", mDisableTimeShifting? "true":"false");
+            }
+
             if (bStartInTimeShift)
                 ret = startLiveTryTimeShift(param);
             else

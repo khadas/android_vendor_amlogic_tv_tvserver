@@ -8,6 +8,7 @@
  */
 
 #include <am_scan.h>
+#include <am_check_scramb.h>
 #include <am_epg.h>
 #include <am_mem.h>
 #include <am_db.h>

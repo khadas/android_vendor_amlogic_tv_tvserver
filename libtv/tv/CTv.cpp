@@ -1221,7 +1221,6 @@ int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int
     int ret = 0;
 
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
-
     if (mBlackoutEnable)
         mAv.EnableVideoBlackout();
     else
@@ -1269,7 +1268,6 @@ int CTv::playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int
     int ret = 0;
 
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
-
     if (mBlackoutEnable)
         mAv.EnableVideoBlackout();
     else
@@ -1345,7 +1343,6 @@ int CTv::playDtmbProgram ( int progId )
 int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __unused, int audioCompetation)
 {
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_TV);
-
     mTvAction |= TV_ACTION_PLAYING;
     if ( mBlackoutEnable ) {
         mAv.EnableVideoBlackout();
@@ -1573,11 +1570,12 @@ int CTv::stopPlaying(bool isShowTestScreen, bool resetFE)
             ClearAnalogFrontEnd();
     } else if (m_source_input ==  SOURCE_DTV) {
         mHDMIAudioCheckThread.requestAndWaitPauseCheck();
-        mAv.EnableVideoBlackout();
+        if (mBlackoutEnable == true) {
+            mAv.EnableVideoBlackout();
+        }
         mAv.StopTS ();
     }
-
-    if ( SOURCE_TV != m_source_input ) {
+    if ( SOURCE_TV != m_source_input && mBlackoutEnable == true) {
         if ( true == isShowTestScreen ) {
             if ( iSBlackPattern ) {
                 mAv.DisableVideoWithBlackColor();
@@ -1586,7 +1584,6 @@ int CTv::stopPlaying(bool isShowTestScreen, bool resetFE)
             }
         }
     }
-
     mTvAction &= ~TV_ACTION_PLAYING;
     return 0;
 }
@@ -2071,10 +2068,11 @@ int CTv::StopTvLock ( void )
     if ( Get2d4gHeadsetEnable() == 1 ) {
         property_set("audio.tv_open.flg", "0");
     }
-
-    mAv.DisableVideoWithBlackColor();
+    if (mBlackoutEnable) {
+        mAv.DisableVideoWithBlackColor();
+        mAv.EnableVideoBlackout();
+    }
     mAv.ClearVideoBuffer();
-    mAv.EnableVideoBlackout();
     SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
     return 0;
 }
@@ -2204,9 +2202,13 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
 
     SetAudioMuteForTv(CC_AUDIO_MUTE);
     mHDMIAudioCheckThread.requestAndWaitPauseCheck();
-    mAv.DisableVideoWithBlackColor();
-    //enable blackout, when play,disable it
-    mAv.EnableVideoBlackout();
+    //if BlackoutEnable is false, no need to disable video and enable blackout
+
+    if (mBlackoutEnable == true) {
+        mAv.DisableVideoWithBlackColor();
+        //enable blackout, when play,disable it
+        mAv.EnableVideoBlackout();
+    }
     //set front dev mode
     if ( source_input == SOURCE_TV ) {
         mFrontDev->Open(FE_ANALOG);

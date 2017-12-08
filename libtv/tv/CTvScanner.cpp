@@ -104,6 +104,11 @@ int CTvScanner::Scan(CFrontEnd::FEParas &fp, ScanParas &sp) {
     // Start Scan
     memset(&dmx_para, 0, sizeof(dmx_para));
     AM_DMX_Open(para.dtv_para.dmx_dev_id, &dmx_para);
+    /*get scramble prop value,default value 0 is ca des*/
+    int mode = config_get_int(CFG_SECTION_TV, CFG_DTV_CHECK_SCRAMBLE_MODE, 0);
+    if (mode == 1) {
+        para.check_scramble_mode = AM_SCAN_CHECK_SCRAMBLE_TSHEAD;
+    }
     if (AM_SCAN_Create(&para, &handle) != AM_SUCCESS) {
         LOGD("SCAN CREATE fail");
         handle = NULL;
@@ -1036,6 +1041,7 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
 void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist)
 {
     LOGD("processAtscTs");
+    int scrambled_pids[AM_DVB_PID_MAXCOUNT + 1];
 
     if(ts->digital.vcts
         && (ts->digital.vcts->i_extension != ts->digital.pats->i_ts_id)
@@ -1052,13 +1058,17 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
     SCAN_ServiceInfo_t *psrv_info;
     int cc_fixed = getParamOption("cc.fixed");
     AM_Bool_t is_cc_fixed = (cc_fixed == -1)? false : (cc_fixed != 0);
-
+    AM_Bool_t mNeedCheck_tsid = AM_TRUE;
+    /*if do store the programs in VCT but NOT in PMT,we need set store_cvt_mode AM_TRUE*/
+    AM_Bool_t store_vct_notin_pmt = AM_FALSE;/*!!!!for  CVTE, need set AM_FALSE*/
     if (!ts->digital.pats && !ts->digital.vcts)
     {
         LOGD("No PAT or VCT found in ts");
         return;
     }
-
+    memset(scrambled_pids, 0, sizeof(scrambled_pids));
+    LOGD("am-check-scram start get pids");
+    AM_Check_Scramb_GetPid(scrambled_pids);
     LOGD(" TS: src %d", src);
 
     AM_SI_LIST_BEGIN(ts->digital.pmts, pmt) {
@@ -1082,19 +1092,61 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
                 extractCaScrambledFlag(es->p_first_descriptor, &psrv_info->scrambled_flag);
         }AM_SI_LIST_END()
 
+        if (psrv_info->scrambled_flag && config_get_int(CFG_SECTION_TV, CFG_DTV_CHECK_SCRAMBLE_MODE, 0) == 1) {
+            /*repeat check ts head scramble bit, default dmx id is 0*/
+            LOGD("Program to check scramble ( pid %d)", psrv_info->vid);
+            int i = 0;
+            int j = 0;
+            int video_scramb = 0;
+            int audio_scramb = 0;
+
+            for (i = 0; i < AM_DVB_PID_MAXCOUNT; i++) {
+                if (scrambled_pids[i] == psrv_info->vid) {
+                    video_scramb = 1;
+                    LOGD("Program to check scramble video is scrambled check end( pid %d)", psrv_info->vid);
+                    break;
+                }
+                if (scrambled_pids[i] == 0) {
+                    //check end
+                    LOGD("Program to check scramble video check end( pid %d)", psrv_info->vid);
+                    break;
+                }
+            }
+
+            for (i = 0; i < AM_DVB_PID_MAXCOUNT; i++) {
+                for (j = 0; j < psrv_info->aud_info.audio_count; j++) {
+                    if (psrv_info->aud_info.audios[j].pid == scrambled_pids[i]) {
+                        audio_scramb = 1;
+                        LOGD("Program to check scramble audios is scrambled check end( pid %d)", psrv_info->aud_info.audios[j].pid);
+                        goto check_end;
+                    }
+                }
+            }
+check_end:
+            if (audio_scramb != 0 || video_scramb != 0) {
+                psrv_info->scrambled_flag = 1;
+            } else {
+                psrv_info->scrambled_flag = 0;
+            }
+        }
+
         program_found_in_vct = AM_FALSE;
+        mNeedCheck_tsid = AM_TRUE;
+ VCT_REPEAT:
         AM_SI_LIST_BEGIN(ts->digital.vcts, vct) {
         AM_SI_LIST_BEGIN(vct->p_first_channel, vcinfo) {
             /*Skip inactive program*/
             if (vcinfo->i_program_number == 0  || vcinfo->i_program_number == 0xffff)
                 continue;
 
-            if ((ts->digital.use_vct_tsid || (vct->i_extension == ts->digital.pats->i_ts_id))
+            if ((ts->digital.use_vct_tsid || (vct->i_extension == ts->digital.pats->i_ts_id) || mNeedCheck_tsid == AM_FALSE)
                 && vcinfo->i_channel_tsid == vct->i_extension) {
                 if (vcinfo->i_program_number == pmt->i_program_number) {
-                    if (vct->b_cable_vct)
-                        psrv_info->vct_type = 1;
-                    AM_SI_ExtractAVFromVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
+                    if (mNeedCheck_tsid == AM_TRUE) {
+                        if (vct->b_cable_vct)
+                            psrv_info->vct_type = 1;
+                        AM_SI_ExtractAVFromVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
+                    }
                     extractSrvInfoFromVc(result, vcinfo, psrv_info);
                     program_found_in_vct = AM_TRUE;
                     goto VCT_END;
@@ -1107,6 +1159,11 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
             }
         } AM_SI_LIST_END()
         } AM_SI_LIST_END()
+        /*if not find in vct on check tsid mode,we need repeat check on not check tsid*/
+        if (program_found_in_vct == AM_FALSE && mNeedCheck_tsid == AM_TRUE) {
+            mNeedCheck_tsid = AM_FALSE;
+            goto VCT_REPEAT;
+        }
 VCT_END:
         /*Store this service*/
         updateServiceInfo(result, psrv_info);
@@ -1133,51 +1190,52 @@ VCT_END:
     } AM_SI_LIST_END()
 
     /* All programs in PMTs added, now trying the programs in VCT but NOT in PMT */
-    AM_SI_LIST_BEGIN(ts->digital.vcts, vct) {
-    AM_SI_LIST_BEGIN(vct->p_first_channel, vcinfo) {
-        AM_Bool_t found_in_pmt = AM_FALSE;
+    if (store_vct_notin_pmt == AM_TRUE) {
+        AM_SI_LIST_BEGIN(ts->digital.vcts, vct) {
+        AM_SI_LIST_BEGIN(vct->p_first_channel, vcinfo) {
+            AM_Bool_t found_in_pmt = AM_FALSE;
 
-        if (!(psrv_info = getServiceInfo()))
-            return;
-        psrv_info->srv_id = vcinfo->i_program_number;
-        psrv_info->src = src;
+            if (!(psrv_info = getServiceInfo()))
+                return;
+            psrv_info->srv_id = vcinfo->i_program_number;
+            psrv_info->src = src;
 
-        /*Skip inactive program*/
-        if (vcinfo->i_program_number == 0  || vcinfo->i_program_number == 0xffff)
-            continue;
+            /*Skip inactive program*/
+            if (vcinfo->i_program_number == 0  || vcinfo->i_program_number == 0xffff)
+                continue;
 
-        /* Is already added in PMT? */
-        AM_SI_LIST_BEGIN(ts->digital.pmts, pmt) {
-            if (vcinfo->i_program_number == pmt->i_program_number) {
-                found_in_pmt = AM_TRUE;
-                break;
-            }
-        } AM_SI_LIST_END()
+            /* Is already added in PMT? */
+            AM_SI_LIST_BEGIN(ts->digital.pmts, pmt) {
+                if (vcinfo->i_program_number == pmt->i_program_number) {
+                    found_in_pmt = AM_TRUE;
+                    break;
+                }
+            } AM_SI_LIST_END()
 
-        if (found_in_pmt)
-            continue;
+            if (found_in_pmt)
+                continue;
 
-        if (vcinfo->i_channel_tsid == vct->i_extension) {
-            AM_SI_ExtractAVFromVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
-            extractSrvInfoFromVc(result, vcinfo, psrv_info);
-            updateServiceInfo(result, psrv_info);
+            if (vcinfo->i_channel_tsid == vct->i_extension) {
+                AM_SI_ExtractAVFromVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
+                extractSrvInfoFromVc(result, vcinfo, psrv_info);
+                updateServiceInfo(result, psrv_info);
 
-            if (is_cc_fixed) {
-                memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
+                if (is_cc_fixed) {
+                    memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
                 addFixedATSCCaption(&psrv_info->cap_info, -1, -1, -1, 1);
             }
 
             slist.push_back(psrv_info);
 
-        } else {
-            LOGD("Program(%d ts:%d) in VCT(ts:%d) found",
+            } else {
+                LOGD("Program(%d ts:%d) in VCT(ts:%d) found",
                 vcinfo->i_program_number, vcinfo->i_channel_tsid,
                 vct->i_extension);
-            continue;
-        }
-    } AM_SI_LIST_END()
-    } AM_SI_LIST_END()
-
+                continue;
+            }
+        } AM_SI_LIST_END()
+        } AM_SI_LIST_END()
+    }
 }
 
 void CTvScanner::storeScanHelper(AM_SCAN_Result_t *result)

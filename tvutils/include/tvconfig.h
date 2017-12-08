@@ -30,6 +30,7 @@
 
 #define CFG_ATV_FREQ_LIST                       "atv.get.min.max.freq"
 #define CFG_DTV_SCAN_SORT_MODE                  "dtv.scan.sort.mode"
+#define CFG_DTV_CHECK_SCRAMBLE_MODE             "dtv.check.scramble.mode"
 
 #define CFG_TVIN_KERNELPET_DISABLE              "tvin.kernelpet_disable"
 #define CFG_TVIN_KERNELPET_TIMEROUT             "tvin.kernelpet.timeout"

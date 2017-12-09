@@ -107,8 +107,11 @@ int CTvScanner::Scan(CFrontEnd::FEParas &fp, ScanParas &sp) {
     /*get scramble prop value,default value 0 is ca des*/
     int mode = config_get_int(CFG_SECTION_TV, CFG_DTV_CHECK_SCRAMBLE_MODE, 0);
     if (mode == 1) {
-        para.check_scramble_mode = AM_SCAN_CHECK_SCRAMBLE_TSHEAD;
+        para.dtv_para.mode |= AM_SCAN_DTVMODE_SCRAMB_TSHEAD;
     }
+    //para.dtv_para.mode |= AM_SCAN_DTVMODE_FTA;
+    //para.dtv_para.mode |= AM_SCAN_DTVMODE_NOVCT;
+    //para.atv_para.mode |= AM_SCAN_ATVMODE_NOTSTORE_PAL
     if (AM_SCAN_Create(&para, &handle) != AM_SUCCESS) {
         LOGD("SCAN CREATE fail");
         handle = NULL;
@@ -755,7 +758,7 @@ void CTvScanner::updateServiceInfo(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t 
         }
         /* Skip program for FTA mode */
         if (srv_info->scrambled_flag && (mode & AM_SCAN_DTVMODE_FTA)) {
-            LOGD( "Skip program '%s' for FTA mode", srv_info->name);
+            LOGD( "Skip program '%s' vid:[%d]for FTA mode", srv_info->name, srv_info->vid);
             return;
         }
 
@@ -1041,7 +1044,6 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
 void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist)
 {
     LOGD("processAtscTs");
-    int scrambled_pids[AM_DVB_PID_MAXCOUNT + 1];
 
     if(ts->digital.vcts
         && (ts->digital.vcts->i_extension != ts->digital.pats->i_ts_id)
@@ -1052,6 +1054,7 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
     dvbpsi_atsc_vct_channel_t *vcinfo;
     dvbpsi_pmt_t *pmt;
     dvbpsi_pmt_es_t *es;
+    int mode = result->start_para->dtv_para.mode;
     int src = result->start_para->dtv_para.source;
     AM_Bool_t stream_found_in_vct = AM_FALSE;
     AM_Bool_t program_found_in_vct = AM_FALSE;
@@ -1066,10 +1069,6 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
         LOGD("No PAT or VCT found in ts");
         return;
     }
-    memset(scrambled_pids, 0, sizeof(scrambled_pids));
-    LOGD("am-check-scram start get pids");
-    AM_Check_Scramb_GetPid(scrambled_pids);
-    LOGD(" TS: src %d", src);
 
     AM_SI_LIST_BEGIN(ts->digital.pmts, pmt) {
         if (!(psrv_info = getServiceInfo()))
@@ -1078,58 +1077,26 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
         psrv_info->src = src;
         psrv_info->pmt_pid = getPmtPid(ts->digital.pats, pmt->i_program_number);
         psrv_info->pcr_pid = pmt->i_pcr_pid;
-
         /* looking for CA descr */
         if (! psrv_info->scrambled_flag) {
-            extractCaScrambledFlag(pmt->p_first_descriptor, &psrv_info->scrambled_flag);
+            if (mode & AM_SCAN_DTVMODE_SCRAMB_TSHEAD) {
+                psrv_info->scrambled_flag = pmt->i_scramble_flag;
+            } else {
+              extractCaScrambledFlag(pmt->p_first_descriptor, &psrv_info->scrambled_flag);
+            }
         }
-
         AM_SI_LIST_BEGIN(pmt->p_first_es, es) {
             AM_SI_ExtractAVFromES(es, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
             if (!is_cc_fixed)
                 AM_SI_ExtractATSCCaptionFromES(es, &psrv_info->cap_info);
-            if (! psrv_info->scrambled_flag)
+            if (! psrv_info->scrambled_flag && !(mode & AM_SCAN_DTVMODE_SCRAMB_TSHEAD))
                 extractCaScrambledFlag(es->p_first_descriptor, &psrv_info->scrambled_flag);
         }AM_SI_LIST_END()
-
-        if (psrv_info->scrambled_flag && config_get_int(CFG_SECTION_TV, CFG_DTV_CHECK_SCRAMBLE_MODE, 0) == 1) {
-            /*repeat check ts head scramble bit, default dmx id is 0*/
-            LOGD("Program to check scramble ( pid %d)", psrv_info->vid);
-            int i = 0;
-            int j = 0;
-            int video_scramb = 0;
-            int audio_scramb = 0;
-
-            for (i = 0; i < AM_DVB_PID_MAXCOUNT; i++) {
-                if (scrambled_pids[i] == psrv_info->vid) {
-                    video_scramb = 1;
-                    LOGD("Program to check scramble video is scrambled check end( pid %d)", psrv_info->vid);
-                    break;
-                }
-                if (scrambled_pids[i] == 0) {
-                    //check end
-                    LOGD("Program to check scramble video check end( pid %d)", psrv_info->vid);
-                    break;
-                }
-            }
-
-            for (i = 0; i < AM_DVB_PID_MAXCOUNT; i++) {
-                for (j = 0; j < psrv_info->aud_info.audio_count; j++) {
-                    if (psrv_info->aud_info.audios[j].pid == scrambled_pids[i]) {
-                        audio_scramb = 1;
-                        LOGD("Program to check scramble audios is scrambled check end( pid %d)", psrv_info->aud_info.audios[j].pid);
-                        goto check_end;
-                    }
-                }
-            }
-check_end:
-            if (audio_scramb != 0 || video_scramb != 0) {
-                psrv_info->scrambled_flag = 1;
-            } else {
-                psrv_info->scrambled_flag = 0;
-            }
+        /* Skip program for FTA mode */
+        if (psrv_info->scrambled_flag && (mode & AM_SCAN_DTVMODE_FTA)) {
+            LOGD( "Skip program '%s' vid:[%d]for FTA mode", psrv_info->name, psrv_info->vid);
+            continue;
         }
-
         program_found_in_vct = AM_FALSE;
         mNeedCheck_tsid = AM_TRUE;
  VCT_REPEAT:
@@ -1167,7 +1134,6 @@ check_end:
 VCT_END:
         /*Store this service*/
         updateServiceInfo(result, psrv_info);
-
         if (is_cc_fixed) {
             memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
             addFixedATSCCaption(&psrv_info->cap_info, -1, -1, -1, 1);

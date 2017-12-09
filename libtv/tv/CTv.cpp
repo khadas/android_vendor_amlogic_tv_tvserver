@@ -5516,7 +5516,7 @@ int CTv::autoSwitchToMonitorMode()
 
 void CTv::onVdinSignalChange()
 {
-    if (!(mTvAction & TV_ACTION_IN_VDIN) || (mTvAction & TV_ACTION_SCANNING)) {
+    if (!(mTvAction & TV_ACTION_IN_VDIN) || (mTvAction & TV_ACTION_SCANNING) || (SOURCE_SPDIF == m_source_input)) {
         return;
     }
 

@@ -111,7 +111,11 @@ int CTvScanner::Scan(CFrontEnd::FEParas &fp, ScanParas &sp) {
     }
     //para.dtv_para.mode |= AM_SCAN_DTVMODE_FTA;
     //para.dtv_para.mode |= AM_SCAN_DTVMODE_NOVCT;
-    //para.atv_para.mode |= AM_SCAN_ATVMODE_NOTSTORE_PAL
+    if (FE_ATSC == fp.getFEMode().getBase()) {
+        para.store_mode |= AM_SCAN_ATV_STOREMODE_NOPAL;
+        LOGD("not srote pal type programs");
+    }
+
     if (AM_SCAN_Create(&para, &handle) != AM_SUCCESS) {
         LOGD("SCAN CREATE fail");
         handle = NULL;
@@ -1248,6 +1252,14 @@ void CTvScanner::storeScan(AM_SCAN_Result_t *result, AM_SCAN_TS_t *curr_ts)
 
     AM_SI_LIST_BEGIN(result->tses, ts) {
         if (ts->type == AM_SCAN_TS_ANALOG) {
+            int mode = result->start_para->store_mode;
+            //not store pal type program
+            if (((ts->analog.std & V4L2_COLOR_STD_PAL) == V4L2_COLOR_STD_PAL) &&
+                (mode & AM_SCAN_ATV_STOREMODE_NOPAL) == AM_SCAN_ATV_STOREMODE_NOPAL)
+            {
+                LOGE("skip pal type program");
+                continue;
+            }
             SCAN_TsInfo_t *tsinfo = (SCAN_TsInfo_t*)calloc(sizeof(SCAN_TsInfo_t), 1);
             if (!tsinfo) {
                 LOGE("No memory for Scanner");

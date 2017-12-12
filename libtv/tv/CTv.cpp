@@ -3596,6 +3596,8 @@ int CTv::SetAudioMuteForTv(int muteOrUnmute)
         mAudioMuteStatusForSystem, mAudioMuteStatusForTv, muteOrUnmute);
     ret |= SetDacMute(mAudioMuteStatusForSystem | mAudioMuteStatusForTv, CC_DAC_MUTE_TYPE_EXTERNAL | CC_DAC_MUTE_TYPE_INTERNAL);
     ret |= SetAudioI2sMute(mAudioMuteStatusForTv);
+    ret |= SetAudioSPDIFMute(mAudioMuteStatusForTv);
+    ret |= mAudioAlsa.SetAudioARCSwitch(!mAudioMuteStatusForTv);
     AudioSystem::setStreamMute(AUDIO_STREAM_MUSIC, mAudioMuteStatusForTv);
     return ret;
 }

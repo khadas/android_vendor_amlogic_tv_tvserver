@@ -1247,6 +1247,7 @@ int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int
     msg.mDelayMs = 2000;
     msg.mType = CTvMsgQueue::TV_MSG_CHECK_FE_DELAY;
     mTvMsgQueue.sendMsg ( msg );
+
     SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
     return 0;
 }
@@ -1420,7 +1421,7 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 int CTv::setFrontEnd ( const char *paras, bool force )
 {
     AutoMutex _l( mLock );
-    LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
+    LOGD("mTvAction = %#x, %s, paras = %s", mTvAction, __FUNCTION__, paras);
     if (mTvAction & TV_ACTION_SCANNING) {
         return -1;
     }
@@ -2410,11 +2411,11 @@ void CTv::onSigStillStable()
         m_hdmi_audio_data = 0;
     }
     if ( 1 ) {
-        tvin_info_t info = m_cur_sig_info;
+        //tvin_info_t info = m_cur_sig_info;
         TvEvent::SignalInfoEvent ev;
-        ev.mTrans_fmt = info.trans_fmt;
-        ev.mFmt = info.fmt;
-        ev.mStatus = info.status;
+        ev.mTrans_fmt = m_cur_sig_info.trans_fmt;
+        ev.mFmt = m_cur_sig_info.fmt;
+        ev.mStatus = m_cur_sig_info.status;
         ev.mReserved = getHDMIFrameRate();
         sendTvEvent ( ev );
     }
@@ -2538,12 +2539,12 @@ void CTv::onSigToUnSupport()
     }
 
     if (!(mTvAction & TV_ACTION_SCANNING)) {
-        tvin_info_t info = m_cur_sig_info;
+        //tvin_info_t info = m_cur_sig_info;
         TvEvent::SignalInfoEvent ev;
-        ev.mTrans_fmt = info.trans_fmt;
-        ev.mFmt = info.fmt;
-        ev.mStatus = info.status;
-        ev.mReserved = info.reserved;
+        ev.mTrans_fmt = m_cur_sig_info.trans_fmt;
+        ev.mFmt = m_cur_sig_info.fmt;
+        ev.mStatus = m_cur_sig_info.status;
+        ev.mReserved = m_cur_sig_info.reserved;
         sendTvEvent ( ev );
     }
 }
@@ -2566,12 +2567,12 @@ void CTv::onSigToNoSig()
     }
 
     if (!(mTvAction & TV_ACTION_SCANNING)) {
-        tvin_info_t info = m_cur_sig_info;
+        //tvin_info_t info = m_cur_sig_info;
         TvEvent::SignalInfoEvent ev;
-        ev.mTrans_fmt = info.trans_fmt;
-        ev.mFmt = info.fmt;
-        ev.mStatus = info.status;
-        ev.mReserved = info.reserved;
+        ev.mTrans_fmt = m_cur_sig_info.trans_fmt;
+        ev.mFmt = m_cur_sig_info.fmt;
+        ev.mStatus = m_cur_sig_info.status;
+        ev.mReserved = m_cur_sig_info.reserved;
         sendTvEvent ( ev );
     }
 }
@@ -2659,24 +2660,24 @@ tvin_info_t CTv::GetCurrentSignalInfo ( void )
 {
     tvin_trans_fmt det_fmt = TVIN_TFMT_2D;
     tvin_sig_status_t signalState = TVIN_SIG_STATUS_NULL;
-    tvin_info_t signal_info = m_cur_sig_info;
+    //tvin_info_t signal_info = m_cur_sig_info;
 
     int feState = mFrontDev->getStatus();
     if ( (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_DTV ) ) {
         det_fmt = mpTvin->TvinApi_Get3DDectMode();
         if ((feState & FE_HAS_LOCK) == FE_HAS_LOCK) {
-            signal_info.status = TVIN_SIG_STATUS_STABLE;
+            m_cur_sig_info.status = TVIN_SIG_STATUS_STABLE;
         } else if ((feState & FE_TIMEDOUT) == FE_TIMEDOUT) {
-            signal_info.status = TVIN_SIG_STATUS_NOSIG;
+            m_cur_sig_info.status = TVIN_SIG_STATUS_NOSIG;
         }
         if ( det_fmt != TVIN_TFMT_2D ) {
-            signal_info.trans_fmt = det_fmt;
+            m_cur_sig_info.trans_fmt = det_fmt;
         }
-        signal_info.fmt = mAv.getVideoResolutionToFmt();
+        m_cur_sig_info.fmt = mAv.getVideoResolutionToFmt();
     }
-    LOGD("%s,trans_fmt is %d,fmt is %d, status is %d", __FUNCTION__, m_cur_sig_info.trans_fmt,
-        m_cur_sig_info.fmt, m_cur_sig_info.status);
-    return signal_info;
+    LOGD("%s, m_source_input = %d, trans_fmt is %d,fmt is %d, status is %d", __FUNCTION__,
+            m_source_input, m_cur_sig_info.trans_fmt, m_cur_sig_info.fmt, m_cur_sig_info.status);
+    return m_cur_sig_info;
 }
 
 int CTv::Tvin_SetPLLValues ()

@@ -1122,7 +1122,7 @@ VCT_END:
             CTvRegion::getChannelListByName((char *)list_name, vcp);
             for (int i = 0; i < (int)vcp.size(); i++) {
                 if ((tsinfo->fe.getFrequency()/1000) == (vcp[i]->getFrequency()/1000)) {
-                    psrv_info->major_chan_num = i+2;
+                    psrv_info->major_chan_num = vcp[i]->getLogicalChannelNum();
                     psrv_info->minor_chan_num = psrv_info->srv_id;
                 }
             }

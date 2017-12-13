@@ -151,7 +151,7 @@ int CDTVTvPlayer::start(const char *param) {
 }
 
 int CDTVTvPlayer::stop(const char *param) {
-    LOGD("stop(%s:%s)", toReadable(getId()), toReadable(param));
+    LOGD("CDTVTvPlayer stop(%s:%s)", toReadable(getId()), toReadable(param));
 
     int ret;
 
@@ -704,7 +704,7 @@ int CATVTvPlayer::start(const char *param) {
 }
 
 int CATVTvPlayer::stop(const char *param) {
-    LOGD("stop(%s:%s)", toReadable(getId()), toReadable(param));
+    LOGD("CATVTvPlayer stop(%s:%s)", toReadable(getId()), toReadable(param));
     int ret = -1;
 
     ret = pTv->stopPlaying(true, false);

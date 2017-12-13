@@ -1331,16 +1331,25 @@ const char *CTvScanner::getDtvScanListName(int mode)
                 list_name = (char *)"U.S.,ATSC Cable HRC";
                 break;
             case 4:
-                list_name = (char *)"U.S.,NTSC Air";
+                list_name = (char *)"U.S.,ATSC Cable Auto";
                 break;
             case 5:
-                list_name = (char *)"U.S.,NTSC Cable Standard";
+                list_name = (char *)"U.S.,ATSC Air";
                 break;
             case 6:
-                list_name = (char *)"U.S.,NTSC Cable IRC";
+                list_name = (char *)"U.S.,NTSC Cable Standard";
                 break;
             case 7:
+                list_name = (char *)"U.S.,NTSC Cable IRC";
+                break;
+            case 8:
                 list_name = (char *)"U.S.,NTSC Cable HRC";
+                break;
+            case 9:
+                list_name = (char *)"U.S.,NTSC Cable Auto";
+                break;
+            case 10:
+                list_name = (char *)"U.S.,NTSC Air";
                 break;
             default:
                 list_name = (char *)"U.S.,ATSC Air";

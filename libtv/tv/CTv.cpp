@@ -3637,6 +3637,11 @@ void CTv::updateSubtitle(int pic_width, int pic_height)
 //Audio Mute
 int CTv::SetAudioI2sMute(int muteStatus)
 {
+    int aud_arch_type = GetAudioArchitectureTypeCFG();
+
+    if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_ON_BOARD)
+        return 0;
+
     int vol = 256;
     if (muteStatus == CC_AUDIO_MUTE) {
         vol = 0;

@@ -397,12 +397,13 @@ void CTv::onEvent(const CAv::AVEvent &ev)
             SetDisplayMode(CVpp::getInstance()->GetDisplayMode(m_source_input),
                 m_source_input,
                 mAv.getVideoResolutionToFmt());
-            usleep(50 * 1000);
+            //usleep(50 * 1000);
             mAv.EnableVideoNow(true);
             LOGD("[source_switch_time]: %fs, EVENT_AV_VIDEO_AVAILABLE, video available ok", getUptimeSeconds());
             SetAudioMuteForTv(CC_AUDIO_UNMUTE);
             Tv_SetAudioInSource(SOURCE_DTV);
         }
+
         TvEvent::AVPlaybackEvent AvPlayBackEvt;
         AvPlayBackEvt.mMsgType = TvEvent::AVPlaybackEvent::EVENT_AV_VIDEO_AVAILABLE;
         AvPlayBackEvt.mProgramId = (int)ev.param;
@@ -1425,9 +1426,17 @@ int CTv::setFrontEnd ( const char *paras, bool force )
 
     CFrontEnd::FEParas fp(paras);
 
+    if (!mATVDisplaySnow) {
+        if (iSBlackPattern) {
+            mAv.DisableVideoWithBlackColor();
+        } else {
+            mAv.DisableVideoWithBlueColor();
+        }
+    }
+
     if ( fp.getFEMode().getBase() == FE_ANALOG ) {
         if (SOURCE_DTV == m_source_input) {
-            mAv.DisableVideoBlackout();
+            //mAv.DisableVideoBlackout();
             stopPlaying(false);
         }
         int tmpFreq = fp.getFrequency();
@@ -1460,7 +1469,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
     } else {
         if (SOURCE_ADTV == m_source_input_virtual) {
             if (SOURCE_TV == m_source_input) {
-                mAv.DisableVideoBlackout();
+                //mAv.DisableVideoBlackout();
                 mHDMIAudioCheckThread.requestAndWaitPauseCheck();
                 mpTvin->Tvin_StopDecoder();
                 if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
@@ -1471,7 +1480,6 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         mFrontDev->Open(FE_AUTO);
         mFrontDev->setPara ( paras, force );
     }
-
 
     int mode, freq, para1, para2;
     mFrontDev->getPara(&mode, &freq, &para1, &para2);

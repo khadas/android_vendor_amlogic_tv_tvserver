@@ -1454,13 +1454,16 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
 
     if (FE_ATSC == fp.getFEMode().getBase()) {
         mAtvIsAtsc = 1;
+        atv_para.afc_range = 1000000;
         LOGD("create ATV scan param: ATSC");
+    } else {
+        atv_para.afc_range = 2000000;
     }
 
     atv_para.am_scan_atv_cvbs_lock =  &checkAtvCvbsLockHelper;
     atv_para.default_std = CFrontEnd::getInstance()->enumToStdAndColor(fp.getVideoStd(), fp.getAudioStd());
     atv_para.channel_id = -1;
-    atv_para.afc_range = 2000000;
+    //atv_para.afc_range = 2000000;
 
     if (mAtvIsAtsc && !is_analog_auto) {// atsc scan with list-mode, not auto mode
         int mode = scp.getAtvModifier(CFrontEnd::FEParas::FEP_MODE, -1);
@@ -2123,7 +2126,6 @@ CTvScanner::ScanParas& CTvScanner::ScanParas::operator = (const ScanParas &spp)
     this->mparas = spp.mparas;
     return *this;
 }
-
 
 int CTvScanner::getAtscChannelPara(int attennaType, Vector<sp<CTvChannel> > &vcp)
 {

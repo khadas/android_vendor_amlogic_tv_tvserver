@@ -532,6 +532,8 @@ private:
 
     int tryReleasePlayer(bool isEnter, tv_source_input_t si);
 
+    void setDvbLogLevel();
+
     CAudioAlsa mAudioAlsa;
     CAudioEffect mAudioEffect;
 

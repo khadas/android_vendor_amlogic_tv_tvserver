@@ -1475,30 +1475,7 @@ const std::string paramGetString(const char *param, const char *section, const c
     return jsonGetString(param, section, value, def);
 }
 
-#define PROPERTY_VALUE_MAX 92
-
 bool propertyGetBool(const char *prop, bool def) {
-    if (!prop || !strlen(prop))
-        return false;
-
-    char buf[PROPERTY_VALUE_MAX] = {0};
-    int len = property_get(prop, buf, def?"true":"false");
-    if (strncmp(buf, "true", 4) == 0
-        || strncmp(buf, "1", 1) == 0
-        || strncmp(buf, "enable", 6) == 0)
-        return true;
-    return false;
-}
-
-int properyGetInt(const char *prop, int def) {
-     if (!prop || !strlen(prop))
-        return false;
-
-    int val = def;
-    char buf[PROPERTY_VALUE_MAX] = {0};
-    int len = property_get(prop, buf, "?");
-    if (sscanf(buf, "%i", &val) == 1)
-        return val;
-    return def;
+    return property_get_bool(prop, def ? 1 : 0) ? true : false;
 }
 

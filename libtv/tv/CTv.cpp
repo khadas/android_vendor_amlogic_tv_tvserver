@@ -1544,6 +1544,7 @@ int CTv::startPlayTv ( int source, int vid, int aid, int pcrid, int vfat, int af
 {
     if ( source == SOURCE_DTV ) {
         AM_FileEcho ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
+        setDvbLogLevel();
         LOGD ( "%s, startPlayTv", __FUNCTION__);
         return mAv.StartTS (vid, aid, pcrid, ( AM_AV_VFormat_t ) vfat, ( AM_AV_AFormat_t ) afat );
     }
@@ -1981,6 +1982,7 @@ int CTv::StartTvLock ()
     AutoMutex _l( mLock );
     //tvWriteSysfs("/sys/power/wake_lock", "tvserver.run");
 
+    setDvbLogLevel();
     //mAv.ClearVideoBuffer();
     mAv.SetVideoLayerDisable(1);
     SwitchAVOutBypass(0);
@@ -5623,6 +5625,7 @@ int CTv::doRecordingCommand(int cmd, const char *id, const char *param)
 {
     LOGD("doRec(cmd:%d, id:%s, para:%s)", cmd, id, param);
     int ret = -10;
+    setDvbLogLevel();
     switch (cmd) {
         case RECORDING_CMD_PREPARE:
         ret = prepareRecording(id, param);
@@ -5737,6 +5740,7 @@ int CTv::doPlayCommand(int cmd, const char *id, const char *param)
 {
     LOGD("doPlay(cmd:%d, id:%s, para:%s)", cmd, id, param);
     int ret = -10;
+    setDvbLogLevel();
     switch (cmd) {
         case PLAY_CMD_START:
         ret = startPlay(id, param);
@@ -5800,6 +5804,10 @@ int CTv::Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_
     *rrt_select_info = tmp;
 
     return ret;
+}
+
+void CTv::setDvbLogLevel() {
+    AM_DebugSetLogLevel(property_get_int32("tv.dvb.loglevel", 1));
 }
 
 void CTv::dump(String8 &result)

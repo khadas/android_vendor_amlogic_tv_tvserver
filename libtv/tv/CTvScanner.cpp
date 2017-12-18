@@ -111,10 +111,10 @@ int CTvScanner::Scan(CFrontEnd::FEParas &fp, ScanParas &sp) {
     }
     //para.dtv_para.mode |= AM_SCAN_DTVMODE_FTA;
     //para.dtv_para.mode |= AM_SCAN_DTVMODE_NOVCT;
-    if (FE_ATSC == fp.getFEMode().getBase()) {
-        para.store_mode |= AM_SCAN_ATV_STOREMODE_NOPAL;
-        LOGD("not srote pal type programs");
-    }
+    // if (FE_ATSC == fp.getFEMode().getBase()) {
+    //     para.store_mode |= AM_SCAN_ATV_STOREMODE_NOPAL;
+    //     LOGD("not srote pal type programs");
+    // }
 
     if (AM_SCAN_Create(&para, &handle) != AM_SUCCESS) {
         LOGD("SCAN CREATE fail");

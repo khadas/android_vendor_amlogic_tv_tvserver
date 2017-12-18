@@ -1988,13 +1988,13 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
             if (npd != NULL) {
                 switch (npd->newts->type) {
                     case AM_SCAN_TS_ANALOG:
-                        if (npd->result->start_para->atv_para.mode == AM_SCAN_ATVMODE_AUTO
-                            || npd->result->start_para->atv_para.mode == AM_SCAN_ATVMODE_FREQ)
+                        if (npd->result->start_para->atv_para.mode & AM_SCAN_ATVMODE_AUTO == AM_SCAN_ATVMODE_AUTO
+                            || npd->result->start_para->atv_para.mode & AM_SCAN_ATVMODE_FREQ == AM_SCAN_ATVMODE_FREQ)
                             pT->storeScan(npd->result, npd->newts);
                     break;
                     case AM_SCAN_TS_DIGITAL:
-                        if ((npd->result->start_para->dtv_para.mode == AM_SCAN_DTVMODE_AUTO)
-                            || (npd->result->start_para->dtv_para.mode == AM_SCAN_DTVMODE_ALLBAND))
+                        if ((npd->result->start_para->dtv_para.mode & AM_SCAN_DTVMODE_AUTO == AM_SCAN_DTVMODE_AUTO)
+                            || (npd->result->start_para->dtv_para.mode & AM_SCAN_DTVMODE_ALLBAND == AM_SCAN_DTVMODE_ALLBAND))
                             pT->storeScan(npd->result, npd->newts);
                     break;
                     default:

@@ -1454,7 +1454,7 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
 
     if (FE_ATSC == fp.getFEMode().getBase()) {
         mAtvIsAtsc = 1;
-        atv_para.afc_range = 1000000;
+        atv_para.afc_range = 2000000;
         LOGD("create ATV scan param: ATSC");
     } else {
         atv_para.afc_range = 2000000;

@@ -113,7 +113,8 @@ int CTvScanner::Scan(CFrontEnd::FEParas &fp, ScanParas &sp) {
     //para.dtv_para.mode |= AM_SCAN_DTVMODE_NOVCT;
     // if (FE_ATSC == fp.getFEMode().getBase()) {
     //     para.store_mode |= AM_SCAN_ATV_STOREMODE_NOPAL;
-    //     LOGD("not srote pal type programs");
+    //     para.store_mode |= AM_SCAN_DTV_STOREMODE_NOSECAM;
+    //     LOGD("not srote pal and secam type programs");
     // }
 
     if (AM_SCAN_Create(&para, &handle) != AM_SUCCESS) {
@@ -1258,6 +1259,13 @@ void CTvScanner::storeScan(AM_SCAN_Result_t *result, AM_SCAN_TS_t *curr_ts)
                 (mode & AM_SCAN_ATV_STOREMODE_NOPAL) == AM_SCAN_ATV_STOREMODE_NOPAL)
             {
                 LOGE("skip pal type program");
+                continue;
+            }
+            //not store secam type program
+            if (((ts->analog.std & V4L2_COLOR_STD_SECAM) == V4L2_COLOR_STD_SECAM) &&
+                (mode & AM_SCAN_DTV_STOREMODE_NOSECAM) == AM_SCAN_DTV_STOREMODE_NOSECAM)
+            {
+                LOGE("skip secam type program");
                 continue;
             }
             SCAN_TsInfo_t *tsinfo = (SCAN_TsInfo_t*)calloc(sizeof(SCAN_TsInfo_t), 1);

@@ -191,9 +191,13 @@ public:
     virtual int playDtmbProgram ( int progId );
     virtual int playAtvProgram ( int, int, int, int, int);
     virtual int playDtvProgram ( int, int, int, int, int, int, int, int, int, int);
+    virtual int playDtvProgramUnlocked( int, int, int, int, int, int, int, int, int, int);
     virtual int playDtvProgram(const char *, int, int, int, int, int, int, int, int, int, int);
+    virtual int playDtvProgramUnlocked(const char *, int, int, int, int, int, int, int, int, int, int);
     virtual int playDtvProgram(const char *, int, int, int, int, int, int);
+    virtual int playDtvProgramUnlocked(const char *, int, int, int, int, int, int);
     virtual int playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int audioCompetation);
+    virtual int playDtvTimeShiftUnlocked(const char *feparas, AM_AV_TimeshiftPara_t *para, int audioCompetation);
     virtual int stopPlayingLock();
     virtual int resetFrontEndPara ( frontend_para_set_t feParms );
     virtual int SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt );

@@ -1215,10 +1215,9 @@ int CTv::setAudioAD (int enable, int aPid, int aFmt)
     return iOutRet;
 }
 
-int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int para2,
+int CTv::playDtvProgramUnlocked (const char *feparas, int mode, int freq, int para1, int para2,
                           int vpid, int vfmt, int apid, int afmt, int pcr, int audioCompetation)
 {
-    AutoMutex _l( mLock );
     int ret = 0;
 
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
@@ -1252,20 +1251,34 @@ int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int
     return 0;
 }
 
+int CTv::playDtvProgram (const char *feparas, int mode, int freq, int para1, int para2,
+                          int vpid, int vfmt, int apid, int afmt, int pcr, int audioCompetation)
+{
+    AutoMutex _l( mLock );
+    return playDtvProgramUnlocked(feparas, mode, freq, para1, para2,
+                            vpid, vfmt, apid, afmt, pcr, audioCompetation);
+}
+
+int CTv::playDtvProgramUnlocked(int mode, int freq, int para1, int para2, int vpid, int vfmt, int apid,
+        int afmt, int pcr, int audioCompetation) {
+    return playDtvProgramUnlocked(NULL, mode, freq, para1, para2, vpid, vfmt, apid, afmt, pcr, audioCompetation);
+}
 int CTv::playDtvProgram(int mode, int freq, int para1, int para2, int vpid, int vfmt, int apid,
         int afmt, int pcr, int audioCompetation) {
     return playDtvProgram(NULL, mode, freq, para1, para2, vpid, vfmt, apid, afmt, pcr, audioCompetation);
 }
-
+int CTv::playDtvProgramUnlocked(const char* feparas, int vpid, int vfmt, int apid,
+        int afmt, int pcr, int audioCompetation) {
+    return playDtvProgramUnlocked(feparas, 0, 0, 0, 0, vpid, vfmt, apid, afmt, pcr, audioCompetation);
+}
 int CTv::playDtvProgram(const char* feparas, int vpid, int vfmt, int apid,
         int afmt, int pcr, int audioCompetation) {
     return playDtvProgram(feparas, 0, 0, 0, 0, vpid, vfmt, apid, afmt, pcr, audioCompetation);
 }
 
 
-int CTv::playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int audioCompetation)
+int CTv::playDtvTimeShiftUnlocked (const char *feparas, AM_AV_TimeshiftPara_t *para, int audioCompetation)
 {
-    AutoMutex _l( mLock );
     int ret = 0;
 
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
@@ -1290,6 +1303,11 @@ int CTv::playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int
     SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
 
     return ret;
+}
+int CTv::playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int audioCompetation)
+{
+    AutoMutex _l( mLock );
+    return playDtvTimeShiftUnlocked(feparas, para, audioCompetation);
 }
 
 int CTv::playDtmbProgram ( int progId )
@@ -5624,6 +5642,7 @@ int CTv::stopRecording(const char *id, const char *param)
 int CTv::doRecordingCommand(int cmd, const char *id, const char *param)
 {
     LOGD("doRec(cmd:%d, id:%s, para:%s)", cmd, id, param);
+    AutoMutex _l(mLock);
     int ret = -10;
     setDvbLogLevel();
     switch (cmd) {
@@ -5739,6 +5758,7 @@ int CTv::setPlayParam(const char *id, const char *param)
 int CTv::doPlayCommand(int cmd, const char *id, const char *param)
 {
     LOGD("doPlay(cmd:%d, id:%s, para:%s)", cmd, id, param);
+    AutoMutex _l(mLock);
     int ret = -10;
     setDvbLogLevel();
     switch (cmd) {

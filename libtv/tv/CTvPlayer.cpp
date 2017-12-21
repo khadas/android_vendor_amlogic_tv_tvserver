@@ -35,7 +35,7 @@ CDTVTvPlayer::CDTVTvPlayer(CTv *tv) : CTvPlayer(tv) {
     mParam = NULL;
     mTfile = NULL;
     mSourceChanged = true;
-    mDisableTimeShifting = false;
+    mDisableTimeShifting = propertyGetBool("tv.dtv.tf.disable", false);
 }
 CDTVTvPlayer::~CDTVTvPlayer() {
     if (mFEParam)
@@ -97,7 +97,8 @@ int CDTVTvPlayer::setParam(const char *param) {
     mParam = param? strdup(param) : NULL;
     mMode = paramGetInt(mParam, NULL, "mode", PLAY_MODE_LIVE);
     mSourceChanged = true;
-    mDisableTimeShifting = paramGetInt(mParam, NULL, "disableTimeShifting", 0) ? true : false;
+    //DO NOT use this param, use prop:tv.dtv.tf.disable instead
+    //mDisableTimeShifting = paramGetInt(mParam, NULL, "disableTimeShifting", 0) ? true : false;
     return 0;
 }
 
@@ -119,7 +120,7 @@ int CDTVTvPlayer::start(const char *param) {
         }break;
 
         case PLAY_MODE_TIMESHIFT: {//return to play live
-            ret = pTv->playDtvProgram(mFEParam, mVpid, mVfmt, mApid, mAfmt, mPpid, paramGetInt(mAparam, NULL, "AudComp", 0));
+            ret = pTv->playDtvProgramUnlocked(mFEParam, mVpid, mVfmt, mApid, mAfmt, mPpid, paramGetInt(mAparam, NULL, "AudComp", 0));
             if (ret == 0)
                 mMode = PLAY_MODE_LIVE;
         }break;
@@ -143,7 +144,7 @@ int CDTVTvPlayer::start(const char *param) {
             pminfo->ttx_cnt = 0;
             pminfo->duration = 0;
             pminfo->program_name[0] = '\0';*/
-            ret = pTv->playDtvTimeShift(NULL, &para, paramGetInt(mAparam, NULL, "AudComp", 0));
+            ret = pTv->playDtvTimeShiftUnlocked(NULL, &para, paramGetInt(mAparam, NULL, "AudComp", 0));
         }break;
     }
     mSourceChanged = false;
@@ -294,7 +295,7 @@ int CDTVTvPlayer::tryCloseTFile()
 int CDTVTvPlayer::startLive(const char *param __unused)
 {
     int ret = -1;
-    ret = pTv->playDtvProgram(mFEParam, mVpid, mVfmt, mApid, mAfmt, mPpid, paramGetInt(mAparam, NULL, "AudComp", 0));
+    ret = pTv->playDtvProgramUnlocked(mFEParam, mVpid, mVfmt, mApid, mAfmt, mPpid, paramGetInt(mAparam, NULL, "AudComp", 0));
     mMode = PLAY_MODE_LIVE;
     return ret;
 }
@@ -408,7 +409,7 @@ int CDTVTvPlayer::startLiveTryTimeShift(const char *param)
             pminfo->duration = paramGetInt(mParam, "max", "time", 0);
             pminfo->program_name[0] = '\0';
             LOGD("playDtvTimeShift");
-            ret = pTv->playDtvTimeShift(mFEParam, &para, paramGetInt(mAparam, NULL, "AudComp", 0));
+            ret = pTv->playDtvTimeShiftUnlocked(mFEParam, &para, paramGetInt(mAparam, NULL, "AudComp", 0));
             if (ret == 0) {
                 //LOGD("subscribe update, %s", getId());
                 //AM_EVT_Subscribe(0, AM_AV_EVT_PLAYER_UPDATE_INFO, player_info_callback, (void*)getId());

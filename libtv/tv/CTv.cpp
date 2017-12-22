@@ -1956,7 +1956,7 @@ int CTv::OpenTv ( void )
     mAv.Open();
     resetDmxAndAvSource();
     mDevicesPollStatusDetectThread.startDetect();
-    ClearAnalogFrontEnd();
+    //ClearAnalogFrontEnd();
     InitCurrenSignalInfo();
 
     mTvStatus = TV_OPEN_ED;

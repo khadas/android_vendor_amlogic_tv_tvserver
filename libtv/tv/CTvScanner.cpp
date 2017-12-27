@@ -1049,7 +1049,7 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
 void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist)
 {
     LOGD("processAtscTs");
-
+    #define VALID_PID(_pid_) ((_pid_)>0 && (_pid_)<0x1fff)
     if(ts->digital.vcts
         && (ts->digital.vcts->i_extension != ts->digital.pats->i_ts_id)
         && (ts->digital.pats->i_ts_id == 0))
@@ -1117,7 +1117,14 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
                     if (mNeedCheck_tsid == AM_TRUE) {
                         if (vct->b_cable_vct)
                             psrv_info->vct_type = 1;
-                        AM_SI_ExtractAVFromVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
+
+                            int vpid = 0;
+                            int vfmt = 0;
+                            AM_SI_ExtractAVFromVC(vcinfo, &vpid, &vfmt, &psrv_info->aud_info);
+                            if (!VALID_PID(psrv_info->vid)) {
+                                psrv_info->vid = vpid;
+                                psrv_info->vfmt = vfmt;
+                            }
                     }
                     extractSrvInfoFromVc(result, vcinfo, psrv_info);
                     program_found_in_vct = AM_TRUE;

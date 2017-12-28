@@ -145,15 +145,12 @@ int CTvEas::EasCreate(int fend_id, int dmx_id, int src, char *textLangs)
  */
 int CTvEas::EasDestroy()
 {
+    AM_ErrorCode_t ret;
     if (mEasScanHandle != NULL) {
         /*unregister eit events notifications*/
         AM_EVT_Unsubscribe((long)mEasScanHandle, AM_EPG_EVT_NEW_CEA, EasEvtCallback, NULL);
 
-        AM_ErrorCode_t ret = AM_EPG_Destroy(mEasScanHandle);
-        if (ret != AM_SUCCESS) {
-            LOGD("AM_EPG_SetUserData failed!\n");
-            return -1;
-        }
+        ret = AM_EPG_Destroy(mEasScanHandle);
         mEasScanHandle = NULL;
     }
 
@@ -162,7 +159,12 @@ int CTvEas::EasDestroy()
         mDmxId = INVALID_ID;
     }
 
-    return 0;
+    if (ret != AM_SUCCESS) {
+        LOGD("AM_EPG_SetUserData failed!\n");
+        return -1;
+    } else {
+        return 0;
+    }
 }
 
 /**

@@ -373,7 +373,6 @@ void CTv::onEvent(const CAv::AVEvent &ev)
         if (m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //atv and other tvin source    not to use it, and if not playing, not use have sig
             LOGD("[EVENT_AV_RESUEM]");
             SetAudioMuteForTv(CC_AUDIO_UNMUTE);
-            SetAudioMuteForSystem(CC_AUDIO_UNMUTE);
             Tv_SetAudioInSource(SOURCE_DTV);
         }
         break;
@@ -407,7 +406,6 @@ void CTv::onEvent(const CAv::AVEvent &ev)
             mAv.EnableVideoNow(true);
             LOGD("[source_switch_time]: %fs, EVENT_AV_VIDEO_AVAILABLE, video available ok", getUptimeSeconds());
             SetAudioMuteForTv(CC_AUDIO_UNMUTE);
-            SetAudioMuteForSystem(CC_AUDIO_UNMUTE);
             Tv_SetAudioInSource(SOURCE_DTV);
         }
 

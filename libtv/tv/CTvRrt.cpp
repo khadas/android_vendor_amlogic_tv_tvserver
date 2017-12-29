@@ -118,6 +118,8 @@ int CTvRrt::StopRrtUpdate(void)
  */
 int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *ret)
 {
+    int r = -1;
+
     LOGD("rating_region_id = %d, dimension_id = %d, value_id = %d\n",rating_region_id, dimension_id, value_id);
 
     //check rrt_define_file exist
@@ -156,17 +158,22 @@ int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, r
                         ret->rating_value_text_count = ValueSize;
                         LOGD("%s\n",pElement->FirstAttribute()->Value());
                         memcpy(ret->rating_value_text, pElement->FirstAttribute()->Value(), ValueSize+1);
-                        return 0;
+                        r = 0;
+                        goto end;
                     }
                 }
             }
         } while(pTmpElement = pTmpElement->NextSiblingElement());
-                LOGD("Don't find value !\n");
-                return -1;
+        LOGD("Don't find value !\n");
     } else {
         LOGD("XML file is NULL!\n");
-        return -1;
     }
+
+end:
+    if (pRRTFile)
+        delete pRRTFile;
+
+    return r;
 }
 
 /**
@@ -573,6 +580,7 @@ void CTvRrt::RrtDataUpdate(AM_EPG_Handle_t dev_no, int event_type, void *param, 
             mpNewRrt = mpNewRrt->p_next;
         }
 
+        delete pRRTFile;
         break;
     }
     default:

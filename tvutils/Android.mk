@@ -29,14 +29,20 @@ LOCAL_C_INCLUDES += \
   $(LOCAL_PATH)/include \
   $(LIB_SQLITE_PATH)/dist \
   $(LIB_VENDOR)/frameworks/services \
+  $(LIB_VENDOR)/tv/tvserver/libtv/include \
   external/jsoncpp/include
 
 LOCAL_SHARED_LIBRARIES += \
-  libsystemcontrolservice
+  libsystemcontrolservice \
+  liblog
 
 LOCAL_STATIC_LIBRARIES += \
   libjsoncpp
 
 LOCAL_MODULE:= libtv_utils
+
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26 && echo OK),OK)
+LOCAL_PROPRIETARY_MODULE := true
+endif
 
 include $(BUILD_STATIC_LIBRARY)

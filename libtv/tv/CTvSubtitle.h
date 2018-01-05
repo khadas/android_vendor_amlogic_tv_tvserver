@@ -11,7 +11,7 @@
 #define _CTVSUBTITLE_H
 #include <stdlib.h>
 #include <CTvLog.h>
-using namespace android;
+//using namespace android;
 #include "am_cc.h"
 #include "am_sub2.h"
 #include "am_pes.h"

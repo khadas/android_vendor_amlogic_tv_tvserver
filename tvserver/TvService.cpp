@@ -40,7 +40,7 @@ extern "C" {
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
-#include "make_ext4fs.h"
+//#include "make_ext4fs.h"
 #include "am_ver.h"
 }
 

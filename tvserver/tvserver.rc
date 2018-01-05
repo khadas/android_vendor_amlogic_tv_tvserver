@@ -1,0 +1,5 @@
+service tvd /vendor/bin/tvserver
+   class core
+   user root
+   group system
+

@@ -9,6 +9,7 @@
 
 #define LOG_TAG "tvserver"
 #include "CTvLog.h"
+#include <android/log.h>
 
 int __tv_log_print(int prio, const char *tag, const char *tv_tag, const char *fmt, ...)
 {

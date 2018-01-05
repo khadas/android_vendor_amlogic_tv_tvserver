@@ -548,6 +548,7 @@ void CTvRrt::RrtDataUpdate(AM_EPG_Handle_t dev_no, int event_type, void *param, 
 
             //save rating_region
             rrt_info.rating_region = mpNewRrt->rating_region;
+            rrt_info.dimensions_id = 0;
 
             //parser rating_region_name
             MultipleStringParser(mpNewRrt->rating_region_name, rrt_info.rating_region_name);

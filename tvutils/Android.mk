@@ -8,7 +8,7 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-LIB_VENDOR := $(wildcard vendor/amlogic)
+LIB_VENDOR := $(wildcard $(BOARD_AML_VENDOR_PATH))
 LIB_SQLITE_PATH := $(wildcard external/sqlite)
 
 LOCAL_MODULE_TAGS := optional

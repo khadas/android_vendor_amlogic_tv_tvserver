@@ -10,21 +10,21 @@ include $(CLEAR_VARS)
 
 DVB_PATH := $(wildcard external/dvb)
 ifeq ($(DVB_PATH), )
-  DVB_PATH := $(wildcard vendor/amlogic/external/dvb)
+  DVB_PATH := $(wildcard $(BOARD_AML_VENDOR_PATH)/external/dvb)
 endif
 ifeq ($(DVB_PATH), )
-  DVB_PATH := $(wildcard vendor/amlogic/dvb)
+  DVB_PATH := $(wildcard $(BOARD_AML_VENDOR_PATH)/dvb)
 endif
 
 LIB_ZVBI_PATH := $(wildcard external/libzvbi)
 ifeq ($(LIB_ZVBI_PATH), )
-  LIB_ZVBI_PATH := $(wildcard vendor/amlogic/external/libzvbi)
+  LIB_ZVBI_PATH := $(wildcard $(BOARD_AML_VENDOR_PATH)/external/libzvbi)
 endif
 
 LIB_TV_UTILS := $(LOCAL_PATH)/../tvutils
 LIB_TV_BINDER := $(LOCAL_PATH)/../../frameworks/libtvbinder
 
-AM_LIBPLAYER_PATH := $(wildcard vendor/amlogic/frameworks/av/LibPlayer)
+AM_LIBPLAYER_PATH := $(wildcard $(BOARD_AML_VENDOR_PATH)/frameworks/av/LibPlayer)
 LIB_SQLITE_PATH := $(wildcard external/sqlite)
 
 #support android and amaudio
@@ -178,7 +178,7 @@ LOCAL_C_INCLUDES += \
   $(AML_DEC_PATH)/amadec/include \
   $(AML_DEC_PATH)/amcodec/include
 else
-AML_DEC_PATH := $(wildcard vendor/amlogic/frameworks/av/LibPlayer)
+AML_DEC_PATH := $(wildcard $(BOARD_AML_VENDOR_PATH)/frameworks/av/LibPlayer)
 LOCAL_C_INCLUDES += \
   $(AML_DEC_PATH)/amadec/include \
   $(AML_DEC_PATH)/amcodec/include \

@@ -16,9 +16,9 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
-#include <CTvLog.h>
+#include <include/CTvLog.h>
 
-#include "CIniFile.h"
+#include "include/CIniFile.h"
 
 CIniFile::CIniFile()
 {

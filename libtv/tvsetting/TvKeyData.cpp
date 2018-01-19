@@ -431,7 +431,7 @@ int SSMRefreshHDCPKey()
 {
     int ret = -1;
     ret = SSMSetHDCPKey();
-    system ( "/system/bin/dec" );
+    system ( "/vendor/bin/dec" );
     return ret;
 }
 
@@ -687,7 +687,7 @@ static void *SSMMacAddressStartWorkMainApp(void *data __unused)
     while (GetMacAddressStartWorkThreadTurnOnFlag() == 1) {
         pid = fork();
         if (pid == 0) {
-            if (execl("/system/bin/stop", "stop_eth_dhcpcd", "eth_dhcpcd", NULL)
+            if (execl("/vendor/bin/stop", "stop_eth_dhcpcd", "eth_dhcpcd", NULL)
                     < 0) {
                 _exit(-1);
             }

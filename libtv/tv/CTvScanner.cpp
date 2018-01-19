@@ -1506,7 +1506,7 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
         LOGD("channel list size = %d", size);
 
         if (size == 0) {
-            CTvDatabase::GetTvDb()->importXmlToDB("/etc/tv_default.xml");
+            CTvDatabase::GetTvDb()->importXmlToDB(CTV_DATABASE_DEFAULT_XML);
             CTvRegion::getChannelListByName((char *)list_name, vcp);
             size = vcp.size();
         }
@@ -1590,7 +1590,7 @@ int CTvScanner::createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEP
             LOGD("frequncy: %d not found in channel list [%s], break", scp.getDtvFrequency1(), list_name);
             return -1;
         }
-        CTvDatabase::GetTvDb()->importXmlToDB("/etc/tv_default.xml");
+        CTvDatabase::GetTvDb()->importXmlToDB(CTV_DATABASE_DEFAULT_XML);
         CTvRegion::getChannelListByName((char *)list_name, vcp);
         size = vcp.size();
     }

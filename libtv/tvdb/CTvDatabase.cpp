@@ -76,7 +76,7 @@ int CTvDatabase::InitTvDb(const char *path)
             //setup and path set
             AM_DB_Setup((char *)path, getHandle());
             if (isFreqListExist() == false) {
-                importXmlToDB("/etc/tv_default.xml");
+                importXmlToDB(CTV_DATABASE_DEFAULT_XML);
                 LOGD("scan region table is NULL, so import freq XML again\n");
             }
         } else {
@@ -99,7 +99,7 @@ int CTvDatabase::InitTvDb(const char *path)
             ClearDbTable();
             //insert 256 ATV Program
             //load init date
-            importXmlToDB("/etc/tv_default.xml");
+            importXmlToDB(CTV_DATABASE_DEFAULT_XML);
             config_set_int("TV", "tv_db_created", 1);
         }
     }

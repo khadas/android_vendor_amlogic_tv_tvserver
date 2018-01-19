@@ -8,7 +8,7 @@
  */
 
 #define LOG_TAG "tvserver"
-#define LOG_TV_TAG "CDevicesPollStatusDetect"
+#define LOG_TV_TAG "CDevicesDetect"
 
 #include "CTvin.h"
 #include <CTvLog.h>
@@ -28,6 +28,7 @@
 
 CDevicesPollStatusDetect::CDevicesPollStatusDetect()
 {
+    mVdinDetectFd = -1;
     mpObserver = NULL;
     if (mEpoll.create() < 0) {
         return;
@@ -44,12 +45,6 @@ CDevicesPollStatusDetect::CDevicesPollStatusDetect()
         m_event.events = EPOLLIN | EPOLLET;
         mEpoll.add(mHdmiDetectFile.getFd(), &m_event);
     }
-    //signal status
-    if (CTvin::getInstance()->m_vdin_dev_fd > 0) {
-        m_event.data.fd = CTvin::getInstance()->m_vdin_dev_fd;
-        m_event.events = EPOLLIN | EPOLLET;
-        mEpoll.add(CTvin::getInstance()->m_vdin_dev_fd, &m_event);
-    }
 }
 
 CDevicesPollStatusDetect::~CDevicesPollStatusDetect()
@@ -58,8 +53,48 @@ CDevicesPollStatusDetect::~CDevicesPollStatusDetect()
 
 int CDevicesPollStatusDetect::startDetect()
 {
+    //signal status
+    int fd = CTvin::getInstance()->getVdinDeviceFd();
+    if (fd > 0) {
+        m_event.data.fd = fd;
+        m_event.events = EPOLLIN | EPOLLET;
+        mEpoll.add(fd, &m_event);
+
+        mVdinDetectFd = fd;
+
+        LOGD("startDetect get vdin device fd :%d", fd);
+    }
     this->run("CDevicesPollStatusDetect");
     return 0;
+}
+
+char* CDevicesPollStatusDetect::inputToName(tv_source_input_t srcInput) {
+    char* inputName[] = {
+        /*"INVALID",*/
+        "TV",
+        "AV1",
+        "AV2",
+        "YPBPR1",
+        "YPBPR2",
+        "HDMI1",
+        "HDMI2",
+        "HDMI3",
+        "HDMI4",
+        "VGA,",
+        "MPEG",
+        "DTV",
+        "SVIDEO",
+        "IPTV",
+        "DUMMY",
+        "SPDIF",
+        "ADTV",
+        "MAX"
+    };
+
+    if (SOURCE_INVALID == srcInput)
+        return "INVALID";
+    else
+        return inputName[srcInput];
 }
 
 int CDevicesPollStatusDetect::SourceInputMaptoChipHdmiPort(tv_source_input_t source_input)
@@ -83,7 +118,6 @@ int CDevicesPollStatusDetect::SourceInputMaptoChipHdmiPort(tv_source_input_t sou
         return HDMI_DETECT_STATUS_BIT_A;
         break;
     }
-
 }
 
 tv_source_input_t CDevicesPollStatusDetect::ChipHdmiPortMaptoSourceInput(int port)
@@ -152,10 +186,11 @@ int CDevicesPollStatusDetect::GetSourceConnectStatus(tv_source_input_t source_in
         break;
     }
     default:
-        LOGD("GetSourceConnectStatus not support  source!!!!!!!!!!!!!!!1");
+        LOGD("GetSourceConnectStatus not support source :%s", inputToName(source_input));
         break;
     }
 
+    LOGD("GetSourceConnectStatus source :%s, status:%s", inputToName(source_input), (CC_SOURCE_PLUG_IN == PlugStatus)?"plug in":"plug out");
     return PlugStatus;
 }
 
@@ -165,7 +200,7 @@ bool CDevicesPollStatusDetect::threadLoop()
         return false;
     }
 
-    LOGD("%s, entering...\n", "TV");
+    LOGD("detect thread start");
 
     prctl(PR_SET_NAME, (unsigned long)"CDevicesPollStatusDetect thread loop");
     //init status
@@ -200,6 +235,7 @@ bool CDevicesPollStatusDetect::threadLoop()
                                 source = SOURCE_AV2;
                             }
 
+                            LOGD("%s detected\n", inputToName((tv_source_input_t)source));
                             if (mpObserver != NULL) {
                                 mpObserver->onSourceConnect(source, plug);
                             }
@@ -209,13 +245,14 @@ bool CDevicesPollStatusDetect::threadLoop()
                 } else if (fd == mHdmiDetectFile.getFd()) { //hdmi
                     int hdmi_status = 0;
                     mHdmiDetectFile.readFile((void *)(&hdmi_status), sizeof(int));
+                    LOGD("HDMI detected\n");
                     int source = -1, plug = -1;
                     if ((hdmi_status & HDMI_DETECT_STATUS_BIT_A) != (m_hdmi_status  & HDMI_DETECT_STATUS_BIT_A) ) {
                         if ((hdmi_status & HDMI_DETECT_STATUS_BIT_A) == HDMI_DETECT_STATUS_BIT_A) {
                             source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_A);
                             plug = CC_SOURCE_PLUG_IN;
                         } else {
-                            source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_A);;
+                            source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_A);
                             plug = CC_SOURCE_PLUG_OUT;
                         }
                         mpObserver->onSourceConnect(source, plug);
@@ -226,7 +263,7 @@ bool CDevicesPollStatusDetect::threadLoop()
                             source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_B);
                             plug = CC_SOURCE_PLUG_IN;
                         } else {
-                            source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_B);;
+                            source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_B);
                             plug = CC_SOURCE_PLUG_OUT;
                         }
                         mpObserver->onSourceConnect(source, plug);
@@ -237,7 +274,7 @@ bool CDevicesPollStatusDetect::threadLoop()
                             source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_C);
                             plug = CC_SOURCE_PLUG_IN;
                         } else {
-                            source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_C);;
+                            source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_C);
                             plug = CC_SOURCE_PLUG_OUT;
                         }
                         mpObserver->onSourceConnect(source, plug);
@@ -248,7 +285,7 @@ bool CDevicesPollStatusDetect::threadLoop()
                             source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_D);
                             plug = CC_SOURCE_PLUG_IN;
                         } else {
-                            source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_D);;
+                            source = ChipHdmiPortMaptoSourceInput(HDMI_DETECT_STATUS_BIT_D);
                             plug = CC_SOURCE_PLUG_OUT;
                         }
                         mpObserver->onSourceConnect(source, plug);
@@ -258,7 +295,8 @@ bool CDevicesPollStatusDetect::threadLoop()
                     mpObserver->onSetPQPCMode(source, pc_mode_status);//pc_mode_status：1 PC mode on；0 PC mode off；
 
                     m_hdmi_status = hdmi_status;
-                }else if ( fd == CTvin::getInstance()->m_vdin_dev_fd ) {
+                }else if ( fd == mVdinDetectFd ) {
+                    LOGD("VDIN detected\n");
                     if (mpObserver != NULL) {
                         mpObserver->onVdinSignalChange();
                     }
@@ -271,7 +309,7 @@ bool CDevicesPollStatusDetect::threadLoop()
         }
     }//exit
 
-    LOGD("%s, exiting...\n", "CDevicesPollStatusDetect");
+    LOGD("CDevicesPollStatusDetect, exiting...\n");
     //return true, run again, return false,not run.
     return false;
 }

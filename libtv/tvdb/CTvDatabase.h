@@ -22,6 +22,8 @@
 #include "CTvLog.h"
 
 
+#define CTV_DATABASE_DEFAULT_XML        "/vendor/etc/tv_default.xml"
+
 using namespace android;
 //根据现在情况需求,此类只针对电视功能绑定的单文件数据库,与AM_DB有关联性
 //无解的关联

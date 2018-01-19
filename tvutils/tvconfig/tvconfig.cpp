@@ -14,10 +14,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "tvconfig.h"
+#include "include/tvconfig.h"
 
-#include "CTvLog.h"
-#include "CIniFile.h"
+#include "include/CTvLog.h"
+#include "include/CIniFile.h"
 static const char *TV_SECTION = "TV";
 //INI_CONFIG* mpConfig = NULL;
 static char mpFilePath[256] = {0};

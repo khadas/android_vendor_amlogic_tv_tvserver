@@ -151,15 +151,12 @@ ifeq ($(strip $(BOARD_TV_AUDIO_TYPE)),android)
   LOCAL_CFLAGS += -DCC_TV_AUDIO_TYPE_ANDROID=1
 endif
 
-ifneq ($(TARGET_BUILD_VARIANT), user)
-	LOCAL_CFLAGS += -DTV_DEBUG_PQ_ENABLE
-endif
-
 LOCAL_C_INCLUDES += \
   external/tinyxml \
   $(LIB_TV_BINDER)/include \
   $(LIB_SQLITE_PATH)/dist \
-  system/media/audio_effects/include
+  system/media/audio_effects/include \
+  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include
 
 ifeq ($(strip $(BOARD_TV_AUDIO_AMAUDIO_LIB_TYPE)), external)
   LOCAL_C_INCLUDES += hardware/amlogic/audio/libTVaudio
@@ -198,6 +195,7 @@ LOCAL_C_INCLUDES += \
   $(LOCAL_PATH)/tv \
   $(LOCAL_PATH)/gpio \
   $(LOCAL_PATH)/include \
+  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include \
   external/jsoncpp/include
 
 LOCAL_LDLIBS  += -L$(SYSROOT)/usr/lib -llog

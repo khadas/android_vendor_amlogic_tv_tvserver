@@ -26,13 +26,14 @@ LOCAL_SRC_FILES := \
   tvconfig/tvconfig.cpp
 
 LOCAL_C_INCLUDES += \
-  $(LOCAL_PATH)/include \
+  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include \
+  $(BOARD_AML_VENDOR_PATH)frameworks/services \
   $(LIB_SQLITE_PATH)/dist \
-  $(LIB_VENDOR)/frameworks/services \
-  $(LIB_VENDOR)/tv/tvserver/libtv/include \
+  $(BOARD_AML_VENDOR_PATH)tv/tvserver/libtv/include \
   external/jsoncpp/include
 
 LOCAL_SHARED_LIBRARIES += \
+  vendor.amlogic.hardware.systemcontrol@1.0_vendor \
   libsystemcontrolservice \
   liblog
 

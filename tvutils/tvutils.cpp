@@ -31,11 +31,11 @@
 
 #include <utils/threads.h>
 #include <binder/IServiceManager.h>
-#include <systemcontrol/ISystemControlService.h>
+#include <systemcontrol/SystemControlClient.h>
 
-#include "tvconfig.h"
-#include "tvutils.h"
-#include "CTvLog.h"
+#include "include/tvconfig.h"
+#include "include/tvutils.h"
+#include "include/CTvLog.h"
 
 #include <vector>
 #include <map>
@@ -51,52 +51,25 @@ static unsigned int user_counter = 0;
 static unsigned int user_pet_terminal = 1;
 
 static Mutex amLock;
-static sp<ISystemControlService> amSystemControlService;
-class DeathNotifier: public IBinder::DeathRecipient {
-public:
-    DeathNotifier() {
-    }
-
-    void binderDied(const wp<IBinder> &who __unused) {
-        LOGW("system_control died!");
-
-        amSystemControlService.clear();
-    }
-};
-
-
-static sp<DeathNotifier> amDeathNotifier;
-static const sp<ISystemControlService> &getSystemControlService()
+static sp<SystemControlClient> sysctrlClient = nullptr;
+static const sp<SystemControlClient> &getSystemControlService()
 {
     Mutex::Autolock _l(amLock);
-    if (amSystemControlService.get() == 0) {
-        sp<IServiceManager> sm = defaultServiceManager();
-        sp<IBinder> binder;
-        do {
-            binder = sm->getService(String16("system_control"));
-            if (binder != 0)
-                break;
-            LOGW("SystemControlService not published, waiting...");
-            usleep(500000); // 0.5 s
-        } while(true);
-        if (amDeathNotifier == NULL) {
-            amDeathNotifier = new DeathNotifier();
-        }
-        binder->linkToDeath(amDeathNotifier);
-        amSystemControlService = interface_cast<ISystemControlService>(binder);
+    if (sysctrlClient == nullptr) {
+        sysctrlClient = new SystemControlClient();
     }
-    ALOGE_IF(amSystemControlService == 0, "no System Control Service!?");
+    ALOGE_IF(sysctrlClient == nullptr, "no System Control Service!?");
 
-    return amSystemControlService;
+    return sysctrlClient;
 }
 
 int getBootEnv(const char *key, char *value, const char *def_val)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
-        String16 v;
-        if (sws->getBootEnv(String16(key), v)) {
-            strcpy(value, String8(v).string());
+    const sp<SystemControlClient> sws = getSystemControlService();
+    if (sws != nullptr) {
+        std::string v;
+        if (sws->getBootEnv(key, v)) {
+            strcpy(value, v.c_str());
             return 0;
         }
     }
@@ -107,9 +80,9 @@ int getBootEnv(const char *key, char *value, const char *def_val)
 
 void setBootEnv(const char *key, const char *value)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
-        sws->setBootEnv(String16(key), String16(value));
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
+        sws->setBootEnv(key, value);
     }
 }
 
@@ -121,7 +94,7 @@ int writeSys(const char *path, const char *val) {
         return -1;
     }
 
-    //LOGI("write %s, val:%s\n", path, val);
+    LOGD("write %s, val:%s\n", path, val);
 
     int len = write(fd, val, strlen(val));
     close(fd);
@@ -169,11 +142,11 @@ exit:
 
 int tvReadSysfs(const char *path, char *value) {
 #ifdef USE_SYSTEM_CONTROL
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
-        String16 v;
-        if (sws->readSysfs(String16(path), v)) {
-            strcpy(value, String8(v).string());
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
+        std::string v;
+        if (sws->readSysfs(path, v)) {
+            strcpy(value, v.c_str());
             return 0;
         }
     }
@@ -188,9 +161,9 @@ int tvReadSysfs(const char *path, char *value) {
 
 int tvWriteSysfs(const char *path, const char *value) {
 #ifdef USE_SYSTEM_CONTROL
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
-        sws->writeSysfs(String16(path), String16(value));
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
+        sws->writeSysfs(path, value);
     }
     return 0;
 #else
@@ -208,9 +181,9 @@ int tvWriteSysfs(const char *path, int value, int base)
     }
     LOGD("tvWriteSysfs, str_value = %s", str_value);
 #ifdef USE_SYSTEM_CONTROL
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
-        sws->writeSysfs(String16(path), String16(str_value));
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
+        sws->writeSysfs(path, str_value);
     }
     return 0;
 #else
@@ -220,9 +193,9 @@ int tvWriteSysfs(const char *path, int value, int base)
 
 int tvWriteDisplayMode(const char *mode)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
-        sws->setSinkOutputMode(String16(mode));
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
+        sws->setSinkOutputMode(mode);
     }
     return 0;
 }
@@ -230,8 +203,8 @@ int tvWriteDisplayMode(const char *mode)
 //Add for PQ
 int tvResetLastVppSettingsSourceType(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         sws->resetLastPQSettingsSourceType();
     }
     return 0;
@@ -239,8 +212,8 @@ int tvResetLastVppSettingsSourceType(void)
 
 int tvLoadPQSettings(source_input_param_t source_input_param)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         sws->loadPQSettings(source_input_param);
     }
     return 0;
@@ -248,8 +221,8 @@ int tvLoadPQSettings(source_input_param_t source_input_param)
 
 int tvLoadCpqLdimRegs(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         sws->loadCpqLdimRegs();
     }
     return 0;
@@ -257,8 +230,8 @@ int tvLoadCpqLdimRegs(void)
 
 int tvSSMReadNTypes(int id, int data_len, int *data_buf, int offset)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         int tmp_val = 0;
         tmp_val = sws->sysSSMReadNTypes(id, data_len, offset);
         *data_buf = tmp_val;
@@ -268,8 +241,8 @@ int tvSSMReadNTypes(int id, int data_len, int *data_buf, int offset)
 
 int tvSSMWriteNTypes(int id, int data_len, int data_buf, int offset)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         sws->sysSSMWriteNTypes(id, data_len, data_buf, offset);
     }
     return 0;
@@ -278,8 +251,8 @@ int tvSSMWriteNTypes(int id, int data_len, int data_buf, int offset)
 
 int tvGetActualAddr(int id)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         sws->getActualAddr(id);
     }
     return 0;
@@ -288,8 +261,8 @@ int tvGetActualAddr(int id)
 
 int tvGetActualSize(int id)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         sws->getActualSize(id);
     }
     return 0;
@@ -298,9 +271,9 @@ int tvGetActualSize(int id)
 
 int tvSetPQMode ( vpp_picture_mode_t mode, int is_save, int is_autoswitch)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
+    const sp<SystemControlClient> &sws = getSystemControlService();
 
-    if (sws != 0) {
+    if (sws != nullptr) {
         sws->setPQmode((int)mode, is_save, is_autoswitch);
     }
 
@@ -309,8 +282,8 @@ int tvSetPQMode ( vpp_picture_mode_t mode, int is_save, int is_autoswitch)
 
 vpp_picture_mode_t tvGetPQMode ( void )
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return (vpp_picture_mode_t)sws->getPQmode();
     }
 
@@ -319,9 +292,9 @@ vpp_picture_mode_t tvGetPQMode ( void )
 
 int tvSavePQMode ( vpp_picture_mode_t mode )
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
+    const sp<SystemControlClient> &sws = getSystemControlService();
 
-    if (sws != 0) {
+    if (sws != nullptr) {
         return sws->savePQmode(mode);
     }
 
@@ -330,9 +303,9 @@ int tvSavePQMode ( vpp_picture_mode_t mode )
 
 int tvGetPQParams(source_input_param_t source_input_param, vpp_picture_mode_t pq_mode, vpp_pq_para_t *pq_para)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
+    const sp<SystemControlClient> &sws = getSystemControlService();
 
-    if (sws != 0) {
+    if (sws != nullptr) {
         vpp_pq_para_t tmp_value;
         tmp_value.brightness = sws->getPQParams(source_input_param, pq_mode, BRIGHTNESS);
         tmp_value.contrast = sws->getPQParams(source_input_param, pq_mode, CONTRAST);
@@ -343,7 +316,6 @@ int tvGetPQParams(source_input_param_t source_input_param, vpp_picture_mode_t pq
         tmp_value.backlight = sws->getPQParams(source_input_param, pq_mode, BACKLIGHT);
 
         *pq_para = tmp_value;
-
         return 0;
     }
 
@@ -352,9 +324,8 @@ int tvGetPQParams(source_input_param_t source_input_param, vpp_picture_mode_t pq
 
 int tvGetAutoSwitchPCModeFlag(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getAutoSwitchPCModeFlag();
     }
 
@@ -363,9 +334,8 @@ int tvGetAutoSwitchPCModeFlag(void)
 
 int tvSetBrightness(int brightness, int is_save)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setBrightness(brightness, is_save);
     }
     return -1;
@@ -373,9 +343,8 @@ int tvSetBrightness(int brightness, int is_save)
 
 int tvGetBrightness ( void )
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getBrightness();
     }
 
@@ -384,9 +353,8 @@ int tvGetBrightness ( void )
 
 int tvSaveBrightness ( int brightness )
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->saveBrightness(brightness);
     }
 
@@ -395,9 +363,8 @@ int tvSaveBrightness ( int brightness )
 
 int tvSetContrast ( int contrast, int is_save )
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setContrast(contrast, is_save);
     }
 
@@ -406,9 +373,8 @@ int tvSetContrast ( int contrast, int is_save )
 
 int tvGetContrast (void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getContrast();
     }
 
@@ -417,9 +383,8 @@ int tvGetContrast (void)
 
 int tvSaveContrast (int contrast)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->saveContrast(contrast);
     }
 
@@ -428,9 +393,8 @@ int tvSaveContrast (int contrast)
 
 int tvSetSaturation (int satuation, int is_save)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setSaturation(satuation, is_save);
     }
 
@@ -439,9 +403,8 @@ int tvSetSaturation (int satuation, int is_save)
 
 int tvGetSaturation (void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getSaturation();
     }
 
@@ -450,9 +413,8 @@ int tvGetSaturation (void)
 
 int tvSaveSaturation (int satuation)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->saveSaturation(satuation);
     }
 
@@ -461,9 +423,8 @@ int tvSaveSaturation (int satuation)
 
 int tvSetHue (int hue, int is_save)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setHue(hue, is_save);
     }
 
@@ -472,9 +433,8 @@ int tvSetHue (int hue, int is_save)
 
 int tvGetHue (void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getHue();
     }
 
@@ -483,9 +443,8 @@ int tvGetHue (void)
 
 int tvSaveHue (int hue)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-     if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->saveHue(hue);
     }
 
@@ -494,9 +453,8 @@ int tvSaveHue (int hue)
 
 int tvSetSharpness ( int value, int en, int is_save )
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setSharpness(value, en, is_save);
     }
 
@@ -505,9 +463,8 @@ int tvSetSharpness ( int value, int en, int is_save )
 
 int tvGetSharpness (void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getSharpness();
     }
 
@@ -516,9 +473,8 @@ int tvGetSharpness (void)
 
 int tvSaveSharpness (int value)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         sws->saveSharpness(value);
     }
 
@@ -527,9 +483,8 @@ int tvSaveSharpness (int value)
 
 int tvSetColorTemperature (vpp_color_temperature_mode_t mode, int is_save)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setColorTemperature(mode, is_save);
     }
 
@@ -538,9 +493,8 @@ int tvSetColorTemperature (vpp_color_temperature_mode_t mode, int is_save)
 
 int tvGetColorTemperature (void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getColorTemperature();
     }
 
@@ -549,9 +503,8 @@ int tvGetColorTemperature (void)
 
 int tvSaveColorTemperature (vpp_color_temperature_mode_t mode)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->saveColorTemperature(mode);
     }
 
@@ -560,9 +513,8 @@ int tvSaveColorTemperature (vpp_color_temperature_mode_t mode)
 
 int tvSetColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setColorTemperatureParam(Tempmode, params);
     }
 
@@ -571,9 +523,8 @@ int tvSetColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, tcon_rgb_
 
 int tvGetColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, pq_color_param_t id)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getColorTemperatureParam((int)Tempmode, (int)id);
     }
 
@@ -582,9 +533,8 @@ int tvGetColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, pq_color_
 
 int tvSaveColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->saveColorTemperatureParam((int)Tempmode, params);
     }
 
@@ -593,9 +543,8 @@ int tvSaveColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, tcon_rgb
 
 int tvSetNoiseReductionMode (vpp_noise_reduction_mode_t mode, int is_save)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setNoiseReductionMode(mode, is_save);
     }
 
@@ -604,9 +553,8 @@ int tvSetNoiseReductionMode (vpp_noise_reduction_mode_t mode, int is_save)
 
 int tvGetNoiseReductionMode (void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getNoiseReductionMode();
     }
 
@@ -615,9 +563,8 @@ int tvGetNoiseReductionMode (void)
 
 int tvSaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->saveNoiseReductionMode(mode);
     }
 
@@ -626,8 +573,8 @@ int tvSaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode)
 
 int tvSetGamma(int gamma_curve, int is_save)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setGammaValue(gamma_curve, is_save);
     }
 
@@ -636,8 +583,8 @@ int tvSetGamma(int gamma_curve, int is_save)
 
 int tvGetGamma(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getGammaValue();
     }
 
@@ -646,8 +593,8 @@ int tvGetGamma(void)
 
 int tvSetEyeProtectionMode(source_input_param_t source_input_param, int enable)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setEyeProtectionMode(source_input_param, enable);
     }
 
@@ -656,8 +603,8 @@ int tvSetEyeProtectionMode(source_input_param_t source_input_param, int enable)
 
 int tvGetEyeProtectionMode(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getEyeProtectionMode();
     }
 
@@ -666,8 +613,8 @@ int tvGetEyeProtectionMode(void)
 
 int tvGetDisplayMode(source_input_param_t source_input_param)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getDisplayMode(source_input_param);
     }
 
@@ -676,9 +623,8 @@ int tvGetDisplayMode(source_input_param_t source_input_param)
 
 int tvFactoryResetNonlinear(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factoryResetNonlinear();
     }
 
@@ -687,9 +633,8 @@ int tvFactoryResetNonlinear(void)
 
 int tvGetOverscanParam(source_input_param_t source_input_param, tvin_cutwin_param_t id)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getOverscanParam(source_input_param, (int)id);
     }
 
@@ -698,9 +643,8 @@ int tvGetOverscanParam(source_input_param_t source_input_param, tvin_cutwin_para
 
 int tvFactoryResetPQMode(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factoryResetPQMode();
     }
 
@@ -709,9 +653,8 @@ int tvFactoryResetPQMode(void)
 
 int tvFactoryResetColorTemp(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factoryResetColorTemp();
     }
 
@@ -720,9 +663,8 @@ int tvFactoryResetColorTemp(void)
 
 int tvFactorySetPQParam(source_input_param_t source_input_param, int pq_mode, vpp_pq_param_t id, int value)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factorySetPQParam(source_input_param, pq_mode, id, value);
     }
 
@@ -731,9 +673,8 @@ int tvFactorySetPQParam(source_input_param_t source_input_param, int pq_mode, vp
 
 int tvFactoryGetPQParam(source_input_param_t source_input_param, int pq_mode, vpp_pq_param_t id)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factoryGetPQParam(source_input_param, pq_mode, id);
     }
 
@@ -741,9 +682,8 @@ int tvFactoryGetPQParam(source_input_param_t source_input_param, int pq_mode, vp
 }
 int tvFactorySetColorTemperatureParam(int colortemperature_mode, pq_color_param_t id, int value)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factorySetColorTemperatureParam(colortemperature_mode, id, value);
     }
 
@@ -751,9 +691,8 @@ int tvFactorySetColorTemperatureParam(int colortemperature_mode, pq_color_param_
 }
 int tvFactoryGetColorTemperatureParam(int colortemperature_mode, pq_color_param_t id)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factoryGetColorTemperatureParam(colortemperature_mode, id);
     }
 
@@ -761,9 +700,8 @@ int tvFactoryGetColorTemperatureParam(int colortemperature_mode, pq_color_param_
 }
 int tvFactorySaveColorTemperatureParam(int colortemperature_mode, pq_color_param_t id, int value)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factorySaveColorTemperatureParam(colortemperature_mode, id, value);
     }
 
@@ -772,9 +710,8 @@ int tvFactorySaveColorTemperatureParam(int colortemperature_mode, pq_color_param
 
 int tvFactorySetOverscanParam(source_input_param_t source_input_param, tvin_cutwin_t cutwin_t)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factorySetOverscan(source_input_param, cutwin_t.he, cutwin_t.hs, cutwin_t.ve, cutwin_t.vs);
     }
 
@@ -782,9 +719,8 @@ int tvFactorySetOverscanParam(source_input_param_t source_input_param, tvin_cutw
 }
 int tvFactoryGetOverscanParam(source_input_param_t source_input_param, int id)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factoryGetOverscan(source_input_param, id);
     }
 
@@ -794,9 +730,8 @@ int tvFactoryGetOverscanParam(source_input_param_t source_input_param, int id)
 
 int tvFactorySetGamma(int gamma_r, int gamma_g, int gamma_b)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factorySetGamma(gamma_r, gamma_g, gamma_b);
     }
 
@@ -805,9 +740,8 @@ int tvFactorySetGamma(int gamma_r, int gamma_g, int gamma_b)
 
 int tvFactorySetNolineParams(source_input_param_t source_input_param, int type, noline_params_t noline_params)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factorySetNolineParams(source_input_param, type, noline_params.osd0, noline_params.osd25,
                                            noline_params.osd50, noline_params.osd75, noline_params.osd100);
     }
@@ -817,9 +751,8 @@ int tvFactorySetNolineParams(source_input_param_t source_input_param, int type, 
 
 int tvFactoryGetNolineParams(source_input_param_t source_input_param, int type, int id)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factoryGetNolineParams(source_input_param, type, id);
     }
 
@@ -828,9 +761,8 @@ int tvFactoryGetNolineParams(source_input_param_t source_input_param, int type, 
 
 int tvFactorySetParamsDefault(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factorySetParamsDefault();
     }
 
@@ -840,9 +772,8 @@ int tvFactorySetParamsDefault(void)
 
 int tvFactorySSMRestore(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->factorySSMRestore();
     }
 
@@ -852,9 +783,8 @@ int tvFactorySSMRestore(void)
 
 int tvSSMRecovery(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->SSMRecovery();
     }
 
@@ -863,9 +793,8 @@ int tvSSMRecovery(void)
 
 int tvGetSSMStatus(void)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->getSSMStatus();
     }
 
@@ -874,33 +803,28 @@ int tvGetSSMStatus(void)
 
 int tvSetPLLValues(source_input_param_t source_input_param)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setPLLValues(source_input_param);
     }
 
     return -1;
-
 }
 
 int tvSetCVD2Values(source_input_param_t source_input_param)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setCVD2Values(source_input_param);
     }
 
     return -1;
-
 }
 
 int tvSetPQConfig(Set_Flag_Cmd_t id, int value)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         return sws->setPQConfig(id, value);
     }
 
@@ -910,9 +834,8 @@ int tvSetPQConfig(Set_Flag_Cmd_t id, int value)
 int tvSetCurrentSourceInfo(tv_source_input_t tv_source_input, tv_source_input_type_t source_type,tvin_port_t source_port,
                                     tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
 {
-    const sp<ISystemControlService> &sws = getSystemControlService();
-
-    if (sws != 0) {
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
         source_input_param_t source_input_param;
         source_input_param.source_input = tv_source_input;
         source_input_param.source_type = source_type;
@@ -923,11 +846,10 @@ int tvSetCurrentSourceInfo(tv_source_input_t tv_source_input, tv_source_input_ty
 
         return sws->setCurrentSourceInfo(source_input_param);
     }
-
     return -1;
 }
-
 //PQ end
+
 int Tv_MiscRegs(const char *cmd)
 {
     FILE *fp = NULL;
@@ -1397,7 +1319,7 @@ Paras Paras::operator + (const Paras &p)
 
 int Paras::getInt(const char *key, int def) const
 {
-    STR_MAP::const_iterator  it = mparas.find(std::string(key));
+    STR_MAP::const_iterator it = mparas.find(std::string(key));
     if (it == mparas.end())
         return def;
     return atoi(it->second.c_str());
@@ -1469,6 +1391,7 @@ int paramGetInt(const char *param, const char *section, const char *value, int d
         return def;
     return jsonGetInt(param, section, value, def);
 }
+
 const std::string paramGetString(const char *param, const char *section, const char *value, const char *def) {
     if (!param || !strlen(param))
         return def;

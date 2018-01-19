@@ -1,5 +1,7 @@
+on post-fs
+   restorecon_recursive /param
+
 service tvd /vendor/bin/tvserver
    class core
    user root
    group system
-

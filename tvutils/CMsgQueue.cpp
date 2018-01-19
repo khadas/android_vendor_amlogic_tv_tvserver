@@ -10,8 +10,8 @@
 #define LOG_TAG "tvserver"
 #define LOG_TV_TAG "CMessage"
 
-#include "CMsgQueue.h"
-#include <CTvLog.h>
+#include "include/CMsgQueue.h"
+#include <include/CTvLog.h>
 #include <utils/Timers.h>
 
 CMessage::CMessage()

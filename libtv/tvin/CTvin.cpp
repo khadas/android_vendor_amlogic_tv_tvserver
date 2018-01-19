@@ -60,10 +60,8 @@ CTvin *CTvin::getInstance()
     return mInstance;
 }
 
-CTvin::CTvin()
+CTvin::CTvin() : mAfeDevFd(-1), mVdin0DevFd(-1)
 {
-    m_vdin_dev_fd = -1;
-    afe_dev_fd = -1;
     m_snow_status = false;
 
     m_tvin_param.index = 0;
@@ -88,7 +86,7 @@ CTvin::CTvin()
     mSourceInputToPortMap[SOURCE_DTV] = TVIN_PORT_DTV;
     mSourceInputToPortMap[SOURCE_IPTV] = TVIN_PORT_BT656;
     mSourceInputToPortMap[SOURCE_SPDIF] = TVIN_PORT_CVBS3;
-    init_vdin();
+    //init_vdin();
 }
 
 CTvin::~CTvin()
@@ -123,61 +121,61 @@ int CTvin::VDIN_AddPath ( const char *videopath )
 
     char str[1024 + 1] = {0};
     sprintf (str, "%s", videopath);
-    return tvWriteSysfs("/sys/class/vfm/map", str);
+    return tvWriteSysfs(SYS_VFM_MAP_PATH, str);
 }
 
 int CTvin::VDIN_RmDefPath ( void )
 {
-    return tvWriteSysfs("/sys/class/vfm/map", "rm default");
+    return tvWriteSysfs(SYS_VFM_MAP_PATH, "rm default");
 }
 
 int CTvin::VDIN_RmTvPath ( void )
 {
-    return tvWriteSysfs("/sys/class/vfm/map", "rm tvpath");
+    return tvWriteSysfs(SYS_VFM_MAP_PATH, "rm tvpath");
 }
 
 int CTvin::VDIN_AddVideoPath ( int selPath )
 {
     int ret = -1;
-    int Existamlvideo2 = isFileExist(AMLVIDEO2_DEV_PATH);
-
+    std::string vdinPath;
+    std::string suffixVideoPath("ppmgr deinterlace amvideo");
+    bool amlvideo2Exist = isFileExist(AMLVIDEO2_DEV_PATH);
     switch ( selPath ) {
     case TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:
-        if (Existamlvideo2) {
-            ret = VDIN_AddPath ( "add tvpath vdin0 amlvideo2.0 ppmgr deinterlace amvideo" );
-        }
-        else {
-            ret = VDIN_AddPath ( "add tvpath vdin0 ppmgr deinterlace amvideo" );
-        }
+        if (amlvideo2Exist)
+            vdinPath = "add tvpath vdin0 amlvideo2.0 ";
+        else
+            vdinPath = "add tvpath vdin0 ";
         break;
 
     case TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:
-        if (Existamlvideo2) {
-            ret = VDIN_AddPath ( "add default decoder amlvideo2.0 ppmgr deinterlace amvideo" );
-        }
-        else {
-            ret = VDIN_AddPath ( "add default decoder ppmgr deinterlace amvideo" );
-        }
+        if (amlvideo2Exist)
+            vdinPath = "add default decoder amlvideo2.0 ";
+        else
+            vdinPath = "add default decoder ";
         break;
     default:
         break;
     }
 
+    vdinPath += suffixVideoPath;
+    ret = VDIN_AddPath (vdinPath.c_str());
     return ret;
 }
 
-int CTvin::VDIN_RmPreviewPath ( void )
-{
-    return tvWriteSysfs("/sys/class/vfm/map", "rm previewpath");
+int CTvin::getVdinDeviceFd() {
+    if (mVdin0DevFd < 0) {
+        mVdin0DevFd = VDIN_OpenModule();
+    }
+    return mVdin0DevFd;
 }
 
 int CTvin::VDIN_OpenModule()
 {
     char file_name[64];
     sprintf ( file_name, "/dev/vdin%d", CC_SEL_VDIN_DEV );
-    m_vdin_dev_fd = open ( file_name, O_RDWR );
-
-    if ( m_vdin_dev_fd < 0 ) {
+    int fd = open ( file_name, O_RDWR );
+    if ( fd < 0 ) {
         LOGW ( "Open %s error(%s)!\n", file_name, strerror ( errno ) );
         return -1;
     }
@@ -185,21 +183,17 @@ int CTvin::VDIN_OpenModule()
     memset ( &gTvinVDINParam, 0, sizeof ( gTvinVDINParam ) );
     memset ( &gTvinVDINSignalInfo, 0, sizeof ( gTvinVDINSignalInfo ) );
 
-    LOGD ( "Open vdin module vdin_dev_fd = [%d]", m_vdin_dev_fd );
+    LOGD ( "Open vdin%d module fd = [%d]", CC_SEL_VDIN_DEV, fd );
 
-    return m_vdin_dev_fd;
-}
-
-int CTvin::VDIN_GetVdinFd()
-{
-    return m_vdin_dev_fd;
+    //mVdin0DevFd = fd;
+    return fd;
 }
 
 int CTvin::VDIN_CloseModule()
 {
-    if ( m_vdin_dev_fd != -1 ) {
-        close ( m_vdin_dev_fd );
-        m_vdin_dev_fd = -1;
+    if ( mVdin0DevFd != -1 ) {
+        close ( mVdin0DevFd );
+        mVdin0DevFd = -1;
     }
 
     return 0;
@@ -211,12 +205,16 @@ int CTvin::VDIN_DeviceIOCtl ( int request, ... )
     va_list ap;
     void *arg;
 
-    if ( m_vdin_dev_fd >= 0 ) {
+    if (mVdin0DevFd < 0) {
+        mVdin0DevFd = VDIN_OpenModule();
+    }
+
+    if ( mVdin0DevFd >= 0 ) {
         va_start ( ap, request );
         arg = va_arg ( ap, void * );
         va_end ( ap );
 
-        tmp_ret = ioctl ( m_vdin_dev_fd, request, arg );
+        tmp_ret = ioctl ( mVdin0DevFd, request, arg );
         return tmp_ret;
     }
 
@@ -505,23 +503,21 @@ int CTvin::VDIN_EnableRDMA ( int enable )
 // AFE
 int CTvin::AFE_OpenModule ( void )
 {
-    if ( afe_dev_fd < 0 ) {
-        afe_dev_fd = open ( AFE_DEV_PATH, O_RDWR );
-
-        if ( afe_dev_fd < 0 ) {
-            LOGW ( "Open tvafe module, error(%s).\n", strerror ( errno ) );
-            return -1;
-        }
+    int fd = open ( AFE_DEV_PATH, O_RDWR );
+    if ( fd < 0 ) {
+        LOGW ( "Open tvafe module, error(%s).\n", strerror ( errno ) );
+        return -1;
     }
 
-    return afe_dev_fd;
+    LOGD ( "Open %s module fd = [%d]", AFE_DEV_PATH, fd );
+    return fd;
 }
 
 void CTvin::AFE_CloseModule ( void )
 {
-    if ( afe_dev_fd >= 0 ) {
-        close ( afe_dev_fd );
-        afe_dev_fd = -1;
+    if ( mAfeDevFd >= 0 ) {
+        close ( mAfeDevFd );
+        mAfeDevFd = -1;
     }
 }
 
@@ -531,22 +527,21 @@ int CTvin::AFE_DeviceIOCtl ( int request, ... )
     va_list ap;
     void *arg;
 
-    if ( afe_dev_fd >= 0 ) {
+    if (mAfeDevFd < 0) {
+        mAfeDevFd = AFE_OpenModule();
+    }
+
+    if ( mAfeDevFd >= 0 ) {
         va_start ( ap, request );
         arg = va_arg ( ap, void * );
         va_end ( ap );
 
-        tmp_ret = ioctl ( afe_dev_fd, request, arg );
+        tmp_ret = ioctl ( mAfeDevFd, request, arg );
 
         return tmp_ret;
     }
 
     return -1;
-}
-
-int CTvin::AFE_GetDeviceFileHandle()
-{
-    return afe_dev_fd;
 }
 
 int CTvin::AFE_SetVGAEdid ( const unsigned char *ediddata )
@@ -658,7 +653,7 @@ int CTvin::AFE_VGAAutoAdjust ( struct tvafe_vga_parm_s *timingadj )
         rt = AFE_DeviceIOCtl ( TVIN_IOC_G_AFE_CMD_STATUS, &CMDStatus );
 
         if ( rt < 0 ) {
-            LOGD ( "get afe CMD status, error(%s), fd(%d), return(%d).\n", strerror ( errno ), AFE_GetDeviceFileHandle(), rt );
+            LOGD ( "get afe CMD status, error(%s), return(%d).\n", strerror ( errno ), rt );
         }
 
         if ( ( CMDStatus == TVAFE_CMD_STATUS_IDLE ) || ( CMDStatus == TVAFE_CMD_STATUS_SUCCESSFUL ) ) {
@@ -754,7 +749,7 @@ int CTvin::AFE_GetVGAAutoAdjustCMDStatus ( tvafe_cmd_status_t *Status )
     rt = AFE_DeviceIOCtl ( TVIN_IOC_G_AFE_CMD_STATUS, Status );
 
     if ( rt < 0 ) {
-        LOGW ( "AFE_GetVGAAutoAdjustStatus, get status, error(%s) fd(%d) return(%d)\n", strerror ( errno ), AFE_GetDeviceFileHandle(), rt );
+        LOGW ( "AFE_GetVGAAutoAdjustStatus, get status, error(%s) return(%d)\n", strerror ( errno ), rt );
         return rt;
     }
 
@@ -993,7 +988,7 @@ char *CTvin::get_cap_addr ( enum adc_cal_type_e calType )
 
     for ( n = 0; n < 0x00ff; n++ ) {
         if ( VDIN_DeviceIOCtl ( TVIN_IOC_G_SIG_INFO, &gTvinAFESignalInfo ) < 0 ) {
-            LOGW ( "get_cap_addr, get signal info, error(%s),fd(%d).\n", strerror ( errno ), m_vdin_dev_fd );
+            LOGW ( "get_cap_addr, get signal info, error(%s),fd(%d).\n", strerror ( errno ), mVdin0DevFd );
             return NULL;
         } else {
             if ( gTvinAFESignalInfo.status == TVIN_SIG_STATUS_STABLE ) {
@@ -1015,9 +1010,9 @@ char *CTvin::get_cap_addr ( enum adc_cal_type_e calType )
         usleep ( 1000 );
 
         if ( calType == CAL_YPBPR ) {
-            dp = ( char * ) mmap ( NULL, COMP_CAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, m_vdin_dev_fd, 0 );
+            dp = ( char * ) mmap ( NULL, COMP_CAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, mVdin0DevFd, 0 );
         } else {
-            dp = ( char * ) mmap ( NULL, VGA_CAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, m_vdin_dev_fd, 0 );
+            dp = ( char * ) mmap ( NULL, VGA_CAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, mVdin0DevFd, 0 );
         }
 
         if ( dp == NULL ) {
@@ -1200,7 +1195,7 @@ int CTvin::get_frame_average ( enum adc_cal_type_e calType, struct adc_cal_s *me
     }
 
     if ( VDIN_DeviceIOCtl ( TVIN_IOC_START_DEC, &gTvinAFEParam ) < 0 ) {
-        LOGW ( "get_frame_average, get vdin signal info, error(%s),fd(%d).\n", strerror ( errno ), m_vdin_dev_fd );
+        LOGW ( "get_frame_average, get vdin signal info, error(%s),fd(%d).\n", strerror ( errno ), mVdin0DevFd );
         return 0;
     }
 
@@ -1286,7 +1281,7 @@ int CTvin::AFE_GetMemData ( int typeSel, struct adc_cal_s *mem_data )
 {
     int rt = -1;
 
-    if ( m_vdin_dev_fd < 0 || mem_data == NULL ) {
+    if ( mVdin0DevFd < 0 || mem_data == NULL ) {
         LOGW ( "AFE_GetMemData, didn't open vdin fd, return!\n" );
         return -1;
     }
@@ -1295,7 +1290,7 @@ int CTvin::AFE_GetMemData ( int typeSel, struct adc_cal_s *mem_data )
     memset ( &gTvinAFESignalInfo, 0, sizeof ( gTvinAFESignalInfo ) );
 
     if ( VDIN_DeviceIOCtl ( TVIN_IOC_G_PARM, &gTvinAFEParam ) < 0 ) {
-        LOGW ( "AFE_GetMemData, get vdin param, error(%s), fd(%d)!\n", strerror ( errno ), m_vdin_dev_fd );
+        LOGW ( "AFE_GetMemData, get vdin param, error(%s), fd(%d)!\n", strerror ( errno ), mVdin0DevFd );
         return -1;
     }
 
@@ -1963,13 +1958,10 @@ int CTvin::Tvin_RemovePath ( tv_path_type_t pathtype )
             }
         }
 
-    } else {
-        ret = -1;
     }
 
     return ret;
 }
-
 
 int CTvin::Tvin_CheckPathActive ( tv_path_type_t path_type)
 {
@@ -1984,9 +1976,9 @@ int CTvin::Tvin_CheckPathActive ( tv_path_type_t path_type)
     int match;
     int is_active = TV_PATH_STATUS_INACTIVE;
 
-    f = fopen ( "/sys/class/vfm/map", "r" );
+    f = fopen ( SYS_VFM_MAP_PATH, "r" );
     if ( !f ) {
-        LOGE ( "%s, can not open /sys/class/vfm/map!\n", CFG_SECTION_TV );
+        LOGE ( "%s, can not open %s!\n", CFG_SECTION_TV, SYS_VFM_MAP_PATH );
         return TV_PATH_STATUS_NO_DEV;
     }
 
@@ -2017,7 +2009,7 @@ int CTvin::Tvin_CheckPathActive ( tv_path_type_t path_type)
 
 int CTvin::Tv_init_afe ( void )
 {
-    AFE_OpenModule();
+    //AFE_OpenModule();
     return 0;
 }
 

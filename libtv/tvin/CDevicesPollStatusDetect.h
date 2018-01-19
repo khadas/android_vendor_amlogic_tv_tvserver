@@ -72,7 +72,9 @@ public:
     };
 private:
     bool threadLoop();
+    char* inputToName(tv_source_input_t srcInput);
 
+    int mVdinDetectFd;
     ISourceConnectObserver *mpObserver;
     Epoll       mEpoll;
     mutable Mutex mLock;

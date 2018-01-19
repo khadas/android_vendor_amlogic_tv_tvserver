@@ -427,9 +427,11 @@ int CFrontEnd::addColorAutoFlag(int std)
 {
     return std | V4L2_COLOR_STD_AUTO;
 }
+
 v4l2_std_id CFrontEnd::enumToStdAndColor(int videoStd, int audioStd)
 {
     v4l2_std_id tmpTunerStd = 0;
+
     if (videoStd == CC_ATV_VIDEO_STD_PAL) {
         tmpTunerStd |= V4L2_COLOR_STD_PAL;
         if (audioStd == CC_ATV_AUDIO_STD_DK) {
@@ -441,7 +443,7 @@ v4l2_std_id CFrontEnd::enumToStdAndColor(int videoStd, int audioStd)
         } else if (audioStd == CC_ATV_AUDIO_STD_M) {
             tmpTunerStd |= V4L2_STD_PAL_M;
         }
-    } else if (videoStd == CC_ATV_VIDEO_STD_NTSC || videoStd == CC_ATV_VIDEO_STD_AUTO) {
+    } else if (videoStd == CC_ATV_VIDEO_STD_NTSC) {
         tmpTunerStd |= V4L2_COLOR_STD_NTSC;
         if (audioStd == CC_ATV_AUDIO_STD_DK) {
             tmpTunerStd |= V4L2_STD_PAL_DK;
@@ -465,8 +467,8 @@ v4l2_std_id CFrontEnd::enumToStdAndColor(int videoStd, int audioStd)
         } else if (audioStd == CC_ATV_AUDIO_STD_L) {
             tmpTunerStd |= V4L2_STD_SECAM_L;
         }
-
     }
+
     return tmpTunerStd;
 }
 

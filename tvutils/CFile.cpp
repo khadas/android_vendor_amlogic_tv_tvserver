@@ -11,8 +11,8 @@
 #define LOG_TV_TAG "CFile"
 //#define LOG_NDEBUG 0
 
-#include "CFile.h"
-#include "CTvLog.h"
+#include "include/CFile.h"
+#include "include/CTvLog.h"
 
 #include <stdlib.h>
 

@@ -16,6 +16,7 @@
 #include <utils/Thread.h>
 #include "../tv/CFrontEnd.h"
 
+#define SYS_VFM_MAP_PATH            "/sys/class/vfm/map"
 #define SYS_DISPLAY_MODE_PATH       "/sys/class/display/mode"
 #define DEPTH_LEVEL_2DTO3D 33
 static const int DepthTable_2DTO3D[DEPTH_LEVEL_2DTO3D] = {
@@ -491,10 +492,10 @@ typedef struct tvafe_pin_mux_s {
 // *** add more **********************************************
 // ***************************************************************************
 
-typedef enum tvin_path_id_e {
+enum {
     TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO,
     TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO,
-} tvin_path_id_t;
+};
 
 #define CAMERA_IOC_MAGIC 'C'
 #define CAMERA_IOC_START        _IOW(CAMERA_IOC_MAGIC, 0x01, struct camera_info_s)
@@ -650,8 +651,6 @@ public:
     int VDIN_RmDefPath ( void );
     int VDIN_RmTvPath ( void );
     int VDIN_AddVideoPath ( int selPath );
-    int VDIN_RmPreviewPath ( void );
-    int VDIN_GetVdinFd();
 
     int VDIN_OpenModule();
     int VDIN_CloseModule();
@@ -683,10 +682,10 @@ public:
     int VDIN_SetDIBypassProg ( int enable );
     int VDIN_SetDIBypassDynamic ( int flag );
     int VDIN_EnableRDMA ( int enable );
+
+    int getVdinDeviceFd();
     int AFE_OpenModule ( void );
-    void AFE_CloseModule ( void );
-    int AFE_GetDeviceFileHandle();
-    int AFE_SetCVBSStd ( tvin_sig_fmt_t cvbs_fmt );
+    void AFE_CloseModule ( void );    int AFE_SetCVBSStd ( tvin_sig_fmt_t cvbs_fmt );
     int AFE_SetVGAEdid ( const unsigned char *ediddata );
     int AFE_GetVGAEdid ( unsigned char *ediddata );
     int AFE_SetADCTimingAdjust ( const struct tvafe_vga_parm_s *timingadj );
@@ -730,9 +729,6 @@ public:
     static v4l2_std_id CvbsFtmToV4l2ColorStd(tvin_sig_fmt_t fmt);
 
     static CTvin *getInstance();
-
-    int m_vdin_dev_fd;
-    bool m_snow_status;
 
 public:
     class CHDMIAudioCheck: public Thread {
@@ -783,7 +779,9 @@ public:
 
 private:
     static CTvin *mInstance;
-    int afe_dev_fd;
+    int mAfeDevFd;
+    int mVdin0DevFd;
+    bool m_snow_status;
     tvin_parm_t m_tvin_param;
     tvin_parm_t gTvinVDINParam;
     tvin_info_t gTvinVDINSignalInfo;

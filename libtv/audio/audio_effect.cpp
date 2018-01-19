@@ -42,7 +42,7 @@ int CAudioEffect::GetEQBandCount()
 int CAudioEffect::SetEQSwitch(int switch_val)
 {
     int tmp_ret = 0;
-    tmp_ret |= amAudioSetEQEnable(switch_val);
+    //tmp_ret |= amAudioSetEQEnable(switch_val);
     return tmp_ret;
 }
 
@@ -55,7 +55,7 @@ int CAudioEffect::GetEQSwitch()
 int CAudioEffect::SetEQValue(int gain_val_buf[])
 {
     int tmp_ret = 0;
-    tmp_ret |= amAudioSetEQGain(gain_val_buf, CC_BAND_ITEM_CNT);
+    //tmp_ret |= amAudioSetEQGain(gain_val_buf, CC_BAND_ITEM_CNT);
     return tmp_ret;
 }
 
@@ -67,63 +67,63 @@ int CAudioEffect::GetEQValue(int gain_val_buf[] __unused)
 int CAudioEffect::SetSrsSurroundSwitch(int switch_val)
 {
     int tmp_ret = 0;
-    tmp_ret |= amAudioSetSRSSurroundSwitch(switch_val);
+    //tmp_ret |= amAudioSetSRSSurroundSwitch(switch_val);
     return tmp_ret;
 }
 
 int CAudioEffect::SetSrsSurroundGain(int gain_val)
 {
     int tmp_ret = 0;
-    tmp_ret |= amAudioSetSRSSurroundGain(gain_val);
+    //tmp_ret |= amAudioSetSRSSurroundGain(gain_val);
     return tmp_ret;
 }
 
 int CAudioEffect::SetSrsInputOutputGain(int input_gain_val, int output_gain_val)
 {
     int tmp_ret = 0;
-    tmp_ret |= amAudioSetSRSGain(input_gain_val, output_gain_val);
+    //tmp_ret |= amAudioSetSRSGain(input_gain_val, output_gain_val);
     return tmp_ret;
 }
 
 int CAudioEffect::SetSrsTruBassSwitch(int switch_val)
 {
     int tmp_ret = 0;
-    tmp_ret |= amAudioSetSRSTrubassSwitch(switch_val);
+    //tmp_ret |= amAudioSetSRSTrubassSwitch(switch_val);
     return tmp_ret;
 }
 
 int CAudioEffect::SetSrsTruBassGain(int gain_val)
 {
     int tmp_ret = 0;
-    tmp_ret |= amAudioSetSRSTrubassGain(gain_val);
+    //tmp_ret |= amAudioSetSRSTrubassGain(gain_val);
     return tmp_ret;
 }
 
 int CAudioEffect::SetSrsDialogClaritySwitch(int switch_val)
 {
     int tmp_ret = 0;
-    tmp_ret |= amAudioSetSRSDialogClaritySwitch(switch_val);
+    //tmp_ret |= amAudioSetSRSDialogClaritySwitch(switch_val);
     return tmp_ret;
 }
 
 int CAudioEffect::SetSrsDialogClarityGain(int gain_val)
 {
     int tmp_ret = 0;
-    tmp_ret |= amAudioSetSRSDialogClarityGain(gain_val);
+    //tmp_ret |= amAudioSetSRSDialogClarityGain(gain_val);
     return tmp_ret;
 }
 
 int CAudioEffect::SetSrsDefinitionGain(int gain_val)
 {
     int tmp_ret = 0;
-    tmp_ret |= amAudioSetSRSDefinitionGain(gain_val);
+    //tmp_ret |= amAudioSetSRSDefinitionGain(gain_val);
     return tmp_ret;
 }
 
 int CAudioEffect::SetSrsTrubassSpeakerSize(int set_val)
 {
     int tmp_ret = 0;
-    tmp_ret |= amAudioSetSRSTrubassSpeakerSize(set_val);
+    //tmp_ret |= amAudioSetSRSTrubassSpeakerSize(set_val);
     return tmp_ret;
 }
 
@@ -143,5 +143,5 @@ int CAudioEffect::DbxTv_SetMode(int mode __unused, int son_value, int vol_value,
 
 int CAudioEffect::SetAudioVirtualizer(int enable, int EffectLevel)
 {
-    return amAudioVirtualizer(enable, EffectLevel);
+    return 0;//amAudioVirtualizer(enable, EffectLevel);
 }

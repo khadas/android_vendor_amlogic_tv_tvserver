@@ -1951,7 +1951,7 @@ int CTv::OpenTv ( void )
     SetAudioVolDigitLUTTable(SOURCE_MPEG);
 
     SSMSetHDCPKey();
-    system ( "/system/bin/dec" );
+    system ( "/vendor/bin/dec" );
 
     value = config_get_str ( CFG_SECTION_TV, CFG_TVIN_DISPLAY_FREQ_AUTO, "null" );
     if ( strcmp ( value, "enable" ) == 0 ) {
@@ -1978,7 +1978,7 @@ int CTv::OpenTv ( void )
     mFrontDev->autoLoadFE();
     mAv.Open();
     resetDmxAndAvSource();
-    mDevicesPollStatusDetectThread.startDetect();
+    //mDevicesPollStatusDetectThread.startDetect();
     //ClearAnalogFrontEnd();
     InitCurrenSignalInfo();
 
@@ -2025,31 +2025,19 @@ int CTv::StartTvLock ()
     return 0;
 }
 
-int CTv::DoInstabootSuspend()
+int CTv::startTvDetect()
 {
-    CTvDatabase::GetTvDb()->UnInitTvDb();
-    return 0;
-}
-
-int CTv::DoInstabootResume()
-{
-    CTvDatabase::GetTvDb()->InitTvDb(TV_DB_PATH);
+    mDevicesPollStatusDetectThread.startDetect();
     return 0;
 }
 
 int CTv::DoSuspend(int type)
 {
-    if (type == 1) {
-        DoInstabootSuspend();
-    }
     return 0;
 }
 
 int CTv::DoResume(int type)
 {
-    if (type == 1) {
-        DoInstabootResume();
-    }
     return 0;
 }
 
@@ -2645,7 +2633,7 @@ void CTv::onHDMIAudioCheckLoop()
 }
 
 void CTv::onBootvideoRunning() {
-    LOGD("%s,boot video is running", __FUNCTION__);
+    //LOGD("%s,boot video is running", __FUNCTION__);
 }
 
 void CTv::onBootvideoStopped() {
@@ -3182,12 +3170,12 @@ int CTv::Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t ve
 
     config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "customer_edid");
     if ( HDMI_EDID_VER_14== version ) {
-        sprintf(edid_path, "/system/etc/port_%d.bin", 14);
+        sprintf(edid_path, "/vendor/etc/port_%d.bin", 14);
     } else if (HDMI_EDID_VER_20== version) {
-        sprintf(edid_path, "/system/etc/port_%d.bin", 20);
+        sprintf(edid_path, "/vendor/etc/port_%d.bin", 20);
     } else {
         LOGE("%s HDMI EDID VERSION error!\n", __FUNCTION__);
-        sprintf(edid_path, "/system/etc/port_%d.bin", 14);
+        sprintf(edid_path, "/vendor/etc/port_%d.bin", 14);
     }
     sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
     if (access(edid_path, 0) < 0) {
@@ -3634,7 +3622,7 @@ int CTv::SetAudioMuteForTv(int muteOrUnmute)
     ret |= SetAudioI2sMute(mAudioMuteStatusForTv);
     ret |= SetAudioSPDIFMute(mAudioMuteStatusForTv);
     ret |= mAudioAlsa.SetAudioARCSwitch(!mAudioMuteStatusForTv);
-    AudioSystem::setStreamMute(AUDIO_STREAM_MUSIC, mAudioMuteStatusForTv);
+    //AudioSystem::setStreamMute(AUDIO_STREAM_MUSIC, mAudioMuteStatusForTv);
     return ret;
 }
 

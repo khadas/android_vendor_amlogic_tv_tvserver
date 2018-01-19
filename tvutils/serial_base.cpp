@@ -21,8 +21,8 @@
 #include <termios.h>
 #include <errno.h>
 
-#include "serial_base.h"
-#include "CTvLog.h"
+#include "include/serial_base.h"
+#include "include/CTvLog.h"
 
 #define CS_SERIAL_A_DEV_PATH "/dev/ttyS0"
 #define CS_SERIAL_B_DEV_PATH "/dev/ttyS1"

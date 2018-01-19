@@ -22,9 +22,9 @@
 #include <errno.h>
 #include <linux/hidraw.h>
 
-#include "serial_base.h"
-#include "serial_operate.h"
-#include "CTvLog.h"
+#include "include/serial_base.h"
+#include "include/serial_operate.h"
+#include "include/CTvLog.h"
 
 //******************************************************
 #ifndef HIDIOCSFEATURE

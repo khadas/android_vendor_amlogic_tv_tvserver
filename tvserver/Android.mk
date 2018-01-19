@@ -34,14 +34,24 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES:= \
-  main.cpp \
+  main_tvserver.cpp \
+  DroidTvServer.cpp \
+  DroidTvServiceIntf.cpp \
   MemoryLeakTrackUtil.cpp \
   TvService.cpp
 
 LOCAL_SHARED_LIBRARIES += \
+  vendor.amlogic.hardware.tvserver@1.0_vendor \
+  vendor.amlogic.hardware.systemcontrol@1.0_vendor \
+  libbase \
+  libhidlbase \
+  libhidltransport \
+  libhidlmemory \
+  android.hidl.allocator@1.0 \
   libutils \
   libbinder \
   libcutils \
+  liblog \
   libtvbinder \
   libtv
 
@@ -51,6 +61,8 @@ LOCAL_SHARED_LIBRARIES += \
   libam_ver
 
 LOCAL_C_INCLUDES := \
+  system/libhidl/transport/include/hidl \
+  system/libhidl/libhidlmemory/include \
   $(LOCAL_PATH)/../libtv \
   $(LOCAL_PATH)/../libtv/tvdb \
   $(LOCAL_PATH)/../libtv/tv \
@@ -67,6 +79,7 @@ LOCAL_C_INCLUDES += \
   hardware/amlogic/audio/libTVaudio
 
 LOCAL_C_INCLUDES += \
+  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include \
   $(DVB_PATH)/include/am_adp \
   $(DVB_PATH)/include/am_mw \
   $(DVB_PATH)/include/am_ver \

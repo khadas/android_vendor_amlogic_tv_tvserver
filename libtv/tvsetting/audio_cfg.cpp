@@ -550,7 +550,7 @@ int GetUseAndroidVolEnable()
 
 const char *GetAudExtDacLibPath()
 {
-    return config_get_str(CFG_SECTION_TV, "audio.external.dac.libpath", "/system/lib/libdac.so");
+    return config_get_str(CFG_SECTION_TV, "audio.external.dac.libpath", "/vendor/lib/libdac.so");
 }
 
 int GetKaraokAvEnable()

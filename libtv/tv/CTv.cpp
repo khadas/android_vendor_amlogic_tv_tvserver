@@ -73,8 +73,6 @@ extern "C" {
 
 using namespace android;
 
-static const int WALL_EFFECT_VALUE[CC_BAND_ITEM_CNT] = { 0, 0, 1, 2, 2, 0 };
-
 bool CTv::insertedFbcDevice()
 {
     bool ret = false;
@@ -104,9 +102,6 @@ bool CTv::insertedFbcDevice()
 
 CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
 {
-    mAudioMuteStatusForTv = CC_AUDIO_UNMUTE;
-    mAudioMuteStatusForSystem = CC_AUDIO_UNMUTE;
-
     //copy file to param
     char buf[PROPERTY_VALUE_MAX] = {0};
     int len = property_get("tv.tvconfig.force_copy", buf, "true");
@@ -183,8 +178,6 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     mBootvideoStatusDetectThread = new CBootvideoStatusDetect();
     mBootvideoStatusDetectThread->setObserver(this);
 
-    m_hdmi_audio_data = 0;
-    mHDMIAudioCheckThread.setObserver(this);
     mDevicesPollStatusDetectThread.setObserver ( this );
     mFrontDev->setObserver ( &mTvMsgQueue );
     mTvEas = CTvEas::GetInstance();
@@ -197,43 +190,6 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     mSubtitle.setObserver(this);
     mHeadSet.setObserver(this);
     mAv.setObserver(&mTvMsgQueue);
-    mMainVolLutTableExtraName[0] = '\0';
-    //-----------------------------------------------------------
-    mCurAudioMasterVolume = CC_DEF_SOUND_VOL;
-    mCurAudioBalance = CC_DEF_SOUND_BALANCE_VAL;
-    mCurAudioSupperBassVolume = CC_DEF_SUPPERBASS_VOL;
-    mCurAudioSupperBassSwitch = CC_SWITCH_OFF;
-    mCurAudioSRSSurround = CC_SWITCH_OFF;
-    mCurAudioSrsDialogClarity = CC_SWITCH_OFF;
-    mCurAudioSrsTruBass = CC_SWITCH_OFF;
-    mCurAudioSPDIFSwitch = CC_SWITCH_ON;
-    mCurAudioSPDIFMode = CC_SPDIF_MODE_PCM;
-    mCurAudioBassVolume = CC_DEF_BASS_TREBLE_VOL;
-    mCurAudioTrebleVolume = CC_DEF_BASS_TREBLE_VOL;
-    mCurAudioSoundMode = CC_SOUND_MODE_END;
-    mCurAudioWallEffect = CC_SWITCH_OFF;
-    mCurAudioEQMode = CC_EQ_MODE_START;
-    mCustomAudioMasterVolume = CC_DEF_SOUND_VOL;
-    mCustomAudioBalance = CC_DEF_SOUND_BALANCE_VAL;
-    mCustomAudioSupperBassVolume = CC_DEF_SUPPERBASS_VOL;
-    mCustomAudioSupperBassSwitch = CC_SWITCH_OFF;
-    mCustomAudioSRSSurround = CC_SWITCH_OFF;
-    mCustomAudioSrsDialogClarity = CC_SWITCH_OFF;
-    mCustomAudioSrsTruBass = CC_SWITCH_OFF;
-    mCustomAudioBassVolume = CC_DEF_BASS_TREBLE_VOL;
-    mCustomAudioTrebleVolume = CC_DEF_BASS_TREBLE_VOL;
-    mCustomAudioSoundMode = CC_SOUND_MODE_END;
-    mCustomAudioWallEffect = CC_SWITCH_OFF;
-    mCustomAudioEQMode = CC_EQ_MODE_START;
-    mCustomAudioSoundEnhancementSwitch = CC_SWITCH_OFF;
-    mVolumeCompensationVal = 0;
-
-    mMainVolumeBalanceVal = 0;
-    for (int i = 0; i < CC_BAND_ITEM_CNT; i++) {
-        mCustomEQGainBuf[i] = 0;
-        mCurEQGainBuf[i] = 0;
-        mCurEQGainChBuf[i] = 0;
-    }
 
     mTvAction &= TV_ACTION_NULL;
     mTvStatus = TV_INIT_ED;
@@ -384,7 +340,6 @@ void CTv::onEvent(const CAv::AVEvent &ev)
         } else {
             mAv.DisableVideoWithBlueColor();
         }
-        SetAudioMuteForTv ( CC_AUDIO_MUTE );
 
         TvEvent::SignalInfoEvent ev;
         ev.mStatus = TVIN_SIG_STATUS_NOSIG;
@@ -400,11 +355,6 @@ void CTv::onEvent(const CAv::AVEvent &ev)
         AvPlayBackEvt.mMsgType = TvEvent::AVPlaybackEvent::EVENT_AV_PLAYBACK_RESUME;
         AvPlayBackEvt.mProgramId = (int)ev.param;
         sendTvEvent(AvPlayBackEvt);
-        if (m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //atv and other tvin source    not to use it, and if not playing, not use have sig
-            LOGD("[EVENT_AV_RESUEM]");
-            SetAudioMuteForTv(CC_AUDIO_UNMUTE);
-            Tv_SetAudioInSource(SOURCE_DTV);
-        }
         break;
     }
 
@@ -435,8 +385,6 @@ void CTv::onEvent(const CAv::AVEvent &ev)
             //usleep(50 * 1000);
             mAv.EnableVideoNow(true);
             LOGD("[source_switch_time]: %fs, EVENT_AV_VIDEO_AVAILABLE, video available ok", getUptimeSeconds());
-            SetAudioMuteForTv(CC_AUDIO_UNMUTE);
-            Tv_SetAudioInSource(SOURCE_DTV);
         }
 
         TvEvent::AVPlaybackEvent AvPlayBackEvt;
@@ -514,13 +462,6 @@ void CTv::CTvMsgQueue::handleMessage ( CMessage &msg )
 
     case TV_MSG_EPG_EVENT: {
         mpTv->onEvent(*((CTvEpg::EpgEvent *)(msg.mpPara)));
-        break;
-    }
-
-    case TV_MSG_HDMI_SR_CHANGED: {
-        int sr = ((int *)(msg.mpPara))[0];
-        mpTv->onHdmiSrChanged(sr, (((int *)(msg.mpPara))[1] == 0) ? true : false);
-        mpTv->setAudioPreGain(mpTv->m_source_input);
         break;
     }
 
@@ -620,29 +561,6 @@ void CTv::CTvMsgQueue::onEvent ( const CTvEas::EasEvent &ev )
     this->sendMsg ( msg );
 }
 
-void CTv::onHdmiSrChanged(int sr, bool bInit)
-{
-    if (bInit) {
-        LOGD ( "%s, Init HDMI audio, sampling rate:%d", __FUNCTION__,  sr );
-        sr = HanldeAudioInputSr(sr);
-        InitTvAudio (sr, CC_IN_USE_SPDIF_DEVICE);
-    } else {
-        LOGD ( "%s, Reset HDMI sampling rate to %d", __FUNCTION__,  sr );
-        AudioChangeSampleRate ( sr );
-    }
-}
-
-void CTv::onHMDIAudioStatusChanged(int status)
-{
-    if (status == 0) {//change to no audio data
-        SetAudioMuteForTv ( CC_AUDIO_MUTE );
-    } else if (status == 1) {//change to audio data come
-        Tv_SetAudioInSource(m_source_input);
-        usleep(200 * 1000);
-        SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
-    }
-}
-
 int CTv::setTvObserver ( TvIObserver *ob )
 {
     mpObserver = ob;
@@ -684,12 +602,10 @@ int CTv::clearFrontEnd(int para)
 int CTv::Scan(const char *feparas, const char *scanparas) {
     AutoMutex _l(mLock);
     m_source_input = SOURCE_INVALID;
-    SetAudioMuteForTv ( CC_AUDIO_MUTE );
     mTvAction = mTvAction | TV_ACTION_SCANNING;
     LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
     LOGD("fe[%s], scan[%s] %s", feparas, scanparas, __FUNCTION__);
 
-    mHDMIAudioCheckThread.requestAndWaitPauseCheck();
     mAv.StopTS();
     mpTvin->Tvin_StopDecoder();
     if ( iSBlackPattern ) {
@@ -801,7 +717,6 @@ int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchTyp
     mTvAction |= TV_ACTION_SCANNING;
     stopPlaying(false);
     mTvScanner->setObserver ( &mTvMsgQueue );
-    SetAudioMuteForTv ( CC_AUDIO_MUTE );
     getATVMinMaxFreq (&minScanFreq, &maxScanFreq );
     if ( minScanFreq == 0 || maxScanFreq == 0 || minScanFreq > maxScanFreq ) {
         LOGE ( "%s, auto scan  freq set is error min=%d, max=%d", __FUNCTION__, minScanFreq, maxScanFreq );
@@ -874,9 +789,7 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
         mAv.DisableVideoWithBlueColor();
     mTvAction |= TV_ACTION_SCANNING;
     mTvScanner->setObserver ( &mTvMsgQueue );
-    SetAudioMuteForTv ( CC_AUDIO_MUTE );
     unsigned long stdAndColor = mFrontDev->enumToStdAndColor(vStd, aStd);
-
     tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceInput(SOURCE_TV);
     mpTvin->VDIN_OpenPort ( source_port );
 
@@ -951,8 +864,6 @@ int CTv::stopScan()
             mAv.DisableVideoWithBlueColor();
         }
     }
-    mHDMIAudioCheckThread.requestAndWaitPauseCheck();
-    mHDMIAudioCheckThread.setObserver(this);
     //mTvEpg.leaveChannel();
     mTvScanner->stopScan();
     mFrontDev->Close();
@@ -1216,7 +1127,6 @@ int CTv::playDtvProgramUnlocked (const char *feparas, int mode, int freq, int pa
     msg.mType = CTvMsgQueue::TV_MSG_CHECK_FE_DELAY;
     mTvMsgQueue.sendMsg ( msg );
 
-    SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
     return 0;
 }
 
@@ -1269,8 +1179,6 @@ int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCom
     tvWriteSysfs ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
     ret = mAv.startTimeShift(para);
 
-    SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
-
     return ret;
 }
 
@@ -1289,13 +1197,11 @@ int CTv::playDtmbProgram ( int progId )
     CTvProgram::Audio *pA;
     CTvProgram::Video *pV;
     int ret = CTvProgram::selectByID ( progId, prog );
-    SetAudioMuteForTv ( CC_AUDIO_MUTE );
     saveDTVProgramID ( progId );
     prog.getChannel ( channel );
     //音量补偿
     int chanVolCompValue = 0;
     chanVolCompValue = GetAudioVolumeCompensationVal(progId);
-    SetCurProgramAudioVolumeCompensationVal ( chanVolCompValue );
 
     mFrontDev->setPara ( channel.getMode(), channel.getFrequency(), channel.getBandwidth(), 0 );
 
@@ -1338,9 +1244,7 @@ int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __u
     } else {
         mAv.DisableVideoBlackout();
     }
-    SetAudioMuteForTv ( CC_AUDIO_MUTE );
     //image selecting channel
-    mHDMIAudioCheckThread.requestAndWaitPauseCheck();
     mpTvin->Tvin_StopDecoder();
     mFrontDev->Open(TV_FE_ANALOG);
     //set CVBS
@@ -1351,11 +1255,6 @@ int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __u
     //set TUNER
     mFrontDev->setPara (TV_FE_ANALOG, freq, stdAndColor, 1);
 
-    mHDMIAudioCheckThread.setObserver(this);
-    mHDMIAudioCheckThread.initCheckState();
-    mHDMIAudioCheckThread.resumeCheck(1000);
-
-    SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
     return 0;
 }
 
@@ -1379,7 +1278,6 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
         LOGD("%s, resetFrontEndPara- vstd=%d astd=%d stdandcolor=%lld", __FUNCTION__, feParms.videoStd, feParms.audioStd, stdAndColor);
 
         //set frontend parameters to tuner dev
-        mHDMIAudioCheckThread.requestAndWaitPauseCheck();
         mpTvin->Tvin_StopDecoder();
 
         //set CVBS
@@ -1394,9 +1292,6 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
         if ( tmpfineFreq != 0 ) {
             mFrontDev->fineTune ( tmpfineFreq / 1000 );
         }
-
-        mHDMIAudioCheckThread.initCheckState();
-        mHDMIAudioCheckThread.resumeCheck();
     } else {
         mFrontDev->Open(feParms.mode);
         mFrontDev->setPara ( feParms.mode, feParms.freq, feParms.para1, feParms.para2 );
@@ -1435,9 +1330,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         unsigned long stdAndColor = mFrontDev->enumToStdAndColor (fp.getVideoStd(), fp.getAudioStd());
 
         LOGD("%s: vstd=%d astd=%d stdandcolor=%lld", __FUNCTION__, fp.getVideoStd(), fp.getAudioStd(), stdAndColor);
-        SetAudioMuteForTv ( CC_AUDIO_MUTE);
         //set frontend parameters to tuner dev
-        mHDMIAudioCheckThread.requestAndWaitPauseCheck();
         mpTvin->Tvin_StopDecoder();
 
         //set CVBS
@@ -1452,14 +1345,10 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         if ( tmpfineFreq != 0 ) {
             mFrontDev->fineTune ( tmpfineFreq / 1000, force );
         }
-
-        mHDMIAudioCheckThread.initCheckState();
-        mHDMIAudioCheckThread.resumeCheck();
     } else {
         if (SOURCE_ADTV == m_source_input_virtual) {
             if (SOURCE_TV == m_source_input) {
                 //mAv.DisableVideoBlackout();
-                mHDMIAudioCheckThread.requestAndWaitPauseCheck();
                 mpTvin->Tvin_StopDecoder();
                 if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
                     mpTvin->SwitchSnow( false );
@@ -1495,25 +1384,6 @@ int CTv::resetDmxAndAvSource()
     int ts_source = ( int ) curdmxSource;
     mAv.SetTSSource (ts_source );
 #endif
-    return 0;
-}
-
-int CTv::SetCurProgramAudioVolumeCompensationVal ( int tmpVal )
-{
-    SetAudioVolumeCompensationVal ( tmpVal );
-    SetAudioMasterVolume (GetAudioMasterVolume() );
-
-    LOGD ( "%s, VolumeCompensationVal = %d, id = -1\n", __FUNCTION__,  tmpVal );
-    CTvProgram prog;
-    if ( CTvProgram::selectByID ( -1, prog ) != 0 ) {
-        LOGE ( "[ctv]%s, atv progID is not matching the db's  ret = 0\n", __FUNCTION__ );
-        return -1;
-    }
-
-    if (prog.updateVolComp ( -1, tmpVal ) != 0 ) {
-        LOGE ( "[ctv]%s, atv progID is not matching the db's\n", __FUNCTION__);
-        return -1;
-    }
     return 0;
 }
 
@@ -1565,11 +1435,9 @@ int CTv::stopPlaying(bool isShowTestScreen, bool resetFE)
 
     if (m_source_input == SOURCE_TV) {
         //first mute
-        SetAudioMuteForTv(CC_AUDIO_MUTE);
         if (resetFE)
             ClearAnalogFrontEnd();
     } else if (m_source_input ==  SOURCE_DTV) {
-        mHDMIAudioCheckThread.requestAndWaitPauseCheck();
         if (mBlackoutEnable == true) {
             mAv.EnableVideoBlackout();
         }
@@ -1917,8 +1785,6 @@ int CTv::OpenTv ( void )
     mpTvin->Tv_init_afe();
 
     CVpp::getInstance()->Vpp_Init(mHdmiOutFbc);
-    TvAudioOpen();
-    SetAudioVolDigitLUTTable(SOURCE_MPEG);
 
     SSMSetHDCPKey();
     system ( "/vendor/bin/dec" );
@@ -1938,7 +1804,6 @@ int CTv::OpenTv ( void )
     Tvin_GetTvinConfig();
     m_last_source_input = SOURCE_INVALID;
     m_source_input = SOURCE_INVALID;
-    m_hdmi_sampling_rate = 0;
 
     int8_t enable;
     SSMReadBlackoutEnable(&enable);
@@ -1951,6 +1816,9 @@ int CTv::OpenTv ( void )
     //mDevicesPollStatusDetectThread.startDetect();
     //ClearAnalogFrontEnd();
     InitCurrenSignalInfo();
+    if (!isBootvideoStopped()) {
+        mBootvideoStatusDetectThread->startDetect();
+    }
 
     mTvStatus = TV_OPEN_ED;
     return 0;
@@ -1958,7 +1826,6 @@ int CTv::OpenTv ( void )
 
 int CTv::CloseTv ( void )
 {
-    mHDMIAudioCheckThread.stopCheck();
     mpTvin->Tv_uninit_afe();
     mpTvin->uninit_vdin();
     TvMisc_DisableWDT ( gTvinConfig.userpet );
@@ -1978,10 +1845,6 @@ int CTv::StartTvLock ()
     setDvbLogLevel();
     //mAv.ClearVideoBuffer();
     mAv.SetVideoLayerDisable(1);
-    SwitchAVOutBypass(0);
-    InitSetTvAudioCard();
-    SetAudioMuteForTv(CC_AUDIO_MUTE);
-    mHDMIAudioCheckThread.startCheck();
     mTvMsgQueue.startMsgQueue();
     SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( m_source_input ), m_source_input, m_cur_sig_info.fmt);
     TvMisc_EnableWDT ( gTvinConfig.kernelpet_disable, gTvinConfig.userpet, gTvinConfig.kernelpet_timeout, gTvinConfig.userpet_timeout, gTvinConfig.userpet_reset );
@@ -2014,7 +1877,6 @@ int CTv::DoResume(int type)
 int CTv::StopTvLock ( void )
 {
     LOGD("%s, call Tv_Stop status = %d \n", __FUNCTION__, mTvStatus);
-    mHDMIAudioCheckThread.requestAndWaitPauseCheck();
     AutoMutex _l( mLock );
     mTvAction |= TV_ACTION_STOPING;
     mAv.DisableVideoWithBlackColor();
@@ -2033,14 +1895,7 @@ int CTv::StopTvLock ( void )
     setAudioChannel(TV_AOUT_OUTPUT_STEREO);
     mpTvin->setMpeg2Vdin(0);
     mAv.setLookupPtsForDtmb(0);
-    SwitchAVOutBypass(0);
-    tv_audio_channel_e audio_channel = mpTvin->Tvin_GetInputSourceAudioChannelIndex (SOURCE_MPEG);
-    AudioLineInSelectChannel( audio_channel );
-    AudioCtlUninit();
-    SetAudioVolDigitLUTTable(SOURCE_MPEG);
-    Tv_SetAudioInSource(SOURCE_MPEG);
     SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( SOURCE_MPEG ), SOURCE_MPEG, m_cur_sig_info.fmt);
-    RefreshAudioMasterVolume ( SOURCE_MPEG );
     m_last_source_input = SOURCE_INVALID;
     m_source_input = SOURCE_INVALID;
     m_source_input_virtual = SOURCE_INVALID;
@@ -2056,15 +1911,11 @@ int CTv::StopTvLock ( void )
     mTvAction &= ~TV_ACTION_STOPING;
     mTvStatus = TV_STOP_ED;
     MnoNeedAutoSwitchToMonitorMode = false;
-    if ( Get2d4gHeadsetEnable() == 1 ) {
-        property_set("audio.tv_open.flg", "0");
-    }
     if (mBlackoutEnable) {
         mAv.DisableVideoWithBlackColor();
         mAv.EnableVideoBlackout();
     }
     mAv.ClearVideoBuffer();
-    SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
     return 0;
 }
 
@@ -2191,8 +2042,6 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
     }
     mTvAction |= TV_ACTION_SOURCE_SWITCHING;
 
-    SetAudioMuteForTv(CC_AUDIO_MUTE);
-    mHDMIAudioCheckThread.requestAndWaitPauseCheck();
     //if BlackoutEnable is false, no need to disable video and enable blackout
 
     if (mBlackoutEnable == true) {
@@ -2217,27 +2066,16 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
     m_source_input = source_input;
     SSMSaveSourceInput ( source_input );
 
-    SetAudioVolumeCompensationVal ( 0 );
-
     if ( source_input == SOURCE_DTV ) {
         resetDmxAndAvSource();
 
         //we should stop audio first for audio mute.
-        SwitchAVOutBypass(0);
-        tv_audio_channel_e audio_channel = mpTvin->Tvin_GetInputSourceAudioChannelIndex (SOURCE_MPEG);
-        AudioLineInSelectChannel( audio_channel );
-        AudioCtlUninit();
-        SetAudioVolDigitLUTTable(SOURCE_MPEG);
         //
         mpTvin->Tvin_StopDecoder();
         mpTvin->VDIN_ClosePort();
         mpTvin->Tvin_WaitPathInactive ( TV_PATH_TYPE_DEFAULT );
 
         //double confirm we set the main volume lut buffer to mpeg
-        RefreshAudioMasterVolume ( SOURCE_MPEG );
-        RefreshSrsEffectAndDacGain();
-        SetCustomEQGain();
-        LoadAudioVirtualizer();
         mpTvin->setMpeg2Vdin(1);
         mAv.setLookupPtsForDtmb(1);
         tv_source_input_type_t source_type = mpTvin->Tvin_SourceInputToSourceInputType(m_source_input);
@@ -2250,7 +2088,6 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
 
         CVpp::getInstance()->LoadVppSettings(SOURCE_DTV, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, INDEX_2D, TVIN_TFMT_2D);
 
-        Tv_SetAudioInSource ( source_input );
     } else {
         mpTvin->setMpeg2Vdin(0);
         mAv.setLookupPtsForDtmb(0);
@@ -2260,29 +2097,8 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
     Tv_MiscSetBySource ( source_input );
 
     if (source_input != SOURCE_DTV) {
-        // Uninit data
-        UnInitTvAudio();
-        if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3 ||
-              source_input == SOURCE_HDMI4 || source_input == SOURCE_MPEG || source_input == SOURCE_DTV) {
-            SwitchAVOutBypass(0);
-        } else {
-            SwitchAVOutBypass(1);
-        }
-
-        tv_audio_channel_e audio_channel = mpTvin->Tvin_GetInputSourceAudioChannelIndex (source_input);
-        AudioLineInSelectChannel( audio_channel );
-
-        Tv_SetAudioInSource ( source_input );
-        if ( source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3
-            || source_input == SOURCE_HDMI4) {
-            m_hdmi_sampling_rate = 0;
-            m_hdmi_audio_data = 0;
-        } else if (source_input == SOURCE_SPDIF) {
-            InitTvAudio(48000, CC_IN_USE_SPDIF_DEVICE);
-            HanldeAudioInputSr(48000);
-        }
-
         if (mpTvin->SwitchPort ( cur_port ) == 0) { //ok
+            mTvAction |= TV_ACTION_IN_VDIN;
             if (source_input != SOURCE_SPDIF)
             {
                 unsigned char std;
@@ -2295,25 +2111,10 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
                 CVpp::getInstance()->Vpp_ResetLastVppSettingsSourceType();
             }
             m_sig_spdif_nums = 0;
-            mHDMIAudioCheckThread.setObserver(this);
-            mHDMIAudioCheckThread.initCheckState();
-
-            if (source_input != SOURCE_SPDIF) {
-                mHDMIAudioCheckThread.setHDMIAudioCheckEnable(true);
-            } else {
-                mHDMIAudioCheckThread.setHDMIAudioCheckEnable(false);
-            }
-            mHDMIAudioCheckThread.resumeCheck(0);
         }
     }
 
-    Tv_SetAudioSourceType(source_input);
-    RefreshAudioMasterVolume(source_input);
-    Tv_SetAudioOutputSwap_Type(source_input);
-    Tv_SetAVOutPut_Input_gain(source_input);
-
     mTvAction &= ~ TV_ACTION_SOURCE_SWITCHING;
-    mTvAction |= TV_ACTION_IN_VDIN;
     return 0;
 }
 
@@ -2327,11 +2128,6 @@ void CTv::onSigToStable()
                                      INDEX_2D, m_cur_sig_info.trans_fmt);
     if (ret < 0) {
         LOGE("%s Set CurrentSourceInfo error!\n");
-    }
-
-    if (SOURCE_TV <= m_source_input && m_source_input <= SOURCE_AV2) {
-        InitTvAudio(48000, CC_IN_USE_I2S_DEVICE);
-        HanldeAudioInputSr(-1);
     }
 
     CVpp::getInstance()->LoadVppSettings(m_source_input, m_cur_sig_info.fmt, INDEX_2D,
@@ -2395,13 +2191,11 @@ void CTv::onSigStillStable()
     }
     if ( 1 ) {
         LOGD("still stable , to unmute audio/video");
-        setAudioPreGain(m_source_input);
         CMessage msg;
         msg.mDelayMs = 0;
         msg.mType = CTvMsgQueue::TV_MSG_ENABLE_VIDEO_LATER;
         msg.mpPara[0] = 2;
         mTvMsgQueue.sendMsg ( msg );
-        m_hdmi_audio_data = 0;
     }
     if ( 1 ) {
         //tvin_info_t info = m_cur_sig_info;
@@ -2427,14 +2221,6 @@ void CTv::onEnableVideoLater(int framecount)
 {
     LOGD ( "[source_switch_time]: %fs, onEnableVideoLater start, wait %d video frame come out", getUptimeSeconds(), framecount);
     mAv.EnableVideoWhenVideoPlaying(framecount);
-    if (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) != SOURCE_TYPE_HDMI ) {
-        if (isTvViewBlocked()) {
-            SetAudioMuteForTv ( CC_AUDIO_MUTE );
-        } else {
-            SetAudioMuteForTv ( CC_AUDIO_UNMUTE );
-        }
-        Tv_SetAudioInSource(m_source_input);
-    }
     LOGD ( "[source_switch_time]: %fs, onEnableVideoLater end, show source on screen", getUptimeSeconds());
 }
 
@@ -2452,62 +2238,9 @@ void CTv::onVideoAvailableLater(int framecount)
     }
 }
 
-void CTv::Tv_SetAVOutPut_Input_gain(tv_source_input_t source_input)
-{
-    int nPgaValueIndex = 0;
-    int nAdcValueIndex = 0;
-    int nDdcValueIndex = 0;
-    int tmpAvoutBufPtr[9];
-
-    if (GetAvOutGainBuf_Cfg(tmpAvoutBufPtr) != 0) {
-        GetDefaultAvOutGainBuf(tmpAvoutBufPtr);
-    }
-
-    switch (source_input) {
-    case SOURCE_AV1:
-    case SOURCE_AV2:
-        nPgaValueIndex = 0;
-        nAdcValueIndex = 1;
-        nDdcValueIndex = 2;
-        break;
-    case SOURCE_HDMI1:
-    case SOURCE_HDMI2:
-    case SOURCE_HDMI3:
-    case SOURCE_HDMI4:
-    case SOURCE_DTV:
-    case SOURCE_MPEG:
-        nPgaValueIndex = 3;
-        nAdcValueIndex = 4;
-        nDdcValueIndex = 5;
-        break;
-    case SOURCE_TV:
-        nPgaValueIndex = 6;
-        nAdcValueIndex = 7;
-        nDdcValueIndex = 8;
-        break;
-    default:
-        break;
-    }
-
-    SetPGA_IN_Value(tmpAvoutBufPtr[nPgaValueIndex]);
-    SetADC_Digital_Capture_Volume(tmpAvoutBufPtr[nAdcValueIndex]);
-    SetDAC_Digital_PlayBack_Volume(tmpAvoutBufPtr[nDdcValueIndex]);
-}
-
 void CTv::onSigToUnstable()
 {
     LOGD ( "%s, signal to Unstable\n", __FUNCTION__);
-    SetAudioMuteForTv(CC_AUDIO_MUTE);
-/*
-    if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
-        mpTvin->SwitchSnow( true );
-        mpTvin->Tvin_StartDecoder ( m_cur_sig_info );
-        mAv.EnableVideoNow( false );
-    } else {
-        mAv.DisableVideoWithBlackColor();
-        mpTvin->Tvin_StopDecoder();
-    }
-*/
     if (SOURCE_TV != m_source_input) {
         mAv.DisableVideoWithBlackColor();
         mpTvin->Tvin_StopDecoder();
@@ -2517,7 +2250,6 @@ void CTv::onSigToUnstable()
 void CTv::onSigToUnSupport()
 {
     LOGD ( "%s, signal to UnSupport\n", __FUNCTION__);
-    SetAudioMuteForTv(CC_AUDIO_MUTE);
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
         mpTvin->SwitchSnow( true );
         mpTvin->Tvin_StartDecoder ( m_cur_sig_info );
@@ -2545,7 +2277,6 @@ void CTv::onSigToUnSupport()
 void CTv::onSigToNoSig()
 {
     LOGD ( "%s, signal to NoSignal\n", __FUNCTION__);
-    SetAudioMuteForTv(CC_AUDIO_MUTE);
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
         mpTvin->SwitchSnow( true );
         mpTvin->Tvin_StartDecoder ( m_cur_sig_info );
@@ -2570,45 +2301,12 @@ void CTv::onSigToNoSig()
     }
 }
 
-void CTv::onHDMIAudioCheckLoop()
-{
-    if (( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_HDMI ) ) {
-        int sr = mpTvin->get_hdmi_sampling_rate();
-        if ( ( sr > 0 ) && ( sr != m_hdmi_sampling_rate ) ) {
-            LOGD("HDMI SR CHANGED");
-            CMessage msg;
-            msg.mDelayMs = 0;
-            msg.mType = CTvMsgQueue::TV_MSG_HDMI_SR_CHANGED;
-            ((int *)(msg.mpPara))[0] = sr;
-            ((int *)(msg.mpPara))[1] = m_hdmi_sampling_rate;
-            mTvMsgQueue.sendMsg ( msg );
-            m_hdmi_sampling_rate = sr;
-        }
-
-        //m_hdmi_audio_data init is 0, not audio data , when switch to HDMI
-        int hdmi_audio_data = mpTvin->TvinApi_GetHDMIAudioStatus();
-        if (hdmi_audio_data != m_hdmi_audio_data && sr > 0) {
-            LOGD("HDMI  auds_rcv_sts CHANGED = %d", hdmi_audio_data);
-            m_hdmi_audio_data = hdmi_audio_data;
-            onHMDIAudioStatusChanged(hdmi_audio_data);
-        }
-    }else if (( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_SPDIF ) ) {
-        if ( ( mAudioMuteStatusForTv == CC_AUDIO_MUTE ) && ( m_sig_spdif_nums ++ > 3 ) )
-        {
-            SetAudioMuteForSystem(CC_AUDIO_UNMUTE);
-            SetAudioMuteForTv(CC_AUDIO_UNMUTE);
-            LOGD("SPDIF UNMUTE");
-        }
-    }
-}
-
 void CTv::onBootvideoRunning() {
     //LOGD("%s,boot video is running", __FUNCTION__);
 }
 
 void CTv::onBootvideoStopped() {
     LOGD("%s,boot video has stopped", __FUNCTION__);
-    SetAudioMasterVolume( GetAudioMasterVolume());
     mBootvideoStatusDetectThread->stopDetect();
     if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_TVIN) > 0) {
         mpTvin->VDIN_AddVideoPath(TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
@@ -2713,129 +2411,6 @@ int CTv::SetPreviewWindow ( tvin_window_pos_t pos )
 
     return mAv.setVideoAxis(m_win_pos.x1, m_win_pos.y1, m_win_pos.x2, m_win_pos.y2);
 }
-
-/*********************** Audio start **********************/
-int CTv::SetAudioVolDigitLUTTable ( tv_source_input_t source_input )
-{
-    int tmpDefDigitLutBuf[CC_LUT_BUF_SIZE] = { 0 };
-    int lut_table_index = 0;
-    if (source_input == SOURCE_TV) {
-        lut_table_index = CC_GET_LUT_TV;
-    } else if (source_input == SOURCE_AV1 || source_input == SOURCE_AV2) {
-        lut_table_index = CC_GET_LUT_AV;
-    } else if (source_input == SOURCE_YPBPR1 || source_input == SOURCE_YPBPR2) {
-        lut_table_index = CC_GET_LUT_COMP;
-    } else if (source_input == SOURCE_VGA) {
-        lut_table_index = CC_GET_LUT_VGA;
-    } else if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3
-            || source_input == SOURCE_HDMI4) {
-        lut_table_index = CC_GET_LUT_HDMI;
-    } else if ( source_input == SOURCE_MPEG ) {
-        lut_table_index = CC_GET_LUT_MPEG;
-    } else if ( source_input == SOURCE_DTV ) {
-        lut_table_index = CC_GET_LUT_MPEG;
-    } else if ( source_input == SOURCE_MAX) {
-        return 0;
-    }
-    char MainVolLutTableName[128];
-    const char *baseName = GetAudioAmpMainvolTableBaseName(lut_table_index);
-    strcpy(MainVolLutTableName, baseName);
-    const char *dName = ".";
-    strcat(MainVolLutTableName, dName);
-    strcat(MainVolLutTableName, mMainVolLutTableExtraName);
-    if ( GetAudioAmpMainvolBuf(MainVolLutTableName, tmpDefDigitLutBuf) == 0) {
-        AudioSetVolumeDigitLUTBuf ( lut_table_index, tmpDefDigitLutBuf);
-    }
-    return 0;
-}
-
-void CTv::RefreshAudioMasterVolume ( tv_source_input_t source_input )
-{
-    if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 || source_input == SOURCE_HDMI3
-        || source_input == SOURCE_HDMI4) {
-        if ( GetAudioDVISupportEnable() == 1 ) {
-            if ( IsDVISignal() ) {
-                SetAudioVolDigitLUTTable ( SOURCE_MPEG );
-                SetAudioMasterVolume ( GetAudioMasterVolume() );
-                return;
-            }
-        }
-    }
-
-    SetAudioVolDigitLUTTable ( source_input );
-    SetAudioMasterVolume ( GetAudioMasterVolume() );
-}
-
-int CTv::Tv_SetAudioInSource (tv_source_input_t source_input)
-{
-    int vol = 255;
-    switch (source_input) {
-    case SOURCE_TV:
-        if (mpTvin->Tvin_GetAudioInSourceType(source_input) == TV_AUDIO_IN_SOURCE_TYPE_ATV) {
-            AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_ATV);
-            vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_ATV);
-        } else {
-            AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_LINEIN);
-            vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_LINEIN);
-        }
-        break;
-    case SOURCE_SPDIF:
-        AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_SPDIFIN);
-        vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_SPDIFIN);
-        break;
-    case SOURCE_AV1:
-    case SOURCE_AV2:
-    case SOURCE_YPBPR1:
-    case SOURCE_YPBPR2:
-    case SOURCE_VGA:
-        AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_LINEIN);
-        vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_LINEIN);
-        break;
-    case SOURCE_HDMI1:
-    case SOURCE_HDMI2:
-    case SOURCE_HDMI3:
-    case SOURCE_HDMI4:
-    case SOURCE_MPEG:
-    case SOURCE_DTV:
-        AudioSetAudioInSource(CC_AUDIO_IN_SOURCE_HDMI);
-        vol = GetAudioInternalDACDigitalPlayBackVolume_Cfg(CC_AUDIO_IN_SOURCE_HDMI);
-        break;
-    default:
-        break;
-    }
-    LOGD("%s, we have read SetDAC_Digital_PlayBack_Volume = %d of source [%d].\n", __FUNCTION__, vol, source_input);
-    return 0;
-}
-
-int CTv::Tv_SetAudioSourceType (tv_source_input_t source_input)
-{
-    int audio_source = -1;
-
-    if (source_input == SOURCE_TV) {
-        audio_source = AUDIO_ATV_SOURCE;
-    } else if (source_input == SOURCE_AV1 || source_input == SOURCE_AV2) {
-        audio_source = AUDIO_AV_SOURCE;
-    } else if (source_input == SOURCE_HDMI1 || source_input == SOURCE_HDMI2 ||
-               source_input == SOURCE_HDMI3 || source_input == SOURCE_HDMI4) {
-        audio_source = AUDIO_HDMI_SOURCE;
-    } else if (source_input == SOURCE_YPBPR1 || source_input == SOURCE_YPBPR2 ||
-               source_input == SOURCE_VGA) {
-        audio_source = AUDIO_AV_SOURCE;
-    } else if (source_input == SOURCE_DTV) {
-        audio_source = AUDIO_MPEG_SOURCE;
-    } else {
-        audio_source = AUDIO_MPEG_SOURCE;
-    }
-
-    return AudioSetAudioSourceType(audio_source);
-}
-
-void CTv::Tv_SetAudioOutputSwap_Type (tv_source_input_t source_input)
-{
-    int sw_status = GetAudioOutputSwapStatus(source_input);
-    SetOutput_Swap(sw_status);
-}
-/*********************** Audio end **********************/
 
 unsigned int CTv::Vpp_GetDisplayResolutionInfo(tvin_window_pos_t *win_pos)
 {
@@ -2970,7 +2545,6 @@ int CTv::setLcdEnable(bool enable)
 int CTv::Tv_SSMRestoreDefaultSetting()
 {
     SSMRestoreDeviceMarkValues();
-    AudioSSMRestoreDefaultSetting();
     CVpp::getInstance()->VPPSSMFacRestoreDefault();
     MiscSSMRestoreDefault();
     ReservedSSMRestoreDefault();
@@ -2993,7 +2567,6 @@ int CTv::clearDbAllProgramInfoTable()
 int CTv::Tv_SSMFacRestoreDefaultSetting()
 {
     CVpp::getInstance()->VPPSSMFacRestoreDefault();
-    AudioSSMRestoreDefaultSetting();
     MiscSSMFacRestoreDefault();
     return 0;
 }
@@ -3441,45 +3014,6 @@ int CTv::Tv_SaveDisplayMode ( vpp_display_mode_t mode, tv_source_input_t tv_sour
     return SSMSaveDisplayMode ( tv_source_input, (int)mode );
 }
 
-int CTv::setAudioPreGain(tv_source_input_t source_input)
-{
-    float pre_gain = getAudioPreGain(source_input);
-    if (pre_gain > -100.000001 && pre_gain < -99.999999) {
-        return -1;
-    }
-
-    return setAmAudioPreGain(pre_gain);
-}
-
-float CTv::getAudioPreGain(tv_source_input_t source_input)
-{
-    float pre_gain = -100;//default value is -100, if value of gain is -100, don't set it to AMAUDIO.
-    switch (source_input) {
-    case SOURCE_AV1:
-    case SOURCE_AV2:
-        pre_gain = config_get_float(CFG_SECTION_TV, CFG_AUDIO_PRE_GAIN_FOR_AV, -100);
-        break;
-    case SOURCE_HDMI1:
-    case SOURCE_HDMI2:
-    case SOURCE_HDMI3:
-    case SOURCE_HDMI4:
-        pre_gain = config_get_float(CFG_SECTION_TV, CFG_AUDIO_PRE_GAIN_FOR_HDMI, -100);
-        break;
-    case SOURCE_DTV:
-        pre_gain = config_get_float(CFG_SECTION_TV, CFG_AUDIO_PRE_GAIN_FOR_DTV, -100);
-        break;
-    case SOURCE_MPEG:
-        pre_gain = 0;
-        break;
-    case SOURCE_TV:
-        pre_gain = config_get_float(CFG_SECTION_TV, CFG_AUDIO_PRE_GAIN_FOR_ATV, -100);
-        break;
-    default:
-        break;
-    }
-    return pre_gain;
-}
-
 int CTv::setEyeProtectionMode(int enable)
 {
     int ret = -1;
@@ -3538,84 +3072,6 @@ int CTv::Tv_Easupdate()
 }
 
 //audio
-void CTv::TvAudioOpen()
-{
-    SetAudioAVOutMute(CC_AUDIO_UNMUTE);
-    SetAudioSPDIFMute(CC_AUDIO_UNMUTE);
-    project_info_t tmp_info;
-    if (GetProjectInfo(&tmp_info) == 0) {
-        strncpy(mMainVolLutTableExtraName, tmp_info.amp_curve_name, CC_PROJECT_INFO_ITEM_MAX_LEN - 1);
-    }
-    openTvAudio();
-}
-
-void CTv::AudioCtlUninit()
-{
-    int oldMuteStatus = mAudioMuteStatusForTv;
-    SetAudioMuteForTv(CC_AUDIO_MUTE);
-
-    AudioSetAudioInSource (CC_AUDIO_IN_SOURCE_HDMI);
-    SetDAC_Digital_PlayBack_Volume(255);
-    AudioSetAudioSourceType (AUDIO_MPEG_SOURCE);
-    UnInitTvAudio();
-    SetAudioVolumeCompensationVal(0);
-    SetAudioMasterVolume(GetAudioMasterVolume());
-    UnInitSetTvAudioCard();
-
-    SetAudioMuteForTv(oldMuteStatus);
-}
-
-//audio
-int CTv::SetAudioMuteForSystem(int muteOrUnmute)
-{
-    int ret = 0;
-    LOGD("SetAudioMuteForSystem sysMuteStats=%d, tvMuteStatus=%d, toMute=%d",
-        mAudioMuteStatusForSystem, mAudioMuteStatusForTv, muteOrUnmute);
-    mAudioMuteStatusForSystem = muteOrUnmute;
-    ret |= SetDacMute(mAudioMuteStatusForSystem, CC_DAC_MUTE_TYPE_EXTERNAL);
-    ret |= SetAudioI2sMute(mAudioMuteStatusForSystem | mAudioMuteStatusForTv);
-    return ret;
-}
-
-int CTv::GetAudioMuteForSystem()
-{
-    return mAudioMuteStatusForSystem;
-}
-
-int CTv::SetAudioMuteForTv(int muteOrUnmute)
-{
-    int ret = 0;
-    mAudioMuteStatusForTv = muteOrUnmute;
-    LOGD("SetAudioMuteForTv sysMuteStats=%d, tvMuteStatus=%d, toMute=%d",
-        mAudioMuteStatusForSystem, mAudioMuteStatusForTv, muteOrUnmute);
-    ret |= SetDacMute(mAudioMuteStatusForSystem | mAudioMuteStatusForTv, CC_DAC_MUTE_TYPE_EXTERNAL | CC_DAC_MUTE_TYPE_INTERNAL);
-    ret |= SetAudioI2sMute(mAudioMuteStatusForTv);
-    ret |= SetAudioSPDIFMute(mAudioMuteStatusForTv);
-    ret |= mAudioAlsa.SetAudioARCSwitch(!mAudioMuteStatusForTv);
-    //AudioSystem::setStreamMute(AUDIO_STREAM_MUSIC, mAudioMuteStatusForTv);
-    return ret;
-}
-
-int CTv::GetAudioMuteForTv()
-{
-    return mAudioMuteStatusForTv;
-}
-
-int CTv::SetAudioSPDIFSwitch(int tmp_val)
-{
-    int muteStatus = CC_AUDIO_UNMUTE;
-
-    SaveCurAudioSPDIFSwitch(tmp_val);
-
-    if (tmp_val == CC_SWITCH_OFF /*|| mAudioMuteStatusForSystem == CC_AUDIO_MUTE || mAudioMuteStatusForTv == CC_AUDIO_MUTE*/) {
-        muteStatus = CC_AUDIO_MUTE;
-    } else {
-        muteStatus = CC_AUDIO_UNMUTE;
-    }
-
-    SetAudioSPDIFMute(muteStatus);
-    return 0;
-}
 
 void CTv::updateSubtitle(int pic_width, int pic_height)
 {
@@ -3624,1748 +3080,10 @@ void CTv::updateSubtitle(int pic_width, int pic_height)
     ev.pic_height = pic_height;
     sendTvEvent(ev);
 }
-//--------------------------------------------------
-
-
-//Audio Mute
-int CTv::SetAudioI2sMute(int muteStatus)
-{
-    int aud_arch_type = GetAudioArchitectureTypeCFG();
-
-    if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_ON_BOARD)
-        return 0;
-
-    int vol = 256;
-    if (muteStatus == CC_AUDIO_MUTE) {
-        vol = 0;
-    } else {
-        vol = 256;
-    }
-    CFile::setFileAttrValue(SYS_AUIDO_DIRECT_RIGHT_GAIN, vol);
-    CFile::setFileAttrValue(SYS_AUIDO_DIRECT_LEFT_GAIN, vol);
-    return 0;
-}
-
-int CTv::SetDacMute(int muteStatus, int mute_type)
-{
-    int tmp_ret = 0;
-    if (mute_type & CC_DAC_MUTE_TYPE_INTERNAL) {
-        tmp_ret |= mAudioAlsa.SetInternalDacMute(muteStatus);
-    }
-
-    if (mute_type & CC_DAC_MUTE_TYPE_EXTERNAL) {
-        int set_val = 0;
-        int aud_arch_type = GetAudioArchitectureTypeCFG();
-
-        if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_ON_BOARD) {
-            if (muteStatus == CC_AUDIO_MUTE) {
-                set_val = CC_MUTE_ON;
-            } else if (muteStatus == CC_AUDIO_UNMUTE) {
-                set_val = CC_MUTE_OFF;
-            } else {
-                return -1;
-            }
-
-            mAudioAlsa.SetExternalDacChannelSwitch(1, set_val);
-            mAudioAlsa.SetExternalDacChannelSwitch(2, set_val);
-            //showboz:  can disable it
-            mAudioAlsa.SetExternalDacChannelSwitch(3, set_val);
-        } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_OFF_BOARD_FBC) {
-            SendCmdToOffBoardFBCExternalDac(AUDIO_CMD_SET_MUTE, muteStatus);
-        } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_CUSTOMER_LIB) {
-            mCustomerCtrl.SetMute((muteStatus == CC_AUDIO_MUTE) ? CAudioCustomerCtrl::MUTE : CAudioCustomerCtrl::UNMUTE);
-        } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_DIGITAL) {
-            mAudioAlsa.SetDigitalMute(muteStatus);
-        }
-        mAudioAlsa.setAudioPcmPlaybackMute(muteStatus);
-    }
-    return tmp_ret;
-}
-
-int CTv::SetAudioAVOutMute(int muteStatus)
-{
-    SSMSaveAudioAVOutMuteVal(muteStatus);
-    return mAudioAlsa.SetInternalDacMute(muteStatus);
-}
-
-int CTv::GetAudioAVOutMute()
-{
-    int8_t tmp_ch = 0;
-    SSMReadAudioAVOutMuteVal(&tmp_ch);
-    return tmp_ch;
-}
-
-int CTv::SetAudioSPDIFMute(int muteStatus)
-{
-    if (GetCurAudioSPDIFSwitch() == CC_SWITCH_OFF) {
-        muteStatus = CC_AUDIO_MUTE;
-    }
-
-    SSMSaveAudioSPIDFMuteVal(muteStatus);
-    return mAudioAlsa.SetSPDIFMute(muteStatus);
-}
-
-int CTv::GetAudioSPDIFMute()
-{
-    int8_t tmp_ch = 0;
-    SSMReadAudioSPIDFMuteVal(&tmp_ch);
-    return tmp_ch;
-}
-
-int CTv::GetCurAudioSPDIFSwitch()
-{
-    return mCurAudioSPDIFSwitch;
-}
-
-int CTv::SaveCurAudioSPDIFSwitch(int tmp_val)
-{
-    mCurAudioSPDIFSwitch = tmp_val;
-    SSMSaveAudioSPDIFSwitchVal(tmp_val);
-    return tmp_val;
-}
-
-int CTv::LoadCurAudioSPDIFSwitch()
-{
-    int8_t tmp_ch = 0;
-    SSMReadAudioSPDIFSwitchVal(&tmp_ch);
-    mCurAudioSPDIFSwitch = tmp_ch;
-    if (mCurAudioSPDIFSwitch != CC_SWITCH_ON
-            && mCurAudioSPDIFSwitch != CC_SWITCH_OFF) {
-        SaveCurAudioSPDIFSwitch (CC_SWITCH_ON);
-    }
-    return mCurAudioSPDIFSwitch;
-}
-
-//Audio SPDIF Mode
-int CTv::SetAudioSPDIFMode(int tmp_val)
-{
-    LOGD("%s : val = %d\n", __FUNCTION__, tmp_val);
-    mCurAudioSPDIFMode = tmp_val;
-    SetSPDIFMode(tmp_val);
-    return 0;
-}
-
-int CTv::GetCurAudioSPDIFMode()
-{
-    return mCurAudioSPDIFMode;
-}
-
-int CTv::SaveCurAudioSPDIFMode(int tmp_val)
-{
-    mCurAudioSPDIFMode = tmp_val;
-    SSMSaveAudioSPDIFModeVal(tmp_val);
-    return tmp_val;
-}
-
-int CTv::LoadCurAudioSPDIFMode()
-{
-    int8_t tmp_ch = 0;
-    SSMReadAudioSPDIFModeVal(&tmp_ch);
-    mCurAudioSPDIFMode = tmp_ch;
-    if (mCurAudioSPDIFMode != CC_SPDIF_MODE_PCM
-            && mCurAudioSPDIFMode != CC_SPDIF_MODE_RAW) {
-        SaveCurAudioSPDIFMode (CC_SPDIF_MODE_PCM);
-    }
-    return mCurAudioSPDIFMode;
-}
-
-int CTv::SetAudioMasterVolume(int tmp_vol)
-{
-    LOGD("%s, tmp_vol = %d", __FUNCTION__, tmp_vol);
-    mCustomAudioMasterVolume = tmp_vol;
-    if (!isBootvideoStopped()) {
-        mBootvideoStatusDetectThread->startDetect();
-        return 0;
-    }
-    if (GetUseAndroidVolEnable()) {
-        int master_vol;
-        master_vol =  config_get_int(CFG_SECTION_TV, CFG_AUDIO_MASTER_VOL, 150);
-        mAudioAlsa.SetExternalDacChannelVolume(0, master_vol);
-        return 0;
-    }
-
-    //Volume Compensation
-    tmp_vol += mVolumeCompensationVal;
-
-    if (tmp_vol > CC_MAX_SOUND_VOL) {
-        tmp_vol = CC_MAX_SOUND_VOL;
-    }
-
-    if (tmp_vol < CC_MIN_SOUND_VOL) {
-        tmp_vol = CC_MIN_SOUND_VOL;
-    }
-
-    int tmp_ret = 0;
-    int aud_arch_type = GetAudioArchitectureTypeCFG();
-
-    if (aud_arch_type == CC_DAC_G9TV_INTERNAL_DAC) {
-        tmp_ret = mAudioAlsa.SetInternalDacMainVolume(tmp_vol);
-    } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_ON_BOARD) {
-        int digit_vol = 0;
-        int vol_gain_val = 0;
-        int vol_buf[2] = {0, 0};
-
-        //handle l&r channel volume for balance
-        mAudioAlsa.CalculateBalanceVol(255, mMainVolumeBalanceVal, vol_buf);
-
-        tmp_ret |= mAudioAlsa.SetExternalDacChannelVolume(1, vol_buf[0]);
-        tmp_ret |= mAudioAlsa.SetExternalDacChannelVolume(2, vol_buf[1]);
-
-        //handle master channel volume
-        digit_vol = mAudioAlsa.TransVolumeBarVolToDigitalVol(mAudioAlsa.GetMainVolDigitLutBuf(), tmp_vol);
-
-        vol_gain_val = mAudioAlsa.GetMainVolumeGain();
-        digit_vol += vol_gain_val;
-        tmp_ret |= mAudioAlsa.SetExternalDacChannelVolume(0, digit_vol);
-    } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_OFF_BOARD_FBC) {
-        tmp_ret = SendCmdToOffBoardFBCExternalDac(AUDIO_CMD_SET_VOLUME_BAR, tmp_vol);
-    } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_CUSTOMER_LIB) {
-        tmp_ret = mCustomerCtrl.SetVolumeBar(tmp_vol);
-    } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_DIGITAL) {
-        int vol_buf[2] = {0, 0};
-        mAudioAlsa.CalculateBalanceVol(tmp_vol, mMainVolumeBalanceVal, vol_buf);
-        tmp_ret = mAudioAlsa.SetDigitalMainVolume(vol_buf[0], vol_buf[1]);
-    }
-    if ( Get2d4gHeadsetEnable() == 1 ) {
-        setAudioPcmPlaybackVolume(tmp_vol);
-    }
-    return 0;
-}
-
-int CTv::GetAudioMasterVolume()
-{
-    return mCustomAudioMasterVolume;
-}
-
-int CTv::GetCurAudioMasterVolume()
-{
-    return mCurAudioMasterVolume;
-}
-
-int CTv::SaveCurAudioMasterVolume(int tmp_vol)
-{
-    mCurAudioMasterVolume = tmp_vol;
-    SSMSaveAudioMasterVolume(tmp_vol);
-    return tmp_vol;
-}
-
-int CTv::LoadCurAudioMasterVolume()
-{
-    int8_t tmp_ch = 0;
-    SSMReadAudioMasterVolume(&tmp_ch);
-    mCurAudioMasterVolume = tmp_ch;
-    if (mCurAudioMasterVolume < CC_MIN_SOUND_VOL
-            || mCurAudioMasterVolume > CC_MAX_SOUND_VOL) {
-        SaveCurAudioMasterVolume (CC_DEF_SOUND_VOL);
-    }
-    mCustomAudioMasterVolume = mCurAudioMasterVolume;
-
-    return mCurAudioMasterVolume;
-}
-
-int CTv::SetAudioBalance(int tmp_val)
-{
-    mCustomAudioBalance = tmp_val;
-
-    int aud_arch_type = GetAudioArchitectureTypeCFG();
-    int max_vol = config_get_int(CFG_SECTION_TV, CFG_AUDIO_BALANCE_MAX_VOL, 255);
-
-    mMainVolumeBalanceVal = tmp_val;
-
-    if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_OFF_BOARD_FBC) {
-        SendCmdToOffBoardFBCExternalDac(AUDIO_CMD_SET_BALANCE, mMainVolumeBalanceVal);
-    } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_CUSTOMER_LIB) {
-        mCustomerCtrl.SetBlance(mMainVolumeBalanceVal);
-    } else {
-        int tmp_ret = 0;
-        int vol_buf[2] = {0, 0};
-        mAudioAlsa.CalculateBalanceVol(max_vol, mMainVolumeBalanceVal, vol_buf);
-
-        tmp_ret |= mAudioAlsa.SetExternalDacChannelVolume(1, vol_buf[0]);
-        tmp_ret |= mAudioAlsa.SetExternalDacChannelVolume(2, vol_buf[1]);
-    }
-    return 0;
-}
-
-int CTv::GetAudioBalance()
-{
-    return mCustomAudioBalance;
-}
-
-int CTv::GetCurAudioBalance()
-{
-    return mCurAudioBalance;
-}
-
-int CTv::SaveCurAudioBalance(int tmp_val)
-{
-    mCurAudioBalance = tmp_val;
-    SSMSaveAudioBalanceVal(tmp_val);
-    return tmp_val;
-}
-
-int CTv::LoadCurAudioBalance()
-{
-    int8_t tmp_ch = 0;
-    SSMReadAudioBalanceVal(&tmp_ch);
-    mCurAudioBalance = tmp_ch;
-    if (mCurAudioBalance < CC_MIN_SOUND_BALANCE_VAL
-            || mCurAudioBalance > CC_MAX_SOUND_BALANCE_VAL) {
-        SaveCurAudioBalance (CC_DEF_SOUND_BALANCE_VAL);
-    }
-
-    mCustomAudioBalance = mCurAudioBalance;
-
-    return mCurAudioBalance;
-}
-
-int CTv::SetAudioVolumeCompensationVal(int tmp_vol_comp_val)
-{
-    mVolumeCompensationVal = tmp_vol_comp_val;
-    LOGD("%s, new vol comp value = %d.\n", __FUNCTION__, tmp_vol_comp_val);
-    return mVolumeCompensationVal;
-}
-
-int CTv::SetAudioSupperBassVolume(int tmp_vol)
-{
-    mCustomAudioSupperBassVolume = tmp_vol;
-
-    int aud_arch_type = GetAudioArchitectureTypeCFG();
-    int tmp_ret = 0;
-
-    if (aud_arch_type == CC_DAC_G9TV_INTERNAL_DAC) {
-        return 0;
-    } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_ON_BOARD) {
-        int digit_vol = 0;
-        int vol_gain_val = 0;
-
-        digit_vol = mAudioAlsa.TransVolumeBarVolToDigitalVol(mAudioAlsa.GetMainVolDigitLutBuf(), tmp_vol);
-
-        vol_gain_val = mAudioAlsa.GetSupperBassVolumeGain();
-        digit_vol += vol_gain_val;
-        if (digit_vol < CC_MIN_DAC_SUB_WOOFER_VOLUME) {
-            digit_vol = CC_MIN_DAC_SUB_WOOFER_VOLUME;
-        } else if (digit_vol > CC_MAX_DAC_SUB_WOOFER_VOLUME) {
-            digit_vol = CC_MAX_DAC_SUB_WOOFER_VOLUME;
-        }
-
-        tmp_ret = mAudioAlsa.SetExternalDacChannelVolume(3, digit_vol);
-    } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_OFF_BOARD_FBC) {
-        tmp_ret = SendCmdToOffBoardFBCExternalDac(AUDIO_CMD_SET_SUBCHANNEL_VOLUME, tmp_vol);
-    }
-
-    return tmp_ret;
-}
-
-int CTv::GetAudioSupperBassVolume()
-{
-    return mCustomAudioSupperBassVolume;
-}
-
-int CTv::GetCurAudioSupperBassVolume()
-{
-    return mCurAudioSupperBassVolume;
-}
-
-int CTv::SaveCurAudioSupperBassVolume(int tmp_vol)
-{
-    mCurAudioSupperBassVolume = tmp_vol;
-    SSMSaveAudioSupperBassVolume(tmp_vol);
-
-    return tmp_vol;
-}
-
-int CTv::LoadCurAudioSupperBassVolume()
-{
-    int8_t tmp_ch = 0;
-    SSMReadAudioSupperBassVolume(&tmp_ch);
-    mCurAudioSupperBassVolume = tmp_ch;
-    if (mCurAudioSupperBassVolume < CC_MIN_SUPPERBASS_VOL
-            || mCurAudioSupperBassVolume > CC_MAX_SUPPERBASS_VOL) {
-        SaveCurAudioSupperBassVolume (CC_DEF_SUPPERBASS_VOL);
-    }
-    mCustomAudioSupperBassVolume = mCurAudioSupperBassVolume;
-
-    return mCurAudioSupperBassVolume;
-}
-
-int CTv::SetAudioSupperBassSwitch(int tmp_val)
-{
-    mCustomAudioSupperBassSwitch = tmp_val;
-
-    if (GetAudioSupperBassSwitch() == CC_SWITCH_OFF) {
-        return SetAudioSupperBassVolume(CC_MIN_SUPPERBASS_VOL);
-    }
-
-    return SetAudioSupperBassVolume(GetAudioSupperBassVolume());
-}
-
-int CTv::GetAudioSupperBassSwitch()
-{
-    if (GetAudioSupperBassSwitchDisableCFG() != 0) {
-        return CC_SWITCH_ON;
-    }
-
-    return mCustomAudioSupperBassSwitch;
-}
-
-int CTv::GetCurAudioSupperBassSwitch()
-{
-    if (GetAudioSupperBassSwitchDisableCFG() != 0) {
-        return CC_SWITCH_ON;
-    }
-
-    return mCurAudioSupperBassSwitch;
-}
-
-int CTv::SaveCurAudioSupperBassSwitch(int tmp_val)
-{
-    mCurAudioSupperBassSwitch = tmp_val;
-    SSMSaveAudioSupperBassSwitch(tmp_val);
-    SetSupperBassSRSSpeakerSize();
-    return tmp_val;
-}
-
-int CTv::LoadCurAudioSupperBassSwitch()
-{
-    int8_t tmp_ch = 0;
-    SSMReadAudioSupperBassSwitch(&tmp_ch);
-    mCurAudioSupperBassSwitch = tmp_ch;
-    if (mCurAudioSupperBassSwitch != CC_SWITCH_ON
-            && mCurAudioSupperBassSwitch != CC_SWITCH_OFF) {
-        SaveCurAudioSupperBassSwitch (CC_SWITCH_OFF);
-    }
-    mCustomAudioSupperBassSwitch = mCurAudioSupperBassSwitch;
-
-    return mCurAudioSupperBassSwitch;
-}
-
-void CTv::SetSupperBassSRSSpeakerSize()
-{
-    int tmp_speakersize = -1;
-
-    if (GetAudioSrsTruBass() == CC_SWITCH_ON) {
-        tmp_speakersize = GetAudioSRSSupperBassTrubassSpeakerSizeCfg();
-        if (tmp_speakersize >= 0) {
-            mAudioEffect.SetSrsTrubassSpeakerSize(tmp_speakersize);
-        }
-    }
-}
-
-int CTv::SetAudioSRSSurround(int tmp_val)
-{
-    mCustomAudioSRSSurround = tmp_val;
-    RefreshSrsEffectAndDacGain();
-    return 0;
-}
-
-int CTv::GetAudioSRSSurround()
-{
-    return mCustomAudioSRSSurround;
-}
-
-int CTv::GetCurAudioSRSSurround()
-{
-    return mCurAudioSRSSurround;
-}
-
-int CTv::SaveCurAudioSrsSurround(int tmp_val)
-{
-    mCurAudioSRSSurround = tmp_val;
-    SSMSaveAudioSRSSurroundSwitch(tmp_val);
-    return tmp_val;
-}
-
-int CTv::LoadCurAudioSrsSurround()
-{
-    int8_t tmp_ch = 0;
-
-    SSMReadAudioSRSSurroundSwitch(&tmp_ch);
-    mCurAudioSRSSurround = tmp_ch;
-    if (mCurAudioSRSSurround != CC_SWITCH_ON
-            && mCurAudioSRSSurround != CC_SWITCH_OFF) {
-        SaveCurAudioSrsSurround (CC_SWITCH_OFF);
-    }
-    mCustomAudioSRSSurround = mCurAudioSRSSurround;
-
-    return mCurAudioSRSSurround;
-}
-
-int CTv::SetAudioSrsDialogClarity(int tmp_val)
-{
-    mCustomAudioSrsDialogClarity = tmp_val;
-    RefreshSrsEffectAndDacGain();
-    return 0;
-}
-
-int CTv::GetAudioSrsDialogClarity()
-{
-    return mCustomAudioSrsDialogClarity;
-}
-
-int CTv::GetCurAudioSrsDialogClarity()
-{
-    return mCurAudioSrsDialogClarity;
-}
-
-int CTv::SaveCurAudioSrsDialogClarity(int tmp_val)
-{
-    mCurAudioSrsDialogClarity = tmp_val;
-    SSMSaveAudioSRSDialogClaritySwitch(tmp_val);
-    return tmp_val;
-}
-
-int CTv::LoadCurAudioSrsDialogClarity()
-{
-    int8_t tmp_ch = 0;
-
-    SSMReadAudioSRSDialogClaritySwitch(&tmp_ch);
-    mCurAudioSrsDialogClarity = tmp_ch;
-    if (mCurAudioSrsDialogClarity != CC_SWITCH_ON
-            && mCurAudioSrsDialogClarity != CC_SWITCH_OFF) {
-        SaveCurAudioSrsDialogClarity (CC_SWITCH_OFF);
-    }
-    mCustomAudioSrsDialogClarity = mCurAudioSrsDialogClarity;
-
-    return mCurAudioSrsDialogClarity;
-}
-
-int CTv::SetAudioSrsTruBass(int tmp_val)
-{
-    mCustomAudioSrsTruBass = tmp_val;
-    RefreshSrsEffectAndDacGain();
-    return 0;
-}
-
-int CTv::GetAudioSrsTruBass()
-{
-    return mCustomAudioSrsTruBass;
-}
-
-int CTv::GetCurAudioSrsTruBass()
-{
-    return mCurAudioSrsTruBass;
-}
-
-int CTv::SaveCurAudioSrsTruBass(int tmp_val)
-{
-    mCurAudioSrsTruBass = tmp_val;
-    SSMSaveAudioSRSTruBassSwitch(tmp_val);
-    return tmp_val;
-}
-
-int CTv::LoadCurAudioSrsTruBass()
-{
-    int8_t tmp_ch = 0;
-
-    SSMReadAudioSRSTruBassSwitch(&tmp_ch);
-    mCurAudioSrsTruBass = tmp_ch;
-    if (mCurAudioSrsTruBass != CC_SWITCH_ON
-            && mCurAudioSrsTruBass != CC_SWITCH_OFF) {
-        SaveCurAudioSrsTruBass (CC_SWITCH_OFF);
-    }
-    mCustomAudioSrsTruBass = mCurAudioSrsTruBass;
-
-    return mCurAudioSrsTruBass;
-}
-
-void CTv::RefreshSrsEffectAndDacGain()
-{
-    int tmp_gain_val = 0;
-    int surround_switch = CC_SWITCH_OFF;
-    int trubass_switch = CC_SWITCH_OFF;
-    int dialogclarity_switch = CC_SWITCH_OFF;
-    trubass_switch = GetAudioSrsTruBass();
-    dialogclarity_switch = GetAudioSrsDialogClarity();
-    surround_switch = GetAudioSRSSurround();
-
-    if (GetAudioSRSSourroundEnableCFG() == 0) {
-        return;
-    }
-
-    if (surround_switch == CC_SWITCH_ON) {
-        mAudioEffect.SetSrsSurroundSwitch(CC_SWITCH_ON);
-        tmp_gain_val = GetAudioSRSGainCfg(CFG_AUDIO_SRS_SOURROUND_GAIN, 50);
-        mAudioEffect.SetSrsSurroundGain(tmp_gain_val);
-
-        int input_gain_val = GetAudioSRSGainCfg(CFG_AUDIO_SRS_INPUT_GAIN, 50);
-        int out_gain_val = GetAudioSRSGainCfg(CFG_AUDIO_SRS_OUTPUT_GAIN, 50);
-        mAudioEffect.SetSrsInputOutputGain(input_gain_val, out_gain_val);
-
-        if (trubass_switch == CC_SWITCH_ON
-                && dialogclarity_switch == CC_SWITCH_OFF) {
-
-            mAudioEffect.SetSrsTruBassSwitch (CC_SWITCH_ON);
-            tmp_gain_val = GetAudioSRSGainCfg(CFG_AUDIO_SRS_TRUBASS_GAIN, 50);
-            mAudioEffect.SetSrsTruBassGain(tmp_gain_val);
-            tmp_gain_val = GetAudioSRSGainCfg(CFG_AUDIO_SRS_TRUBASS_SPEAKERSIZE, 2);
-            mAudioEffect.SetSrsTrubassSpeakerSize(tmp_gain_val);
-
-            mAudioEffect.SetSrsDialogClaritySwitch (CC_SWITCH_OFF);
-
-        } else if (trubass_switch == CC_SWITCH_OFF
-                   && dialogclarity_switch == CC_SWITCH_ON) {
-
-            mAudioEffect.SetSrsDialogClaritySwitch (CC_SWITCH_ON);
-            tmp_gain_val = GetAudioSRSGainCfg(CFG_AUDIO_SRS_CLARITY_GAIN, 30);
-            mAudioEffect.SetSrsDialogClarityGain(tmp_gain_val);
-            tmp_gain_val = GetAudioSRSGainCfg(CFG_AUDIO_SRS_DEFINITION_GAIN, 20);
-            mAudioEffect.SetSrsDefinitionGain(tmp_gain_val);
-
-            mAudioEffect.SetSrsTruBassSwitch (CC_SWITCH_OFF);
-
-        } else if (trubass_switch == CC_SWITCH_ON
-                   && dialogclarity_switch == CC_SWITCH_ON) {
-
-            mAudioEffect.SetSrsTruBassSwitch (CC_SWITCH_ON);
-            tmp_gain_val = GetAudioSRSGainCfg(CFG_AUDIO_SRS_TRUBASS_GAIN, 50);
-            mAudioEffect.SetSrsTruBassGain(tmp_gain_val);
-            tmp_gain_val = GetAudioSRSGainCfg(CFG_AUDIO_SRS_TRUBASS_SPEAKERSIZE, 2);
-            mAudioEffect.SetSrsTrubassSpeakerSize(tmp_gain_val);
-
-            mAudioEffect.SetSrsDialogClaritySwitch(CC_SWITCH_ON);
-            tmp_gain_val = GetAudioSRSGainCfg(CFG_AUDIO_SRS_CLARITY_GAIN, 30);
-            mAudioEffect.SetSrsDialogClarityGain(tmp_gain_val);
-            tmp_gain_val = GetAudioSRSGainCfg(CFG_AUDIO_SRS_DEFINITION_GAIN, 20);
-            mAudioEffect.SetSrsDefinitionGain(tmp_gain_val);
-
-        } else if (trubass_switch == CC_SWITCH_OFF
-                   && dialogclarity_switch == CC_SWITCH_OFF) {
-            mAudioEffect.SetSrsTruBassSwitch (CC_SWITCH_OFF);
-            mAudioEffect.SetSrsDialogClaritySwitch(CC_SWITCH_OFF);
-        }
-        SetSupperBassSRSSpeakerSize();
-    } else {
-        mAudioEffect.SetSrsSurroundSwitch (CC_SWITCH_OFF);
-        mAudioEffect.SetSrsTruBassSwitch(CC_SWITCH_OFF);
-        mAudioEffect.SetSrsDialogClaritySwitch(CC_SWITCH_OFF);
-    }
-    //Refesh DAC gain
-    int main_gain_val = 0;
-    if (surround_switch == CC_SWITCH_ON) {
-        main_gain_val = GetAudioEffectAmplifierGainCfg(CFG_AUDIO_SRS_SOURROUND_MASTER_GAIN, 6, 24);
-        if (dialogclarity_switch == CC_SWITCH_ON
-                && trubass_switch == CC_SWITCH_OFF) {
-            main_gain_val = GetAudioEffectAmplifierGainCfg(CFG_AUDIO_SRS_CLARITY_MASTER_GAIN, 6, 24);
-        } else if (dialogclarity_switch == CC_SWITCH_OFF
-                   && trubass_switch == CC_SWITCH_ON) {
-            main_gain_val = GetAudioEffectAmplifierGainCfg(CFG_AUDIO_SRS_TRUBASS_MASTER_GAIN, 6, 24);
-        } else if (dialogclarity_switch == CC_SWITCH_ON
-                   && trubass_switch == CC_SWITCH_ON) {
-            main_gain_val = GetAudioEffectAmplifierGainCfg(CFG_AUDIO_SRS_TRUBASS_CLARITY_MASTER_GAIN, 6, 24);
-        }
-    }
-    mAudioAlsa.SetMainVolumeGain(main_gain_val);
-}
-
-int CTv::SetAudioVirtualizer(int enable, int EffectLevel)
-{
-    config_set_int(CFG_SECTION_TV, CFG_AUDIO_VIRTUAL_ENABLE, enable);
-    config_set_int(CFG_SECTION_TV, CFG_AUDIO_VIRTUAL_LEVEL, EffectLevel);
-    return mAudioEffect.SetAudioVirtualizer(enable, EffectLevel);
-}
-
-int CTv::GetAudioVirtualizerEnable()
-{
-    return   config_get_int(CFG_SECTION_TV, CFG_AUDIO_VIRTUAL_ENABLE, 0);
-}
-
-int CTv::GetAudioVirtualizerLevel()
-{
-    return    config_get_int(CFG_SECTION_TV, CFG_AUDIO_VIRTUAL_LEVEL, 100);
-}
-
-int CTv::LoadAudioVirtualizer()
-{
-    return SetAudioVirtualizer(GetAudioVirtualizerEnable(), GetAudioVirtualizerLevel());
-}
-
-int CTv::SetAudioBassVolume(int tmp_vol) {
-    int nMinBassVol = 0, nMaxBassVol = 0;
-
-    nMinBassVol = GetBassUIMinGainVal();
-    nMaxBassVol = GetBassUIMaxGainVal();
-
-    if (tmp_vol < nMinBassVol || tmp_vol > nMaxBassVol) {
-        tmp_vol = (nMaxBassVol + nMinBassVol) / 2;
-    }
-
-    mCustomAudioBassVolume = tmp_vol;
-    tmp_vol = MappingTrebleBassAndEqualizer(GetAudioBassVolume(), 0,
-                                            nMinBassVol, nMaxBassVol);
-    return SetSpecialIndexEQGain(CC_EQ_BASS_IND, tmp_vol);
-}
-
-int CTv::GetAudioBassVolume()
-{
-    return mCustomAudioBassVolume;
-}
-
-int CTv::GetCurAudioBassVolume()
-{
-    return mCurAudioBassVolume;
-}
-
-int CTv::SaveCurAudioBassVolume(int tmp_vol)
-{
-    int nMinBassVol = 0, nMaxBassVol = 0;
-
-    nMinBassVol = GetBassUIMinGainVal();
-    nMaxBassVol = GetBassUIMaxGainVal();
-
-    if (tmp_vol < nMinBassVol || tmp_vol > nMaxBassVol) {
-        tmp_vol = (nMaxBassVol + nMinBassVol) / 2;
-    }
-
-    RealSaveCurAudioBassVolume(tmp_vol, 1);
-
-    tmp_vol = MappingTrebleBassAndEqualizer(GetCurAudioBassVolume(), 0,
-                                            nMinBassVol, nMaxBassVol);
-    return SaveSpecialIndexEQGain(CC_EQ_BASS_IND, tmp_vol);
-}
-
-int CTv::RealSaveCurAudioBassVolume(int tmp_vol, int sound_mode_judge)
-{
-    mCurAudioBassVolume = tmp_vol;
-    SSMSaveAudioBassVolume(tmp_vol);
-
-    if (sound_mode_judge == 1) {
-        if (GetAudioSoundMode() != CC_SOUND_MODE_USER) {
-            SaveCurAudioSoundMode (CC_SOUND_MODE_USER);
-            mCustomAudioSoundMode = mCurAudioSoundMode;
-        }
-    }
-    return mCurAudioBassVolume;
-}
-
-int CTv::LoadCurAudioBassVolume()
-{
-    int nMinBassVol = 0, nMaxBassVol = 0;
-    int8_t tmp_ch = 0;
-
-    nMinBassVol = GetBassUIMinGainVal();
-    nMaxBassVol = GetBassUIMaxGainVal();
-
-    SSMReadAudioBassVolume(&tmp_ch);
-    mCurAudioBassVolume = tmp_ch;
-    if (mCurAudioBassVolume < nMinBassVol
-            || mCurAudioBassVolume > nMaxBassVol) {
-        RealSaveCurAudioBassVolume((nMaxBassVol + nMinBassVol) / 2, 0);
-    }
-
-    mCustomAudioBassVolume = mCurAudioBassVolume;
-    return mCurAudioBassVolume;
-}
-
-int CTv::SetAudioTrebleVolume(int tmp_vol)
-{
-    int nMinTrebleVol = 0, nMaxTrebleVol = 0;
-
-    nMinTrebleVol = GetTrebleUIMinGainVal();
-    nMaxTrebleVol = GetTrebleUIMaxGainVal();
-
-    if (tmp_vol < nMinTrebleVol || tmp_vol > nMaxTrebleVol) {
-        tmp_vol = (nMaxTrebleVol + nMinTrebleVol) / 2;
-    }
-
-    mCustomAudioTrebleVolume = tmp_vol;
-
-    tmp_vol = MappingTrebleBassAndEqualizer(GetAudioTrebleVolume(), 0,
-                                            nMinTrebleVol, nMaxTrebleVol);
-    return SetSpecialIndexEQGain(CC_EQ_TREBLE_IND, tmp_vol);
-}
-
-int CTv::GetAudioTrebleVolume()
-{
-    return mCustomAudioTrebleVolume;
-}
-
-int CTv::GetCurAudioTrebleVolume()
-{
-    return mCurAudioTrebleVolume;
-}
-
-int CTv::SaveCurAudioTrebleVolume(int tmp_vol)
-{
-    int nMinTrebleVol = 0, nMaxTrebleVol = 0;
-
-    nMinTrebleVol = GetTrebleUIMinGainVal();
-    nMaxTrebleVol = GetTrebleUIMaxGainVal();
-
-    if (tmp_vol < nMinTrebleVol || tmp_vol > nMaxTrebleVol) {
-        tmp_vol = (nMaxTrebleVol + nMinTrebleVol) / 2;
-    }
-
-    RealSaveCurAudioTrebleVolume(tmp_vol, 1);
-
-    tmp_vol = MappingTrebleBassAndEqualizer(GetCurAudioTrebleVolume(), 0,
-                                            nMinTrebleVol, nMaxTrebleVol);
-    return SaveSpecialIndexEQGain(CC_EQ_TREBLE_IND, tmp_vol);
-}
-
-int CTv::RealSaveCurAudioTrebleVolume(int tmp_vol, int sound_mode_judge)
-{
-    mCurAudioTrebleVolume = tmp_vol;
-    SSMSaveAudioTrebleVolume(tmp_vol);
-
-    if (sound_mode_judge == 1) {
-        if (GetAudioSoundMode() != CC_SOUND_MODE_USER) {
-            SaveCurAudioSoundMode (CC_SOUND_MODE_USER);
-            mCustomAudioSoundMode = mCurAudioSoundMode;
-        }
-    }
-
-    return mCurAudioTrebleVolume;
-}
-
-int CTv::LoadCurAudioTrebleVolume()
-{
-    int nMinTrebleVol = 0, nMaxTrebleVol = 0;
-    int8_t tmp_ch = 0;
-
-    nMinTrebleVol = GetTrebleUIMinGainVal();
-    nMaxTrebleVol = GetTrebleUIMaxGainVal();
-
-    SSMReadAudioTrebleVolume(&tmp_ch);
-    mCurAudioTrebleVolume = tmp_ch;
-    if (mCurAudioTrebleVolume < nMinTrebleVol
-            || mCurAudioTrebleVolume > nMaxTrebleVol) {
-        RealSaveCurAudioTrebleVolume((nMaxTrebleVol + nMinTrebleVol) / 2, 0);
-    }
-
-    mCustomAudioTrebleVolume = mCurAudioTrebleVolume;
-    return mCurAudioTrebleVolume;
-}
-
-int CTv::SetAudioSoundMode(int tmp_val)
-{
-    mCustomAudioSoundMode = tmp_val;
-    SetSpecialModeEQGain(mCustomAudioSoundMode);
-
-    HandleTrebleBassVolume();
-    return 0;
-}
-
-int CTv::GetAudioSoundMode()
-{
-    return mCustomAudioSoundMode;
-}
-
-int CTv::GetCurAudioSoundMode()
-{
-    return mCurAudioSoundMode;
-}
-
-int CTv::SaveCurAudioSoundMode(int tmp_val)
-{
-    mCurAudioSoundMode = tmp_val;
-    SSMSaveAudioSoundModeVal(tmp_val);
-    return tmp_val;
-}
-
-int CTv::LoadCurAudioSoundMode()
-{
-    int8_t tmp_ch = 0;
-    SSMReadAudioSoundModeVal(&tmp_ch);
-    mCurAudioSoundMode = tmp_ch;
-    if (mCurAudioSoundMode < CC_SOUND_MODE_START
-            || mCurAudioSoundMode > CC_SOUND_MODE_END) {
-        SaveCurAudioSoundMode (CC_SOUND_MODE_STD);
-    }
-    mCustomAudioSoundMode = mCurAudioSoundMode;
-    return mCurAudioSoundMode;
-}
-
-int CTv::HandleTrebleBassVolume()
-{
-    int tmp_vol = 0;
-    int tmpEQGainBuf[128] = { 0 };
-    int8_t tmp_ch = 0;
-
-    GetCustomEQGain(tmpEQGainBuf);
-
-    tmp_vol = MappingTrebleBassAndEqualizer(tmpEQGainBuf[CC_EQ_TREBLE_IND], 1,
-                                            GetTrebleUIMinGainVal(), GetTrebleUIMaxGainVal());
-    mCustomAudioTrebleVolume = tmp_vol;
-    mCurAudioTrebleVolume = mCustomAudioTrebleVolume;
-    tmp_ch = mCustomAudioTrebleVolume;
-    SSMSaveAudioTrebleVolume(tmp_ch);
-
-    tmp_vol = MappingTrebleBassAndEqualizer(tmpEQGainBuf[CC_EQ_BASS_IND], 1,
-                                            GetBassUIMinGainVal(), GetBassUIMaxGainVal());
-    mCustomAudioBassVolume = tmp_vol;
-    mCurAudioBassVolume = mCustomAudioBassVolume;
-    tmp_ch = mCustomAudioBassVolume;
-    SSMSaveAudioBassVolume(tmp_ch);
-    return 0;
-}
-
-int CTv::SetAudioWallEffect(int tmp_val)
-{
-    int tmp_treble_val;
-    int tmp_type = 0;
-
-    mCustomAudioWallEffect = tmp_val;
-
-    tmp_type = GetAudioWallEffectTypeCfg();
-    if (tmp_type == 0) {
-        SetCustomEQGain();
-    } else if (tmp_type == 1) {
-        int aud_arch_type = GetAudioArchitectureTypeCFG();
-        if (aud_arch_type == CC_DAC_G9TV_INTERNAL_DAC) {
-            return 0;
-        } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_ON_BOARD) {
-            mAudioAlsa.SetExternalDacEQMode(tmp_val);
-        } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_OFF_BOARD_FBC) {
-            SendCmdToOffBoardFBCExternalDac(AUDIO_CMD_SET_EQ_MODE, tmp_val);
-        }
-    }
-    return 0;
-}
-
-int CTv::GetAudioWallEffect()
-{
-    return mCustomAudioWallEffect;
-}
-
-int CTv::GetCurAudioWallEffect()
-{
-    return mCurAudioWallEffect;
-}
-
-int CTv::SaveCurAudioWallEffect(int tmp_val)
-{
-    mCurAudioWallEffect = tmp_val;
-    SSMSaveAudioWallEffectSwitch(tmp_val);
-    return tmp_val;
-}
-
-int CTv::LoadCurAudioWallEffect()
-{
-    int8_t tmp_ch = 0;
-    SSMReadAudioWallEffectSwitch(&tmp_ch);
-    mCurAudioWallEffect = tmp_ch;
-    if (mCurAudioWallEffect != CC_SWITCH_ON
-            && mCurAudioWallEffect != CC_SWITCH_OFF) {
-        SaveCurAudioWallEffect (CC_SWITCH_OFF);
-    }
-
-    mCustomAudioWallEffect = mCurAudioWallEffect;
-    return mCurAudioWallEffect;
-}
-
-int CTv::SetAudioEQMode(int tmp_val)
-{
-    mCustomAudioEQMode = tmp_val;
-    return 0;
-}
-
-int CTv::GetAudioEQMode()
-{
-    return mCustomAudioEQMode;
-}
-
-int CTv::GetCurAudioEQMode()
-{
-    return mCurAudioEQMode;
-}
-
-int CTv::SaveCurAudioEQMode(int tmp_val)
-{
-    mCurAudioEQMode = tmp_val;
-    SSMSaveAudioEQModeVal(tmp_val);
-
-    return tmp_val;
-}
-
-int CTv::LoadCurAudioEQMode()
-{
-    int8_t tmp_ch = 0;
-    SSMReadAudioEQModeVal(&tmp_ch);
-    mCurAudioEQMode = tmp_ch;
-    if (mCurAudioEQMode < CC_EQ_MODE_START
-            || mCurAudioEQMode > CC_EQ_MODE_END) {
-        SaveCurAudioEQMode (CC_EQ_MODE_START);
-    }
-    mCustomAudioEQMode = mCurAudioEQMode;
-
-    return mCurAudioEQMode;
-}
-
-int CTv::GetAudioEQRange(int range_buf[])
-{
-    range_buf[0] = CC_MIN_EQ_GAIN_VAL;
-    range_buf[1] = CC_MAX_EQ_GAIN_VAL;
-    return 0;
-}
-
-int CTv::GetAudioEQBandCount()
-{
-    return mAudioEffect.GetEQBandCount();
-}
-
-int CTv::SetAudioEQGain(int gain_buf[])
-{
-    return AudioSetEQGain(gain_buf);
-}
-
-int CTv::GetAudioEQGain(int gain_buf[])
-{
-    return GetCustomEQGain(gain_buf);
-}
-
-int CTv::GetCurAudioEQGain(int gain_buf[])
-{
-    RealReadCurAudioEQGain(gain_buf);
-    return 0;
-}
-
-int CTv::SaveCurAudioEQGain(int gain_buf[])
-{
-    return RealSaveCurAudioEQGain(gain_buf, 1);
-}
-
-int CTv::RealReadCurAudioEQGain(int gain_buf[])
-{
-    ArrayCopy(gain_buf, mCurEQGainBuf, GetAudioEQBandCount());
-    return 0;
-}
-
-int CTv::RealSaveCurAudioEQGain(int gain_buf[], int sound_mode_judge)
-{
-    ArrayCopy(mCurEQGainBuf, gain_buf, GetAudioEQBandCount());
-    ArrayCopy(mCurEQGainChBuf, gain_buf, GetAudioEQBandCount());
-    SSMSaveAudioEQGain(0, GetAudioEQBandCount(), mCurEQGainChBuf);
-
-    if (sound_mode_judge == 1) {
-        HandleTrebleBassVolume();
-        SaveCurAudioSoundMode (CC_SOUND_MODE_USER);
-        mCustomAudioSoundMode = mCurAudioSoundMode;
-    }
-
-    return 0;
-}
-
-int CTv::LoadCurAudioEQGain()
-{
-    SSMReadAudioEQGain(0, GetAudioEQBandCount(), mCurEQGainChBuf);
-    ArrayCopy(mCurEQGainBuf, mCurEQGainChBuf, GetAudioEQBandCount());
-
-    for (int i = 0; i < GetAudioEQBandCount(); i++) {
-        if (mCurEQGainBuf[i] & 0x80) {
-            mCurEQGainBuf[i] = mCurEQGainBuf[i] - 256;
-        }
-    }
-    return 0;
-}
-
-int CTv::SetAudioEQSwitch(int switch_val)
-{
-    return mAudioEffect.SetEQSwitch(switch_val);
-}
-
-int CTv::GetBassUIMinGainVal()
-{
-    return 0;
-}
-
-int CTv::GetBassUIMaxGainVal()
-{
-    return 100;
-}
-
-int CTv::GetTrebleUIMinGainVal()
-{
-    return 0;
-}
-
-int CTv::GetTrebleUIMaxGainVal()
-{
-    return 100;
-}
-
-int CTv::MappingLine(int map_val, int src_min, int src_max, int dst_min, int dst_max)
-{
-    if (dst_min < 0) {
-        return (map_val - (src_max + src_min) / 2) * (dst_max - dst_min)
-               / (src_max - src_min);
-    } else {
-        return (map_val - src_min) * (dst_max - dst_min) / (src_max - src_min);
-    }
-}
-
-int CTv::MappingTrebleBassAndEqualizer(int tmp_vol, int direct, int tb_min, int tb_max)
-{
-    int tmp_ret = 0;
-
-    if (direct == 0) {
-        tmp_ret = MappingLine(tmp_vol, tb_min, tb_max, CC_EQ_DEF_UI_MIN_GAIN, CC_EQ_DEF_UI_MAX_GAIN);
-    } else {
-        tmp_ret = MappingLine(tmp_vol, CC_EQ_DEF_UI_MIN_GAIN, CC_EQ_DEF_UI_MAX_GAIN, tb_min, tb_max);
-    }
-
-    LOGD("%s, tmp_vol = %d, direct = %d, tmp_ret = %d\n", __FUNCTION__, tmp_vol,
-         direct, tmp_ret);
-
-    return tmp_ret;
-}
-
-int CTv::MappingEQGain(int src_gain_buf[], int dst_gain_buf[], int direct)
-{
-    int i = 0;
-    int nMinUIVal = 0, nMaxUIVal = 0, nMinVal = 0, nMaxVal = 0;
-
-    nMinUIVal = CC_EQ_DEF_UI_MIN_GAIN;
-    nMaxUIVal = CC_EQ_DEF_UI_MAX_GAIN;
-    nMinVal = CC_MIN_EQ_GAIN_VAL;
-    nMaxVal = CC_MAX_EQ_GAIN_VAL;
-
-    if (nMinUIVal >= nMinVal && nMaxUIVal <= nMaxVal) {
-        for (i = 0; i < GetAudioEQBandCount(); i++) {
-            dst_gain_buf[i] = src_gain_buf[i];
-        }
-    } else {
-        for (i = 0; i < GetAudioEQBandCount(); i++) {
-            if (direct == 0) {
-                dst_gain_buf[i] = MappingLine(src_gain_buf[i], nMinUIVal,
-                                              nMaxUIVal, nMinVal, nMaxVal);
-            } else {
-                dst_gain_buf[i] = MappingLine(src_gain_buf[i], nMinVal, nMaxVal,
-                                              nMinUIVal, nMaxUIVal);
-            }
-        }
-    }
-    return 0;
-}
-
-int CTv::RestoreToAudioDefEQGain(int gain_buf[])
-{
-    int i = 0;
-
-    for (i = 0; i < GetAudioEQBandCount(); i++) {
-        gain_buf[i] = (CC_EQ_DEF_UI_MAX_GAIN + CC_EQ_DEF_UI_MIN_GAIN) / 2;
-    }
-
-    ArrayCopy(mCurEQGainBuf, gain_buf, GetAudioEQBandCount());
-    ArrayCopy(mCurEQGainChBuf, gain_buf, GetAudioEQBandCount());
-    SSMSaveAudioEQGain(0, GetAudioEQBandCount(), mCurEQGainChBuf);
-
-    HandleTrebleBassVolume();
-    SaveCurAudioSoundMode (CC_SOUND_MODE_STD);
-    mCustomAudioSoundMode = mCurAudioSoundMode;
-    return 0;
-}
-
-int CTv::GetCustomEQGain(int gain_buf[])
-{
-    ArrayCopy(gain_buf, mCustomEQGainBuf, GetAudioEQBandCount());
-    return 0;
-}
-
-int CTv::SetCustomEQGain()
-{
-    int tmpEQGainBuf[128] = { 0 };
-
-    if (MappingEQGain(mCustomEQGainBuf, tmpEQGainBuf, 0) < 0) {
-        return -1;
-    }
-
-    return RealSetEQGain(tmpEQGainBuf);
-}
-
-int CTv::AudioSetEQGain(int gain_buf[])
-{
-    int tmpEQGainBuf[128] = { 0 };
-
-    ArrayCopy(mCustomEQGainBuf, gain_buf, GetAudioEQBandCount());
-
-    if (MappingEQGain(mCustomEQGainBuf, tmpEQGainBuf, 0) < 0) {
-        return -1;
-    }
-
-    return RealSetEQGain(tmpEQGainBuf);
-}
-
-int CTv::handleEQGainBeforeSet(int src_buf[], int dst_buf[])
-{
-    int i = 0, nMinGain, nMaxGain;
-
-    nMinGain = CC_MIN_EQ_GAIN_VAL;
-    nMaxGain = CC_MAX_EQ_GAIN_VAL;
-
-    if (GetAudioWallEffect() == CC_SWITCH_ON && GetAudioWallEffectTypeCfg() == 0) {
-        for (i = 0; i < GetAudioEQBandCount(); i++) {
-            dst_buf[i] = WALL_EFFECT_VALUE[i] + src_buf[i];
-
-            if (dst_buf[i] < nMinGain) {
-                dst_buf[i] = nMinGain;
-            }
-
-            if (dst_buf[i] > nMaxGain) {
-                dst_buf[i] = nMaxGain;
-            }
-        }
-    } else {
-        for (i = 0; i < GetAudioEQBandCount(); i++) {
-            dst_buf[i] = src_buf[i];
-        }
-    }
-
-    return 0;
-}
-
-int CTv::RealSetEQGain(int gain_buf[])
-{
-    if (GetAudioWallEffect() == CC_SWITCH_ON && GetAudioWallEffectTypeCfg() == 0) {
-        for (int i = 0; i < GetAudioEQBandCount(); i++) {
-            gain_buf[i] = WALL_EFFECT_VALUE[i] + gain_buf[i];
-
-            if (gain_buf[i] < CC_MIN_EQ_GAIN_VAL) {
-                gain_buf[i] = CC_MIN_EQ_GAIN_VAL;
-            }
-
-            if (gain_buf[i] > CC_MAX_EQ_GAIN_VAL) {
-                gain_buf[i] = CC_MAX_EQ_GAIN_VAL;
-            }
-        }
-    }
-
-    mAudioEffect.SetEQValue(gain_buf);
-    return 0;
-}
-
-int CTv::SetAtvInGain(int gain_val)
-{
-    char set_str[32] = {0};
-
-    sprintf ( set_str, "audio_gain_set %x", gain_val );
-    return tvWriteSysfs ( SYS_ATV_DEMOD_DEBUG, set_str );
-}
-
-int CTv::SetSpecialModeEQGain(int tmp_val)
-{
-    int tmpEQPresetBufPtr[24];
-    if (GetAudioEQPresetBufferPtr(tmpEQPresetBufPtr) != 0) {
-        GetDefault_EQGain_Table(tmpEQPresetBufPtr);
-    }
-    int tmpEQGainBuf[128] = { 0 };
-
-    if (tmp_val == CC_SOUND_MODE_USER) {
-        RealReadCurAudioEQGain(tmpEQGainBuf);
-    } else {
-        ArrayCopy(tmpEQGainBuf,
-                  tmpEQPresetBufPtr + tmp_val * GetAudioEQBandCount(),
-                  GetAudioEQBandCount());
-    }
-
-    AudioSetEQGain(tmpEQGainBuf);
-    return tmp_val;
-}
-
-int CTv::SetSpecialIndexEQGain(int buf_index, int w_val)
-{
-    int tmpEQGainBuf[128] = { 0 };
-
-    if (buf_index >= 0 && buf_index < GetAudioEQBandCount()) {
-        RealReadCurAudioEQGain(tmpEQGainBuf);
-        tmpEQGainBuf[buf_index] = w_val;
-
-        return AudioSetEQGain(tmpEQGainBuf);
-    }
-    return -1;
-}
-
-int CTv::SaveSpecialIndexEQGain(int buf_index, int w_val)
-{
-    int tmpEQGainBuf[128] = { 0 };
-
-    if (buf_index >= 0 && buf_index < GetAudioEQBandCount()) {
-        RealReadCurAudioEQGain(tmpEQGainBuf);
-        tmpEQGainBuf[buf_index] = w_val;
-
-        return RealSaveCurAudioEQGain(tmpEQGainBuf, 0);
-    }
-
-    return 0;
-}
-
-// amAudio
-int CTv::OpenAmAudio(unsigned int sr, int input_device, int output_device)
-{
-    LOGD("OpenAmAudio input_device = %d", input_device);
-    return amAudioOpen(sr, input_device, output_device);
-}
-
-int CTv::CloseAmAudio(void)
-{
-    return amAudioClose();
-}
-
-int CTv::setAmAudioPreMute(int mute)
-{
-    int ret = -1;
-    if (m_source_input == SOURCE_DTV) {
-        ret = mAv.AudioSetPreMute(mute);
-    } else {
-        ret = amAudioSetPreMute(mute);
-    }
-    return ret;
-}
-
-int CTv::getAmAudioPreMute()
-{
-    unsigned int mute = -1;
-    if (m_source_input == SOURCE_DTV) {
-        mAv.AudioGetPreMute(&mute);
-    } else {
-        amAudioGetPreMute(&mute);
-    }
-    return mute;
-}
-
-int CTv::setAmAudioVolume(float volume)
-{
-    float gain = 0;
-    gain = 20 * log10f(volume / 100);
-
-    return setAmAudioPreGain(gain);
-}
-
-float CTv::getAmAudioVolume()
-{
-    float volume = getAmAudioPreGain();
-    volume = powf(10, volume / 20);
-
-    return volume * 100;
-}
-
-int CTv::saveAmAudioVolume(int volume, int source)
-{
-    return SSMSaveAmAudioVal(volume, source);
-}
-
-int CTv::getSaveAmAudioVolume(int source)
-{
-    int volume = 0;
-    SSMReadAmAudioVal(&volume, source);
-
-    return volume;
-}
-
-int CTv::setAmAudioPreGain(float pre_gain)
-{
-    int ret = -1;
-    if (m_source_input == SOURCE_DTV) {
-        ret = mAv.AudioSetPreGain(pre_gain);
-    } else {
-        ret = amAudioSetPreGain(pre_gain);
-    }
-    return ret;
-}
-
-float CTv::getAmAudioPreGain()
-{
-    float pre_gain = -1;
-    if (m_source_input == SOURCE_DTV) {
-        mAv.AudioGetPreGain(&pre_gain);
-    } else {
-        amAudioGetPreGain(&pre_gain);
-    }
-    return pre_gain;
-}
-
-int CTv::SetAmAudioInputSr(unsigned int sr, int output_device)
-{
-    LOGD("SetAmAudioInputSr");
-    return amAudioSetInputSr(sr, CC_IN_USE_SPDIF_DEVICE, output_device);
-}
-
-int CTv::SetAmAudioOutputMode(int mode)
-{
-    if (mode != CC_AMAUDIO_OUT_MODE_DIRECT && mode != CC_AMAUDIO_OUT_MODE_INTER_MIX
-            && mode != CC_AMAUDIO_OUT_MODE_DIRECT_MIX) {
-        LOGE("[ctv]%s, mode error, it should be mix or direct!\n", __FUNCTION__);
-        return -1;
-    }
-
-    return amAudioSetOutputMode(mode);
-}
-
-int CTv::SetAmAudioMusicGain(int gain)
-{
-    return amAudioSetMusicGain(gain);
-}
-
-int CTv::SetAmAudioLeftGain(int gain)
-{
-    return amAudioSetLeftGain(gain);
-}
-
-int CTv::SetAmAudioRightGain(int gain)
-{
-    return amAudioSetRightGain(gain);
-}
-
-int CTv::SetAudioDumpDataFlag(int tmp_flag)
-{
-    return amAudioSetDumpDataFlag(tmp_flag);
-}
-
-int CTv::GetAudioDumpDataFlag()
-{
-    return amAudioGetDumpDataFlag();
-}
-
-void CTv::AudioSetVolumeDigitLUTBuf(int lut_table_index, int *MainVolLutBuf)
-{
-    int tmpDefDigitLutBuf[CC_LUT_BUF_SIZE] = { 0 };
-    mAudioAlsa.SetMainVolDigitLutBuf(MainVolLutBuf);
-
-    GetAudioAmpSupbassvolBuf(lut_table_index, tmpDefDigitLutBuf);
-    mAudioAlsa.SetSupperBassVolDigitLutBuf(tmpDefDigitLutBuf);
-}
-
-int CTv::InitTvAudio(int sr, int input_device)
-{
-    OpenAmAudio(sr, input_device, CC_OUT_USE_AMAUDIO);
-
-    RefreshSrsEffectAndDacGain();
-    SetCustomEQGain();
-    LoadAudioVirtualizer();
-    return 0;
-}
-
-int CTv::UnInitTvAudio()
-{
-    return CloseAmAudio();
-}
-
-int CTv::AudioChangeSampleRate(int sr)
-{
-    sr = HanldeAudioInputSr(sr);
-
-    if (SetAmAudioInputSr(sr, CC_OUT_USE_AMAUDIO) != 0) {
-        return -1;
-    }
-
-    RefreshSrsEffectAndDacGain();
-    SetCustomEQGain();
-    return 0;
-}
-
-int CTv::AudioSetAudioInSource(int audio_src_in_type)
-{
-    return mAudioAlsa.SetAudioInSource(audio_src_in_type);
-}
-
-int CTv::AudioSetAudioSourceType(int source_type)
-{
-    int aud_arch_type = GetAudioArchitectureTypeCFG();
-
-    if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_ON_BOARD) {
-    } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_OFF_BOARD_FBC) {
-        SendCmdToOffBoardFBCExternalDac(AUDIO_CMD_SET_SOURCE, source_type);
-    } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_CUSTOMER_LIB) {
-        mCustomerCtrl.SetSource(source_type);
-    } else if (aud_arch_type == CC_DAC_G9TV_EXTERNAL_DAC_DIGITAL) {
-    }
-    return 0;
-}
-
-int CTv::AudioLineInSelectChannel(int audio_channel)
-{
-    LOGD ("%s, audio_channel = %d", __FUNCTION__, audio_channel);
-    mAudioAlsa.SetInternalDacLineInSelectChannel(audio_channel);
-    return 0;
-}
-
-int CTv::AudioSetLineInCaptureVolume(int l_vol, int r_vol)
-{
-    mAudioAlsa.SetInternalDacLineInCaptureVolume(l_vol, r_vol);
-    return 0;
-}
-
-int CTv::openTvAudio()
-{
-    int tmp_val = 0;
-
-    LOGD("%s, entering...\n", __FUNCTION__);
-    UnInitSetTvAudioCard();
-
-    tmp_val = GetAudioDumpDataEnableFlagCfg();
-    SetAudioDumpDataFlag(tmp_val);
-
-    tmp_val = GetAudioInternalDacPGAInGain_Cfg();
-    mAudioAlsa.SetAudioInternalDacPGAInGain(tmp_val, tmp_val);
-
-    mAudioAlsa.SetMixerBypassSwitch (CC_SWITCH_OFF);
-    mAudioAlsa.SetMixerDacSwitch (CC_SWITCH_ON);
-
-    LoadAudioCtl();
-
-    RefreshSrsEffectAndDacGain();
-    InitSetAudioCtl();
-    return 0;
-}
-
-void CTv::LoadAudioCtl()
-{
-    // Get Current Audio Volume
-    LoadCurAudioMasterVolume();
-
-    // Get Current Audio Balance
-    LoadCurAudioBalance();
-
-    // Get Current Supper Bass Switch
-    LoadCurAudioSupperBassSwitch();
-
-    // Get Current Supper Bass Volume
-    LoadCurAudioSupperBassVolume();
-
-    // Get Current SRSSurround
-    LoadCurAudioSrsSurround();
-
-    // Get Current SRS DialogClarity
-    LoadCurAudioSrsDialogClarity();
-
-    // Get Current SRS TruBass
-    LoadCurAudioSrsTruBass();
-
-    // Get Current Audio Sound Mode
-    LoadCurAudioSoundMode();
-
-    // Get Current Audio Bass and Treble
-    LoadCurAudioBassVolume();
-    LoadCurAudioTrebleVolume();
-
-    // Get Current Wall Effect
-    LoadCurAudioWallEffect();
-
-    // Get Current spdif switch
-    LoadCurAudioSPDIFSwitch();
-
-    // Get Current spdif mode
-    LoadCurAudioSPDIFMode();
-
-    // Get Current EQ mode
-    LoadCurAudioEQMode();
-
-    // Get Current EQ Gain
-    LoadCurAudioEQGain();
-
-    //Get Current Virtual Effect status
-    LoadAudioVirtualizer();
-}
 
 bool CTv::isBootvideoStopped() {
     return mBootvideoStatusDetectThread == NULL
             || mBootvideoStatusDetectThread->isBootvideoStopped();
-}
-
-void CTv::InitSetAudioCtl()
-{
-    // Set Current Audio balance value
-    SetAudioBalance(GetAudioBalance());
-
-    // Set Current Audio Volume
-    SetAudioMasterVolume(GetAudioMasterVolume());
-
-    // Set Current Supper Bass Volume
-    SetAudioSupperBassVolume(GetAudioSupperBassVolume());
-
-    // Set Current Audio Sound Mode
-    SetAudioSoundMode(GetAudioSoundMode());
-
-    // Set Current Audio SPDIF Switch
-    SetAudioSPDIFSwitch(GetCurAudioSPDIFSwitch());
-
-    // Set Current Audio SPDIF mode
-    SetAudioSPDIFMode(GetCurAudioSPDIFMode());
-}
-
-int CTv::SetADC_Digital_Capture_Volume(int value)
-{
-    return mAudioAlsa.SetAudioInternalDacADCDigitalCaptureVolume( value, value);
-}
-
-int CTv::SetPGA_IN_Value(int value)
-{
-    return mAudioAlsa.SetAudioInternalDacPGAInGain( value, value);
-}
-
-int CTv::SetDAC_Digital_PlayBack_Volume(int value)
-{
-    return mAudioAlsa.SetAudioInternalDacDACDigitalPlayBackVolume( value, value);
-}
-
-int CTv::setAudioPcmPlaybackVolume(int val)
-{
-    int pcm_volume = 0;
-    pcm_volume = val / 2;
-    if (pcm_volume > 24) pcm_volume = 24;
-    //return SetAudioPcmPlaybackVolume(pcm_volume);
-    return 0;
-}
-
-int CTv::HanldeAudioInputSr(unsigned int sr)
-{
-    int tmp_cfg = 0;
-
-    tmp_cfg = GetAudioResampleTypeCFG();
-    if (tmp_cfg & CC_AUD_RESAMPLE_TYPE_HW) {
-        mAudioAlsa.SetHardwareResample(sr);
-    } else {
-        mAudioAlsa.SetHardwareResample(-1);
-    }
-
-    if (!(tmp_cfg & CC_AUD_RESAMPLE_TYPE_SW)) {
-        sr = 48000;
-    }
-
-    return sr;
-}
-
-int CTv::AudioSSMRestoreDefaultSetting()
-{
-    int i = 0, tmp_val = 0;
-    int nMinUIVol = 0, nMaxUIVol = 0;
-    int *tmp_ptr = NULL;
-    int tmpEQGainBuf[128] = { 0 };
-    unsigned char tmp_buf[CC_NO_LINE_POINTS_MAX_CNT] = { 0 };
-
-    // Save Current Audio Volume
-    SaveCurAudioMasterVolume (CC_DEF_SOUND_VOL);
-
-    // Save Current Audio Balance
-    SaveCurAudioBalance (CC_DEF_SOUND_BALANCE_VAL);
-
-    // Save Current Supper Bass Switch
-    SaveCurAudioSupperBassSwitch (CC_SWITCH_OFF);
-
-    // Save Current Supper Bass Volume
-    SaveCurAudioSupperBassVolume (CC_DEF_SUPPERBASS_VOL);
-
-    // Save Current SRSSurround
-    SaveCurAudioSrsSurround(CC_SWITCH_OFF);
-
-    // Save Current SRS DialogClarity
-    SaveCurAudioSrsDialogClarity(CC_SWITCH_OFF);
-
-    // Save Current SRS TruBass
-    SaveCurAudioSrsTruBass(CC_SWITCH_OFF);
-
-    // Save Current Audio Sound Mode
-    SaveCurAudioSoundMode (CC_SOUND_MODE_STD);
-
-    // Save Current Wall Effect
-    SaveCurAudioWallEffect(CC_SWITCH_OFF);
-
-    // Save Current spdif switch
-    SaveCurAudioSPDIFSwitch (CC_SWITCH_ON);
-
-    // Save Current spdif mode
-    SaveCurAudioSPDIFMode (CC_SPDIF_MODE_PCM);
-
-    // Save Current avout and spidif mute state
-    SSMSaveAudioSPIDFMuteVal(CC_AUDIO_MUTE);
-    SSMSaveAudioAVOutMuteVal(CC_AUDIO_MUTE);
-
-    // Save Current EQ mode
-    SaveCurAudioEQMode (CC_EQ_MODE_NOMAL);
-
-    // Save Current EQ Gain
-    RestoreToAudioDefEQGain(tmpEQGainBuf);
-
-    // Save Current Audio Bass and Treble
-    nMinUIVol = GetBassUIMinGainVal();
-    nMaxUIVol = GetBassUIMaxGainVal();
-    RealSaveCurAudioBassVolume((nMinUIVol + nMaxUIVol) / 2, 0);
-
-    nMinUIVol = GetTrebleUIMinGainVal();
-    nMaxUIVol = GetTrebleUIMaxGainVal();
-    RealSaveCurAudioTrebleVolume((nMinUIVol + nMaxUIVol) / 2, 0);
-    return 0;
-}
-
-int CTv::InitSetTvAudioCard()
-{
-    int captureIdx = -1;
-    char buf[32] = { 0 };
-    char propValue[PROPERTY_VALUE_MAX];
-
-#ifndef BOARD_ALSA_AUDIO_TINY
-    snd_card_refresh_info();
-#endif
-
-    if (GetTvAudioCardNeedSet()) {
-        int totleNum = 0;
-        char cardName[64] = { 0 };
-
-        GetTvAudioCardName(cardName);
-        /*
-        memset(propValue, '\0', PROPERTY_VALUE_MAX);
-        property_get(PROP_AUDIO_CARD_NUM, propValue, "0");
-
-        totleNum = strtoul(propValue, NULL, 10);
-        LOGD("%s, totle number = %d\n", __FUNCTION__, totleNum);
-        */
-        totleNum = 8;
-
-        for (int i = 0; i < totleNum; i++) {
-            sprintf(buf, "snd.card.%d.name", i);
-            memset(propValue, '\0', PROPERTY_VALUE_MAX);
-            property_get(buf, propValue, "null");
-
-            LOGD("%s, key string \"%s\", value string \"%s\".\n", __FUNCTION__, buf, propValue);
-            if (strcmp(propValue, cardName) == 0) {
-                captureIdx = i;
-                break;
-            }
-        }
-    }
-
-    sprintf(buf, "%d", captureIdx);
-    property_set(PROP_DEF_CAPTURE_NAME, buf);
-    LOGD("%s, set \"%s\" as \"%s\".\n", __FUNCTION__, PROP_DEF_CAPTURE_NAME, buf);
-    return 0;
-}
-
-int CTv::UnInitSetTvAudioCard()
-{
-#ifndef BOARD_ALSA_AUDIO_TINY
-    snd_card_refresh_info();
-#endif
-    property_set(PROP_DEF_CAPTURE_NAME, "-1");
-    LOGD("%s, set [%s]:[-1]\n", __FUNCTION__, PROP_DEF_CAPTURE_NAME);
-    return 0;
-}
-
-int CTv::SetSPDIFMode(int mode_val)
-{
-    tvWriteSysfs(SYS_SPDIF_MODE_DEV_PATH, mode_val);
-    return 0;
-}
-
-int CTv::SwitchAVOutBypass(int sw)
-{
-    if (sw == 0 ) {
-        mAudioAlsa.SetMixerBypassSwitch ( CC_SWITCH_OFF );
-        mAudioAlsa.SetMixerDacSwitch ( CC_SWITCH_ON );
-    } else {
-        mAudioAlsa.SetMixerBypassSwitch ( CC_SWITCH_ON );
-        mAudioAlsa.SetMixerDacSwitch ( CC_SWITCH_OFF );
-    }
-    return 0;
-}
-
-int CTv::SetAudioSwitchIO(int value)
-{
-    return mAudioAlsa.SetAudioSwitchIO( value);
-}
-
-int CTv::SetOutput_Swap(int value)
-{
-    return mAudioAlsa.SetOutput_Swap( value);
 }
 
 int CTv::SendCmdToOffBoardFBCExternalDac(int cmd, int para)
@@ -5409,15 +3127,11 @@ int CTv::GetHdmiAvHotplugDetectOnoff()
 
 int CTv::SetHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version)
 {
-    SetAudioMuteForTv ( CC_AUDIO_MUTE );
-    mHDMIAudioCheckThread.requestAndWaitPauseCheck();
     mAv.DisableVideoWithBlackColor();
     mpTvin->Tvin_StopDecoder();
     Tv_HDMIEDIDFileSelect(port, version);
     SSMSetHDMIEdid(port);
     mHDMIRxManager.HdmiRxEdidUpdate();
-    mHDMIAudioCheckThread.initCheckState();
-    mHDMIAudioCheckThread.resumeCheck();
     return 0;
 }
 
@@ -5529,7 +3243,6 @@ void CTv::onSetPQPCMode(int source, int status)
     LOGD("source = %d, m_source_input = %d, status = %d\n",source, m_source_input, status);
     if (( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_HDMI ) ) {
         if ((source == -1 ) || (source == (int)m_source_input)) {
-            SetAudioMuteForTv(CC_AUDIO_MUTE);
 
             if (status == 0) {
                 CVpp::getInstance()->enableMonitorMode(false);
@@ -5538,11 +3251,8 @@ void CTv::onSetPQPCMode(int source, int status)
             }
 
             tvin_port_t cur_port = mpTvin->Tvin_GetSourcePortBySourceInput(m_source_input);
-            mHDMIAudioCheckThread.requestAndWaitPauseCheck();
             mpTvin->SwitchPort(cur_port);
             CVpp::getInstance()->Vpp_ResetLastVppSettingsSourceType();
-            mHDMIAudioCheckThread.initCheckState();
-            mHDMIAudioCheckThread.resumeCheck(1000);
         }
     }
 }

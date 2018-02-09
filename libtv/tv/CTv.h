@@ -31,7 +31,6 @@
 #include "CTvSubtitle.h"
 #include "CAv.h"
 #include "CTvDmx.h"
-#include "../audio/CTvAudio.h"
 #include "AutoBackLight.h"
 #include "CAutoPQparam.h"
 #include "CBootvideoStatusDetect.h"
@@ -102,12 +101,21 @@ typedef enum TvRunStatus_s {
     TV_CLOSE_ED,
 } TvRunStatus_t;
 
+enum CC_AUDIO_MUTE_STATUS {
+    CC_MUTE_ON,
+    CC_MUTE_OFF,
+};
+
+enum CC_AUDIO_MUTE_PARAM {
+    CC_AUDIO_UNMUTE,
+    CC_AUDIO_MUTE,
+};
+
 class CTvPlayer;
 class CDTVTvPlayer;
 class CATVTvPlayer;
 
-class CTv : public CTvin::CHDMIAudioCheck::IHDMIAudioCheckObserver,
-            public CDevicesPollStatusDetect::ISourceConnectObserver,
+class CTv : public CDevicesPollStatusDetect::ISourceConnectObserver,
             public IUpgradeFBCObserver,
             public CTvSubtitle::IObserver,
             public CBootvideoStatusDetect::IBootvideoStatusObserver,
@@ -204,9 +212,6 @@ public:
     virtual int stopPlayingLock();
     virtual int resetFrontEndPara ( frontend_para_set_t feParms );
     virtual int SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt );
-    virtual void onHdmiSrChanged(int  sr, bool bInit);
-    virtual void onHMDIAudioStatusChanged(int status);
-    int SetCurProgramAudioVolumeCompensationVal ( int tmpVal );
     int GetAudioVolumeCompensationVal(int progDbId);
     //dtv audio track info
     int getAudioTrackNum ( int progId );
@@ -260,7 +265,6 @@ public:
     int isVgaFmtInHdmi();
 
     int getHDMIFrameRate ( void );
-    void RefreshAudioMasterVolume ( tv_source_input_t source_input );
 
     int Tvin_SetPLLValues ();
     int SetCVD2Values ();
@@ -271,7 +275,6 @@ public:
     virtual void onHeadSetDetect(int state, int para);
 
     CTvFactory mFactoryMode;
-    CTvin::CHDMIAudioCheck mHDMIAudioCheckThread;
     CDevicesPollStatusDetect mDevicesPollStatusDetectThread;
     CBootvideoStatusDetect *mBootvideoStatusDetectThread;
     CHDMIRxManager mHDMIRxManager;
@@ -295,7 +298,6 @@ public:
     int Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);
     int Tv_HandeHDMIEDIDFilePathConfig();
     int Tv_SetDDDRCMode(tv_source_input_t source_input);
-    int Tv_SetAudioSourceType (tv_source_input_t source_input);
 
     //PQ
     virtual int Tv_SetBrightness ( int brightness, tv_source_input_t tv_source_input, int is_save );
@@ -335,135 +337,7 @@ public:
     int SetHdmiColorRangeMode(tv_hdmi_color_range_t range_mode);
     tv_hdmi_color_range_t GetHdmiColorRangeMode();
     int setGamma(vpp_gamma_curve_t gamma_curve, int is_save);
-
-    //audio
     virtual void updateSubtitle(int, int);
-
-    //audio
-    virtual void TvAudioOpen();
-    virtual void AudioCtlUninit();
-    virtual int SetAudioMuteForSystem(int muteOrUnmute);
-    virtual int GetAudioMuteForSystem();
-    virtual int SetAudioMuteForTv(int muteOrUnmute);
-    virtual int GetAudioMuteForTv();
-    int SetAudioAVOutMute(int muteStatus);
-    int GetAudioAVOutMute();
-    int SetAudioSPDIFMute(int muteStatus);
-    int GetAudioSPDIFMute();
-    int SetDacMute(int muteStatus, int mute_type);
-    int SetAudioI2sMute(int);
-    int SetAudioMasterVolume(int tmp_vol);
-    int GetAudioMasterVolume();
-    int SaveCurAudioMasterVolume(int tmp_vol);
-    int GetCurAudioMasterVolume();
-    int SetAudioBalance(int tmp_val);
-    int GetAudioBalance();
-    int SaveCurAudioBalance(int tmp_val);
-    int GetCurAudioBalance();
-    int SetAudioSupperBassVolume(int tmp_vol);
-    int GetAudioSupperBassVolume();
-    int SaveCurAudioSupperBassVolume(int tmp_vol);
-    int GetCurAudioSupperBassVolume();
-    int SetAudioSupperBassSwitch(int tmp_val);
-    int GetAudioSupperBassSwitch();
-    int SaveCurAudioSupperBassSwitch(int tmp_val);
-    int GetCurAudioSupperBassSwitch();
-    int SetAudioSRSSurround(int tmp_val);
-    int GetAudioSRSSurround();
-    int SaveCurAudioSrsSurround(int tmp_val);
-    int GetCurAudioSRSSurround();
-    int SetAudioSrsDialogClarity(int tmp_val);
-    int GetAudioSrsDialogClarity();
-    int SaveCurAudioSrsDialogClarity(int tmp_val);
-    int GetCurAudioSrsDialogClarity();
-    int SetAudioSrsTruBass(int tmp_val);
-    int GetAudioSrsTruBass();
-    int SaveCurAudioSrsTruBass(int tmp_val);
-    int GetCurAudioSrsTruBass();
-    int SetAudioSPDIFSwitch(int tmp_val);
-    int GetCurAudioSPDIFSwitch();
-    int SaveCurAudioSPDIFSwitch(int tmp_val);
-    int SetAudioVirtualizer(int enable, int EffectLevel);
-    int GetAudioVirtualizerEnable();
-    int GetAudioVirtualizerLevel();
-    int LoadAudioVirtualizer();
-
-    //Audio SPDIF Mode
-    int SetAudioSPDIFMode(int tmp_val);
-    int GetCurAudioSPDIFMode();
-    int SaveCurAudioSPDIFMode(int tmp_val);
-    int SetAudioBassVolume(int tmp_vol);
-    int GetAudioBassVolume();
-    int SaveCurAudioBassVolume(int tmp_vol);
-    int GetCurAudioBassVolume();
-    int SetAudioTrebleVolume(int tmp_vol);
-    int GetAudioTrebleVolume();
-    int SaveCurAudioTrebleVolume(int tmp_vol);
-    int GetCurAudioTrebleVolume();
-    int SetAudioSoundMode(int tmp_val);
-    int GetAudioSoundMode();
-    int SaveCurAudioSoundMode(int tmp_val);
-    int GetCurAudioSoundMode();
-    int SetAudioWallEffect(int tmp_val);
-    int GetAudioWallEffect();
-    int SaveCurAudioWallEffect(int tmp_val);
-    int GetCurAudioWallEffect();
-    int SetAudioEQMode(int tmp_val);
-    int GetAudioEQMode();
-    int SaveCurAudioEQMode(int tmp_val);
-    int GetCurAudioEQMode();
-    int GetAudioEQRange(int range_buf[]);
-    int GetAudioEQBandCount();
-    int SetAudioEQGain(int gain_buf[]);
-    int GetAudioEQGain(int gain_buf[]);
-    int GetCurAudioEQGain(int gain_buf[]);
-    int SaveCurAudioEQGain(int gain_buf[]);
-    int SetAudioEQSwitch(int switch_val);
-    int OpenAmAudio(unsigned int sr, int input_device, int output_device);
-    int CloseAmAudio(void);
-    int SetAmAudioInputSr(unsigned int sr, int output_device);
-    int SetAmAudioOutputMode(int mode);
-    int SetAmAudioMusicGain(int gain);
-    int SetAmAudioLeftGain(int gain);
-    int SetAmAudioRightGain(int gain);
-    int SetAudioVolumeCompensationVal(int tmp_vol_comp_val);
-    int AudioLineInSelectChannel(int audio_channel);
-    int AudioSetLineInCaptureVolume(int l_vol, int r_vol);
-    int setAudioPcmPlaybackVolume(int val);
-    int setAmAudioVolume(float volume);
-    float getAmAudioVolume();
-    int saveAmAudioVolume(int volume, int source);
-    int getSaveAmAudioVolume(int volume);
-    int setAmAudioPreGain(float pre_gain);
-    float getAmAudioPreGain();
-    int setAmAudioPreMute(int mute);
-    int getAmAudioPreMute();
-
-    int openTvAudio();
-
-    int InitTvAudio(int sr, int input_device);
-    int UnInitTvAudio();
-    int AudioChangeSampleRate(int sr);
-    int AudioSetAudioInSource(int audio_src_in_type);
-    int AudioSetAudioSourceType(int source_type);
-    int AudioSSMRestoreDefaultSetting();
-    int SetAudioDumpDataFlag(int tmp_flag);
-    int GetAudioDumpDataFlag();
-    int SetAudioLeftRightMode(unsigned int mode);
-    unsigned int GetAudioLeftRightMode();
-    int SwitchAVOutBypass (int);
-    int SetAudioSwitchIO(int value);
-    int SetOutput_Swap(int value);
-    int HanldeAudioInputSr(unsigned int);
-    void AudioSetVolumeDigitLUTBuf(int lut_sel_flag, int *MainVolLutBuf);
-    int SetADC_Digital_Capture_Volume(int value);
-    int SetPGA_IN_Value(int value);
-    int SetDAC_Digital_PlayBack_Volume(int value);
-    int InitSetTvAudioCard();
-    int UnInitSetTvAudioCard();
-    void RefreshSrsEffectAndDacGain();
-    int SetCustomEQGain();
-    int SetAtvInGain(int gain_val);
     int GetHdmiAvHotplugDetectOnoff();
     int SetHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);
     int SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable);
@@ -474,47 +348,6 @@ public:
     void dump(String8 &result);
 private:
     int SendCmdToOffBoardFBCExternalDac(int, int);
-    int LoadCurAudioSPDIFMode();
-    int LoadCurAudioMasterVolume();
-    int LoadCurAudioBalance();
-    int LoadCurAudioSupperBassVolume();
-    int LoadCurAudioSupperBassSwitch();
-    int LoadCurAudioSrsSurround();
-    int LoadCurAudioSrsDialogClarity();
-    int LoadCurAudioSPDIFSwitch();
-    void SetSupperBassSRSSpeakerSize();
-    int LoadCurAudioSoundMode();
-    int LoadCurAudioEQMode();
-    int LoadCurAudioSrsTruBass();
-    int RealSaveCurAudioBassVolume(int, int);
-    int LoadCurAudioBassVolume();
-    int RealSaveCurAudioTrebleVolume(int, int);
-    int LoadCurAudioTrebleVolume();
-    int HandleTrebleBassVolume();
-    int LoadCurAudioWallEffect();
-    int RealReadCurAudioEQGain(int *);
-    int RealSaveCurAudioEQGain(int *, int);
-    int LoadCurAudioEQGain();
-    int MappingEQGain(int *, int *, int);
-    int RestoreToAudioDefEQGain(int *);
-    int GetCustomEQGain(int *);
-    int AudioSetEQGain(int *);
-    int handleEQGainBeforeSet(int *, int *);
-    int RealSetEQGain(int *);
-    int SetSpecialModeEQGain(int);
-    int SetSpecialIndexEQGain(int, int);
-    int SaveSpecialIndexEQGain(int, int);
-    void LoadAudioCtl();
-    void InitSetAudioCtl();
-    int GetBassUIMinGainVal();
-    int GetBassUIMaxGainVal();
-    int GetTrebleUIMinGainVal();
-    int GetTrebleUIMaxGainVal();
-    int MappingLine(int, int, int, int, int);
-    int MappingTrebleBassAndEqualizer(int, int, int, int);
-    int SetSPDIFMode(int mode_val);
-    int setAudioPreGain(tv_source_input_t source_input);
-    float getAudioPreGain(tv_source_input_t source_input);
     int KillMediaServerClient();
     bool insertedFbcDevice();
 
@@ -541,42 +374,6 @@ private:
 
     void setDvbLogLevel();
 
-    CAudioAlsa mAudioAlsa;
-    CAudioEffect mAudioEffect;
-
-    CAudioCustomerCtrl mCustomerCtrl;
-    int mCurAudioMasterVolume;
-    int mCurAudioBalance;
-    int mCurAudioSupperBassVolume;
-    int mCurAudioSupperBassSwitch;
-    int mCurAudioSRSSurround;
-    int mCurAudioSrsDialogClarity;
-    int mCurAudioSrsTruBass;
-    int mCurAudioSPDIFSwitch;
-    int mCurAudioSPDIFMode;
-    int mCurAudioBassVolume;
-    int mCurAudioTrebleVolume;
-    int mCurAudioSoundMode;
-    int mCurAudioWallEffect;
-    int mCurAudioEQMode;
-    int mCustomAudioMasterVolume;
-    int mCustomAudioBalance;
-    int mCustomAudioSupperBassVolume;
-    int mCustomAudioSupperBassSwitch;
-    int mCustomAudioSRSSurround;
-    int mCustomAudioSrsDialogClarity;
-    int mCustomAudioSrsTruBass;
-    int mCustomAudioBassVolume;
-    int mCustomAudioTrebleVolume;
-    int mCustomAudioSoundMode;
-    int mCustomAudioWallEffect;
-    int mCustomAudioEQMode;
-    int mCustomAudioSoundEnhancementSwitch;
-    int mCustomEQGainBuf[CC_BAND_ITEM_CNT];
-    int mCurEQGainBuf[CC_BAND_ITEM_CNT] ;
-    int8_t mCurEQGainChBuf[CC_BAND_ITEM_CNT];
-    int mVolumeCompensationVal;
-    int mMainVolumeBalanceVal;
     //end audio
     bool mATVDisplaySnow;
     bool iSBlackPattern;
@@ -658,19 +455,11 @@ protected:
     int Tv_MiscSetBySource ( tv_source_input_t );
     void print_version_info ( void );
     int dtvCleanProgramByFreq ( int freq );
-    /*********************** Audio start **********************/
-    int SetAudioVolDigitLUTTable ( tv_source_input_t source_input );
-    virtual int Tv_SetAudioInSource (tv_source_input_t source_input);
-    void Tv_SetAudioOutputSwap_Type (tv_source_input_t source_input);
-    void Tv_SetAVOutPut_Input_gain(tv_source_input_t source_input);
-    /*********************** Audio end **********************/
-
     void onSigToStable();
     void onSigToUnstable();
     void onSigToUnSupport();
     void onSigToNoSig();
     void onSigStillStable();
-    void onHDMIAudioCheckLoop();
 
     virtual void onSourceConnect(int source_type, int connect_status);
     virtual void onVdinSignalChange();
@@ -722,14 +511,7 @@ protected:
     int m_sig_spdif_nums;
     bool mSetHdmiEdid;
     /** for HDMI-in sampling detection. **/
-    int  m_hdmi_sampling_rate;
-    int	m_hdmi_audio_data;
     /** for display mode to bottom **/
-
-    //audio mute
-    int mAudioMuteStatusForTv;
-    int mAudioMuteStatusForSystem;
-    char mMainVolLutTableExtraName[CC_PROJECT_INFO_ITEM_MAX_LEN];
 
     CTvin *mpTvin;
     CTvGpio *pGpio;

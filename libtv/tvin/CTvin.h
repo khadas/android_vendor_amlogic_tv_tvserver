@@ -648,7 +648,6 @@ public:
     int TvinApi_GetHDMIAudioStatus ( void );
     int Tvin_StartDecoder ( tvin_info_t &info );
     int Tvin_StopDecoder();
-    int get_hdmi_sampling_rate();
     int SwitchPort (tvin_port_t source_port );
     int SwitchSnow(bool enable);
     bool getSnowStatus(void);
@@ -725,7 +724,6 @@ public:
     static unsigned int Tvin_TransPortStringToValue(const char *port_str);
     static void Tvin_LoadSourceInputToPortMap();
     static int Tvin_GetSourcePortByCECPhysicalAddress(int physical_addr);
-    static tv_audio_channel_t Tvin_GetInputSourceAudioChannelIndex ( tv_source_input_t source_input );
     static tv_audio_in_source_type_t Tvin_GetAudioInSourceType ( tv_source_input_t source_input );
     static tv_source_input_t Tvin_PortToSourceInput ( tvin_port_t port );
     static int isVgaFmtInHdmi ( tvin_sig_fmt_t fmt );
@@ -735,53 +733,6 @@ public:
     static unsigned long CvbsFtmToV4l2ColorStd(tvin_sig_fmt_t fmt);
 
     static CTvin *getInstance();
-
-public:
-    class CHDMIAudioCheck: public Thread {
-    public:
-        CHDMIAudioCheck ();
-        ~CHDMIAudioCheck();
-        int startCheck(bool bPause = true);
-        int stopCheck();
-        int pauseCheck();
-        int resumeCheck(int later = 0);
-        int initCheckState();
-        void setHDMIAudioCheckEnable(bool enable = true);
-        int requestAndWaitPauseCheck();
-        //first pause detect? ok
-
-        class IHDMIAudioCheckObserver {
-        public:
-            IHDMIAudioCheckObserver()
-            {};
-            virtual ~IHDMIAudioCheckObserver()
-            {};
-            virtual void onHDMIAudioCheckEnter() {};
-            virtual void onHDMIAudioCheckLoop() {};
-        };
-        void setObserver ( IHDMIAudioCheckObserver *pOb )
-        {
-            mpObserver = pOb;
-        };
-
-    private:
-        bool threadLoop();
-
-        //member
-        mutable Mutex mLock;
-        Condition mCheckPauseCondition;
-        Condition mRequestPauseCondition;
-        volatile bool m_request_pause_check;
-        enum CheckState {
-            STATE_STOPED = 0,
-            STATE_RUNNING,
-            STATE_PAUSE
-        };
-        int mCheckState;
-        int mResumeLaterTime;
-        bool mHDMIAudioCheckEnable;
-        IHDMIAudioCheckObserver *mpObserver;
-    };
 
 private:
     static CTvin *mInstance;

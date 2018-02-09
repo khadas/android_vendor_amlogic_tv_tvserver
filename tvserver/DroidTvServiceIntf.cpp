@@ -40,7 +40,6 @@
 #include <tvutils.h>
 #include <tvsetting/CTvSetting.h>
 #include <tv/CTvFactory.h>
-#include <audio/CTvAudio.h>
 #include <version/version.h>
 #include "tvcmd.h"
 #include <tvdb/CTvRegion.h>
@@ -634,407 +633,254 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
         // AUDIO & AUDIO MUTE
         case SET_AUDIO_MUTE_FOR_TV: {
             int status = p.readInt32();
-            if (status != mpTv->GetAudioMuteForTv()) {
-                ret = mpTv->SetAudioMuteForTv(status);
-            }
             break;
         }
         case SET_AUDIO_MUTEKEY_STATUS: {
             int status = p.readInt32();
-            ret = mpTv->SetAudioMuteForSystem(status);
             break;
         }
         case GET_AUDIO_MUTEKEY_STATUS:
-            ret = mpTv->GetAudioMuteForSystem();
             break;
 
         case SET_AUDIO_AVOUT_MUTE_STATUS: {
-            int status = p.readInt32();
-            ret = mpTv->SetAudioAVOutMute(status);
             break;
         }
         case GET_AUDIO_AVOUT_MUTE_STATUS:
-            ret = mpTv->GetAudioAVOutMute();
             break;
 
         case SET_AUDIO_SPDIF_MUTE_STATUS: {
-            int status = p.readInt32();
-            ret = mpTv->SetAudioSPDIFMute(status);
             break;
         }
         case GET_AUDIO_SPDIF_MUTE_STATUS:
-            ret = mpTv->GetAudioSPDIFMute();
             break;
 
         // AUDIO MASTER VOLUME
         case SET_AUDIO_MASTER_VOLUME: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioMasterVolume(vol);
             break;
         }
         case GET_AUDIO_MASTER_VOLUME:
-            ret = mpTv->GetAudioMasterVolume();
             break;
         case SAVE_CUR_AUDIO_MASTER_VOLUME: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioMasterVolume(vol);
             break;
         }
         case GET_CUR_AUDIO_MASTER_VOLUME:
-            ret = mpTv->GetCurAudioMasterVolume();
             break;
         //AUDIO BALANCE
         case SET_AUDIO_BALANCE: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioBalance(vol);
             break;
         }
         case GET_AUDIO_BALANCE:
-            ret = mpTv->GetAudioBalance();
             break;
 
         case SAVE_CUR_AUDIO_BALANCE: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioBalance(vol);
             break;
         }
         case GET_CUR_AUDIO_BALANCE:
-            ret = mpTv->GetCurAudioBalance();
             break;
 
         //AUDIO SUPPERBASS VOLUME
         case SET_AUDIO_SUPPER_BASS_VOLUME: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioSupperBassVolume(vol);
             break;
         }
         case GET_AUDIO_SUPPER_BASS_VOLUME:
-            ret = mpTv->GetAudioSupperBassVolume();
             break;
 
         case SAVE_CUR_AUDIO_SUPPER_BASS_VOLUME: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioSupperBassVolume(vol);
             break;
         }
         case GET_CUR_AUDIO_SUPPER_BASS_VOLUME:
-            ret = mpTv->GetCurAudioSupperBassVolume();
             break;
 
         //AUDIO SUPPERBASS SWITCH
         case SET_AUDIO_SUPPER_BASS_SWITCH: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioSupperBassSwitch(vol);
             break;
         }
         case GET_AUDIO_SUPPER_BASS_SWITCH:
-            ret = mpTv->GetAudioSupperBassSwitch();
             break;
 
         case SAVE_CUR_AUDIO_SUPPER_BASS_SWITCH: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioSupperBassSwitch(vol);
             break;
         }
         case GET_CUR_AUDIO_SUPPER_BASS_SWITCH:
-            ret = mpTv->GetCurAudioSupperBassSwitch();
             break;
 
         //AUDIO SRS SURROUND SWITCH
         case SET_AUDIO_SRS_SURROUND: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioSRSSurround(vol);
-            mpTv->RefreshAudioMasterVolume(SOURCE_MAX);
             break;
         }
         case GET_AUDIO_SRS_SURROUND:
-            ret = mpTv->GetAudioSRSSurround();
             break;
 
         case SAVE_CUR_AUDIO_SRS_SURROUND: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioSrsSurround(vol);
             break;
         }
         case GET_CUR_AUDIO_SRS_SURROUND:
-            ret = mpTv->GetCurAudioSRSSurround();
             break;
 
         //AUDIO SRS DIALOG CLARITY
         case SET_AUDIO_SRS_DIALOG_CLARITY: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioSrsDialogClarity(vol);
-            mpTv->RefreshAudioMasterVolume(SOURCE_MAX);
             break;
         }
         case GET_AUDIO_SRS_DIALOG_CLARITY: {
-            ret = mpTv->GetAudioSrsDialogClarity();
             break;
         }
         case SAVE_CUR_AUDIO_SRS_DIALOG_CLARITY: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioSrsDialogClarity(vol);
             break;
         }
         case GET_CUR_AUDIO_SRS_DIALOG_CLARITY:
-            ret = mpTv->GetCurAudioSrsDialogClarity();
             break;
 
         //AUDIO SRS TRUBASS
         case SET_AUDIO_SRS_TRU_BASS: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioSrsTruBass(vol);
-            mpTv->RefreshAudioMasterVolume(SOURCE_MAX);
             break;
         }
         case GET_AUDIO_SRS_TRU_BASS:
-            ret = mpTv->GetAudioSrsTruBass();
             break;
 
         case SAVE_CUR_AUDIO_SRS_TRU_BASS: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioSrsTruBass(vol);
             break;
         }
         case GET_CUR_AUDIO_SRS_TRU_BASS:
-            ret = mpTv->GetCurAudioSrsTruBass();
             break;
 
         //AUDIO BASS
         case SET_AUDIO_BASS_VOLUME: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioBassVolume(vol);
             break;
         }
         case GET_AUDIO_BASS_VOLUME:
-            ret = mpTv->GetAudioBassVolume();
             break;
 
         case SAVE_CUR_AUDIO_BASS_VOLUME: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioBassVolume(vol);
             break;
         }
 
         case GET_CUR_AUDIO_BASS_VOLUME:
-            ret = mpTv->GetCurAudioBassVolume();
             break;
 
         //AUDIO TREBLE
         case SET_AUDIO_TREBLE_VOLUME: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioTrebleVolume(vol);
             break;
         }
         case GET_AUDIO_TREBLE_VOLUME:
-            ret = mpTv->GetAudioTrebleVolume();
             break;
 
         case SAVE_CUR_AUDIO_TREBLE_VOLUME: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioTrebleVolume(vol);
             break;
         }
         case GET_CUR_AUDIO_TREBLE_VOLUME:
-            ret = mpTv->GetCurAudioTrebleVolume();
             break;
 
         //AUDIO SOUND MODE
         case SET_AUDIO_SOUND_MODE: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioSoundMode(vol);
             break;
         }
         case GET_AUDIO_SOUND_MODE:
-            ret = mpTv->GetAudioSoundMode();
             break;
 
         case SAVE_CUR_AUDIO_SOUND_MODE: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioSoundMode(vol);
             break;
         }
         case GET_CUR_AUDIO_SOUND_MODE:
-            ret = mpTv->GetCurAudioSoundMode();
             break;
 
         //AUDIO WALL EFFECT
         case SET_AUDIO_WALL_EFFECT: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioWallEffect(vol);
             break;
         }
         case GET_AUDIO_WALL_EFFECT:
-            ret = mpTv->GetAudioWallEffect();
             break;
 
         case SAVE_CUR_AUDIO_WALL_EFFECT: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioWallEffect(vol);
             break;
         }
         case GET_CUR_AUDIO_WALL_EFFECT:
-            ret = mpTv->GetCurAudioWallEffect();
             break;
 
         //AUDIO EQ MODE
         case SET_AUDIO_EQ_MODE: {
-            int vol = p.readInt32();
-            ret = mpTv->SetAudioEQMode(vol);
             break;
         }
         case GET_AUDIO_EQ_MODE:
-            ret = mpTv->GetAudioEQMode();
             break;
 
         case SAVE_CUR_AUDIO_EQ_MODE: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioEQMode(vol);
             break;
         }
         case GET_CUR_AUDIO_EQ_MODE:
-            ret = mpTv->GetCurAudioEQMode();
             break;
 
         //AUDIO EQ GAIN
         case GET_AUDIO_EQ_RANGE: {
-            int buf[2];
-            ret = mpTv->GetAudioEQRange(buf);
-            //r->writeInt32(2);
-            //r->writeInt32(buf[0]);
-            //r->writeInt32(buf[1]);
-            //r->writeInt32(ret);
             break;
         }
         case GET_AUDIO_EQ_BAND_COUNT:
-            ret = mpTv->GetAudioEQBandCount();
             break;
 
         case SET_AUDIO_EQ_GAIN: {
-            int buf[128] = {0};
-            int bufSize = p.readInt32();
-            for (int i = 0; i < bufSize; i++) {
-                buf[i] = p.readInt32();
-            }
-            ret = mpTv->SetAudioEQGain(buf);
             break;
         }
         case GET_AUDIO_EQ_GAIN: {
-            int buf[128] = {0};
-            ret = mpTv->GetAudioEQGain(buf);
-            int bufSize = mpTv->GetAudioEQBandCount();
-            for (int i = 0; i < bufSize; i++) {
-                //r->writeInt32(buf[i]);
-            }
-            //r->writeInt32(ret);
             break;
         }
         case SAVE_CUR_AUDIO_EQ_GAIN: {
-            int buf[128] = {0};
-            int bufSize = p.readInt32();
-            for (int i = 0; i < bufSize; i++) {
-                buf[i] = p.readInt32();
-            }
-            ret = mpTv->SaveCurAudioEQGain(buf);
             break;
         }
         case GET_CUR_EQ_GAIN: {
-            int buf[128] = {0};
-            ret = mpTv->GetCurAudioEQGain(buf);
-            int bufSize = mpTv->GetAudioEQBandCount();
-            //r->writeInt32(bufSize);
-            for (int i = 0; i < bufSize; i++) {
-                //r->writeInt32(buf[i]);
-            }
             break;
         }
         case SET_AUDIO_EQ_SWITCH: {
-            int tmpVal = p.readInt32();
-            ret = mpTv->SetAudioEQSwitch(tmpVal);
             break;
         }
         // AUDIO SPDIF SWITCH
         case SET_AUDIO_SPDIF_SWITCH: {
-            int tmp_val = p.readInt32();
-            ret = mpTv->SetAudioSPDIFSwitch(tmp_val);
             break;
         }
         case SAVE_CUR_AUDIO_SPDIF_SWITCH: {
-            int tmp_val = p.readInt32();
-            ret = mpTv->SaveCurAudioSPDIFSwitch(tmp_val);
             break;
         }
         case GET_CUR_AUDIO_SPDIF_SWITCH:
-            ret = mpTv->GetCurAudioSPDIFSwitch();
             break;
 
         //AUDIO SPDIF MODE
         case SET_AUDIO_SPDIF_MODE: {
-            int vol = p.readInt32();
-            int progId = p.readInt32();
-            int audioTrackId = p.readInt32();
-            ret = mpTv->SetAudioSPDIFMode(vol);
-            mpTv->ResetAudioDecoderForPCMOutput();
             break;
         }
         case SAVE_CUR_AUDIO_SPDIF_MODE: {
-            int vol = p.readInt32();
-            ret = mpTv->SaveCurAudioSPDIFMode(vol);
             break;
         }
         case GET_CUR_AUDIO_SPDIF_MODE:
-            ret = mpTv->GetCurAudioSPDIFMode();
             break;
 
         case SET_AMAUDIO_OUTPUT_MODE: {
-            int tmp_val = p.readInt32();
-            ret = mpTv->SetAmAudioOutputMode(tmp_val);
             break;
         }
         case SET_AMAUDIO_MUSIC_GAIN: {
-            int tmp_val = p.readInt32();
-            ret = mpTv->SetAmAudioMusicGain(tmp_val);
             break;
         }
         case SET_AMAUDIO_LEFT_GAIN: {
-            int tmp_val = p.readInt32();
-            ret = mpTv->SetAmAudioLeftGain(tmp_val);
             break;
         }
         case SET_AMAUDIO_RIGHT_GAIN: {
-            int tmp_val = p.readInt32();
-            ret = mpTv->SetAmAudioRightGain(tmp_val);
             break;
         }
         case SET_AMAUDIO_PRE_GAIN: {
-            float tmp_val = p.readFloat();
-            ret = mpTv->setAmAudioPreGain(tmp_val);
             break;
         }
         case SET_AMAUDIO_PRE_MUTE: {
-            int tmp_val = p.readInt32();
-            ret = mpTv->setAmAudioPreMute(tmp_val);
             break;
         }
         case GET_AMAUDIO_PRE_MUTE:
-            ret = mpTv->getAmAudioPreMute();
             break;
 
         case SELECT_LINE_IN_CHANNEL: {
-            int channel = p.readInt32();
-            ret = mpTv->AudioLineInSelectChannel(channel);
-            LOGD("SELECT_LINE_IN_CHANNEL: channel = %d; ret = %d.\n", channel, ret);
             break;
         }
         case SET_LINE_IN_CAPTURE_VOL: {
             int l_vol = p.readInt32();
             int r_vol = p.readInt32();
-            ret = mpTv->AudioSetLineInCaptureVolume(l_vol, r_vol);
             break;
         }
         case SET_AUDIO_VOL_COMP: {
-            int tmpVal = p.readInt32();
-            ret = mpTv->SetCurProgramAudioVolumeCompensationVal(tmpVal);
             break;
         }
         case GET_AUDIO_VOL_COMP:
@@ -1042,17 +888,12 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
             break;
 
         case SET_AUDIO_VIRTUAL: {
-            int enable = p.readInt32();
-            int level = p.readInt32();
-            ret = mpTv->SetAudioVirtualizer(enable, level);
             break;
         }
         case GET_AUDIO_VIRTUAL_ENABLE:
-            ret = mpTv->GetAudioVirtualizerEnable();
             break;
 
         case GET_AUDIO_VIRTUAL_LEVEL:
-            ret = mpTv->GetAudioVirtualizerLevel();
             break;
         // AUDIO END
 
@@ -2053,23 +1894,15 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
             break;
 
         case SET_AMAUDIO_VOLUME: {
-            int volume = p.readInt32();
-            ret = mpTv->setAmAudioVolume(float (volume));
             break;
         }
         case GET_AMAUDIO_VOLUME:
-            ret = (int)mpTv->getAmAudioVolume();
             break;
 
         case SAVE_AMAUDIO_VOLUME: {
-            int volume = p.readInt32();
-            int source = p.readInt32();
-            ret = mpTv->saveAmAudioVolume(volume, source);
             break;
         }
         case GET_SAVE_AMAUDIO_VOLUME: {
-            int source = p.readInt32();
-            ret = mpTv->getSaveAmAudioVolume(source);
             break;
         }
         case DTV_UPDATE_RRT: {

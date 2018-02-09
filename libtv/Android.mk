@@ -27,12 +27,6 @@ LIB_TV_BINDER := $(LOCAL_PATH)/../../frameworks/libtvbinder
 AM_LIBPLAYER_PATH := $(wildcard $(BOARD_AML_VENDOR_PATH)/frameworks/av/LibPlayer)
 LIB_SQLITE_PATH := $(wildcard external/sqlite)
 
-#support android and amaudio
-BOARD_TV_AUDIO_TYPE := amaudio
-
-#support builtin and external
-BOARD_TV_AUDIO_AMAUDIO_LIB_TYPE := external
-
 
 LOCAL_MODULE_TAGS := optional
 
@@ -68,11 +62,6 @@ LOCAL_SRC_FILES := \
   tv/CTvEas.cpp \
   tv/CTvRecord.cpp \
   vpp/CVpp.cpp \
-  audio/CTvAudio.cpp \
-  audio/audio_effect.cpp \
-  audio/audio_alsa.cpp \
-  audio/CAudioCustomerCtrl.cpp \
-  tvsetting/audio_cfg.cpp \
   tvsetting/CTvSetting.cpp  \
   tvsetting/TvKeyData.cpp \
   version/version.cpp \
@@ -89,7 +78,6 @@ LOCAL_SHARED_LIBRARIES := \
   libmedia \
   libtinyxml \
   liblog \
-  libaudioclient \
   libbinder
 
 LOCAL_SHARED_LIBRARIES += \
@@ -116,16 +104,6 @@ LOCAL_C_INCLUDES += \
   $(LIB_ZVBI_PATH)/ntsc_decode/include/ntsc_dmx \
   $(LIB_ZVBI_PATH)/src
 
-endif
-
-ifeq ($(strip $(BOARD_TV_AUDIO_AMAUDIO_LIB_TYPE)), external)
-  LOCAL_SHARED_LIBRARIES += libTVaudio
-endif
-
-ifeq ($(strip $(BOARD_ALSA_AUDIO)),tiny)
-  LOCAL_SHARED_LIBRARIES += libtinyalsa
-else
-  LOCAL_SHARED_LIBRARIES += libasound
 endif
 
 LOCAL_STATIC_LIBRARIES += \
@@ -155,35 +133,11 @@ ifeq ($(TARGET_SIMULATOR),true)
   LOCAL_CFLAGS += -DSINGLE_PROCESS
 endif
 
-ifeq ($(strip $(BOARD_ALSA_AUDIO)),tiny)
-  LOCAL_CFLAGS += -DBOARD_ALSA_AUDIO_TINY
-endif
-
-ifeq ($(strip $(BOARD_TV_AUDIO_TYPE)),amaudio)
-  LOCAL_CFLAGS += -DCC_TV_AUDIO_TYPE_AMAUDIO=1
-endif
-
-ifeq ($(strip $(BOARD_TV_AUDIO_TYPE)),android)
-  LOCAL_SRC_FILES += audio/audio_android.cpp
-  LOCAL_CFLAGS += -DCC_TV_AUDIO_TYPE_ANDROID=1
-endif
-
 LOCAL_C_INCLUDES += \
   external/tinyxml \
   $(LIB_TV_BINDER)/include \
   $(LIB_SQLITE_PATH)/dist \
-  system/media/audio_effects/include \
-  $(BOARD_AML_VENDOR_PATH)/frameworks/services/systemcontrol/PQ/include
-
-ifeq ($(strip $(BOARD_TV_AUDIO_AMAUDIO_LIB_TYPE)), external)
-  LOCAL_C_INCLUDES += hardware/amlogic/audio/libTVaudio
-endif
-
-ifeq ($(strip $(BOARD_ALSA_AUDIO)),tiny)
-  LOCAL_C_INCLUDES += external/tinyalsa/include
-else
-  LOCAL_C_INCLUDES += external/alsa-lib/include
-endif
+  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include
 
 ifeq ($(wildcard hardware/amlogic/media),hardware/amlogic/media)
 $(info "have hardware/amlogic/media")

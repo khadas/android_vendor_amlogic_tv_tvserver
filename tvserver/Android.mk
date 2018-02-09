@@ -40,8 +40,8 @@ LOCAL_SRC_FILES:= \
   MemoryLeakTrackUtil.cpp
 
 LOCAL_SHARED_LIBRARIES += \
-  vendor.amlogic.hardware.tvserver@1.0_vendor \
-  vendor.amlogic.hardware.systemcontrol@1.0_vendor \
+  vendor.amlogic.hardware.tvserver@1.0 \
+  vendor.amlogic.hardware.systemcontrol@1.0 \
   libbase \
   libhidlbase \
   libhidltransport \

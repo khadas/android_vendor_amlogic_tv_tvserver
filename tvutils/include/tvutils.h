@@ -17,6 +17,7 @@
 #include <string>
 #include <map>
 #include "PQType.h"
+#include "amstream.h"
 
 #ifndef DVB_SUCCESS
 #define DVB_SUCCESS     (0)

@@ -121,7 +121,7 @@ bool CSqlite::exeSql(const char *sql)
     char *errmsg;
     if (sql == NULL) return false;
     if (sqlite3_exec(mHandle, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
-        LOGE("exeSql=: %s error=%s", sql, errmsg ? errmsg : "Unknown");
+        //LOGE("exeSql=: %s error=%s", sql, errmsg ? errmsg : "Unknown");
         if (errmsg)
             sqlite3_free(errmsg);
         return false;

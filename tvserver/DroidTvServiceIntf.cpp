@@ -99,83 +99,86 @@ void DroidTvServiceIntf::onTvEvent(const CTvEv &ev)
         //if (mpScannerClient != NULL) {
             //sp<Client> ScannerClient = mpScannerClient.promote();
             //if (ScannerClient != 0) {
-                Parcel p;
+                TvHidlParcel hidlParcel;
                 LOGD("scanner evt type:%d freq:%d vid:%d acnt:%d scnt:%d",
                      pScannerEv->mType, pScannerEv->mFrequency, pScannerEv->mVid, pScannerEv->mAcnt, pScannerEv->mScnt);
-                p.writeInt32(pScannerEv->mType);
-                p.writeInt32(pScannerEv->mPercent);
-                p.writeInt32(pScannerEv->mTotalChannelCount);
-                p.writeInt32(pScannerEv->mLockedStatus);
-                p.writeInt32(pScannerEv->mChannelIndex);
-                p.writeInt32(pScannerEv->mFrequency);
-                p.writeString16(String16(pScannerEv->mProgramName));
-                p.writeInt32(pScannerEv->mprogramType);
-                p.writeString16(String16(pScannerEv->mParas));
-                p.writeInt32(pScannerEv->mStrength);
-                p.writeInt32(pScannerEv->mSnr);
+                hidlParcel.msgType = SCAN_EVENT_CALLBACK;
+                hidlParcel.bodyInt.resize(MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+39);
+                hidlParcel.bodyString.resize(pScannerEv->mScnt+pScannerEv->mAcnt+3);
+                hidlParcel.bodyInt[0] = pScannerEv->mType;
+                hidlParcel.bodyInt[1] = pScannerEv->mPercent;
+                hidlParcel.bodyInt[2] = pScannerEv->mTotalChannelCount;
+                hidlParcel.bodyInt[3] = pScannerEv->mLockedStatus;
+                hidlParcel.bodyInt[4] = pScannerEv->mChannelIndex;
+                hidlParcel.bodyInt[5] = pScannerEv->mFrequency;
+                hidlParcel.bodyString[0] = pScannerEv->mProgramName;
+                hidlParcel.bodyInt[6] = pScannerEv->mprogramType;
+                hidlParcel.bodyString[1] = pScannerEv->mParas;
+                hidlParcel.bodyInt[7] = pScannerEv->mStrength;
+                hidlParcel.bodyInt[8] = pScannerEv->mSnr;
                 //ATV
-                p.writeInt32(pScannerEv->mVideoStd);
-                p.writeInt32(pScannerEv->mAudioStd);
-                p.writeInt32(pScannerEv->mIsAutoStd);
+                hidlParcel.bodyInt[9] = pScannerEv->mVideoStd;
+                hidlParcel.bodyInt[10] = pScannerEv->mAudioStd;
+                hidlParcel.bodyInt[11] = pScannerEv->mIsAutoStd;
                 //DTV
-                p.writeInt32(pScannerEv->mMode);
-                p.writeInt32(pScannerEv->mSymbolRate);
-                p.writeInt32(pScannerEv->mModulation);
-                p.writeInt32(pScannerEv->mBandwidth);
-                p.writeInt32(pScannerEv->mReserved);
-                p.writeInt32(pScannerEv->mTsId);
-                p.writeInt32(pScannerEv->mONetId);
-                p.writeInt32(pScannerEv->mServiceId);
-                p.writeInt32(pScannerEv->mVid);
-                p.writeInt32(pScannerEv->mVfmt);
-                p.writeInt32(pScannerEv->mAcnt);
+                hidlParcel.bodyInt[12] = pScannerEv->mMode;
+                hidlParcel.bodyInt[13] = pScannerEv->mSymbolRate;
+                hidlParcel.bodyInt[14] = pScannerEv->mModulation;
+                hidlParcel.bodyInt[15] = pScannerEv->mBandwidth;
+                hidlParcel.bodyInt[16] = pScannerEv->mReserved;
+                hidlParcel.bodyInt[17] = pScannerEv->mTsId;
+                hidlParcel.bodyInt[18] = pScannerEv->mONetId;
+                hidlParcel.bodyInt[19] = pScannerEv->mServiceId;
+                hidlParcel.bodyInt[20] = pScannerEv->mVid;
+                hidlParcel.bodyInt[21] = pScannerEv->mVfmt;
+                hidlParcel.bodyInt[22] = pScannerEv->mAcnt;
                 for (int i = 0; i < pScannerEv->mAcnt; i++)
-                    p.writeInt32(pScannerEv->mAid[i]);
+                    hidlParcel.bodyInt[i+23] = pScannerEv->mAid[i];
                 for (int i = 0; i < pScannerEv->mAcnt; i++)
-                    p.writeInt32(pScannerEv->mAfmt[i]);
+                    hidlParcel.bodyInt[i+pScannerEv->mAcnt+23] = pScannerEv->mAfmt[i];
                 for (int i = 0; i < pScannerEv->mAcnt; i++)
-                    p.writeString16(String16(pScannerEv->mAlang[i]));
+                    hidlParcel.bodyString[i+2] = pScannerEv->mAlang[i];
                 for (int i = 0; i < pScannerEv->mAcnt; i++)
-                    p.writeInt32(pScannerEv->mAtype[i]);
+                    hidlParcel.bodyInt[i+2*pScannerEv->mAcnt+23] = pScannerEv->mAtype[i];
                 for (int i = 0; i < pScannerEv->mAcnt; i++)
-                    p.writeInt32(pScannerEv->mAExt[i]);
-                p.writeInt32(pScannerEv->mPcr);
-                p.writeInt32(pScannerEv->mScnt);
+                    hidlParcel.bodyInt[i+3*pScannerEv->mAcnt+23] = pScannerEv->mAExt[i];
+                hidlParcel.bodyInt[4*pScannerEv->mAcnt+23] = pScannerEv->mPcr;
+                hidlParcel.bodyInt[4*pScannerEv->mAcnt+24] = pScannerEv->mScnt;
                 for (int i = 0; i < pScannerEv->mScnt; i++)
-                    p.writeInt32(pScannerEv->mStype[i]);
+                    hidlParcel.bodyInt[i+4*pScannerEv->mAcnt+25] = pScannerEv->mStype[i];
                 for (int i = 0; i < pScannerEv->mScnt; i++)
-                    p.writeInt32(pScannerEv->mSid[i]);
+                    hidlParcel.bodyInt[i+pScannerEv->mScnt+4*pScannerEv->mAcnt+25] = pScannerEv->mSid[i];
                 for (int i = 0; i < pScannerEv->mScnt; i++)
-                    p.writeInt32(pScannerEv->mSstype[i]);
+                    hidlParcel.bodyInt[i+2*pScannerEv->mScnt+4*pScannerEv->mAcnt+25] = pScannerEv->mSstype[i];
                 for (int i = 0; i < pScannerEv->mScnt; i++)
-                    p.writeInt32(pScannerEv->mSid1[i]);
+                    hidlParcel.bodyInt[i+3*pScannerEv->mScnt+4*pScannerEv->mAcnt+25] = pScannerEv->mSid1[i];
                 for (int i = 0; i < pScannerEv->mScnt; i++)
-                    p.writeInt32(pScannerEv->mSid2[i]);
+                    hidlParcel.bodyInt[i+4*pScannerEv->mScnt+4*pScannerEv->mAcnt+25] = pScannerEv->mSid2[i];
                 for (int i = 0; i < pScannerEv->mScnt; i++)
-                    p.writeString16(String16(pScannerEv->mSlang[i]));
-                p.writeInt32(pScannerEv->mFree_ca);
-                p.writeInt32(pScannerEv->mScrambled);
-                p.writeInt32(pScannerEv->mScanMode);
-                p.writeInt32(pScannerEv->mSdtVer);
-                p.writeInt32(pScannerEv->mSortMode);
+                    hidlParcel.bodyString[i+pScannerEv->mAcnt+2] = pScannerEv->mSlang[i];
+                hidlParcel.bodyInt[5*pScannerEv->mScnt+4*pScannerEv->mAcnt+25] = pScannerEv->mFree_ca;
+                hidlParcel.bodyInt[5*pScannerEv->mScnt+4*pScannerEv->mAcnt+26] = pScannerEv->mScrambled;
+                hidlParcel.bodyInt[5*pScannerEv->mScnt+4*pScannerEv->mAcnt+27] = pScannerEv->mScanMode;
+                hidlParcel.bodyInt[5*pScannerEv->mScnt+4*pScannerEv->mAcnt+28] = pScannerEv->mSdtVer;
+                hidlParcel.bodyInt[5*pScannerEv->mScnt+4*pScannerEv->mAcnt+29] = pScannerEv->mSortMode;
 
-                p.writeInt32(pScannerEv->mLcnInfo.net_id);
-                p.writeInt32(pScannerEv->mLcnInfo.ts_id);
-                p.writeInt32(pScannerEv->mLcnInfo.service_id);
+                hidlParcel.bodyInt[5*pScannerEv->mScnt+4*pScannerEv->mAcnt+30] = pScannerEv->mLcnInfo.net_id;
+                hidlParcel.bodyInt[5*pScannerEv->mScnt+4*pScannerEv->mAcnt+31] = pScannerEv->mLcnInfo.ts_id;
+                hidlParcel.bodyInt[5*pScannerEv->mScnt+4*pScannerEv->mAcnt+32] = pScannerEv->mLcnInfo.service_id;
                 for (int i=0; i<MAX_LCN; i++) {
-                    p.writeInt32(pScannerEv->mLcnInfo.visible[i]);
-                    p.writeInt32(pScannerEv->mLcnInfo.lcn[i]);
-                    p.writeInt32(pScannerEv->mLcnInfo.valid[i]);
+                    hidlParcel.bodyInt[i*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+33] = pScannerEv->mLcnInfo.visible[i];
+                    hidlParcel.bodyInt[i*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+34] = pScannerEv->mLcnInfo.lcn[i];
+                    hidlParcel.bodyInt[i*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+35] = pScannerEv->mLcnInfo.valid[i];
                 }
-                p.writeInt32(pScannerEv->mMajorChannelNumber);
-                p.writeInt32(pScannerEv->mMinorChannelNumber);
-                p.writeInt32(pScannerEv->mSourceId);
-                p.writeInt32(pScannerEv->mAccessControlled);
-                p.writeInt32(pScannerEv->mHidden);
-                p.writeInt32(pScannerEv->mHideGuide);
-                p.writeString16(String16(pScannerEv->mVct));
+                hidlParcel.bodyInt[MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+33] = pScannerEv->mMajorChannelNumber;
+                hidlParcel.bodyInt[MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+34] = pScannerEv->mMinorChannelNumber;
+                hidlParcel.bodyInt[MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+35] = pScannerEv->mSourceId;
+                hidlParcel.bodyInt[MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+36] = pScannerEv->mAccessControlled;
+                hidlParcel.bodyInt[MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+37] = pScannerEv->mHidden;
+                hidlParcel.bodyInt[MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+38] = pScannerEv->mHideGuide;
+                hidlParcel.bodyString[pScannerEv->mScnt+pScannerEv->mAcnt+2] = pScannerEv->mVct;
 
-                //mNotifyListener->onEvent(SCAN_EVENT_CALLBACK, p);
+                mNotifyListener->onEvent(hidlParcel);
             //}
         //}
         break;
@@ -183,12 +186,15 @@ void DroidTvServiceIntf::onTvEvent(const CTvEv &ev)
 
     case CTvEv::TV_EVENT_EPG: {
         CTvEpg::EpgEvent *pEpgEvent = (CTvEpg::EpgEvent *) (&ev);
-        Parcel p;
-        p.writeInt32(pEpgEvent->type);
-        p.writeInt32(pEpgEvent->time);
-        p.writeInt32(pEpgEvent->programID);
-        p.writeInt32(pEpgEvent->channelID);
-        //mNotifyListener->onEvent(EPG_EVENT_CALLBACK, p);
+        TvHidlParcel hidlParcel;
+
+        hidlParcel.msgType = EPG_EVENT_CALLBACK;
+        hidlParcel.bodyInt.resize(4);
+        hidlParcel.bodyInt[0] = pEpgEvent->type;
+        hidlParcel.bodyInt[1] = pEpgEvent->time;
+        hidlParcel.bodyInt[2] = pEpgEvent->programID;
+        hidlParcel.bodyInt[3] = pEpgEvent->channelID;
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
@@ -229,37 +235,46 @@ void DroidTvServiceIntf::onTvEvent(const CTvEv &ev)
 
     case CTvEv::TV_EVENT_SIGLE_DETECT: {
         TvEvent::SignalInfoEvent *pEv = (TvEvent::SignalInfoEvent *)(&ev);
-        Parcel p;
-        p.writeInt32(pEv->mTrans_fmt);
-        p.writeInt32(pEv->mFmt);
-        p.writeInt32(pEv->mStatus);
-        p.writeInt32(pEv->mReserved);
-        //mNotifyListener->onEvent(SIGLE_DETECT_CALLBACK, p);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = SIGLE_DETECT_CALLBACK;
+        hidlParcel.bodyInt.resize(4);
+        hidlParcel.bodyInt[0] = pEv->mTrans_fmt;
+        hidlParcel.bodyInt[1] = pEv->mFmt;
+        hidlParcel.bodyInt[2] = pEv->mStatus;
+        hidlParcel.bodyInt[3] = pEv->mReserved;
+        LOGD("Tv Event signal detect mTrans_fmt =%d, mFmt = %d, mStatus = %d, mReserved = %d", pEv->mTrans_fmt, pEv->mFmt, pEv->mStatus, pEv->mReserved);
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
     case CTvEv::TV_EVENT_SUBTITLE: {
         TvEvent::SubtitleEvent *pEv = (TvEvent::SubtitleEvent *)(&ev);
-        Parcel p;
-        p.writeInt32(pEv->pic_width);
-        p.writeInt32(pEv->pic_height);
-        //mNotifyListener->onEvent(SUBTITLE_UPDATE_CALLBACK, p);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = SUBTITLE_UPDATE_CALLBACK;
+        hidlParcel.bodyInt.resize(2);
+        hidlParcel.bodyInt[0] = pEv->pic_width;
+        hidlParcel.bodyInt[1] = pEv->pic_height;
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
     case CTvEv::TV_EVENT_ADC_CALIBRATION: {
         TvEvent::ADCCalibrationEvent *pEv = (TvEvent::ADCCalibrationEvent *)(&ev);
-        Parcel p;
-        p.writeInt32(pEv->mState);
-        //mNotifyListener->onEvent(ADC_CALIBRATION_CALLBACK, p);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = ADC_CALIBRATION_CALLBACK;
+        hidlParcel.bodyInt.resize(1);
+        hidlParcel.bodyInt[0] = pEv->mState;
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
     case CTvEv::TV_EVENT_VGA: {//VGA
         TvEvent::VGAEvent *pEv = (TvEvent::VGAEvent *)(&ev);
-        Parcel p;
-        p.writeInt32(pEv->mState);
-        //mNotifyListener->onEvent(VGA_CALLBACK, p);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = VGA_CALLBACK;
+        hidlParcel.bodyInt.resize(1);
+        hidlParcel.bodyInt[0] = pEv->mState;
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
@@ -280,151 +295,174 @@ void DroidTvServiceIntf::onTvEvent(const CTvEv &ev)
 
     case CTvEv::TV_EVENT_HDMIRX_CEC: {
         TvEvent::HDMIRxCECEvent *pEv = (TvEvent::HDMIRxCECEvent *)(&ev);
-        Parcel p;
-        p.writeInt32(pEv->mDataCount);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = HDMIRX_CEC_CALLBACK;
+        hidlParcel.bodyInt.resize(pEv->mDataCount + 1);
+        hidlParcel.bodyInt[0] = pEv->mDataCount;
         for (int j = 0; j < pEv->mDataCount; j++) {
-            p.writeInt32(pEv->mDataBuf[j]);
+            hidlParcel.bodyInt[j+1] = pEv->mDataBuf[j];
         }
-        //mNotifyListener->onEvent(HDMIRX_CEC_CALLBACK, p);
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
     case CTvEv::TV_EVENT_UPGRADE_FBC: {
         TvEvent::UpgradeFBCEvent *pEv = (TvEvent::UpgradeFBCEvent *)(&ev);
-        Parcel p;
-        p.writeInt32(pEv->mState);
-        p.writeInt32(pEv->param);
-        //mNotifyListener->onEvent(UPGRADE_FBC_CALLBACK, p);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = UPGRADE_FBC_CALLBACK;
+        hidlParcel.bodyInt.resize(2);
+        hidlParcel.bodyInt[0] = pEv->mState;
+        hidlParcel.bodyInt[1] = pEv->param;
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
     case CTvEv::TV_EVENT_SERIAL_COMMUNICATION: {
         TvEvent::SerialCommunicationEvent *pEv = (TvEvent::SerialCommunicationEvent *)(&ev);
-        Parcel p;
-        p.writeInt32(pEv->mDevId);
-        p.writeInt32(pEv->mDataCount);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = SERIAL_COMMUNICATION_CALLBACK;
+        hidlParcel.bodyInt.resize(pEv->mDataCount+2);
+        hidlParcel.bodyInt[0] = pEv->mDevId;
+        hidlParcel.bodyInt[1] = pEv->mDataCount;
         for (int j = 0; j < pEv->mDataCount; j++) {
-            p.writeInt32(pEv->mDataBuf[j]);
+            hidlParcel.bodyInt[j+2] = pEv->mDataBuf[j];
         }
-        //mNotifyListener->onEvent(SERIAL_COMMUNICATION_CALLBACK, p);
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
     case CTvEv::TV_EVENT_2d4G_HEADSET: {
         TvEvent::HeadSetOf2d4GEvent *pEv = (TvEvent::HeadSetOf2d4GEvent *)(&ev);
         LOGD("SendDtvStats status: =%d para2: =%d", pEv->state, pEv->para);
-        Parcel p;
-        p.writeInt32(pEv->state);
-        p.writeInt32(pEv->para);
-        //mNotifyListener->onEvent(HEADSET_STATUS_CALLBACK, p);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = HEADSET_STATUS_CALLBACK;
+        hidlParcel.bodyInt.resize(2);
+        hidlParcel.bodyInt[0] = pEv->state;
+        hidlParcel.bodyInt[1] = pEv->para;
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
     case CTvEv::TV_EVENT_SCANNING_FRAME_STABLE: {
         TvEvent::ScanningFrameStableEvent *pEv = (TvEvent::ScanningFrameStableEvent *)(&ev);
         LOGD("Scanning Frame is stable!");
-        Parcel p;
-        p.writeInt32(pEv->CurScanningFreq);
-        //mNotifyListener->onEvent(SCANNING_FRAME_STABLE_CALLBACK, p);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = SCANNING_FRAME_STABLE_CALLBACK;
+        hidlParcel.bodyInt.resize(1);
+        hidlParcel.bodyInt[0] = pEv->CurScanningFreq;
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
     case CTvEv::TV_EVENT_FRONTEND: {
         TvEvent::FrontendEvent *pEv = (TvEvent::FrontendEvent *)(&ev);
-        Parcel p;
-        p.writeInt32(pEv->mStatus);
-        p.writeInt32(pEv->mFrequency);
-        p.writeInt32(pEv->mParam1);
-        p.writeInt32(pEv->mParam2);
-        p.writeInt32(pEv->mParam3);
-        p.writeInt32(pEv->mParam4);
-        p.writeInt32(pEv->mParam5);
-        p.writeInt32(pEv->mParam6);
-        p.writeInt32(pEv->mParam7);
-        p.writeInt32(pEv->mParam8);
-        //mNotifyListener->onEvent(FRONTEND_EVENT_CALLBACK, p);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = FRONTEND_EVENT_CALLBACK;
+        hidlParcel.bodyInt.resize(10);
+        hidlParcel.bodyInt[0] = pEv->mStatus;
+        hidlParcel.bodyInt[1] = pEv->mFrequency;
+        hidlParcel.bodyInt[2] = pEv->mParam1;
+        hidlParcel.bodyInt[3] = pEv->mParam2;
+        hidlParcel.bodyInt[4] = pEv->mParam3;
+        hidlParcel.bodyInt[5] = pEv->mParam4;
+        hidlParcel.bodyInt[6] = pEv->mParam5;
+        hidlParcel.bodyInt[7] = pEv->mParam6;
+        hidlParcel.bodyInt[8] = pEv->mParam7;
+        hidlParcel.bodyInt[9] = pEv->mParam8;
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
     case CTvEv::TV_EVENT_RECORDER: {
         TvEvent::RecorderEvent *pEv = (TvEvent::RecorderEvent *)(&ev);
-        Parcel p;
-        p.writeString16(String16(pEv->mId));
-        p.writeInt32(pEv->mStatus);
-        p.writeInt32(pEv->mError);
-        //mNotifyListener->onEvent(RECORDER_EVENT_CALLBACK, p);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = FRONTEND_EVENT_CALLBACK;
+        hidlParcel.bodyInt.resize(2);
+        hidlParcel.bodyString.resize(1);
+        hidlParcel.bodyString[0]= pEv->mId;
+        hidlParcel.bodyInt[0] = pEv->mStatus;
+        hidlParcel.bodyInt[1] = pEv->mError;
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
     case CTvEv::TV_EVENT_RRT: {
         CTvRrt::RrtEvent *pRrtEvent = (CTvRrt::RrtEvent *) (&ev);
-        Parcel p;
-        p.writeInt32(pRrtEvent->satus);
-        //mNotifyListener->onEvent(RRT_EVENT_CALLBACK, p);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = RRT_EVENT_CALLBACK;
+        hidlParcel.bodyInt.resize(1);
+        hidlParcel.bodyInt[0] = pRrtEvent->satus;
+        mNotifyListener->onEvent(hidlParcel);
         break;
     }
 
     case CTvEv::TV_EVENT_EAS: {
         CTvEas::EasEvent *pEasEvent = (CTvEas::EasEvent *) (&ev);
-        Parcel p;
-        p.writeInt32(pEasEvent->eas_section_count);
-        p.writeInt32(pEasEvent->table_id);
-        p.writeInt32(pEasEvent->extension);
-        p.writeInt32(pEasEvent->version);
-        p.writeInt32(pEasEvent->current_next);
-        p.writeInt32(pEasEvent->sequence_num);
-        p.writeInt32(pEasEvent->protocol_version);
-        p.writeInt32(pEasEvent->eas_event_id);
-        p.writeInt32(pEasEvent->eas_orig_code[0]);
-        p.writeInt32(pEasEvent->eas_orig_code[1]);
-        p.writeInt32(pEasEvent->eas_orig_code[2]);
-        p.writeInt32(pEasEvent->eas_event_code_len);
+
+        TvHidlParcel hidlParcel;
+        int index = 0;
+        hidlParcel.msgType = EAS_EVENT_CALLBACK;
+        hidlParcel.bodyInt.resize(1024);
+        hidlParcel.bodyInt[index++] = pEasEvent->eas_section_count;
+        hidlParcel.bodyInt[index++] = pEasEvent->table_id;
+        hidlParcel.bodyInt[index++] = pEasEvent->extension;
+        hidlParcel.bodyInt[index++] = pEasEvent->version;
+        hidlParcel.bodyInt[index++] = pEasEvent->current_next;
+        hidlParcel.bodyInt[index++] = pEasEvent->sequence_num;
+        hidlParcel.bodyInt[index++] = pEasEvent->protocol_version;
+        hidlParcel.bodyInt[index++] = pEasEvent->eas_event_id;
+        hidlParcel.bodyInt[index++] = pEasEvent->eas_orig_code[0];
+        hidlParcel.bodyInt[index++] = pEasEvent->eas_orig_code[1];
+        hidlParcel.bodyInt[index++] = pEasEvent->eas_orig_code[2];
+        hidlParcel.bodyInt[index++] = pEasEvent->eas_event_code_len;
         for (int j=0;j<pEasEvent->eas_event_code_len;j++) {
-            p.writeInt32(pEasEvent->eas_event_code[j]);
+            hidlParcel.bodyInt[index++] = pEasEvent->eas_event_code[j];
         }
-        p.writeInt32(pEasEvent->alert_message_time_remaining);
-        p.writeInt32(pEasEvent->event_start_time);
-        p.writeInt32(pEasEvent->event_duration);
-        p.writeInt32(pEasEvent->alert_priority);
-        p.writeInt32(pEasEvent->details_OOB_source_ID);
-        p.writeInt32(pEasEvent->details_major_channel_number);
-        p.writeInt32(pEasEvent->details_minor_channel_number);
-        p.writeInt32(pEasEvent->audio_OOB_source_ID);
-        p.writeInt32(pEasEvent->location_count);
+        hidlParcel.bodyInt[index++] = pEasEvent->alert_message_time_remaining;
+        hidlParcel.bodyInt[index++] = pEasEvent->event_start_time;
+        hidlParcel.bodyInt[index++] = pEasEvent->event_duration;
+        hidlParcel.bodyInt[index++] = pEasEvent->alert_priority;
+        hidlParcel.bodyInt[index++] = pEasEvent->details_OOB_source_ID;
+        hidlParcel.bodyInt[index++] = pEasEvent->details_major_channel_number;
+        hidlParcel.bodyInt[index++] = pEasEvent->details_minor_channel_number;
+        hidlParcel.bodyInt[index++] = pEasEvent->audio_OOB_source_ID;
+        hidlParcel.bodyInt[index++] = pEasEvent->location_count;
         for (int j=0;j<pEasEvent->location_count;j++) {
-            p.writeInt32(pEasEvent->location[j].i_state_code);
-            p.writeInt32(pEasEvent->location[j].i_country_subdiv);
-            p.writeInt32(pEasEvent->location[j].i_country_code);
+            hidlParcel.bodyInt[index++] = pEasEvent->location[j].i_state_code;
+            hidlParcel.bodyInt[index++] = pEasEvent->location[j].i_country_subdiv;
+            hidlParcel.bodyInt[index++] = pEasEvent->location[j].i_country_code;
         }
-        p.writeInt32(pEasEvent->exception_count);
+        hidlParcel.bodyInt[index++] = pEasEvent->exception_count;
         for (int j=0;j<pEasEvent->exception_count;j++) {
-            p.writeInt32(pEasEvent->exception[j].i_in_band_refer);
-            p.writeInt32(pEasEvent->exception[j].i_exception_major_channel_number);
-            p.writeInt32(pEasEvent->exception[j].i_exception_minor_channel_number);
-            p.writeInt32(pEasEvent->exception[j].exception_OOB_source_ID);
+            hidlParcel.bodyInt[index++] = pEasEvent->exception[j].i_in_band_refer;
+            hidlParcel.bodyInt[index++] = pEasEvent->exception[j].i_exception_major_channel_number;
+            hidlParcel.bodyInt[index++] = pEasEvent->exception[j].i_exception_minor_channel_number;
+            hidlParcel.bodyInt[index++] = pEasEvent->exception[j].exception_OOB_source_ID;
         }
-        p.writeInt32(pEasEvent->multi_text_count);
+        hidlParcel.bodyInt[index++] = pEasEvent->multi_text_count;
         for (int j=0;j<pEasEvent->multi_text_count;j++) {
-            p.writeInt32(pEasEvent->multi_text[j].lang[0]);
-            p.writeInt32(pEasEvent->multi_text[j].lang[1]);
-            p.writeInt32(pEasEvent->multi_text[j].lang[2]);
-            p.writeInt32(pEasEvent->multi_text[j].i_type);
-            p.writeInt32(pEasEvent->multi_text[j].i_compression_type);
-            p.writeInt32(pEasEvent->multi_text[j].i_mode);
-            p.writeInt32(pEasEvent->multi_text[j].i_number_bytes);
+            hidlParcel.bodyInt[index++] = pEasEvent->multi_text[j].lang[0];
+            hidlParcel.bodyInt[index++] = pEasEvent->multi_text[j].lang[1];
+            hidlParcel.bodyInt[index++] = pEasEvent->multi_text[j].lang[2];
+            hidlParcel.bodyInt[index++] = pEasEvent->multi_text[j].i_type;
+            hidlParcel.bodyInt[index++] = pEasEvent->multi_text[j].i_compression_type;
+            hidlParcel.bodyInt[index++] = pEasEvent->multi_text[j].i_mode;
+            hidlParcel.bodyInt[index++] = pEasEvent->multi_text[j].i_number_bytes;
             for (int k=0;k<pEasEvent->multi_text[j].i_number_bytes;k++) {
-                p.writeInt32(pEasEvent->multi_text[j].compressed_str[k]);
+                hidlParcel.bodyInt[index++] = pEasEvent->multi_text[j].compressed_str[k];
             }
         }
-        p.writeInt32(pEasEvent->descriptor_text_count);
+        hidlParcel.bodyInt[index++] = pEasEvent->descriptor_text_count;
         for (int j=0;j<pEasEvent->descriptor_text_count;j++) {
-            p.writeInt32(pEasEvent->descriptor[j].i_tag);
-            p.writeInt32(pEasEvent->descriptor[j].i_length);
+            hidlParcel.bodyInt[index++] = pEasEvent->descriptor[j].i_tag;
+            hidlParcel.bodyInt[index++] = pEasEvent->descriptor[j].i_length;
             for (int k=0;k<pEasEvent->descriptor[j].i_length;k++) {
-                p.writeInt32(pEasEvent->descriptor[j].p_data[k]);
+                hidlParcel.bodyInt[index++] = pEasEvent->descriptor[j].p_data[k];
             }
         }
-        //mNotifyListener->onEvent(EAS_EVENT_CALLBACK, p);
+        LOGD("TV event EAS count = %d", index);
+        mNotifyListener->onEvent(hidlParcel);
+
         break;
     }
 

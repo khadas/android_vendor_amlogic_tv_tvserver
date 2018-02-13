@@ -54,7 +54,6 @@ int CIniFile::LoadFromFile(const char *filename)
     }
 
     while (fgets (lineStr, MAX_INI_FILE_LINE_LEN, m_pIniFile) != NULL) {
-        //去掉多余字符
         allTrim(lineStr);
 
         LINE *pLINE = new LINE();
@@ -142,7 +141,6 @@ int CIniFile::SaveToFile(const char *filename)
     return 0;
 }
 
-//暂不插入操作
 int CIniFile::SetString(const char *section, const char *key, const char *value)
 {
     SECTION *pNewSec = NULL;
@@ -326,29 +324,25 @@ LINE *CIniFile::getKeyLineAtSec(SECTION *pSec, const char *key)
     return NULL;
 }
 
-//去掉串里面的,空格,回车,换行,s指向转换处理后的串的开头
 void CIniFile::allTrim(char *Str)
 {
-    //去掉换行
     char *pStr;
     pStr = strchr (Str, '\n');
     if (pStr != NULL) {
         *pStr = 0;
     }
-    //去掉尾部回车
     int Len = strlen(Str);
     if ( Len > 0 ) {
         if ( Str[Len - 1] == '\r' ) {
             Str[Len - 1] = '\0';
         }
     }
-    //去掉空格
     pStr = Str;
-    while (*pStr != '\0') { //没到尾部
-        if (*pStr == ' ') { //遇到空格
-            char *pTmp = pStr;//从空格处开始
+    while (*pStr != '\0') {
+        if (*pStr == ' ') {
+            char *pTmp = pStr;
             while (*pTmp != '\0') {
-                *pTmp = *(pTmp + 1);//前移,包括移最后结束符
+                *pTmp = *(pTmp + 1);
                 pTmp++;
             }
         } else {

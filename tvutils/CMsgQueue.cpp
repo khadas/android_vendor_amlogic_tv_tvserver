@@ -30,7 +30,6 @@ CMsgQueueThread::CMsgQueueThread()
 
 CMsgQueueThread::~CMsgQueueThread()
 {
-    //请求退出处理线程,并阻塞
     requestExitAndWait();
 }
 
@@ -53,7 +52,6 @@ void CMsgQueueThread::sendMsg(CMessage &msg)
     mGetMsgCondition.signal();
 }
 
-//有个缺陷，只能根据消息类型移除，同类型消息会全部移除,但足够用了
 void CMsgQueueThread::removeMsg(CMessage &msg)
 {
     AutoMutex _l(mLockQueue);

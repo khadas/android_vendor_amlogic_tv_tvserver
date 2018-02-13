@@ -294,8 +294,8 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
     LOGD ( "[source_switch_time]: %fs, %s, FE event type = %d tvaction=%x", getUptimeSeconds(), __FUNCTION__, ev.mCurSigStaus, mTvAction);
     if (mTvAction & TV_ACTION_SCANNING) return;
 
-    //前端事件响应处理
-    if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_HAS_SIG ) { //作为信号稳定
+
+    if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_HAS_SIG ) {
         LOGD("[source_switch_time]: %fs, fe lock", getUptimeSeconds());
         if (/*m_source_input == SOURCE_TV || */m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //atv and other tvin source    not to use it, and if not playing, not use have sig
             TvEvent::SignalInfoEvent ev;
@@ -305,7 +305,7 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
             ev.mReserved = 0;
             sendTvEvent ( ev );
         }
-    } else if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_NO_SIG ) { //作为信号消失
+    } else if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_NO_SIG ) {
         LOGD("[source_switch_time]: %fs, fe unlock", getUptimeSeconds());
         if ((!(mTvAction & TV_ACTION_STOPING)) && m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //just playing
             TvEvent::SignalInfoEvent ev;
@@ -1292,7 +1292,6 @@ int CTv::playDtmbProgram ( int progId )
     SetAudioMuteForTv ( CC_AUDIO_MUTE );
     saveDTVProgramID ( progId );
     prog.getChannel ( channel );
-    //音量补偿
     int chanVolCompValue = 0;
     chanVolCompValue = GetAudioVolumeCompensationVal(progId);
     SetCurProgramAudioVolumeCompensationVal ( chanVolCompValue );

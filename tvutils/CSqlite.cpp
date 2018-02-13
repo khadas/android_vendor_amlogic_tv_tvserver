@@ -30,7 +30,6 @@ CSqlite::~CSqlite()
 #endif
 }
 
-//完整性检测，检测数据库是否被破坏
 bool CSqlite::integrityCheck()
 {
 #ifdef SUPPORT_ADTV

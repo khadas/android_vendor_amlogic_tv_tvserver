@@ -33,73 +33,72 @@ enum {
 class CTvChannel: public LightRefBase<CTvChannel> {
 
 public :
-    /**QPSK模式*/
     static const int MODE_QPSK = 0;
-    /**QAM模式*/
+
     static const int MODE_QAM  = 1;
-    /**OFDM模式*/
+
     static const int MODE_OFDM = 2;
-    /**ATSC模式*/
+
     static const int MODE_ATSC = 3;
-    /**模拟模式*/
+
     static const int MODE_ANALOG = 4;
-    /**DTMB模式*/
+
     static const int MODE_DTMB = 5;
 
     static const int MODE_ISDBT = 6;
 
 
-    /**8MHz带宽*/
+
     static const int BANDWIDTH_8_MHZ = 0;
-    /**7MHz带宽*/
+
     static const int BANDWIDTH_7_MHZ = 1;
-    /**6MHz带宽*/
+
     static const int BANDWIDTH_6_MHZ = 2;
-    /**自动带宽检测*/
+
     static const int BANDWIDTH_AUTO  = 3;
-    /**5MHZ带宽*/
+
     static const int BANDWIDTH_5_MHZ = 4;
-    /**10MHZ带宽*/
+
     static const int BANDWIDTH_10_MHZ = 5;
 
-    /**QPSK调制*/
+
     static const int MODULATION_QPSK    = 0;
-    /**QAM16调制*/
+
     static const int MODULATION_QAM_16  = 1;
-    /**QAM32调制*/
+
     static const int MODULATION_QAM_32  = 2;
-    /**QAM64调制*/
+
     static const int MODULATION_QAM_64  = 3;
-    /**QAM128调制*/
+
     static const int MODULATION_QAM_128 = 4;
-    /**QAM256调制*/
+
     static const int MODULATION_QAM_256 = 5;
-    /**QAM调制(自动检测)*/
+
     static const int MODULATION_QAM_AUTO = 6;
-    /**VSB8调制*/
+
     static const int MODULATION_VSB_8   = 7;
-    /**VSB16调制*/
+
     static const int MODULATION_VSB_16  = 8;
-    /**PSK8调制*/
+
     static const int MODULATION_PSK_8   = 9;
-    /**APSK16调制*/
+
     static const int MODULATION_APSK_16 = 10;
-    /**APSK32调制*/
+
     static const int MODULATION_APSK_32 = 11;
-    /**DQPSK调制*/
+
     static const int MODULATION_DQPSK   = 12;
 
-    /**单声道*/
+
     static const int AUDIO_MONO   = 0x0000;
-    /**立体声*/
+
     static const int AUDIO_STEREO = 0x0001;
-    /**语言2*/
+
     static const int AUDIO_LANG2  = 0x0002;
-    /**SAP*/
+
     static const int AUDIO_SAP    = 0x0002;
-    /**语言1*/
+
     static const int AUDIO_LANG1  = 0x0003;
-    /**语言1/2*/
+
     static const int AUDIO_LANG1_LANG2 = 0x0004;
 
     /**PAL B*/
@@ -179,9 +178,7 @@ public :
     static const int COLOR_NTSC  = 0x08000000;
     static const int COLOR_SECAM = 0x10000000;
 
-    /**水平极性*/
     static const int SAT_POLARISATION_H = 0;
-    /**垂直极限*/
     static const int SAT_POLARISATION_V = 1;
 
 public:
@@ -190,11 +187,6 @@ public:
     ~CTvChannel();
     CTvChannel(const CTvChannel&);
     CTvChannel& operator= (const CTvChannel& cTvChannel);
-    // 根据TVChannelParams,向数据库添加一个Channel
-
-    // *创建当前卫星所有通道
-    // *@param sat_id 卫星id
-    // *@return 返回创建的通道
     static Vector<CTvChannel> tvChannelList(int sat_id);
     static int selectByID(int id, CTvChannel &c);
     static int updateByID(int progID, int std, int freq, int fineFreq);
@@ -247,13 +239,9 @@ public:
     {
         return logicalChannelNum;
     };
-    // 设置符号率(QPSK/QAM模式)
-    // @param symbolRate 符号率
     void setSymbolRate();
-    // 设置极性(QPSK模式)
     void setPolarisation();
     void setATVAudio();
-    // 修改模拟视频制式
     void setATVVideoFormat();
     void setATVAudioFormat();
     void setATVFreq();

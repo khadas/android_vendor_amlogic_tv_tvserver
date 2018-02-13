@@ -18,12 +18,9 @@ typedef enum _LINE_TYPE {
     LINE_TYPE_COMMENT,
 } LINE_TYPE;
 
-//基于链表结构
-
-//行链表,去掉多余的空格和回车,换行后.
 typedef struct _LINE {
-    LINE_TYPE type;//类型
-    char  Text[MAX_INI_FILE_LINE_LEN];//内容
+    LINE_TYPE type;
+    char  Text[MAX_INI_FILE_LINE_LEN];
     int LineLen;
     char *pKeyStart;
     char *pKeyEnd;
@@ -31,7 +28,7 @@ typedef struct _LINE {
     char *pValueEnd;
     struct _LINE *pNext;
 } LINE;
-//段链表
+
 typedef struct _SECTION {
     LINE *pLine;
     struct _SECTION *pNext;
@@ -60,7 +57,6 @@ public:
 
 private:
     LINE_TYPE getLineType(char *Str);
-    //去掉串里面的,空格,回车,换行,s指向转换处理后的串的开头
     void allTrim(char *Str);
 
     SECTION *getSection(const char *section);

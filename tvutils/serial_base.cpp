@@ -160,7 +160,7 @@ static int com_set_opt(int hComm, int speed, int db, int sb, int pb, int to, int
     cfsetparity(&tmpOpt, pb);
 
     if (to >= 0) {
-        tmpOpt.c_cc[VTIME] = to; /* 设置超时15 seconds*/
+        tmpOpt.c_cc[VTIME] = to;
         tmpOpt.c_cc[VMIN] = 0; /* Update the options and do it NOW */
     }
 

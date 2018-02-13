@@ -14,8 +14,7 @@
 #include "CTvChannel.h"
 #include <utils/String8.h>
 #include <utils/Vector.h>
-//  TV 区域
-//  可以获得每个区域的频率列表等信息
+
 using namespace android;
 class CTvRegion {
 public:
@@ -31,8 +30,6 @@ public:
     static int getLogicNumByNameAndfreq(char *name, int freq);
     void selectByCountry();
     Vector<String8> getAllCountry();
-    // 取得该Region的信号源频率参数列表
-    // @return 返回信号源频率参数列表
     //CTvChannel getChannels();
 };
 

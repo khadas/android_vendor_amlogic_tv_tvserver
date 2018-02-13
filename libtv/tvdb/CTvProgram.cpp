@@ -109,7 +109,6 @@ int CTvProgram::CreateFromCursor(CTvDatabase::Cursor &c)
     col   = c.getColumnIndex("aud_track");
     this->audioTrack = c.getInt(col);
 
-    //节目号信息初??
     if (src == CTvChannel::MODE_ATSC || (src == CTvChannel::MODE_ANALOG && major > 0)) {
         this->major = major;
         this->minor = minor;
@@ -364,9 +363,6 @@ int CTvProgram::selectProgramInChannelByNumber(int channelID, int major, int min
     return CTvDatabase::GetTvDb()->select(cmd, c);
 }
 
-/**
- *向数据库添加一个Program,not atscMode
- */
 CTvProgram::CTvProgram(int channelID, int type, int num, int skipFlag)
 {
     CTvChannel channel;
@@ -421,9 +417,6 @@ CTvProgram::CTvProgram(int channelID, int type, int num, int skipFlag)
 
 }
 
-/**
- *向数据库添加一个Program,atscMode
- */
 CTvProgram::CTvProgram(int channelID, int type, int major, int minor, int skipFlag)
 {
     CTvChannel channel;
@@ -478,9 +471,6 @@ CTvProgram::CTvProgram(int channelID, int type, int major, int minor, int skipFl
 
 }
 
-/**
- *根据记录ID查找指定TVProgram
-*/
 int CTvProgram::selectByID(int id, CTvProgram &prog)
 {
     CTvDatabase::Cursor c;
@@ -525,9 +515,6 @@ int CTvProgram::deleteChannelsProgram(CTvChannel &c)
     return 0;
 }
 
-/**
- *根据节目类型和节目号查找指定TVProgram
-*/
 int CTvProgram::selectByNumber(int type, int num, CTvProgram &prog)
 {
     String8 cmd;
@@ -557,9 +544,6 @@ int CTvProgram::selectByNumber(int type, int num, CTvProgram &prog)
     return 0;
 }
 
-/**
- *根据节目类型和节目号查找指定TVProgram
-*/
 int CTvProgram::selectByNumber(int type, int major, int minor, CTvProgram &prog, int minor_check)
 {
     String8 cmd;
@@ -618,12 +602,6 @@ int CTvProgram::selectByNumber(int type, int major, int minor, CTvProgram &prog,
     return 0;
 }
 
-
-/**
- *列出一个channel的全部TVProgram
- *@param channelID channel id
- *@param type 节目类型
- */
 int CTvProgram::selectByChannel(int channelID, int type, Vector<sp<CTvProgram> > &out)
 {
     //Vector<CTvProgram*> vp;
@@ -768,11 +746,6 @@ int CTvProgram::getProgSkipFlag()
     return skip;
 }
 
-/**
- *取得当前的audio索引
- *@param defaultLang 用户未选择语言时，默认的全局语言
- *@return 当前的Audio索引
- */
 int CTvProgram::getCurrentAudio(String8 defaultLang)
 {
     CTvDatabase::Cursor c;

@@ -18,30 +18,21 @@
 #include <stdlib.h>
 #include "CTvLog.h"
 using namespace android;
-// Program对应ATV中的一个频道，DTV中的一个service
+
 class CTvEvent;
 class CTvProgram : public LightRefBase<CTvProgram> {
 public:
-    /*this type value is link to  enum AM_SCAN_ServiceType in am_scan.h
-     * enum AM_SCAN_ServiceType
-    {
-        AM_SCAN_SRV_UNKNOWN     = 0,    < 未知类型
-        AM_SCAN_SRV_DTV         = 1,    < 数字电视类型
-        AM_SCAN_SRV_DRADIO      = 2,    < 数字广播类型
-        AM_SCAN_SRV_ATV         = 3,    < 模拟电视类型
-    };
-    */
-    /**未定义类型*/
+
     static const int TYPE_UNKNOWN = 0;
-    /**电视节目*/
+
     static const int TYPE_TV    =  4;
-    /**广播节目*/
+
     static const int TYPE_RADIO =  2;
-    /**模拟节目*/
+
     static const int TYPE_ATV   =  3;
-    /**数据节目*/
+
     static const int TYPE_DATA  =  5;
-    /**数字节目*/
+
     static const int TYPE_DTV   = 1 ;
     /** PVR/Timeshifting playback program*/
     static const int TYPE_PLAYBACK =  6;
@@ -50,9 +41,6 @@ public:
     static const int PROGRAM_SKIP_YES = 1;
     static const int PROGRAM_SKIP_UNKOWN = 2;
 
-    /**
-     *Service中的基础元素信息
-     */
 public:
     class Element {
     private :
@@ -63,10 +51,7 @@ public:
         {
             this->mpid = pid;
         }
-        /**
-         *取得基础元素的PID
-         *@return 返回PID
-         */
+
         int getPID()
         {
             return mpid;
@@ -75,9 +60,6 @@ public:
 
 
 
-    /**
-     *多语言基础元素信息
-     */
 public:
     class MultiLangElement : public Element {
     private :
@@ -89,21 +71,12 @@ public:
             this->mlang = lang;
         }
 
-        /**
-         *取得元素对应的语言
-         *@return 返回3字符语言字符串
-         */
         String8 getLang()
         {
             return mlang;
         }
     };
 
-
-
-    /**
-    *视频信息
-    */
 public :
     class Video : public Element {
     public:
@@ -135,10 +108,6 @@ public :
             this->mformat = fmt;
         }
 
-        /**
-         *取得视频编码格式
-         *@return 返回视频编码格式
-         */
         int getFormat()
         {
             return mformat;
@@ -147,15 +116,11 @@ public :
         int mformat;
     };
 
-    /**
-     *音频信息
-     */
 public :
     class Audio : public MultiLangElement {
     public  :
         /**MPEG*/
         static const int FORMAT_MPEG      = 0;
-        /**PCM 16位小端*/
         static const int FORMAT_PCM_S16LE = 1;
         /**AAC*/
         static const int FORMAT_AAC       = 2;
@@ -167,7 +132,7 @@ public :
         static const int FORMAT_MULAW     = 5;
         /**DTS*/
         static const int FORMAT_DTS       = 6;
-        /**PCM 16位大端*/
+
         static const int FORMAT_PCM_S16BE = 7;
         /**FLAC*/
         static const int FORMAT_FLAC      = 8;
@@ -185,13 +150,13 @@ public :
         static const int FORMAT_WMA       = 14;
         /**WMA Pro*/
         static const int FORMAT_WMAPRO    = 15;
-        /**蓝光PCM*/
+
         static const int FORMAT_PCM_BLURAY = 16;
         /**ALAC*/
         static const int FORMAT_ALAC      = 17;
         /**Vorbis*/
         static const int FORMAT_VORBIS    = 18;
-        /**AAC latm格式*/
+
         static const int FORMAT_AAC_LATM  = 19;
         /**APE*/
         static const int FORMAT_APE       = 20;
@@ -202,10 +167,6 @@ public :
             this->mformat = fmt;
         }
 
-        /**
-         *取得音频编码格式
-         *@return 返回音频编码格式
-         */
         int getFormat()
         {
             return mformat;
@@ -214,21 +175,18 @@ public :
         int mformat;
     };
 
-    /**
-     *字幕信息
-     */
 public :
     class Subtitle : public MultiLangElement {
     public :
         /**DVB subtitle*/
         static const int TYPE_DVB_SUBTITLE = 1;
-        /**数字电视Teletext*/
+
         static const int TYPE_DTV_TELETEXT = 2;
-        /**模拟电视Teletext*/
+
         static const int TYPE_ATV_TELETEXT = 3;
-        /**数字电视Closed caption*/
+
         static const int TYPE_DTV_CC = 4;
-        /**模拟电视Closed caption*/
+
         static const int TYPE_ATV_CC = 5;
 
 
@@ -246,46 +204,30 @@ public :
             }
         }
 
-        /**
-         *取得字幕类型
-         *@return 返回字幕类型
-         */
+
         int getType()
         {
             return type;
         }
 
-        /**
-         *取得DVB subtitle的composition page ID
-         *@return 返回composition page ID
-         */
+
         int getCompositionPageID()
         {
             return compositionPage;
         }
 
-        /**
-         *取得DVB subtitle的ancillary page ID
-         *@return 返回ancillary page ID
-         */
+
         int getAncillaryPageID()
         {
             return ancillaryPage;
         }
 
-        /**
-         *取得teletext的magazine number
-         *@return 返回magazine number
-         */
+
         int getMagazineNumber()
         {
             return magazineNo;
         }
 
-        /**
-         *取得teletext的page number
-         *@return 返回page number
-         */
         int getPageNumber()
         {
             return pageNo;
@@ -299,9 +241,7 @@ public :
         int type;
     };
 
-    /**
-     *Teletext信息
-     */
+
 public :
     class Teletext : public MultiLangElement {
     public:
@@ -311,19 +251,11 @@ public :
             pageNo = page;
         }
 
-        /**
-         *取得teletext的magazine number
-         *@return 返回magazine number
-         */
         int getMagazineNumber()
         {
             return magazineNo;
         }
 
-        /**
-         *取得teletext的page number
-         *@return 返回page number
-         */
         int getPageNumber()
         {
             return pageNo;
@@ -334,59 +266,39 @@ public :
         int pageNo;
     };
 
-    //节目号信息
+
 public:
-    /**如果没有发现子频道，忽略用户的输入*/
+
     static const int MINOR_CHECK_NONE         = 0;
-    /**如果没有发现子频道，向上寻找（子频道数字增加）,找到子频道号最大的*/
+
     static const int MINOR_CHECK_UP           = 1;
-    /**如果没有发现子频道，向下寻找（子频道数字减小）,找到子频道号最小的*/
+
     static const int MINOR_CHECK_DOWN         = 2;
-    /*如果没有发现子频道，向上寻找，然后找到向上最近的.*/
+
     static const int MINOR_CHECK_NEAREST_UP   = 3;
-    /*如果没有发现子频道，向下寻找，然后找到向下最近的.*/
+
     static const int MINOR_CHECK_NEAREST_DOWN = 4;
 
-    /**
-     *取得节目号
-     *@return 返回节目号
-     */
     int getNumber()
     {
         return major;
     }
 
-    /**
-     *取得主节目号(ATSC)
-     *@return 返回节目的主节目号
-     */
     int getMajor()
     {
         return major;
     }
 
-    /**
-     *取得次节目号(ATSC)
-     *@return 返回节目的次节目号
-     */
     int getMinor()
     {
         return minor;
     }
 
-    /**
-     *是否为ATSC模式
-     *@return 如果是ATSC模式返回true
-     */
     bool isATSCMode()
     {
         return atscMode;
     }
 
-    /**
-     *取得子频道号自动查找策略(ATSC)
-     *@return 返回子频道号自动查找策略
-     */
     int getMinorCheck()
     {
         return minorCheck;
@@ -402,12 +314,8 @@ private:
 public:
     CTvProgram(CTvDatabase::Cursor &c);
     CTvProgram(int channelID, int type, int num, int skipFlag);
-    /**
-     *向数据库添加一个Program,atscMode
-    */
     CTvProgram(int channelID, int type, int major, int minor, int skipFlag);
     ~CTvProgram();
-    // 创建并向数据库添加一个Program
     CTvProgram(int channelID, int type);
 
     CTvProgram();
@@ -435,12 +343,10 @@ public:
     int selectByNumber(int type, int major, int minor, CTvProgram &prog, int minor_check = MINOR_CHECK_NONE);
     static int selectByNumber(int type, int num, CTvProgram &prog);
     static int selectByChannel(int channelID, int type, Vector<sp<CTvProgram> > &out);
-    // 列出全部TVProgram
     static int selectAll(bool no_skip, Vector<sp<CTvProgram> > &out);
     static int selectByType(int type, int skip, Vector<sp<CTvProgram> > &out);
     static int selectByChanID(int type, int skip, Vector<sp<CTvProgram> > &out);
     static Vector<CTvProgram> selectByChannel(int channelID);
-    // 根据节目名称中的关键字查找指定TVProgram
     static Vector<CTvProgram>  selectByName(int name);
     void tvProgramDelByChannelID(int channelID);
     int getID()
@@ -529,14 +435,10 @@ private:
     int currAudTrackIndex;
     bool lock;
     bool scrambled;
-    // video信息,类型不定
     Video *mpVideo;
     int pcrID;
-    // audio信息,类型不定
     Vector<Audio *> mvAudios;
-    // subtitle信息类型不定
     Vector<Subtitle *> mvSubtitles;
-    // teletext信息,类型不定
     Vector<Teletext *> mvTeletexts;
 
 };

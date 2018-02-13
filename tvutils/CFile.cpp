@@ -103,30 +103,25 @@ int CFile::copyTo(const char *dstPath)
     char *ptr;
     int ret = 0;
     while ((bytes_read = read(mFd, buffer, BUFFER_SIZE))) {
-        /* 一个致命的错误发生了 */
         if ((bytes_read == -1) && (errno != EINTR)) {
             ret = -1;
             break;
         } else if (bytes_read > 0) {
             ptr = buffer;
             while ((bytes_write = write(dstFd, ptr, bytes_read))) {
-                /* 一个致命错误发生了 */
                 if ((bytes_write == -1) && (errno != EINTR)) {
                     ret = -1;
                     break;
                 }
-                /* 写完了所有读的字节 */
                 else if (bytes_write == bytes_read) {
                     ret = 0;
                     break;
                 }
-                /* 只写了一部分,继续写 */
                 else if (bytes_write > 0) {
                     ptr += bytes_write;
                     bytes_read -= bytes_write;
                 }
             }
-            /* 写的时候发生的致命错误 */
             if (bytes_write == -1) {
                 ret = -1;
                 break;

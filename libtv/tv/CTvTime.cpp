@@ -13,11 +13,6 @@
 #include "CTvTime.h"
 #include <CTvLog.h>
 
-
-/**
- *设定当前时间
- *@param time 当前时间（毫秒单位）
- */
 long CTvTime::getSysUTCTime()
 {
     //struct tm tm;
@@ -44,10 +39,6 @@ void CTvTime::setTime(long t)
     LOGD("--- mDiff=%ld", mDiff);
 }
 
-/**
- *取得当前时间
- *@return 返回当前时间
- */
 long CTvTime::getTime()
 {
     //long utcMS;

@@ -158,13 +158,6 @@ void CTvDimension::setUSPGAllLockStatus(String8 abbrev, int lock)
 }
 
 
-
-/**
- *根据记录ID取得对应的TVDimension
- *@param context 当前Context
- *@param id 记录ID
- *@return 返回ID对应的TVDimension对象
- */
 void CTvDimension::selectByID(CTvDimension &dm, int id)
 {
     String8 cmd = String8("select * from dimension_table where evt_table.db_id = ") + String8::format("%d", id);
@@ -183,12 +176,6 @@ void CTvDimension::selectByID(CTvDimension &dm, int id)
 
 }
 
-/**
- *根据记录ID取得对应的TVDimension
- *@param context 当前Context
- *@param ratingRegionID rating region ID
- *@return 返回ID对应的TVDimension对象
- */
 void CTvDimension::selectByRatingRegion(CTvDimension &dm, int ratingRegionID)
 {
     String8 cmd = String8("select * from dimension_table where rating_region = ") + String8::format("%d", ratingRegionID);
@@ -206,13 +193,6 @@ void CTvDimension::selectByRatingRegion(CTvDimension &dm, int ratingRegionID)
     c.close();
 }
 
-/**
- *根据记录ID取得对应的TVDimension
- *@param context 当前Context
- *@param ratingRegionID rating region ID
- *@param index RRT中对应的index_j
- *@return 返回对应的TVDimension对象
- */
 int CTvDimension::selectByIndex(CTvDimension &dm, int ratingRegionID, int index)
 {
     String8 cmd = String8("select * from dimension_table where rating_region = ") + String8::format("%d", ratingRegionID);
@@ -233,13 +213,6 @@ int CTvDimension::selectByIndex(CTvDimension &dm, int ratingRegionID, int index)
     return 0;
 }
 
-/**
- *根据ID和名字取得对应的TVDimension
- *@param context 当前Context
- *@param ratingRegionID rating region ID
- *@param dimensionName dimension的名称
- *@return 返回对应的TVDimension对象
- */
 void CTvDimension::selectByName(CTvDimension &dm, int ratingRegionID, String8 dimensionName)
 {
     String8 cmd = String8("select * from dimension_table where rating_region = ") + String8::format("%d", ratingRegionID);
@@ -261,12 +234,6 @@ void CTvDimension::selectByName(CTvDimension &dm, int ratingRegionID, String8 di
 }
 
 
-/**
- *判断指定rating_value是否需要block
- *@param context 当前Context
- *@param definedRating content_advisory_descr中定义的级别信息
- *@return 是否block
- */
 bool CTvDimension::isBlocked(CTvDimension &dm, VChipRating *definedRating)
 {
     int ret = 0;
@@ -279,19 +246,11 @@ bool CTvDimension::isBlocked(CTvDimension &dm, VChipRating *definedRating)
     return false;
 }
 
-/**
- *取得事件的ID
- *@return 返回事件的ID
- */
 int CTvDimension::getID()
 {
     return id;
 }
 
-/**
- *取得 rating region ID
- *@return 返回 rating region ID
- */
 int CTvDimension::getRatingRegion()
 {
     return ratingRegion;
@@ -301,37 +260,22 @@ int CTvDimension::getDefinedValue()
 {
     return valuesDefined;
 }
-/**
- *取得 rating region 名称
- *@return 返回 rating region 名称
- */
+
 String8 CTvDimension::getRatingRegionName()
 {
     return ratingRegionName;
 }
 
-/**
- *取得Dimension名称
- *@return 返回Dimension名称
- */
 String8 CTvDimension::getName()
 {
     return name;
 }
 
-/**
- *取得graduated scale标志
- *@return 返回graduated scale标志
- */
 int CTvDimension::getGraduatedScale()
 {
     return graduatedScale;
 }
 
-/**
- *取得该dimension的所有values的加锁状态
- *@return 返回所有values的加锁状态，0-未加锁，-1-无效值，即不能对该项进行设置，其他-已加锁
- */
 #if 0
 int *CTvDimension::getLockStatus()
 {
@@ -351,11 +295,7 @@ int *CTvDimension::getLockStatus()
     }
 }
 #endif
-/**
- *取得该dimension的指定value的加锁状态
- *@param valueIndex value索引
- *@return 返回指定value的加锁状态，0-未加锁，-1-无效值，即不能对该项进行设置，其他-已加锁
- */
+
 int CTvDimension::getLockStatus(int valueIndex)
 {
     int len = getDefinedValue();
@@ -366,11 +306,6 @@ int CTvDimension::getLockStatus(int valueIndex)
     }
 }
 
-/**
- *取得该dimension的指定几个values的加锁状态
- *@param abbrevs 需要获取的value的abbrev集合
- *@return 返回指定values的加锁状态，0-未加锁，-1-无效值，即不能对该项进行设置，其他-已加锁
- */
 void CTvDimension::getLockStatus(String8 abbrevs[], int lock[], int *array_len)
 {
     int i = 0;
@@ -390,10 +325,6 @@ void CTvDimension::getLockStatus(String8 abbrevs[], int lock[], int *array_len)
     *array_len = len;
 }
 
-/**
- *取得该dimension的所有values的abbrev text
- *@return 返回所有values的abbrev text
- */
 int CTvDimension::getAbbrev(std::vector<String8> abb)
 {
     /* the first rating_value must be not visible to user */
@@ -407,10 +338,6 @@ int CTvDimension::getAbbrev(std::vector<String8> abb)
     }
 }
 
-/**
- *取得该dimension指定value的abbrev text
- *@return 返回abbrev text
- */
 String8 CTvDimension::getAbbrev(int valueIndex)
 {
     int len = getDefinedValue();
@@ -420,10 +347,6 @@ String8 CTvDimension::getAbbrev(int valueIndex)
         return abbrevValues[valueIndex];
 }
 
-/**
- *取得该dimension的所有values的value text
- *@return 返回所有values的value text
- */
 int CTvDimension::getText(String8 tx[])
 {
     int len = getDefinedValue();
@@ -436,10 +359,6 @@ int CTvDimension::getText(String8 tx[])
     }
 }
 
-/**
- *取得该dimension指定value的value text
- *@return 返回value text
- */
 String8 CTvDimension::getText(int valueIndex)
 {
     int len = getDefinedValue();
@@ -449,11 +368,6 @@ String8 CTvDimension::getText(int valueIndex)
         return textValues[valueIndex];
 }
 
-/**
- *设置指定value的加锁状态
- *@param valueIndex value索引
- *@param status 加锁状态
- */
 void CTvDimension::setLockStatus(int valueIndex, int status)
 {
     int len = getDefinedValue();
@@ -469,10 +383,6 @@ void CTvDimension::setLockStatus(int valueIndex, int status)
     }
 }
 
-/**
- *设置该dimension所有values的加锁状态
- *@param status 加锁状态
- */
 void CTvDimension::setLockStatus(int status[])
 {
     int len = getDefinedValue();
@@ -485,11 +395,6 @@ void CTvDimension::setLockStatus(int status[])
     }
 }
 
-/**
- *设置指定values的加锁状态
- *@param abbrevs abbrev集合
- *@param locks 需要修改的与abbrev对应的加锁状态集合
- */
 void CTvDimension::setLockStatus(String8 abbrevs[], int locks[], int abb_size)
 {
     int len = getDefinedValue();

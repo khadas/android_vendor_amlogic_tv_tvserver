@@ -184,11 +184,9 @@ int CTvDatabase::importXmlToDB(const char *xmlPath)
     //delete region table before importing xml
     exeSql("delete from region_table");
 
-    //?????o?????aXML????????￡?ˉ1è±????
     TiXmlDocument myDocument(xmlPath);
     bool ret = myDocument.LoadFile();
 
-    //è?·?????1????′?
     TiXmlElement *RootElement = myDocument.RootElement();
     beginTransaction();//-----------------------------------------------
     //list-->entry

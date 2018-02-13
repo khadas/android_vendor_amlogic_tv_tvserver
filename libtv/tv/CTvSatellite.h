@@ -11,7 +11,6 @@
 #define _CTVSATELLITE_H
 
 
-// TV Satellite相关信息
 class CTvSatellite {
 };
 

@@ -12,12 +12,10 @@
 
 #include <utils/Vector.h>
 using namespace android;
-// Group对应DTV中的一个节目分组
 class CTvGroup {
 public:
     CTvGroup();
     ~CTvGroup();
-    // 取得所有节目分组信息
     static Vector<CTvGroup> selectByGroup();
     static void addGroup();
     static void deleteGroup();

@@ -197,12 +197,8 @@ void CFbcProtocol::sendAckCmd(bool isOk)
     sendDataOneway(COMM_DEV_SERIAL, ackcmd, 12, 0x00000000);
 }
 
-/*  函数名：GetCrc32
-*  函数原型：unsigned int GetCrc32(char* InStr,unsigned int len)
-*      参数：InStr  ---指向需要计算CRC32值的字符? *          len  ---为InStr的长帿 *      返回值为计算出来的CRC32结果? */
 unsigned int CFbcProtocol::GetCrc32(unsigned char *InStr, unsigned int len)
 {
-    //开始计算CRC32校验便
     unsigned int Crc = 0xffffffff;
     for (int i = 0; i < (int)len; i++) {
         Crc = (Crc >> 8) ^ mCrc32Table[(Crc & 0xFF) ^ InStr[i]];

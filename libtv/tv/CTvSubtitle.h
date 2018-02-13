@@ -12,9 +12,12 @@
 #include <stdlib.h>
 #include <CTvLog.h>
 //using namespace android;
+
+#ifdef SUPPORT_ADTV
 #include "am_cc.h"
 #include "am_sub2.h"
 #include "am_pes.h"
+#endif
 #include "CTvEv.h"
 
 enum cc_param_country {
@@ -54,9 +57,9 @@ public:
         //virtual void onEvent(const CloseCaptionEvent &ev);
         virtual void updateSubtitle(int, int) {};
     };
+    void* sub_handle;
+    void* pes_handle;
 
-    AM_SUB2_Handle_t sub_handle;
-    AM_PES_Handle_t  pes_handle;
     int              dmx_id;
     int              filter_handle;
     int              bmp_w;

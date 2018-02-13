@@ -21,12 +21,18 @@
 #include <map>
 #include <string>
 
+#ifdef SUPPORT_ADTV
 extern "C" {
 #include "am_fend.h"
 #include "am_vout.h"
 #include "linux/dvb/frontend.h"
 #include "am_fend_ctrl.h"
 }
+#endif
+
+#define TV_FE_AUTO (-1)    /**< Do not care the mode*/
+#define TV_FE_UNKNOWN (-2) /**< Set mode to unknown, something like reset*/
+
 //for app
 typedef enum atv_audo_std_s {
     CC_ATV_AUDIO_STD_START = 0,
@@ -52,14 +58,16 @@ typedef enum atv_video_std_s {
 
 //from kernel
 /*COLOR MODULATION TYPE*/
-static const   v4l2_std_id  V4L2_COLOR_STD_PAL  =   ((v4l2_std_id)0x04000000);
-static const   v4l2_std_id  V4L2_COLOR_STD_NTSC = ((v4l2_std_id)0x08000000);
-static const   v4l2_std_id  V4L2_COLOR_STD_SECAM =  ((v4l2_std_id)0x10000000);
+static const   unsigned long  V4L2_COLOR_STD_PAL  =   ((unsigned long)0x04000000);
+static const   unsigned long  V4L2_COLOR_STD_NTSC = ((unsigned long)0x08000000);
+static const   unsigned long  V4L2_COLOR_STD_SECAM =  ((unsigned long)0x10000000);
 //virtual
-static const   v4l2_std_id  V4L2_COLOR_STD_AUTO  =    ((v4l2_std_id)0x02000000);
+static const   unsigned long  V4L2_COLOR_STD_AUTO    = ((unsigned long)0x02000000);
 
 typedef struct frontend_para_set_s {
+#ifdef SUPPORT_ADTV
     fe_type_t mode;
+#endif
     int freq;
     atv_video_std_t videoStd;
     atv_audio_std_t audioStd;
@@ -103,7 +111,9 @@ public:
     int fineTune(int freq);
     int fineTune(int fineFreq, bool force);
     static int formatATVFreq(int freq);
+#ifdef SUPPORT_ADTV
     int GetTSSource(AM_DMX_Source_t *src);
+#endif
     int setPara(int mode, int freq, int para1, int para2);
     int setPara(const char *);
     int setPara(const char *paras, bool force );
@@ -119,7 +129,7 @@ public:
     static int addColorAutoFlag(int std);
     static int printVideoStdStr(int videoStd, char strBuffer[], int buff_size);
     static int printAudioStdStr(int audioStd, char strBuffer[], int buff_size);
-    static v4l2_std_id enumToStdAndColor(int videoStd, int audioStd);
+    static unsigned long enumToStdAndColor(int videoStd, int audioStd);
     static int stdEnumToCvbsFmt (int videoStd, int audioStd);
 
     static CFrontEnd *getInstance();
@@ -239,9 +249,10 @@ public:
         int getAfc() const { return getInt(FEP_AFC, -1); }
         FEParas& setAfc(int a) { setInt(FEP_AFC, a); return *this; }
 
+#ifdef SUPPORT_ADTV
         FEParas& fromDVBParameters(const FEMode& mode, const struct dvb_frontend_parameters *dvb);
         FEParas& fromFENDCTRLParameters(const FEMode& mode, const AM_FENDCTRL_DVBFrontendParameters_t *fendctrl);
-
+#endif
         FEParas& operator = (const FEParas &fep) { mparas = fep.mparas; return *this; };
         bool operator == (const FEParas &fep) const;
 

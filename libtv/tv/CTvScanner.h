@@ -7,19 +7,77 @@
  * Description: header file
  */
 
+#ifdef SUPPORT_ADTV
 #include <am_scan.h>
 #include <am_check_scramb.h>
 #include <am_epg.h>
 #include <am_mem.h>
 #include <am_db.h>
 #include "am_cc.h"
+#endif
 #include "CTvChannel.h"
 #include "CTvLog.h"
 #include "CTvEv.h"
 #include "tvin/CTvin.h"
+#include "tv/CFrontEnd.h"
 
 #include <list>
 
+
+//must sync with dvb am_scan.h
+enum
+{
+	TV_SCAN_ATVMODE_AUTO	= 0x01,	/**< auto scan mode*/
+	TV_SCAN_ATVMODE_MANUAL	= 0x02,	/**< manual scan mode*/
+	TV_SCAN_ATVMODE_FREQ	= 0x03,	/**< all band scan mode*/
+	TV_SCAN_ATVMODE_NONE	= 0x07,	/**< none*/
+};
+
+enum
+{
+	TV_SCAN_DTVMODE_AUTO 			= 0x01,	/**< auto scan mode*/
+	TV_SCAN_DTVMODE_MANUAL 			= 0x02,	/**< manual scan mode*/
+	TV_SCAN_DTVMODE_ALLBAND 		= 0x03, /**< all band scan mode*/
+	TV_SCAN_DTVMODE_SAT_BLIND		= 0x04,	/**< Satellite blind scan mode*/
+	TV_SCAN_DTVMODE_NONE			= 0x07,	/**< none*/
+	/* OR option(s)*/
+	TV_SCAN_DTVMODE_SEARCHBAT		= 0x08, /**< Whether to search BAT table*/
+	TV_SCAN_DTVMODE_SAT_UNICABLE	= 0x10,	/**< Satellite Unicable mode*/
+	TV_SCAN_DTVMODE_FTA				= 0x20,	/**< Only scan free programs*/
+	TV_SCAN_DTVMODE_NOTV			= 0x40, /**< Donot store tv programs*/
+	TV_SCAN_DTVMODE_NORADIO			= 0x80, /**< Donot store radio programs*/
+	TV_SCAN_DTVMODE_ISDBT_ONESEG	= 0x100, /**< Scan ISDBT oneseg in layer A*/
+	TV_SCAN_DTVMODE_ISDBT_FULLSEG	= 0x200, /**< Scan ISDBT fullseg*/
+	TV_SCAN_DTVMODE_SCRAMB_TSHEAD	= 0x400, /**< is check scramb by ts head*/
+	TV_SCAN_DTVMODE_NOVCT			= 0x800, /**< Donot store in vct but not in pmt programs*/
+	TV_SCAN_DTVMODE_NOVCTHIDE		= 0x1000, /**< Donot store in vct hide flag is set 1*/
+};
+
+enum
+{
+	TV_SCAN_DTV_STD_DVB		= 0x00,	/**< DVB standard*/
+	TV_SCAN_DTV_STD_ATSC	= 0x01,	/**< ATSC standard*/
+	TV_SCAN_DTV_STD_ISDB	= 0x02,	/**< ISDB standard*/
+	TV_SCAN_DTV_STD_MAX,
+};
+
+enum {
+	TV_FE_QPSK,
+	TV_FE_QAM,
+	TV_FE_OFDM,
+	TV_FE_ATSC,
+	TV_FE_ANALOG,
+	TV_FE_DTMB,
+	TV_FE_ISDBT
+};
+
+enum
+{
+	TV_SCAN_MODE_ATV_DTV,	/**< First search all ATV, then search all DTV*/
+	TV_SCAN_MODE_DTV_ATV,	/**< First search all DTV, then search all ATV*/
+	TV_SCAN_MODE_ADTV,		/**< A/DTV Use the same frequency table，search the A/DTV one by one In a frequency*/
+};
+//end
 
 #if !defined(_CTVSCANNER_H)
 #define _CTVSCANNER_H
@@ -250,8 +308,8 @@ public:
     int Scan(CFrontEnd::FEParas &fp, ScanParas &sp);
 
 private:
-    AM_Bool_t checkAtvCvbsLock(v4l2_std_id  *colorStd);
-    static AM_Bool_t checkAtvCvbsLockHelper(void *);
+    bool checkAtvCvbsLock(unsigned long  *colorStd);
+    static bool checkAtvCvbsLockHelper(void *);
 
     static void evtCallback(long dev_no, int event_type, void *param, void *data);
 
@@ -259,7 +317,7 @@ private:
     int getAtscChannelPara(int attennaType, Vector<sp<CTvChannel> > &vcp);
     void sendEvent(ScannerEvent &evt);
     //
-    AM_SCAN_Handle_t mScanHandle;
+    void* mScanHandle;
     volatile bool mbScanStart;
 
     //scan para info
@@ -302,6 +360,7 @@ private:
     typedef std::list<SCAN_TsInfo_t*> ts_list_t;
 
 #define AM_SCAN_MAX_SRV_NAME_LANG 4
+#define AM_DB_MAX_SRV_NAME_LEN 64
 
     typedef struct {
         uint8_t srv_type, eit_sche, eit_pf, rs, free_ca;
@@ -311,60 +370,56 @@ private:
         int chan_num, scrambled_flag;
         int major_chan_num, minor_chan_num, source_id;
         char name[(AM_DB_MAX_SRV_NAME_LEN + 4)*AM_SCAN_MAX_SRV_NAME_LANG + 1];
+    #ifdef SUPPORT_ADTV
         AM_SI_AudioInfo_t aud_info;
         AM_SI_SubtitleInfo_t sub_info;
         AM_SI_TeletextInfo_t ttx_info;
         AM_SI_CaptionInfo_t cap_info;
+    #endif
         int sdt_version;
         SCAN_TsInfo_t *tsinfo;
     } SCAN_ServiceInfo_t;
 
     typedef std::list<SCAN_ServiceInfo_t*> service_list_t;
 
+#ifdef SUPPORT_ADTV
     dvbpsi_pat_t *getValidPats(AM_SCAN_TS_t *ts);
     int getPmtPid(dvbpsi_pat_t *pats, int pn);
-    SCAN_ServiceInfo_t* getServiceInfo();
     void extractCaScrambledFlag(dvbpsi_descriptor_t *p_first_descriptor, int *flag);
     void extractSrvInfoFromSdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *sdts, SCAN_ServiceInfo_t *service);
     void extractSrvInfoFromVc(AM_SCAN_Result_t *result, dvbpsi_atsc_vct_channel_t *vcinfo, SCAN_ServiceInfo_t *service);
     void updateServiceInfo(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t *service);
-    void notifyService(SCAN_ServiceInfo_t *service);
     void getLcnInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, lcn_list_t &llist);
-    void notifyLcn(ScannerLcnInfo *lcn);
-    int insertLcnList(lcn_list_t &llist, ScannerLcnInfo *lcn, int idx);
-    int getParamOption(char *para);
     void addFixedATSCCaption(AM_SI_CaptionInfo_t *cap_info, int service, int cc, int text, int is_digital_cc);
-
     void processDvbTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist);
     void processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist);
     void processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist);
-
     void processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *info);
-
     void storeNewDvb(AM_SCAN_Result_t *result, AM_SCAN_TS_t *newts);
     void storeNewAnalog(AM_SCAN_Result_t *result, AM_SCAN_TS_t *newts);
     void storeNewAtsc(AM_SCAN_Result_t *result, AM_SCAN_TS_t *newts);
-
     void storeScan(AM_SCAN_Result_t *result, AM_SCAN_TS_t *curr_ts);
-
-    int getScanDtvStandard(ScanParas &scp);
     int createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEParas &fp, ScanParas &sp);
     int freeAtvParas(AM_SCAN_ATVCreatePara_t &atv_para);
     int createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEParas &fp, ScanParas &sp);
     int freeDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para);
-
-    int FETypeHelperCB(int id, void *para, void *user);
-    void CC_VBINetworkCb(AM_CC_Handle_t handle, vbi_network *n);
-
-    AM_Bool_t needVbiAssist();
-    AM_Bool_t checkVbiDataReady(int freq);
+    void CC_VBINetworkCb(void* handle, vbi_network *n);
+    static void storeScanHelper(AM_SCAN_Result_t *result);
+    static void CC_VBINetworkCbHelper(void* handle, vbi_network *n);
+#endif
+    SCAN_ServiceInfo_t* getServiceInfo();
+    void notifyService(SCAN_ServiceInfo_t *service);
+    void notifyLcn(ScannerLcnInfo *lcn);
+    int insertLcnList(lcn_list_t &llist, ScannerLcnInfo *lcn, int idx);
+    int getParamOption(char *para);
+    int getScanDtvStandard(ScanParas &scp);
+    bool needVbiAssist();
+    bool checkVbiDataReady(int freq);
     int startVBI();
     void stopVBI();
     void resetVBI();
-
-    static void storeScanHelper(AM_SCAN_Result_t *result);
+    int FETypeHelperCB(int id, void *para, void *user);
     static int FETypeHelperCBHelper(int id, void *para, void *user);
-    static void CC_VBINetworkCbHelper(AM_CC_Handle_t handle, vbi_network *n);
 
 
 private:
@@ -420,7 +475,7 @@ private:
 
     static service_list_t service_list_dummy;
 
-    AM_CC_Handle_t mVbi;
+    void* mVbi;
     int mVbiTsId;
     int mAtvIsAtsc;
 

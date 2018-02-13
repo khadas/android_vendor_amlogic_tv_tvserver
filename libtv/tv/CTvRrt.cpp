@@ -15,6 +15,162 @@
 pthread_mutex_t rrt_search_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t rrt_update_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+/**
+ * @Function: GetElementPointerByName
+ * @Description: search data from RRT file for save RRT data
+ * @Param: pRootElement: Root element of RRT xml file;
+           ElementName:  name of TiXmlElement need been search
+ * @Return: the TiXmlElement which has been search
+ */
+TiXmlElement *GetElementPointerByName(TiXmlElement* pRootElement, char *ElementName)
+{
+    if (strcmp(ElementName, pRootElement->Value()) == 0) {
+        return pRootElement;
+    }
+
+    TiXmlElement* pElement = NULL;
+    TiXmlElement* pRetElement = NULL;
+    for (pElement=pRootElement->FirstChildElement();pElement;pElement = pElement->NextSiblingElement()) {
+         pRetElement = GetElementPointerByName(pElement, ElementName);
+    }
+
+    if (pRetElement != NULL) {
+        LOGD("GetNodePointerByName: %s", pRetElement->Value());
+        return pRetElement;
+    } else {
+        return NULL;
+    }
+}
+
+/**
+ * @Function: OpenXmlFile
+ * @Description: Open XML file
+ * @Param:
+ * @Return: The pRRTFile which has been opened
+ */
+TiXmlDocument *OpenXmlFile(void)
+{
+    // define TiXmlDocument
+    TiXmlDocument *pRRTFile = new TiXmlDocument();
+    pRRTFile->LoadFile();
+    if (NULL == pRRTFile) {
+        LOGD("create RRTFile error!\n");
+        return NULL;
+    }
+
+    //add Declaration
+    LOGD("start create Declaration!\n");
+    TiXmlDeclaration *pNewDeclaration = new TiXmlDeclaration("1.0","utf-8","");
+    if (NULL == pNewDeclaration) {
+        LOGD("create Declaration error!\n");
+        return NULL;
+    }
+    pRRTFile->LinkEndChild(pNewDeclaration);
+
+    //add root element
+    LOGD("start create RootElement!\n");
+    TiXmlElement *pRootElement = new TiXmlElement("rating-system-definitions");
+    if (NULL == pRootElement) {
+        LOGD("create RootElement error!\n");
+        return NULL;
+    }
+    pRRTFile->LinkEndChild(pRootElement);
+    pRootElement->SetAttribute("xmlns:android", "http://schemas.android.com/apk/res/android");
+    pRootElement->SetAttribute("android:versionCode", "2");
+
+    return pRRTFile;
+}
+
+/**
+ * @Function: SaveDataToXml
+ * @Description: Save data to XML file
+ * @Param:pRRTFile:The pRRTFile which has been opened
+          rrt_info:Charge for GetRRTRating
+ * @Return: true:save success;    false:save failed
+ */
+bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
+{
+    if (pRRTFile == NULL) {
+        LOGE("xml file don't open!\n");
+        return false;
+    }
+    pthread_mutex_lock(&rrt_update_mutex);
+
+    TiXmlElement *pRootElement = pRRTFile->RootElement();
+    if (pRootElement->FirstChildElement() == NULL) {
+        TiXmlElement *pRatingSystemElement = new TiXmlElement("rating-system-definition");
+        if (NULL == pRatingSystemElement) {
+            LOGD("create pRatingSystemElement error!\n");
+            pthread_mutex_unlock(&rrt_update_mutex);
+            return false;
+        }
+        pRootElement->LinkEndChild(pRatingSystemElement);
+        pRatingSystemElement->SetAttribute("android:name", rrt_info.dimensions_name);
+        pRatingSystemElement->SetAttribute("android:rating", rrt_info.rating_region);
+        pRatingSystemElement->SetAttribute("android:country",rrt_info.rating_region_name);
+        pRatingSystemElement->SetAttribute("android:dimension_id",rrt_info.dimensions_id);
+
+        TiXmlElement *pNewElement = new TiXmlElement("rating-definition");
+        if (NULL == pNewElement) {
+            pthread_mutex_unlock(&rrt_update_mutex);
+            return false;
+        }
+        pRatingSystemElement->LinkEndChild(pNewElement);
+        pNewElement->SetAttribute("android:title",rrt_info.abbrev_rating_value_text);
+        pNewElement->SetAttribute("android:description",rrt_info.rating_value_text);
+        pNewElement->SetAttribute("android:rating_id",rrt_info.rating_value_id);
+
+    } else {
+        TiXmlElement *pTmpElement = GetElementPointerByName(pRootElement, "rating-system-definition");
+        if ((strcmp(pTmpElement->FirstAttribute()->Value(), rrt_info.dimensions_name) == 0) &&
+            (strcmp(pTmpElement->FirstAttribute()->Next()->Next()->Value(), rrt_info.rating_region_name) == 0) &&
+            (pTmpElement->LastAttribute()->IntValue() == rrt_info.dimensions_id)) {
+            LOGD("add new rating-definition to rating-system-definition!\n");
+            TiXmlElement *pNewElement = new TiXmlElement("rating-definition");
+            if (NULL == pNewElement) {
+                pthread_mutex_unlock(&rrt_update_mutex);
+                return false;
+            }
+            pTmpElement->LinkEndChild(pNewElement);
+            pNewElement->SetAttribute("android:title",rrt_info.abbrev_rating_value_text);
+            pNewElement->SetAttribute("android:description",rrt_info.rating_value_text);
+            pNewElement->SetAttribute("android:rating_id",rrt_info.rating_value_id);
+        } else {
+            LOGD("create new rating-system-definition!\n");
+            TiXmlElement *pRatingSystemElement = new TiXmlElement("rating-system-definition");
+            if (NULL == pRatingSystemElement) {
+                LOGD("create pRatingSystemElement error!\n");
+                pthread_mutex_unlock(&rrt_update_mutex);
+                return false;
+            }
+            pRootElement->LinkEndChild(pRatingSystemElement);
+            pRatingSystemElement->SetAttribute("android:name", rrt_info.dimensions_name);
+            pRatingSystemElement->SetAttribute("android:rating", rrt_info.rating_region);
+            pRatingSystemElement->SetAttribute("android:country",rrt_info.rating_region_name);
+            pRatingSystemElement->SetAttribute("android:dimension_id",rrt_info.dimensions_id);
+
+            TiXmlElement *pNewElement = new TiXmlElement("rating-definition");
+            if (NULL == pNewElement) {
+                pthread_mutex_unlock(&rrt_update_mutex);
+                return false;
+            }
+            pRatingSystemElement->LinkEndChild(pNewElement);
+            pNewElement->SetAttribute("android:title",rrt_info.abbrev_rating_value_text);
+            pNewElement->SetAttribute("android:description",rrt_info.rating_value_text);
+            pNewElement->SetAttribute("android:rating_id",rrt_info.rating_value_id);
+        }
+    }
+
+    if (!pRRTFile->SaveFile(TV_RRT_DEFINE_PARAM_PATH)) {
+        LOGD("save error!\n");
+        pthread_mutex_unlock(&rrt_update_mutex);
+        return false;
+    }
+
+    pthread_mutex_unlock(&rrt_update_mutex);
+    return true;
+}
+
 CTvRrt *CTvRrt::mInstance;
 CTvRrt *CTvRrt::getInstance()
 {
@@ -28,8 +184,6 @@ CTvRrt *CTvRrt::getInstance()
 
 CTvRrt::CTvRrt()
 {
-    mRrtScanHandle      = NULL;
-    mpNewRrt            = NULL;
     mRrtScanStatus      = INVALID_ID;
     mDmx_id             = INVALID_ID;
     mLastRatingRegion   = INVALID_ID;
@@ -187,6 +341,7 @@ end:
  */
 int CTvRrt::RrtCreate(int fend_id, int dmx_id, int src, char * textLangs)
 {
+#ifdef SUPPORT_ADTV
     AM_EPG_CreatePara_t para;
     AM_ErrorCode_t  ret;
     AM_DMX_OpenPara_t dmx_para;
@@ -195,7 +350,7 @@ int CTvRrt::RrtCreate(int fend_id, int dmx_id, int src, char * textLangs)
     memset(&dmx_para, 0, sizeof(dmx_para));
     LOGD("Opening demux%d ...", dmx_id);
     ret = AM_DMX_Open(mDmx_id, &dmx_para);
-    if (ret != AM_SUCCESS) {
+    if (ret != DVB_SUCCESS) {
         LOGD("AM_DMX_Open failed");
         return - 1;
     }
@@ -208,25 +363,25 @@ int CTvRrt::RrtCreate(int fend_id, int dmx_id, int src, char * textLangs)
 
     ret = AM_EPG_Create(&para, &mRrtScanHandle);
 
-    if (ret != AM_SUCCESS) {
+    if (ret != DVB_SUCCESS) {
         LOGD("AM_EPG_Create failed");
         return - 1;
     }
 
     /*disable internal default table procedure*/
-    ret = AM_EPG_DisableDefProc(mRrtScanHandle, AM_TRUE);
-    if (ret != AM_SUCCESS) {
+    ret = AM_EPG_DisableDefProc(mRrtScanHandle, true);
+    if (ret != DVB_SUCCESS) {
         LOGD("AM_EPG_DisableDefProc failed");
         return - 1;
     }
 
     /*handle tables directly by user*/
     ret = AM_EPG_SetTablesCallback(mRrtScanHandle, AM_EPG_TAB_RRT, RrtTableCallback, NULL);
-    if (ret != AM_SUCCESS) {
+    if (ret != DVB_SUCCESS) {
         LOGD("AM_EPG_SetTablesCallback failed");
         return - 1;
     }
-
+#endif
     return 0;
 }
 
@@ -238,11 +393,12 @@ int CTvRrt::RrtCreate(int fend_id, int dmx_id, int src, char * textLangs)
  */
 int CTvRrt::RrtDestroy()
 {
+#ifdef SUPPORT_ADTV
     AM_ErrorCode_t  ret;
 
     if (mRrtScanHandle != NULL) {
         ret = AM_EPG_Destroy(mRrtScanHandle);
-        if (ret != AM_SUCCESS) {
+        if (ret != DVB_SUCCESS) {
             LOGD("AM_EPG_Destroy failed");
             return - 1;
         }
@@ -252,13 +408,13 @@ int CTvRrt::RrtDestroy()
     if (mDmx_id != INVALID_ID) {
         ret = AM_DMX_Close(mDmx_id);
 
-        if (ret != AM_SUCCESS) {
+        if (ret != DVB_SUCCESS) {
             LOGD("AM_DMX_Close failed");
             return - 1;
         }
         mDmx_id = INVALID_ID;
     }
-
+#endif
     return 0;
 }
 
@@ -271,14 +427,15 @@ int CTvRrt::RrtDestroy()
  */
 int CTvRrt::RrtChangeMode(int op, int mode)
 {
+#ifdef SUPPORT_ADTV
     AM_ErrorCode_t  ret;
 
     ret = AM_EPG_ChangeMode(mRrtScanHandle, op, mode);
-    if (ret != AM_SUCCESS) {
+    if (ret != DVB_SUCCESS) {
         LOGD("AM_EPG_ChangeMode failed");
         return - 1;
     }
-
+#endif
     return 0;
 }
 
@@ -312,14 +469,15 @@ int CTvRrt::RrtScanStop(void)
 /**
  * @Function: RrtTableCallback
  * @Description: RRT event callback function
- * @Param:AM_EPG_Handle_t: dev handle
+ * @Param:void *: dev handle
           event_type:RRT event type
           param:callback data
           user_data:
  * @Return:
  */
-void CTvRrt::RrtTableCallback(AM_EPG_Handle_t handle, int event_type, void *param, void *user_data)
+void CTvRrt::RrtTableCallback(void * handle, int event_type, void *param, void *user_data)
 {
+#ifdef SUPPORT_ADTV
     if (mInstance == NULL) {
         LOGD("rrt mInstance is NULL!\n");
         return;
@@ -358,162 +516,7 @@ void CTvRrt::RrtTableCallback(AM_EPG_Handle_t handle, int event_type, void *para
     default:
         break;
     }
-}
-
-/**
- * @Function: GetElementPointerByName
- * @Description: search data from RRT file for save RRT data
- * @Param: pRootElement: Root element of RRT xml file;
-           ElementName:  name of TiXmlElement need been search
- * @Return: the TiXmlElement which has been search
- */
-TiXmlElement *GetElementPointerByName(TiXmlElement* pRootElement, char *ElementName)
-{
-    if (strcmp(ElementName, pRootElement->Value()) == 0) {
-        return pRootElement;
-    }
-
-    TiXmlElement* pElement = NULL;
-    TiXmlElement* pRetElement = NULL;
-    for (pElement=pRootElement->FirstChildElement();pElement;pElement = pElement->NextSiblingElement()) {
-         pRetElement = GetElementPointerByName(pElement, ElementName);
-    }
-
-    if (pRetElement != NULL) {
-        LOGD("GetNodePointerByName: %s", pRetElement->Value());
-        return pRetElement;
-    } else {
-        return NULL;
-    }
-}
-
-/**
- * @Function: OpenXmlFile
- * @Description: Open XML file
- * @Param:
- * @Return: The pRRTFile which has been opened
- */
-TiXmlDocument *OpenXmlFile(void)
-{
-    // define TiXmlDocument
-    TiXmlDocument *pRRTFile = new TiXmlDocument();
-    pRRTFile->LoadFile();
-    if (NULL == pRRTFile) {
-        LOGD("create RRTFile error!\n");
-        return NULL;
-    }
-
-    //add Declaration
-    LOGD("start create Declaration!\n");
-    TiXmlDeclaration *pNewDeclaration = new TiXmlDeclaration("1.0","utf-8","");
-    if (NULL == pNewDeclaration) {
-        LOGD("create Declaration error!\n");
-        return NULL;
-    }
-    pRRTFile->LinkEndChild(pNewDeclaration);
-
-    //add root element
-    LOGD("start create RootElement!\n");
-    TiXmlElement *pRootElement = new TiXmlElement("rating-system-definitions");
-    if (NULL == pRootElement) {
-        LOGD("create RootElement error!\n");
-        return NULL;
-    }
-    pRRTFile->LinkEndChild(pRootElement);
-    pRootElement->SetAttribute("xmlns:android", "http://schemas.android.com/apk/res/android");
-    pRootElement->SetAttribute("android:versionCode", "2");
-
-    return pRRTFile;
-}
-
-/**
- * @Function: SaveDataToXml
- * @Description: Save data to XML file
- * @Param:pRRTFile:The pRRTFile which has been opened
-          rrt_info:Charge for GetRRTRating
- * @Return: true:save success;    false:save failed
- */
-bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
-{
-    if (pRRTFile == NULL) {
-        LOGE("xml file don't open!\n");
-        return false;
-    }
-    pthread_mutex_lock(&rrt_update_mutex);
-
-    TiXmlElement *pRootElement = pRRTFile->RootElement();
-    if (pRootElement->FirstChildElement() == NULL) {
-        TiXmlElement *pRatingSystemElement = new TiXmlElement("rating-system-definition");
-        if (NULL == pRatingSystemElement) {
-            LOGD("create pRatingSystemElement error!\n");
-            pthread_mutex_unlock(&rrt_update_mutex);
-            return false;
-        }
-        pRootElement->LinkEndChild(pRatingSystemElement);
-        pRatingSystemElement->SetAttribute("android:name", rrt_info.dimensions_name);
-        pRatingSystemElement->SetAttribute("android:rating", rrt_info.rating_region);
-        pRatingSystemElement->SetAttribute("android:country",rrt_info.rating_region_name);
-        pRatingSystemElement->SetAttribute("android:dimension_id",rrt_info.dimensions_id);
-
-        TiXmlElement *pNewElement = new TiXmlElement("rating-definition");
-        if (NULL == pNewElement) {
-            pthread_mutex_unlock(&rrt_update_mutex);
-            return false;
-        }
-        pRatingSystemElement->LinkEndChild(pNewElement);
-        pNewElement->SetAttribute("android:title",rrt_info.abbrev_rating_value_text);
-        pNewElement->SetAttribute("android:description",rrt_info.rating_value_text);
-        pNewElement->SetAttribute("android:rating_id",rrt_info.rating_value_id);
-
-    } else {
-        TiXmlElement *pTmpElement = GetElementPointerByName(pRootElement, "rating-system-definition");
-        if ((strcmp(pTmpElement->FirstAttribute()->Value(), rrt_info.dimensions_name) == 0) &&
-            (strcmp(pTmpElement->FirstAttribute()->Next()->Next()->Value(), rrt_info.rating_region_name) == 0) &&
-            (pTmpElement->LastAttribute()->IntValue() == rrt_info.dimensions_id)) {
-            LOGD("add new rating-definition to rating-system-definition!\n");
-            TiXmlElement *pNewElement = new TiXmlElement("rating-definition");
-            if (NULL == pNewElement) {
-                pthread_mutex_unlock(&rrt_update_mutex);
-                return false;
-            }
-            pTmpElement->LinkEndChild(pNewElement);
-            pNewElement->SetAttribute("android:title",rrt_info.abbrev_rating_value_text);
-            pNewElement->SetAttribute("android:description",rrt_info.rating_value_text);
-            pNewElement->SetAttribute("android:rating_id",rrt_info.rating_value_id);
-        } else {
-            LOGD("create new rating-system-definition!\n");
-            TiXmlElement *pRatingSystemElement = new TiXmlElement("rating-system-definition");
-            if (NULL == pRatingSystemElement) {
-                LOGD("create pRatingSystemElement error!\n");
-                pthread_mutex_unlock(&rrt_update_mutex);
-                return false;
-            }
-            pRootElement->LinkEndChild(pRatingSystemElement);
-            pRatingSystemElement->SetAttribute("android:name", rrt_info.dimensions_name);
-            pRatingSystemElement->SetAttribute("android:rating", rrt_info.rating_region);
-            pRatingSystemElement->SetAttribute("android:country",rrt_info.rating_region_name);
-            pRatingSystemElement->SetAttribute("android:dimension_id",rrt_info.dimensions_id);
-
-            TiXmlElement *pNewElement = new TiXmlElement("rating-definition");
-            if (NULL == pNewElement) {
-                pthread_mutex_unlock(&rrt_update_mutex);
-                return false;
-            }
-            pRatingSystemElement->LinkEndChild(pNewElement);
-            pNewElement->SetAttribute("android:title",rrt_info.abbrev_rating_value_text);
-            pNewElement->SetAttribute("android:description",rrt_info.rating_value_text);
-            pNewElement->SetAttribute("android:rating_id",rrt_info.rating_value_id);
-        }
-    }
-
-    if (!pRRTFile->SaveFile(TV_RRT_DEFINE_PARAM_PATH)) {
-        LOGD("save error!\n");
-        pthread_mutex_unlock(&rrt_update_mutex);
-        return false;
-    }
-
-    pthread_mutex_unlock(&rrt_update_mutex);
-    return true;
+#endif
 }
 
 /**
@@ -525,15 +528,16 @@ bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
           user_data:
  * @Return:
  */
-void CTvRrt::RrtDataUpdate(AM_EPG_Handle_t dev_no, int event_type, void *param, void *user_data)
+void CTvRrt::RrtDataUpdate(void * dev_no, int event_type, void *param, void *user_data)
 {
+#ifdef SUPPORT_ADTV
     switch (event_type) {
     case AM_EPG_TAB_RRT: {
         INT8U i, j;
         rrt_info_t rrt_info;
         memset(&rrt_info, 0, sizeof(rrt_info_t));
 
-        mpNewRrt = (rrt_section_info_t *)param;
+        rrt_section_info_t * pNewRrt = (rrt_section_info_t *)param;
 
         //open xml file
         TiXmlDocument *pRRTFile = OpenXmlFile();
@@ -542,24 +546,24 @@ void CTvRrt::RrtDataUpdate(AM_EPG_Handle_t dev_no, int event_type, void *param, 
             return;
         }
 
-        while (mpNewRrt != NULL) {
-            LOGD("T [RRT:0x%02x][rr:0x%04x][dd:0x%04x] v[0x%x]\n", mpNewRrt->i_table_id, mpNewRrt->rating_region,
-                    mpNewRrt->dimensions_defined, mpNewRrt->version_number);
+        while (pNewRrt != NULL) {
+            LOGD("T [RRT:0x%02x][rr:0x%04x][dd:0x%04x] v[0x%x]\n", pNewRrt->i_table_id, pNewRrt->rating_region,
+                    pNewRrt->dimensions_defined, pNewRrt->version_number);
 
             //save rating_region
-            rrt_info.rating_region = mpNewRrt->rating_region;
+            rrt_info.rating_region = pNewRrt->rating_region;
             rrt_info.dimensions_id = 0;
 
             //parser rating_region_name
-            MultipleStringParser(mpNewRrt->rating_region_name, rrt_info.rating_region_name);
+            MultipleStringParser(pNewRrt->rating_region_name, rrt_info.rating_region_name);
 
             //parser dimensions_info
-            rrt_dimensions_info  *dimensions_info = mpNewRrt->dimensions_info;
+            rrt_dimensions_info  *dimensions_info = pNewRrt->dimensions_info;
 
             while (dimensions_info != NULL) {
                 //parser dimensions_name
                 MultipleStringParser(dimensions_info->dimensions_name, rrt_info.dimensions_name);
-                LOGD("graduated_scale[%d] values_defined[%d]\n", mpNewRrt->dimensions_info->graduated_scale,mpNewRrt->dimensions_info->values_defined);
+                LOGD("graduated_scale[%d] values_defined[%d]\n", pNewRrt->dimensions_info->graduated_scale,pNewRrt->dimensions_info->values_defined);
 
                 //paser and save data to xml
                 for (j=1;j<dimensions_info->values_defined;j++) {
@@ -578,7 +582,7 @@ void CTvRrt::RrtDataUpdate(AM_EPG_Handle_t dev_no, int event_type, void *param, 
 
                 dimensions_info = dimensions_info->p_next;
             }
-            mpNewRrt = mpNewRrt->p_next;
+            pNewRrt = pNewRrt->p_next;
         }
 
         delete pRRTFile;
@@ -587,8 +591,10 @@ void CTvRrt::RrtDataUpdate(AM_EPG_Handle_t dev_no, int event_type, void *param, 
     default:
         break;
     }
+#endif
 }
 
+#if 0
 /**
  * @Function: MultipleStringParser
  * @Description: Multiple string data parser
@@ -608,6 +614,7 @@ void CTvRrt::MultipleStringParser(atsc_multiple_string_t atsc_multiple_string, c
 
     return;
 }
+#endif
 
 /**
  * @Function: RrtUpdataCheck

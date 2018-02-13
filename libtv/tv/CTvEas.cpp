@@ -25,7 +25,6 @@ CTvEas *CTvEas::GetInstance()
 
 CTvEas::CTvEas()
 {
-    mEasScanHandle      = NULL;
     mpObserver          = NULL;
     mDmxId              = INVALID_ID;
 }
@@ -46,6 +45,7 @@ CTvEas::~CTvEas()
  */
 int CTvEas::StartEasUpdate()
 {
+#ifdef SUPPORT_ADTV
     int val = 0;
     val = EasCreate(0, 2, 0, NULL);    //2 is demux id which according to DVB moudle!
     if (val < 0) {
@@ -55,13 +55,13 @@ int CTvEas::StartEasUpdate()
 
     AM_ErrorCode_t ret;
     ret = AM_EPG_ChangeMode(mEasScanHandle, MODE_ADD, SCAN_PSIP_CEA);
-    if (ret != AM_SUCCESS) {
+    if (ret != DVB_SUCCESS) {
         LOGD("StartEasUpdate failed!\n");
         return -1;
-    } else {
-        LOGD("StartEasUpdate success!\n");
-        return 0;
     }
+#endif
+    LOGD("StartEasUpdate success!\n");
+    return 0;
 }
 
 /**
@@ -72,9 +72,10 @@ int CTvEas::StartEasUpdate()
  */
 int CTvEas::StopEasUpdate()
 {
+#ifdef SUPPORT_ADTV
     AM_ErrorCode_t ret;
     ret = AM_EPG_ChangeMode(mEasScanHandle, MODE_REMOVE, SCAN_PSIP_CEA);
-    if (ret != AM_SUCCESS) {
+    if (ret != DVB_SUCCESS) {
         LOGD("StopEasUpdate failed!\n");
     } else {
         LOGD("StopEasUpdate success!\n");
@@ -86,7 +87,7 @@ int CTvEas::StopEasUpdate()
         LOGD("EasDestroy failed!\n");
         return -1;
     }
-
+#endif
     return 0;
 }
 
@@ -101,6 +102,7 @@ int CTvEas::StopEasUpdate()
  */
 int CTvEas::EasCreate(int fend_id, int dmx_id, int src, char *textLangs)
 {
+#ifdef SUPPORT_ADTV
     AM_EPG_CreatePara_t para;
     AM_ErrorCode_t ret;
     AM_DMX_OpenPara_t dmx_para;
@@ -109,7 +111,7 @@ int CTvEas::EasCreate(int fend_id, int dmx_id, int src, char *textLangs)
     mDmxId = dmx_id;
     memset(&dmx_para, 0, sizeof(dmx_para));
     ret = AM_DMX_Open(dmx_id, &dmx_para);
-    if (ret != AM_SUCCESS) {
+    if (ret != DVB_SUCCESS) {
         LOGD("AM_DMX_Open failed");
         return - 1;
     }
@@ -122,7 +124,7 @@ int CTvEas::EasCreate(int fend_id, int dmx_id, int src, char *textLangs)
     snprintf(para.text_langs, sizeof(para.text_langs), "%s", textLangs);
 
     ret = AM_EPG_Create(&para, &mEasScanHandle);
-    if (ret != AM_SUCCESS) {
+    if (ret != DVB_SUCCESS) {
         LOGD("AM_EPG_Create failed!\n");
         return -1;
     }
@@ -130,10 +132,11 @@ int CTvEas::EasCreate(int fend_id, int dmx_id, int src, char *textLangs)
     AM_EVT_Subscribe((long)mEasScanHandle, AM_EPG_EVT_NEW_CEA, EasEvtCallback, NULL);
 
     ret = AM_EPG_SetUserData(mEasScanHandle, (void *)this);
-    if (ret != AM_SUCCESS) {
+    if (ret != DVB_SUCCESS) {
         LOGD("AM_EPG_SetUserData failed!\n");
         return -1;
     }
+#endif
     return 0;
 }
 
@@ -145,6 +148,7 @@ int CTvEas::EasCreate(int fend_id, int dmx_id, int src, char *textLangs)
  */
 int CTvEas::EasDestroy()
 {
+#ifdef SUPPORT_ADTV
     AM_ErrorCode_t ret;
     if (mEasScanHandle != NULL) {
         /*unregister eit events notifications*/
@@ -159,12 +163,12 @@ int CTvEas::EasDestroy()
         mDmxId = INVALID_ID;
     }
 
-    if (ret != AM_SUCCESS) {
+    if (ret != DVB_SUCCESS) {
         LOGD("AM_EPG_SetUserData failed!\n");
         return -1;
-    } else {
-        return 0;
     }
+#endif
+    return 0;
 }
 
 /**
@@ -178,9 +182,10 @@ int CTvEas::EasDestroy()
  */
 void CTvEas::EasEvtCallback(long dev_no, int event_type, void *param, void *user_data __unused)
 {
+#ifdef SUPPORT_ADTV
     CTvEas *pEas;
 
-    AM_EPG_GetUserData((AM_EPG_Handle_t)dev_no, (void **)&pEas);
+    AM_EPG_GetUserData((void *)dev_no, (void **)&pEas);
 
     if ((pEas == NULL) || (pEas->mpObserver == NULL)) {
         return;
@@ -284,8 +289,10 @@ void CTvEas::EasEvtCallback(long dev_no, int event_type, void *param, void *user
     default:
         break;
     }
+#endif
 }
 
+#ifdef SUPPORT_ADTV
 /**
  * @Function: GetSectionCount
  * @Description: Get EAS Section Count
@@ -336,3 +343,5 @@ int CTvEas::GetMultiCount(dvbpsi_atsc_cea_multi_str_t *pData)
     LOGD("multi: count = %d\n", count);
     return count;
 }
+#endif
+

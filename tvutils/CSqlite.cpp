@@ -22,21 +22,25 @@ CSqlite::CSqlite()
 
 CSqlite::~CSqlite()
 {
+#ifdef SUPPORT_ADTV
     if (mHandle != NULL) {
         sqlite3_close(mHandle);
         mHandle = NULL;
     }
+#endif
 }
 
 //完整性检测，检测数据库是否被破坏
 bool CSqlite::integrityCheck()
 {
+#ifdef SUPPORT_ADTV
     char *err;
     int rval = sqlite3_exec(mHandle, "PRAGMA integrity_check;", sqlite3_exec_callback, NULL, &err);
     if (rval != SQLITE_OK) {
         LOGE(" val = %d, msg = %s!\n", rval, sqlite3_errmsg(mHandle));
         return false;
     }
+#endif
     return true;
 }
 
@@ -51,21 +55,25 @@ int CSqlite::sqlite3_exec_callback(void *data __unused, int nColumn, char **colV
 
 int CSqlite::openDb(const char *path)
 {
+#ifdef SUPPORT_ADTV
     if (sqlite3_open(path, &mHandle) != SQLITE_OK) {
         LOGD("open db(%s) error", path);
         mHandle = NULL;
         return -1;
     }
+#endif
     return 0;
 }
 
 int CSqlite::closeDb()
 {
     int rval = 0;
+#ifdef SUPPORT_ADTV
     if (mHandle != NULL) {
         rval = sqlite3_close(mHandle);
         mHandle = NULL;
     }
+#endif
     return rval;
 }
 
@@ -81,6 +89,7 @@ sqlite3 *CSqlite::getHandle()
 
 int CSqlite::select(const char *sql, CSqlite::Cursor &c)
 {
+#ifdef SUPPORT_ADTV
     int col, row;
     char **pResult = NULL;
     char *errmsg;
@@ -98,6 +107,7 @@ int CSqlite::select(const char *sql, CSqlite::Cursor &c)
 
     //LOGD("row=%d, col=%d", row, col);
     c.Init(pResult, row, col);
+#endif
     return 0;
 }
 
@@ -107,6 +117,7 @@ void CSqlite::insert()
 
 bool CSqlite::exeSql(const char *sql)
 {
+#ifdef SUPPORT_ADTV
     char *errmsg;
     if (sql == NULL) return false;
     if (sqlite3_exec(mHandle, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
@@ -115,6 +126,7 @@ bool CSqlite::exeSql(const char *sql)
             sqlite3_free(errmsg);
         return false;
     }
+#endif
     //LOGD("sql=%s", sql);
     return true;
 }

@@ -21,14 +21,17 @@
 #include <sys/types.h>
 #include <dlfcn.h>
 #include <time.h>
-#include "am_misc.h"
-#include "am_debug.h"
 #include "CFrontEnd.h"
 #include "util.h"
 #include "tvin/CTvin.h"
+#include "CTvScanner.h"
 
 #include <string>
 #include <map>
+
+#ifdef SUPPORT_ADTV
+#include "am_misc.h"
+#include "am_debug.h"
 
 extern "C" {
 #include "am_av.h"
@@ -36,6 +39,7 @@ extern "C" {
 #include "linux/videodev2.h"
 #include "am_fend_ctrl.h"
 }
+#endif
 
 CFrontEnd *CFrontEnd::mInstance;
 
@@ -59,14 +63,17 @@ CFrontEnd::CFrontEnd()
 
 CFrontEnd::~CFrontEnd()
 {
+#ifdef SUPPORT_ADTV
     AM_EVT_Unsubscribe(mFrontDevID, AM_FEND_EVT_STATUS_CHANGED, dmd_fend_callback, NULL);
     if (mFrontDevID == FE_DEV_ID)
         AM_FEND_Close(mFrontDevID);
     mFrontDevID = -1;
+#endif
 }
 
 int CFrontEnd::Open(int mode)
 {
+#ifdef SUPPORT_ADTV
     AutoMutex _l( mLock );
 
     AM_FEND_OpenPara_t para;
@@ -74,7 +81,7 @@ int CFrontEnd::Open(int mode)
 
     LOGD("FE Open [%d->%d]", mCurMode, mode);
 
-    if (mbFEOpened && (mCurMode == mode || mode == FE_AUTO)) {
+    if (mbFEOpened && (mCurMode == mode || mode == TV_FE_AUTO)) {
         LOGD("FrontEnd already opened, return");
         return 0;
     }
@@ -97,12 +104,13 @@ int CFrontEnd::Open(int mode)
     mCurFreq = -1;
     mCurPara1 = -1;
     mCurPara2 = -1;
-
+#endif
     return 0;
 }
 
 int CFrontEnd::Close()
 {
+#ifdef SUPPORT_ADTV
     AutoMutex _l( mLock );
 
     int rc = 0;
@@ -125,13 +133,14 @@ int CFrontEnd::Close()
         LOGD("%s,frontend_close fail! dvb error id is %d\n", __FUNCTION__, rc);
         return -1;
     }
-
+#endif
     LOGD("%s,close frontend is ok\n", __FUNCTION__);
     return 0;
 }
 
 int CFrontEnd::setMode(int mode)
 {
+#ifdef SUPPORT_ADTV
     AutoMutex _l( mLock );
 
     int rc = 0;
@@ -141,6 +150,7 @@ int CFrontEnd::setMode(int mode)
         LOGD("%s,front dev set mode failed! dvb error id is %d\n", __FUNCTION__, rc);
         return -1;
     }
+#endif
     mCurMode = mode;
     return 0;
 }
@@ -153,6 +163,7 @@ int CFrontEnd::setProp(int cmd, int val)
 
 int CFrontEnd::setPropLocked(int cmd, int val)
 {
+#ifdef SUPPORT_ADTV
     struct dtv_properties props;
     struct dtv_property prop;
 
@@ -166,30 +177,34 @@ int CFrontEnd::setPropLocked(int cmd, int val)
     props.props = &prop;
 
     return AM_FEND_SetProp(mFrontDevID, &props);
+#else
+    return -1;
+#endif
 }
+
 int CFrontEnd::convertParas(char *paras, int mode, int freq1, int freq2, int para1, int para2)
 {
     char p[128] = {0};
     sprintf(paras, "{\"mode\":%d,\"freq\":%d,\"freq2\":%d", mode, freq1, freq2);
     switch (FEMode(mode).getBase())
     {
-        case FE_DTMB:
-        case FE_OFDM:
+        case TV_FE_DTMB:
+        case TV_FE_OFDM:
             sprintf(p, ",\"bw\":%d}", para1);
             break;
-        case FE_QAM:
+        case TV_FE_QAM:
             sprintf(p, ",\"sr\":%d,\"mod\":%d}", para1, para2);
             break;
-        case FE_ATSC:
+        case TV_FE_ATSC:
             sprintf(p, ",\"mod\":%d}", para1);
             break;
-        case FE_ANALOG:
+        case TV_FE_ANALOG:
             sprintf(p, ",\"vtd\":%d,\"atd\":%d,\"afc\":%d}",
                 stdAndColorToVideoEnum(para1),
                 stdAndColorToAudioEnum(para1),
                 para2);
             break;
-        case FE_ISDBT:
+        case TV_FE_ISDBT:
             sprintf(p, ",\"bw\":%d,\"lyr\":%d}", para1, para2);
             break;
         default:
@@ -210,22 +225,22 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
     mCurPara1 = mCurPara2 = 0;
     switch (mFEParas.getFEMode().getBase())
     {
-        case FE_DTMB:
-        case FE_OFDM:
+        case TV_FE_DTMB:
+        case TV_FE_OFDM:
             mCurPara1 = mFEParas.getBandwidth();
             break;
-        case FE_QAM:
+        case TV_FE_QAM:
             mCurPara1 = mFEParas.getSymbolrate();
             mCurPara2 = mFEParas.getModulation();
             break;
-        case FE_ATSC:
+        case TV_FE_ATSC:
             mCurPara1 = mFEParas.getModulation();
             break;
-        case FE_ANALOG:
+        case TV_FE_ANALOG:
             mCurPara1 = enumToStdAndColor(mFEParas.getVideoStd(), mFEParas.getAudioStd());
             mCurPara2 = mFEParas.getAfc();
             break;
-        case FE_ISDBT:
+        case TV_FE_ISDBT:
             mCurPara1 = mFEParas.getBandwidth();
             mCurPara2 = mFEParas.getLayer();
             break;
@@ -248,6 +263,7 @@ int CFrontEnd::setPara(const char *paras)
 
 int CFrontEnd::setPara(const char *paras, bool force )
 {
+#ifdef SUPPORT_ADTV
     AutoMutex _l( mLock );
     int ret = 0;
     FEParas feparas(paras);
@@ -265,29 +281,29 @@ int CFrontEnd::setPara(const char *paras, bool force )
 
     dvbfepara.m_type = mFEParas.getFEMode().getBase();
     switch (dvbfepara.m_type) {
-    case FE_OFDM:
+    case TV_FE_OFDM:
         dvbfepara.terrestrial.para.frequency = mFEParas.getFrequency();
         dvbfepara.terrestrial.para.u.ofdm.bandwidth = (fe_bandwidth_t)mFEParas.getBandwidth();
         dvbfepara.terrestrial.para.u.ofdm.ofdm_mode = (fe_ofdm_mode_t)mFEParas.getFEMode().getGen();
         break;
-    case FE_DTMB:
+    case TV_FE_DTMB:
         dvbfepara.dtmb.para.frequency = mFEParas.getFrequency();
         dvbfepara.dtmb.para.u.ofdm.bandwidth = (fe_bandwidth_t)mFEParas.getBandwidth();
         break;
-    case FE_ATSC:
+    case TV_FE_ATSC:
         dvbfepara.atsc.para.frequency = mFEParas.getFrequency();
         dvbfepara.atsc.para.u.vsb.modulation = (fe_modulation_t)mFEParas.getModulation();
         break;
-    case FE_QAM:
+    case TV_FE_QAM:
         dvbfepara.cable.para.frequency = mFEParas.getFrequency();
         dvbfepara.cable.para.u.qam.symbol_rate = mFEParas.getSymbolrate();
         dvbfepara.cable.para.u.qam.modulation  = (fe_modulation_t)mFEParas.getModulation();
         break;
-    case FE_ISDBT:
+    case TV_FE_ISDBT:
         dvbfepara.isdbt.para.frequency = mFEParas.getFrequency();
         dvbfepara.isdbt.para.u.ofdm.bandwidth = (fe_bandwidth_t)mFEParas.getBandwidth();
         break;
-    case FE_ANALOG: {
+    case TV_FE_ANALOG: {
         int buff_size = 32;
         char VideoStdBuff[buff_size];
         char audioStdBuff[buff_size];
@@ -315,17 +331,18 @@ int CFrontEnd::setPara(const char *paras, bool force )
         return -1;
     }
 
-    if (mFEParas.getFEMode().getBase() == FE_OFDM
+    if (mFEParas.getFEMode().getBase() == TV_FE_OFDM
             && mFEParas.getFEMode().getGen()) {
         ret = setPropLocked(DTV_DVBT2_PLP_ID, mFEParas.getPlp());
         if (ret != 0)
             return -1;
     }
-    if (dvbfepara.m_type == FE_ISDBT) {
+    if (dvbfepara.m_type == TV_FE_ISDBT) {
         ret = setPropLocked(DTV_ISDBT_LAYER_ENABLED, mFEParas.getLayer());
         if (ret != 0)
             return -1;
     }
+#endif
     return 0;
 }
 
@@ -336,6 +353,7 @@ int CFrontEnd::fineTune(int fineFreq)
 
 int CFrontEnd::fineTune(int fineFreq, bool force)
 {
+#ifdef SUPPORT_ADTV
     AutoMutex _l( mLock );
 
     int ret = 0;
@@ -348,17 +366,13 @@ int CFrontEnd::fineTune(int fineFreq, bool force)
         LOGD("%s, fail! dvb error id is %d", __FUNCTION__, ret);
         return -1;
     }
-    return 0;
-}
-
-int CFrontEnd::GetTSSource(AM_DMX_Source_t *src)
-{
-    AM_FEND_GetTSSource(mFrontDevID, src);
+#endif
     return 0;
 }
 
 void CFrontEnd::dmd_fend_callback(long dev_no __unused, int event_type __unused, void *param, void *user_data)
 {
+#ifdef SUPPORT_ADTV
     CFrontEnd *pFront = (CFrontEnd *)user_data;
     if (NULL == pFront) {
         LOGD("%s,warnning : dmd_fend_callback NULL == pFront\n", __FUNCTION__);
@@ -373,20 +387,22 @@ void CFrontEnd::dmd_fend_callback(long dev_no __unused, int event_type __unused,
         return;
 
     LOGD("fend callback: status[0x%x]\n", evt->status);
-    if (evt->status &  FE_HAS_LOCK) {
+    if (evt->status &  TV_FE_HAS_LOCK) {
         pFront->mCurSigEv.mCurSigStaus = FEEvent::EVENT_FE_HAS_SIG;
         pFront->mCurSigEv.mCurFreq = evt->parameters.frequency;
         pFront->mpObserver->onEvent(pFront->mCurSigEv);
-    } else if (evt->status & FE_TIMEDOUT) {
+    } else if (evt->status & TV_FE_TIMEDOUT) {
         pFront->mCurSigEv.mCurSigStaus = FEEvent::EVENT_FE_NO_SIG;
         pFront->mCurSigEv.mCurFreq = evt->parameters.frequency;
         pFront->mpObserver->onEvent(pFront->mCurSigEv);
     }
+#endif
 }
 
 int CFrontEnd::stdAndColorToAudioEnum(int data)
 {
     atv_audio_std_t std = CC_ATV_AUDIO_STD_DK;
+#ifdef SUPPORT_ADTV
     if (((data & V4L2_STD_PAL_DK) == V4L2_STD_PAL_DK) ||
             ((data & V4L2_STD_SECAM_DK) == V4L2_STD_SECAM_DK)) {
         std =  CC_ATV_AUDIO_STD_DK;
@@ -402,6 +418,7 @@ int CFrontEnd::stdAndColorToAudioEnum(int data)
     } else if ((data & V4L2_STD_SECAM_L) == V4L2_STD_SECAM_L) {
         std = CC_ATV_AUDIO_STD_L;
     }
+#endif
     return  std ;
 }
 
@@ -428,10 +445,10 @@ int CFrontEnd::addColorAutoFlag(int std)
     return std | V4L2_COLOR_STD_AUTO;
 }
 
-v4l2_std_id CFrontEnd::enumToStdAndColor(int videoStd, int audioStd)
+unsigned long CFrontEnd::enumToStdAndColor(int videoStd, int audioStd)
 {
-    v4l2_std_id tmpTunerStd = 0;
-
+    unsigned long tmpTunerStd = 0;
+#ifdef SUPPORT_ADTV
     if (videoStd == CC_ATV_VIDEO_STD_PAL) {
         tmpTunerStd |= V4L2_COLOR_STD_PAL;
         if (audioStd == CC_ATV_AUDIO_STD_DK) {
@@ -468,13 +485,13 @@ v4l2_std_id CFrontEnd::enumToStdAndColor(int videoStd, int audioStd)
             tmpTunerStd |= V4L2_STD_SECAM_L;
         }
     }
-
+#endif
     return tmpTunerStd;
 }
 
 int CFrontEnd::getPara(int *mode, int *freq, int *para1, int *para2)
 {
-
+#ifdef SUPPORT_ADTV
     struct dvb_frontend_parameters para;
     memset(&para, 0, sizeof(struct dvb_frontend_parameters));
     /*if((ret1=AM_FEND_GetPara(mFrontDevID, &para))<0) {
@@ -484,6 +501,7 @@ int CFrontEnd::getPara(int *mode, int *freq, int *para1, int *para2)
         //fpara->mode = fend_mode ;
 
     }*/
+#endif
     *mode = mCurMode;
     *freq = mCurFreq;
     *para1 = mCurPara1;
@@ -494,21 +512,27 @@ int CFrontEnd::getPara(int *mode, int *freq, int *para1, int *para2)
 int CFrontEnd::getSNR()
 {
     int snr = 0;
+#ifdef SUPPORT_ADTV
     AM_FEND_GetSNR(mFrontDevID, &snr);
+#endif
     return snr;
 }
 
 int CFrontEnd::getBER()
 {
     int ber = 0;
+#ifdef SUPPORT_ADTV
     AM_FEND_GetBER(mFrontDevID, &ber);
+#endif
     return ber;
 }
 
 int CFrontEnd::getStrength()
 {
     int Strength = 0;
+#ifdef SUPPORT_ADTV
     AM_FEND_GetStrength(mFrontDevID, &Strength);
+#endif
     return Strength;
 }
 
@@ -609,35 +633,38 @@ int CFrontEnd::autoLoadFE()
 
 int CFrontEnd::setCvbsAmpOut(int tmp)
 {
-    int rc = AM_SUCCESS;
+    int rc = DVB_SUCCESS;
+#ifdef SUPPORT_ADTV
     rc = AM_FEND_SetCvbsAmpOut(mFrontDevID, tmp);
-    if (rc == AM_SUCCESS) {
+    if (rc == DVB_SUCCESS) {
         LOGD("%s, sucessful!", __FUNCTION__);
         rc =  0;
     } else {
         LOGD("%s, fail!", __FUNCTION__);
         rc =  -1;
     }
+#endif
     return rc;
 }
 
 int CFrontEnd::setThreadDelay(int delay)
 {
-    int rc = AM_SUCCESS;
-
+    int rc = DVB_SUCCESS;
+#ifdef SUPPORT_ADTV
     rc = AM_FEND_SetThreadDelay(mFrontDevID, delay);
-    if (rc == AM_SUCCESS) {
+    if (rc == DVB_SUCCESS) {
         LOGD("frontend_setThreadDelay sucessful!\n");
         return 0;
-    } else {
-        LOGD("frontend_setThreadDelay fail! %d\n\n", rc);
-        return -1;
     }
+#endif
+    LOGD("frontend_setThreadDelay fail! %d\n\n", rc);
+    return -1;
 }
 
 int CFrontEnd::lock(int frequency, int symbol_rate, int modulation, int bandwidth __unused)
 {
     int rt = -1;
+#ifdef SUPPORT_ADTV
     struct dvb_frontend_parameters fparam;
     struct dvb_frontend_info finfo;
 
@@ -652,7 +679,7 @@ int CFrontEnd::lock(int frequency, int symbol_rate, int modulation, int bandwidt
 
     switch (finfo.type) {
 
-    case FE_QAM:
+    case TV_FE_QAM:
     default:
 
         if (symbol_rate == 0)
@@ -667,15 +694,15 @@ int CFrontEnd::lock(int frequency, int symbol_rate, int modulation, int bandwidt
         LOGD("mFrontDevID = %d;fre=%d;sym=%d;qam=%d ",
              mFrontDevID, fparam.frequency, fparam.u.qam.symbol_rate, fparam.u.qam.modulation);
         break;
-    case FE_OFDM:
-    case FE_ATSC:
+    case TV_FE_OFDM:
+    case TV_FE_ATSC:
         LOGD("mFrontDevID = %d;fre=%d;bw=%d\n ",
              mFrontDevID, fparam.frequency, fparam.u.ofdm.bandwidth);
         break;
-    case FE_QPSK:
+    case TV_FE_QPSK:
         LOGD("QPSK are not supported.\n ");
         break;
-    case FE_ANALOG:
+    case TV_FE_ANALOG:
         LOGD("ANALOG is supported.\n ");
         fparam.u.analog.std =   V4L2_STD_PAL_I;
         break;
@@ -685,52 +712,62 @@ int CFrontEnd::lock(int frequency, int symbol_rate, int modulation, int bandwidt
 
     rt =  AM_FEND_Lock(FE_DEV_ID, &fparam, &status);
 
-    if ((!rt) && (status & FE_HAS_LOCK)) {
+    if ((!rt) && (status & TV_FE_HAS_LOCK)) {
         LOGD("frontend_lock sucessful!\n");
         return true;
-    } else {
-        LOGD("frontend_lock fail %d!\n", rt);
-        return false;
     }
+#endif
+    LOGD("frontend_lock fail %d!\n", rt);
+    return false;
 }
 
 int CFrontEnd::getInfo()
 {
+#ifdef SUPPORT_ADTV
     struct dvb_frontend_info finfo;
 
     AM_FEND_GetInfo(mFrontDevID, &finfo);
-
+#endif
     //return fend_info;  noitfy FrontEnd message
     return 0;
 }
 
 int CFrontEnd::setTunerAfc(int afc)
 {
+#ifdef SUPPORT_ADTV
     AM_FEND_SetAfc(FE_DEV_ID, afc);
+#endif
     return 0;
 }
 
 int CFrontEnd::getStatus()
 {
+#ifdef SUPPORT_ADTV
     fe_status_t status;
     AM_FEND_GetStatus(mFrontDevID, &status);
 
     return status;
+#else
+    return -1;
+#endif
 }
+
 int CFrontEnd::checkStatusOnce()
 {
+#ifdef SUPPORT_ADTV
     fe_status_t status;
     AM_FEND_GetStatus(mFrontDevID, &status);
     LOGD("%s,get status = %x", __FUNCTION__, status);
-    if (status &  FE_HAS_LOCK) {
+    if (status &  TV_FE_HAS_LOCK) {
         mCurSigEv.mCurSigStaus = FEEvent::EVENT_FE_HAS_SIG;
         mCurSigEv.mCurFreq = 0;
         mpObserver->onEvent(mCurSigEv);
-    } else if (status & FE_TIMEDOUT) {
+    } else if (status & TV_FE_TIMEDOUT) {
         mCurSigEv.mCurSigStaus = FEEvent::EVENT_FE_NO_SIG;
         mCurSigEv.mCurFreq = 0;
         mpObserver->onEvent(mCurSigEv);
     }
+#endif
     return 0;
 }
 
@@ -778,7 +815,11 @@ int CFrontEnd::stdEnumToCvbsFmt (int videoStd, int audioStd)
 
 int CFrontEnd::ClearAnalogFrontEnd()
 {
-    return this->setPara ( FE_ANALOG, 44250000, V4L2_COLOR_STD_PAL | V4L2_STD_PAL_DK, 0 );
+#ifdef SUPPORT_ADTV
+    return this->setPara ( TV_FE_ANALOG, 44250000, V4L2_COLOR_STD_PAL | V4L2_STD_PAL_DK, 0 );
+#else
+    return -1;
+#endif
 }
 
 /*to control afc function*/
@@ -832,16 +873,17 @@ int CFrontEnd::SetAnalogFrontEndSearhSlowMode(int onOff)
     return ret;
 }
 
-
 CFrontEnd::FEMode& CFrontEnd::FEMode::set8(int n, int v)
 {
     mMode = ((mMode & ~(0xff << (8 * n))) | ((v & 0xff) << (8 * n)));
     return *this;
 }
+
 int CFrontEnd::FEMode::get8(int n) const
 {
     return (mMode >> (8 * n)) & 0xff;
 }
+
 bool CFrontEnd::FEMode::operator == (const FEMode &femode) const
 {
     return ((getBase() == femode.getBase()) && (getGen() == femode.getGen()));
@@ -870,24 +912,24 @@ bool CFrontEnd::FEParas::operator == (const FEParas &fep) const
         return false;
 
     switch (getFEMode().getBase()) {
-        case FE_DTMB:
-        case FE_OFDM:
+        case TV_FE_DTMB:
+        case TV_FE_OFDM:
             if (getBandwidth() != fep.getBandwidth())
                 return false;
             break;
-        case FE_QAM:
+        case TV_FE_QAM:
             if (getSymbolrate() != fep.getSymbolrate() || getModulation() != fep.getModulation())
                 return false;
             break;
-        case FE_ATSC:
+        case TV_FE_ATSC:
             if (getModulation() != fep.getModulation())
                 return false;
             break;
-        case FE_ISDBT:
+        case TV_FE_ISDBT:
             if (getModulation() != fep.getModulation() || getLayer() != fep.getLayer())
                 return false;
             break;
-        case FE_ANALOG:
+        case TV_FE_ANALOG:
             if (getVideoStd() != fep.getVideoStd() || getAudioStd() != fep.getAudioStd() || getAfc() != fep.getAfc())
                 return false;
             break;
@@ -898,24 +940,31 @@ bool CFrontEnd::FEParas::operator == (const FEParas &fep) const
     return true;
 }
 
+#ifdef SUPPORT_ADTV
+int CFrontEnd::GetTSSource(AM_DMX_Source_t *src)
+{
+    AM_FEND_GetTSSource(mFrontDevID, src);
+    return 0;
+}
+
 CFrontEnd::FEParas& CFrontEnd::FEParas::fromDVBParameters(const CFrontEnd::FEMode& mode,
         const struct dvb_frontend_parameters *dvb)
 {
     setFEMode(mode).setFrequency(dvb->frequency);
     switch (mode.getBase()) {
-    case FE_OFDM:
-    case FE_DTMB:
+    case TV_FE_OFDM:
+    case TV_FE_DTMB:
     default:
         setBandwidth(dvb->u.ofdm.bandwidth);
     break;
-    case FE_QAM:
+    case TV_FE_QAM:
         setSymbolrate(dvb->u.qam.symbol_rate);
         setModulation(dvb->u.qam.modulation);
     break;
-    case FE_ATSC:
+    case TV_FE_ATSC:
         setModulation(dvb->u.vsb.modulation);
     break;
-    case FE_ANALOG:
+    case TV_FE_ANALOG:
         setVideoStd(stdAndColorToVideoEnum(dvb->u.analog.std));
         setAudioStd(stdAndColorToAudioEnum(dvb->u.analog.std));
     break;
@@ -928,3 +977,5 @@ CFrontEnd::FEParas& CFrontEnd::FEParas::fromFENDCTRLParameters(const CFrontEnd::
 {
     return fromDVBParameters(mode, (struct dvb_frontend_parameters *)fendctrl);
 }
+#endif
+

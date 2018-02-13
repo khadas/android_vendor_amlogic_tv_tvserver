@@ -12,20 +12,16 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/time.h>
-#include <am_epg.h>
-#include <am_mem.h>
 #include <utils/threads.h>
 #include "CTvProgram.h"
 #include "CTvEpg.h"
 #include "CTvRrt.h"
 #include "CTvEas.h"
-#include "CTvScanner.h"
 #include "CTvLog.h"
 #include "CTvTime.h"
 #include "CTvEvent.h"
 #include "CTvEv.h"
 #include "CTvBooking.h"
-#include "CFrontEnd.h"
 #include "../vpp/CVpp.h"
 #include "../tvin/CTvin.h"
 #include "../tvin/CHDMIRxManager.h"
@@ -42,6 +38,13 @@
 #include "tvin/CDevicesPollStatusDetect.h"
 #include "fbcutils/fbcutils.h"
 #include "CTvGpio.h"
+#ifdef SUPPORT_ADTV
+#include <am_epg.h>
+#include <am_mem.h>
+#endif
+#include "CTvScanner.h"
+#include "CFrontEnd.h"
+
 
 #include <CTvFactory.h>
 
@@ -196,8 +199,8 @@ public:
     virtual int playDtvProgramUnlocked(const char *, int, int, int, int, int, int, int, int, int, int);
     virtual int playDtvProgram(const char *, int, int, int, int, int, int);
     virtual int playDtvProgramUnlocked(const char *, int, int, int, int, int, int);
-    virtual int playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int audioCompetation);
-    virtual int playDtvTimeShiftUnlocked(const char *feparas, AM_AV_TimeshiftPara_t *para, int audioCompetation);
+    virtual int playDtvTimeShift (const char *feparas, void *para, int audioCompetation);
+    virtual int playDtvTimeShiftUnlocked(const char *feparas, void *para, int audioCompetation);
     virtual int stopPlayingLock();
     virtual int resetFrontEndPara ( frontend_para_set_t feParms );
     virtual int SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt );
@@ -580,8 +583,10 @@ private:
     bool MnoNeedAutoSwitchToMonitorMode;
 
 protected:
-    class CTvMsgQueue: public CMsgQueueThread, public CAv::IObserver, public CTvScanner::IObserver , public CTvEpg::IObserver, public CFrontEnd::IObserver
-        , public CTvRecord::IObserver, public CTvRrt::IObserver, public CTvEas::IObserver {
+    class CTvMsgQueue: public CMsgQueueThread, public CAv::IObserver
+        , public CTvScanner::IObserver , public CTvEpg::IObserver, public CFrontEnd::IObserver
+        , public CTvRecord::IObserver, public CTvRrt::IObserver, public CTvEas::IObserver
+        {
     public:
         static const int TV_MSG_COMMON = 0;
         static const int TV_MSG_STOP_ANALYZE_TS = 1;
@@ -607,14 +612,14 @@ protected:
         void onEvent ( const CTvEpg::EpgEvent &ev );
         //FE observer
         void onEvent ( const CFrontEnd::FEEvent &ev );
-        //AV
-        void onEvent(const CAv::AVEvent &ev);
         //Record
         void onEvent(const CTvRecord::RecEvent &ev);
         //rrt observer
         void onEvent (const CTvRrt::RrtEvent &ev);
         //eas observer
         void onEvent (const CTvEas::EasEvent &ev);
+        //AV
+        void onEvent(const CAv::AVEvent &ev);
     private:
         virtual void handleMessage ( CMessage &msg );
         CTv *mpTv;
@@ -635,14 +640,15 @@ protected:
     void onEvent ( const CTvEpg::EpgEvent &ev );
     //FE observer
     void onEvent ( const CFrontEnd::FEEvent &ev );
-    //AV
-    void onEvent(const CAv::AVEvent &ev);
+
     //Record
     void onEvent(const CTvRecord::RecEvent &ev);
     //rrt observer
     void onEvent (const CTvRrt::RrtEvent &ev);
     //eas observer
     void onEvent (const CTvEas::EasEvent &ev);
+    //AV
+    void onEvent(const CAv::AVEvent &ev);
 
     bool Tv_Start_Analyze_Ts ( int channelID );
     bool Tv_Stop_Analyze_Ts();
@@ -678,13 +684,15 @@ protected:
     CTvEpg mTvEpg;
     CTvRrt *mTvRrt;
     CTvScanner *mTvScanner;
-    mutable Mutex mLock;
-    CTvTime mTvTime;
     CTvRecord mTvRec;
     CFrontEnd *mFrontDev;
+    CTvEas *mTvEas;
+
+    mutable Mutex mLock;
+    CTvTime mTvTime;
+
     CTvDimension mTvVchip;
     CTvSubtitle mTvSub;
-    CTvEas *mTvEas;
     CAv mAv;
     CTvDmx mTvDmx;
     CTvDmx mTvDmx1;

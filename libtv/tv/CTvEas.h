@@ -7,8 +7,10 @@
  * Description: header file
  */
 
+#ifdef SUPPORT_ADTV
 #include <am_debug.h>
 #include <am_epg.h>
+#endif
 #include "CTvLog.h"
 #include "CTvEv.h"
 #if !defined(_CDTVEAS_H)
@@ -117,15 +119,18 @@ public :
     int StopEasUpdate();
 
     static CTvEas *mInstance;
-    AM_EPG_Handle_t mEasScanHandle;
+    void * mEasScanHandle = nullptr;
+
 
 private:
     int EasCreate(int fend_id, int dmx_id, int src, char *textLangs);
     int EasDestroy();
     static  void EasEvtCallback(long dev_no, int event_type, void *param, void *user_data);
+#ifdef SUPPORT_ADTV
     int GetSectionCount(dvbpsi_atsc_cea_t *pData);
     int GetDescCount(dvbpsi_descriptor_t *pData);
     int GetMultiCount(dvbpsi_atsc_cea_multi_str_t *pData);
+#endif
 
     IObserver *mpObserver;
     int mDmxId ;

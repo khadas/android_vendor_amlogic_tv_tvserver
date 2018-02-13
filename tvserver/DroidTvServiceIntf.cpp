@@ -52,8 +52,9 @@ extern "C" {
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
-//#include "make_ext4fs.h"
+#ifdef SUPPORT_ADTV
 #include "am_ver.h"
+#endif
 }
 
 #include "DroidTvServiceIntf.h"
@@ -1407,19 +1408,19 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
         }
         case MISC_GET_DVB_API_VERSION: {
             // write dvb version info
-            const char *str = dvb_get_git_branch_info();
+            //const char *str = dvb_get_git_branch_info();
             //r->writeString16(String16(str));
 
-            str = dvb_get_git_version_info();
+            //str = dvb_get_git_version_info();
             //r->writeString16(String16(str));
 
-            str = dvb_get_last_chaned_time_info();
+            //str = dvb_get_last_chaned_time_info();
             //r->writeString16(String16(str));
 
-            str = dvb_get_build_time_info();
+            //str = dvb_get_build_time_info();
             //r->writeString16(String16(str));
 
-            str = dvb_get_build_name_info();
+            //str = dvb_get_build_name_info();
             //r->writeString16(String16(str));
             break;
         }
@@ -1854,7 +1855,7 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
         }
         case SET_FRONTEND_PARA: {
             frontend_para_set_t feParms;
-            feParms.mode = (fe_type_t)p.readInt32();
+            //feParms.mode = (fe_type_t)p.readInt32();
             feParms.freq = p.readInt32();
             feParms.videoStd = (atv_video_std_t)p.readInt32();
             feParms.audioStd = (atv_audio_std_t)p.readInt32();
@@ -1866,7 +1867,7 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
         case PLAY_PROGRAM: {
             int mode = p.readInt32();
             int freq = p.readInt32();
-            if (mode == FE_ANALOG) {
+            if (mode == TV_FE_ANALOG) {
                 int videoStd = p.readInt32();
                 int audioStd = p.readInt32();
                 int fineTune = p.readInt32();

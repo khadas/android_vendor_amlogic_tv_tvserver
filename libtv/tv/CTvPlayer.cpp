@@ -20,7 +20,6 @@ void CTvPlayer::sendTvEvent ( const CTvEv &ev ) {
         pTv->sendTvEvent(ev);
 }
 
-
 CDTVTvPlayer::CDTVTvPlayer(CTv *tv) : CTvPlayer(tv) {
     mMode = PLAY_MODE_LIVE;
     mFEParam = NULL;
@@ -33,7 +32,6 @@ CDTVTvPlayer::CDTVTvPlayer(CTv *tv) : CTvPlayer(tv) {
     mPpid = -1;
     mPparam = NULL;
     mParam = NULL;
-    mTfile = NULL;
     mSourceChanged = true;
     mDisableTimeShifting = propertyGetBool("tv.dtv.tf.disable", false);
 }
@@ -106,6 +104,7 @@ int CDTVTvPlayer::setParam(const char *param) {
 int CDTVTvPlayer::start(const char *param) {
     LOGD("start(%s:%s) current mode(%d)", toReadable(getId()), toReadable(param), mMode);
     int ret = -1;
+#ifdef SUPPORT_ADTV
     switch (mMode) {
         case PLAY_MODE_LIVE: {//start play live and rec in the backgroud
             if (!mDisableTimeShifting) {
@@ -144,10 +143,11 @@ int CDTVTvPlayer::start(const char *param) {
             pminfo->ttx_cnt = 0;
             pminfo->duration = 0;
             pminfo->program_name[0] = '\0';*/
-            ret = pTv->playDtvTimeShiftUnlocked(NULL, &para, paramGetInt(mAparam, NULL, "AudComp", 0));
+            ret = pTv->playDtvTimeShiftUnlocked(NULL, (void *)&para, paramGetInt(mAparam, NULL, "AudComp", 0));
         }break;
     }
     mSourceChanged = false;
+#endif
     return ret;
 }
 
@@ -176,6 +176,7 @@ int CDTVTvPlayer::stop(const char *param) {
 int CDTVTvPlayer::pause(const char *param) {
     LOGD("pause(%s:%s)", toReadable(getId()), toReadable(param));
     int ret =  -1;
+#ifdef SUPPORT_ADTV
     switch (mMode) {
         case PLAY_MODE_LIVE: {
             if (mDisableTimeShifting)
@@ -196,7 +197,7 @@ int CDTVTvPlayer::pause(const char *param) {
             para.file_path[0] = '\0';
             para.tfile = mTfile;
             para.offset_ms = mOffset;
-            para.start_paused = AM_TRUE;
+            para.start_paused = true;
             AM_AV_TimeshiftMediaInfo_t *pminfo = &para.media_info;
             pminfo->vid_pid = mVpid;
             pminfo->vid_fmt = mVfmt;
@@ -217,6 +218,7 @@ int CDTVTvPlayer::pause(const char *param) {
         ret = pTv->mAv.pauseTimeShift();
         }break;
     }
+#endif
     return ret;
 }
 
@@ -244,7 +246,7 @@ int CDTVTvPlayer::seek(const char *param)
         case PLAY_MODE_REC:
         case PLAY_MODE_TIMESHIFT:{
             int pos = paramGetInt(param, "", "offset", 0);
-            pTv->mAv.seekTimeShift(pos, AM_TRUE);
+            pTv->mAv.seekTimeShift(pos, true);
         }break;
     }
     return ret;
@@ -282,6 +284,7 @@ int CDTVTvPlayer::setupDefault(const char *param)
 
 int CDTVTvPlayer::tryCloseTFile()
 {
+#ifdef SUPPORT_ADTV
     if (mTfile) {
         int ret;
         AM_EVT_Unsubscribe((long)mTfile, AM_TFILE_EVT_START_TIME_CHANGED, tfile_evt_callback, (void*)getId());
@@ -289,6 +292,7 @@ int CDTVTvPlayer::tryCloseTFile()
         ret = AM_TFile_Close(mTfile);
         LOGD("close tfile=%d", ret);
     }
+#endif
     return 0;
 }
 
@@ -303,7 +307,7 @@ int CDTVTvPlayer::startLive(const char *param __unused)
 int CDTVTvPlayer::startLiveTryRecording(const char *param)
 {
     int ret = -1;
-
+#ifdef SUPPORT_ADTV
     if (!mDisableTimeShifting && mSourceChanged) {
         pTv->stopRecording("timeshifting", NULL);
         tryCloseTFile();
@@ -341,13 +345,14 @@ int CDTVTvPlayer::startLiveTryRecording(const char *param)
         LOGD("player(%s) rec(tf) fail,  in live(no rec) mode", getId());
         mMode = PLAY_MODE_LIVE_WITHOUT_TIMESHIFT;
     }
+#endif
     return ret;
 }
 
 int CDTVTvPlayer::startLiveTryTimeShift(const char *param)
 {
     int ret = -1;
-
+#ifdef SUPPORT_ADTV
     if (!mDisableTimeShifting && mSourceChanged) {
         pTv->stopRecording("timeshifting", NULL);
         tryCloseTFile();
@@ -397,7 +402,7 @@ int CDTVTvPlayer::startLiveTryTimeShift(const char *param)
             para.file_path[0] = '\0';
             para.tfile = mTfile;
             para.offset_ms = mOffset;
-            para.start_paused = AM_FALSE;
+            para.start_paused = false;
             AM_AV_TimeshiftMediaInfo_t *pminfo = &para.media_info;
             pminfo->vid_pid = mVpid;
             pminfo->vid_fmt = mVfmt;
@@ -408,8 +413,8 @@ int CDTVTvPlayer::startLiveTryTimeShift(const char *param)
             pminfo->ttx_cnt = 0;
             pminfo->duration = paramGetInt(mParam, "max", "time", 0);
             pminfo->program_name[0] = '\0';
-            LOGD("playDtvTimeShift");
-            ret = pTv->playDtvTimeShiftUnlocked(mFEParam, &para, paramGetInt(mAparam, NULL, "AudComp", 0));
+            LOGD("play Dtv TimeShift");
+            ret = pTv->playDtvTimeShiftUnlocked(mFEParam, (void *)&para, paramGetInt(mAparam, NULL, "AudComp", 0));
             if (ret == 0) {
                 //LOGD("subscribe update, %s", getId());
                 //AM_EVT_Subscribe(0, AM_AV_EVT_PLAYER_UPDATE_INFO, player_info_callback, (void*)getId());
@@ -427,12 +432,13 @@ int CDTVTvPlayer::startLiveTryTimeShift(const char *param)
             mMode = PLAY_MODE_LIVE_WITHOUT_TIMESHIFT;
         }
     }
-
+#endif
     return ret;
 }
 
 void CDTVTvPlayer::tfile_evt_callback ( long dev_no, int event_type, void *param, void *user_data )
 {
+#ifdef SUPPORT_ADTV
     switch (event_type) {
         case AM_TFILE_EVT_START_TIME_CHANGED: {
             LOGD("player(%s) : start time(%d)", (char*)user_data, (int)(long)param );
@@ -456,6 +462,7 @@ void CDTVTvPlayer::tfile_evt_callback ( long dev_no, int event_type, void *param
         default:
             break;
     }
+#endif
 }
 
 void CDTVTvPlayer::onPlayUpdate(const CAv::AVEvent &ev)
@@ -498,6 +505,7 @@ void CDTVTvPlayer::onPlayUpdate(const CAv::AVEvent &ev)
 
 void CDTVTvPlayer::player_info_callback(long dev_no, int event_type, void *param, void *data)
 {
+#ifdef SUPPORT_ADTV
     if (event_type == AM_AV_EVT_PLAYER_UPDATE_INFO)
     {
         /*typedef enum
@@ -534,6 +542,7 @@ void CDTVTvPlayer::player_info_callback(long dev_no, int event_type, void *param
             }
         }
     }
+#endif
 }
 
 void CDTVTvPlayer::onEvent(const CTvRecord::RecEvent &ev) {
@@ -558,7 +567,7 @@ void CDTVTvPlayer::onEvent(const CTvRecord::RecEvent &ev) {
     }
 }
 
-
+#ifdef SUPPORT_ADTV
 int CDTVTvPlayer::readMediaInfoFromFile(const char *file_path, AM_AV_TimeshiftMediaInfo_t *info)
 {
     uint8_t buffer[2][sizeof(AM_REC_MediaInfo_t) + 4*(sizeof(AM_REC_MediaInfo_t)/188 + 1)];
@@ -645,7 +654,7 @@ read_error:
 
     return -1;
 }
-
+#endif
 
 CATVTvPlayer::CATVTvPlayer(CTv *tv) : CTvPlayer(tv) {
     mFEParam = NULL;
@@ -653,6 +662,7 @@ CATVTvPlayer::CATVTvPlayer(CTv *tv) : CTvPlayer(tv) {
     mAparam = NULL;
     mParam = NULL;
 }
+
 CATVTvPlayer::~CATVTvPlayer() {
     if (mFEParam)
         free((void*)mFEParam);
@@ -671,6 +681,7 @@ int CATVTvPlayer::setFEParam(const char *param) {
     mFEParam = param? strdup(param) : NULL;
     return 0;
 }
+
 int CATVTvPlayer::setVideo(const char *param) {
     LOGD("setVideo(%s)", toReadable(param));
     if (mVparam)
@@ -685,6 +696,7 @@ int CATVTvPlayer::setAudio(const char *param) {
     mAparam = param? strdup(param) : NULL;
     return 0;
 }
+
 int CATVTvPlayer::setParam(const char *param) {
     LOGD("setParam(%s)", toReadable(param));
     if (mParam)

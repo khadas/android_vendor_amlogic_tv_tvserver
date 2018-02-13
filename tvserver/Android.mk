@@ -37,8 +37,7 @@ LOCAL_SRC_FILES:= \
   main_tvserver.cpp \
   DroidTvServer.cpp \
   DroidTvServiceIntf.cpp \
-  MemoryLeakTrackUtil.cpp \
-  TvService.cpp
+  MemoryLeakTrackUtil.cpp
 
 LOCAL_SHARED_LIBRARIES += \
   vendor.amlogic.hardware.tvserver@1.0_vendor \
@@ -55,11 +54,6 @@ LOCAL_SHARED_LIBRARIES += \
   libtvbinder \
   libtv
 
-LOCAL_SHARED_LIBRARIES += \
-  libam_mw \
-  libam_adp \
-  libam_ver
-
 LOCAL_C_INCLUDES := \
   system/libhidl/transport/include/hidl \
   system/libhidl/libhidlmemory/include \
@@ -73,20 +67,11 @@ LOCAL_C_INCLUDES := \
   $(LIB_SQLITE_PATH)/dist
 
 LOCAL_C_INCLUDES += \
+  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include \
   system/extras/ext4_utils \
   $(LIB_TV_BINDER)/include \
   system/media/audio_effects/include \
   hardware/amlogic/audio/libTVaudio
-
-LOCAL_C_INCLUDES += \
-  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include \
-  $(DVB_PATH)/include/am_adp \
-  $(DVB_PATH)/include/am_mw \
-  $(DVB_PATH)/include/am_ver \
-  $(DVB_PATH)/android/ndk/include \
-  $(LIB_ZVBI_PATH)/ntsc_decode/include \
-  $(LIB_ZVBI_PATH)/ntsc_decode/include/ntsc_dmx \
-  $(LIB_ZVBI_PATH)/src
 
 ifeq ($(wildcard hardware/amlogic/media),hardware/amlogic/media)
 $(info "have hardware/amlogic/media")
@@ -104,6 +89,25 @@ LOCAL_C_INCLUDES += \
 endif
 
 LOCAL_CFLAGS += -DTARGET_BOARD_$(strip $(TVAPI_TARGET_BOARD_VERSION))
+
+#DVB define
+ifeq ($(BOARD_HAS_ADTV),true)
+LOCAL_CFLAGS += -DSUPPORT_ADTV
+
+LOCAL_SHARED_LIBRARIES += \
+  libam_mw \
+  libam_adp \
+  libam_ver
+
+LOCAL_C_INCLUDES += \
+  $(DVB_PATH)/include/am_adp \
+  $(DVB_PATH)/include/am_mw \
+  $(DVB_PATH)/include/am_ver \
+  $(DVB_PATH)/android/ndk/include \
+  $(LIB_ZVBI_PATH)/ntsc_decode/include \
+  $(LIB_ZVBI_PATH)/ntsc_decode/include/ntsc_dmx \
+  $(LIB_ZVBI_PATH)/src
+endif
 
 LOCAL_MODULE:= tvserver
 

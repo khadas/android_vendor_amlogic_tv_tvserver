@@ -7,10 +7,13 @@
  * Description: header file
  */
 
+#ifdef SUPPORT_ADTV
 #include <am_debug.h>
 #include <am_scan.h>
 #include <am_epg.h>
 #include <am_mem.h>
+#endif
+
 #include <utils/Log.h>
 #include "CTvEv.h"
 #if !defined(_CDTVEPG_H)
@@ -109,7 +112,6 @@ public :
     {
         mCurScanChannelId  = INVALID_ID;
         mCurScanProgramId  = INVALID_ID;
-        mEpgScanHandle = NULL;
         mpObserver = NULL;
         mDmx_dev_id = INVALID_ID;
     }
@@ -148,8 +150,9 @@ private:
     //
     IObserver *mpObserver;
 
-    //
-    AM_EPG_Handle_t mEpgScanHandle;
+#ifdef SUPPORT_ADTV
+    void * mEpgScanHandle;
+#endif
     int mFend_dev_id;
     int mDmx_dev_id ;
     int mFend_mod;

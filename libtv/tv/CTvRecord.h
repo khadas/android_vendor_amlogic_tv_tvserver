@@ -9,7 +9,9 @@
 #if !defined(_CTVRECORD_H_)
 #define _CTVRECORD_H_
 
+#ifdef SUPPORT_ADTV
 #include "am_rec.h"
+#endif
 #include "CTvEv.h"
 
 #include <utils/Vector.h>
@@ -27,8 +29,6 @@ public:
     int setFilePath(const char *name);
 
     int setFileName(const char *prefix, const char *suffix);
-
-    int setMediaInfo(AM_REC_MediaInfo_t *info);
 
     static const int REC_EXT_TYPE_PMTPID = 0;
     static const int REC_EXT_TYPE_PN = 1;
@@ -51,14 +51,9 @@ public:
 
     int setRecCurTsOrCurProgram(int sel);  // 1: all program in the Ts; 0:current program
 
-    int getInfo(AM_REC_RecInfo_t *info);
-
     //for timeshifting
     int getStartPosition();
     int getWritePosition();
-
-    AM_TFile_t getFileHandler();
-    AM_TFile_t detachFileHandler();
 
     bool equals(CTvRecord &recorder);
 
@@ -88,13 +83,22 @@ public:
         return 0;
     }
 
+#ifdef SUPPORT_ADTV
+    int setMediaInfo(AM_REC_MediaInfo_t *info);
+    int getInfo(AM_REC_RecInfo_t *info);
+    AM_TFile_t getFileHandler();
+    AM_TFile_t detachFileHandler();
+
     AM_REC_CreatePara_t mCreateParam;
+#endif
 private :
 
     char *mId;
+#ifdef SUPPORT_ADTV
     AM_REC_Handle_t mRec;
     AM_REC_RecPara_t mRecParam;
     AM_REC_RecInfo_t mRecInfo;
+#endif
     Vector<int> mExtPids;
     IObserver *mpObserver;
     RecEvent mEvent;

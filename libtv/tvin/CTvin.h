@@ -14,7 +14,13 @@
 #include <cm.h>
 #include <ve.h>
 #include <utils/Thread.h>
+#include <utils/Mutex.h>
+#include "PQType.h"
+#ifdef SUPPORT_ADTV
 #include "../tv/CFrontEnd.h"
+#endif
+
+using namespace android;
 
 #define SYS_VFM_MAP_PATH            "/sys/class/vfm/map"
 #define SYS_DISPLAY_MODE_PATH       "/sys/class/display/mode"
@@ -726,7 +732,7 @@ public:
     static int isSDFmtInHdmi ( tvin_sig_fmt_t fmt );
     static bool Tvin_is50HzFrameRateFmt ( tvin_sig_fmt_t fmt );
     static bool Tvin_IsDeinterlaceFmt ( tvin_sig_fmt_t fmt );
-    static v4l2_std_id CvbsFtmToV4l2ColorStd(tvin_sig_fmt_t fmt);
+    static unsigned long CvbsFtmToV4l2ColorStd(tvin_sig_fmt_t fmt);
 
     static CTvin *getInstance();
 

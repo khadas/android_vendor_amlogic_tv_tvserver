@@ -20,6 +20,7 @@ CTvDmx::~CTvDmx()
 {
 }
 
+#ifdef SUPPORT_ADTV
 int CTvDmx::Open(AM_DMX_OpenPara_t &para)
 {
     return AM_DMX_Open ( mDmxDevId, &para );
@@ -34,3 +35,5 @@ int CTvDmx::SetSource(AM_DMX_Source_t source)
 {
     return AM_DMX_SetSource ( mDmxDevId, source );
 }
+#endif
+

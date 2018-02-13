@@ -36,15 +36,20 @@ CAv::~CAv()
 
 int CAv::SetVideoWindow(int x, int y, int w, int h)
 {
+#ifdef SUPPORT_ADTV
     return AM_AV_SetVideoWindow (mTvPlayDevId, x, y, w, h );
+#else
+    return -1;
+#endif
 }
 
 int CAv::Open()
 {
+#ifdef SUPPORT_ADTV
     AM_AV_OpenPara_t para_av;
     memset ( &para_av, 0, sizeof ( AM_AV_OpenPara_t ) );
     int rt = AM_AV_Open ( mTvPlayDevId, &para_av );
-    if ( rt != AM_SUCCESS ) {
+    if ( rt != DVB_SUCCESS ) {
         LOGD ( "%s, dvbplayer_open fail %d %d\n!" , __FUNCTION__,  mTvPlayDevId, rt );
         return -1;
     }
@@ -53,7 +58,7 @@ int CAv::Open()
     AM_AOUT_OpenPara_t aout_para;
     memset ( &aout_para, 0, sizeof ( AM_AOUT_OpenPara_t ) );
     rt = AM_AOUT_Open ( mTvPlayDevId, &aout_para );
-    if ( AM_SUCCESS != rt ) {
+    if ( DVB_SUCCESS != rt ) {
         LOGD ( "%s,  BUG: CANN'T OPEN AOUT\n", __FUNCTION__);
     }
 
@@ -72,102 +77,213 @@ int CAv::Open()
     AM_EVT_Subscribe ( mTvPlayDevId, AM_AV_EVT_PLAYER_UPDATE_INFO, av_evt_callback, this );
 
     return rt;
+#else
+    return -1;
+#endif
 }
 
 int CAv::Close()
 {
-    int iRet;
+    int iRet = -1;
+#ifdef SUPPORT_ADTV
     iRet = AM_AV_Close ( mTvPlayDevId );
     iRet = AM_AOUT_Close ( mTvPlayDevId );
     if (mFdAmVideo > 0) {
         close(mFdAmVideo);
         mFdAmVideo = -1;
     }
+#endif
     return iRet;
 }
 
-int CAv::GetVideoStatus(AM_AV_VideoStatus_t *status)
+int CAv::GetVideoStatus(int *w, int *h, int *fps, int *interlace)
 {
-    return AM_AV_GetVideoStatus(mTvPlayDevId, status);
+#ifdef SUPPORT_ADTV
+    AM_AV_VideoStatus_t status;
+    int ret = AM_AV_GetVideoStatus(mTvPlayDevId, &status);
+    *w = status.src_w;
+    *h = status.src_h;
+    *fps = status.fps;
+    *interlace = status.interlaced;
+    return ret;
+
+#else
+    return -1;
+#endif
 }
 
-int CAv::GetAudioStatus(AM_AV_AudioStatus_t *status)
+int CAv::GetAudioStatus( int fmt[2], int sample_rate[2], int resolution[2], int channels[2],
+    int lfepresent[2], int *frames, int *ab_size, int *ab_data, int *ab_free)
 {
-    return AM_AV_GetAudioStatus(mTvPlayDevId, status);
+#ifdef SUPPORT_ADTV
+    AM_AV_AudioStatus_t status;
+    int ret = AM_AV_GetAudioStatus(mTvPlayDevId, &status);
+    if (fmt) {
+        fmt[0] = status.aud_fmt;
+        fmt[1] = status.aud_fmt_orig;
+    }
+    if (sample_rate) {
+        sample_rate[0] = status.sample_rate;
+        sample_rate[1] = status.sample_rate_orig;
+    }
+    if (resolution) {
+        resolution[0] = status.resolution;
+        resolution[1] = status.resolution_orig;
+    }
+    if (channels) {
+        channels[0] = status.channels;
+        channels[1] = status.channels_orig;
+    }
+    if (lfepresent) {
+        lfepresent[0] = status.lfepresent;
+        lfepresent[1] = status.lfepresent_orig;
+    }
+    if (frames)
+        *frames = status.frames;
+    if (ab_size)
+        *ab_size = status.ab_size;
+    if (ab_data)
+        *ab_data = status.ab_data;
+    if (ab_free)
+        *ab_free = status.ab_free;
+
+    return ret;
+#else
+    return -1;
+#endif
 }
 
-int CAv::SwitchTSAudio(int apid, AM_AV_AFormat_t afmt)
+int CAv::SwitchTSAudio(int apid, int afmt)
 {
-    return AM_AV_SwitchTSAudio (mTvPlayDevId, ( uint16_t ) apid, ( AM_AV_AFormat_t ) afmt );
+#ifdef SUPPORT_ADTV
+    return AM_AV_SwitchTSAudio (mTvPlayDevId, ( unsigned short ) apid, ( AM_AV_AFormat_t ) afmt );
+#else
+    return -1;
+#endif
 }
 
 int CAv::ResetAudioDecoder()
 {
+#ifdef SUPPORT_ADTV
     return AM_AV_ResetAudioDecoder ( mTvPlayDevId );
+#else
+    return -1;
+#endif
 }
 
-int CAv::SetADAudio(uint enable, int apid, AM_AV_AFormat_t afmt)
+int CAv::SetADAudio(unsigned int enable, int apid, int afmt)
 {
+#ifdef SUPPORT_ADTV
     return AM_AV_SetAudioAd(mTvPlayDevId, enable, apid, afmt);
+#else
+    return -1;
+#endif
 }
 
-int CAv::SetTSSource(AM_AV_TSSource_t ts_source)
+int CAv::SetTSSource(int ts_source)
 {
+#ifdef SUPPORT_ADTV
     return AM_AV_SetTSSource ( mTvPlayDevId, ts_source );
+#else
+    return -1;
+#endif
 }
 
-int CAv::StartTS(uint16_t vpid, uint16_t apid, uint16_t pcrid, AM_AV_VFormat_t vfmt, AM_AV_AFormat_t afmt)
+int CAv::StartTS(unsigned short vpid, unsigned short apid, unsigned short pcrid, int vfmt, int afmt)
 {
+#ifdef SUPPORT_ADTV
     return AM_AV_StartTSWithPCR ( mTvPlayDevId, vpid, apid, pcrid, ( AM_AV_VFormat_t ) vfmt, ( AM_AV_AFormat_t ) afmt );
+#else
+    return -1;
+#endif
 }
 
 int CAv::StopTS()
 {
+#ifdef SUPPORT_ADTV
     return AM_AV_StopTS (mTvPlayDevId);
+#else
+    return -1;
+#endif
 }
 
-int CAv::AudioGetOutputMode(AM_AOUT_OutputMode_t *mode)
+int CAv::AudioGetOutputMode(int *mode)
 {
+#ifdef SUPPORT_ADTV
     return AM_AOUT_GetOutputMode ( mTvPlayDevId, mode );
+#else
+    return -1;
+#endif
 }
 
-int CAv::AudioSetOutputMode(AM_AOUT_OutputMode_t mode)
+int CAv::AudioSetOutputMode(int mode)
 {
+#ifdef SUPPORT_ADTV
     return AM_AOUT_SetOutputMode ( mTvPlayDevId, mode );
+#else
+    return -1;
+#endif
 }
 
 int CAv::AudioSetPreGain(float pre_gain)
 {
+#ifdef SUPPORT_ADTV
     return AM_AOUT_SetPreGain(0, pre_gain);
+#else
+    return -1;
+#endif
+
 }
 
 int CAv::AudioGetPreGain(float *gain)
 {
+#ifdef SUPPORT_ADTV
     return AM_AOUT_GetPreGain(0, gain);
+#else
+    return -1;
+#endif
+
 }
 
-int CAv::AudioSetPreMute(uint mute)
+int CAv::AudioSetPreMute(unsigned int mute)
 {
+#ifdef SUPPORT_ADTV
     return AM_AOUT_SetPreMute(0, mute);
+#else
+    return -1;
+#endif
+
 }
 
-int CAv::AudioGetPreMute(uint *mute)
+int CAv::AudioGetPreMute(unsigned int *mute)
 {
-  int ret = -1;
-  AM_Bool_t btemp_mute = 0;
-  ret = AM_AOUT_GetPreMute(0, &btemp_mute);
-  *mute = btemp_mute ? 1 : 0;
-  return ret;
+    int ret = -1;
+#ifdef SUPPORT_ADTV
+    bool btemp_mute = 0;
+    ret = AM_AOUT_GetPreMute(0, &btemp_mute);
+    *mute = btemp_mute ? 1 : 0;
+#endif
+    return ret;
 }
 
 int CAv::EnableVideoBlackout()
 {
+#ifdef SUPPORT_ADTV
     return AM_AV_EnableVideoBlackout(mTvPlayDevId);
+#else
+    return -1;
+#endif
+
 }
 
 int CAv::DisableVideoBlackout()
 {
+#ifdef SUPPORT_ADTV
     return AM_AV_DisableVideoBlackout(mTvPlayDevId);
+#else
+    return -1;
+#endif
+
 }
 
 int CAv::DisableVideoWithBlueColor()
@@ -179,7 +295,12 @@ int CAv::DisableVideoWithBlueColor()
     }
     mVideoLayerState = VIDEO_LAYER_DISABLE_BLUE;
     SetVideoScreenColor ( 0, 41, 240, 110 ); // Show blue with vdin0, postblending disabled
+#ifdef SUPPORT_ADTV
     return AM_AV_DisableVideo(mTvPlayDevId);
+#else
+    return -1;
+#endif
+
 }
 
 int CAv::DisableVideoWithBlackColor()
@@ -192,22 +313,12 @@ int CAv::DisableVideoWithBlackColor()
 
     mVideoLayerState = VIDEO_LAYER_DISABLE_BLACK;
     SetVideoScreenColor ( 0, 16, 128, 128 ); // Show black with vdin0, postblending disabled
-    return AM_AV_DisableVideo(mTvPlayDevId);
-}
 
-//auto enable,
-int CAv::EnableVideoAuto()
-{
-    LOGD("EnableVideoAuto");
-    if (mVideoLayerState == VIDEO_LAYER_ENABLE) {
-        LOGW("video is enable");
-        return 0;
-    }
-    mVideoLayerState = VIDEO_LAYER_ENABLE;
-    LOGD("DisableVideoWithBlackColor");
-    SetVideoScreenColor ( 0, 16, 128, 128 ); // Show black with vdin0, postblending disabled
-    ClearVideoBuffer();//disable video 2
-    return 0;
+#ifdef SUPPORT_ADTV
+    return AM_AV_DisableVideo(mTvPlayDevId);
+#else
+    return -1;
+#endif
 }
 
 //just enable video
@@ -224,7 +335,128 @@ int CAv::EnableVideoNow(bool IsShowTestScreen)
         LOGD("DisableVideoWithBlackColor");
         SetVideoScreenColor ( 0, 16, 128, 128 );
     }
+
+#ifdef SUPPORT_ADTV
     return AM_AV_EnableVideo(mTvPlayDevId);
+#else
+    return -1;
+#endif
+}
+
+//call disable video 2
+int CAv::ClearVideoBuffer()
+{
+    LOGD("ClearVideoBuffer");
+
+#ifdef SUPPORT_ADTV
+    return AM_AV_ClearVideoBuffer(mTvPlayDevId);
+#else
+    return -1;
+#endif
+}
+
+int CAv::startTimeShift(void *para)
+{
+    LOGD("startTimeShift");
+
+#ifdef SUPPORT_ADTV
+    return AM_AV_StartTimeshift(mTvPlayDevId, (AM_AV_TimeshiftPara_t *)para);
+#else
+    return -1;
+#endif
+}
+
+int CAv::stopTimeShift()
+{
+    LOGD ("stopTimeShift");
+
+#ifdef SUPPORT_ADTV
+    return AM_AV_StopTimeshift(mTvPlayDevId);
+#else
+    return -1;
+#endif
+}
+
+int CAv::pauseTimeShift()
+{
+    LOGD ( "pauseTimeShift");
+
+#ifdef SUPPORT_ADTV
+    return AM_AV_PauseTimeshift (mTvPlayDevId);
+#else
+    return -1;
+#endif
+}
+
+int CAv::resumeTimeShift()
+{
+    LOGD ( "resumeTimeShift");
+
+#ifdef SUPPORT_ADTV
+    return AM_AV_ResumeTimeshift (mTvPlayDevId);
+#else
+    return -1;
+#endif
+}
+
+int CAv::seekTimeShift(int pos, bool start)
+{
+    LOGD ( "seekTimeShift [pos:%d start:%d]", pos, start);
+
+#ifdef SUPPORT_ADTV
+    return AM_AV_SeekTimeshift (mTvPlayDevId, pos, start);
+#else
+    return -1;
+#endif
+}
+
+int CAv::setTimeShiftSpeed(int speed)
+{
+    LOGD ( "setTimeShiftSpeed [%d]", speed);
+    int ret = 0;
+#ifdef SUPPORT_ADTV
+    if (speed < 0)
+        ret = AM_AV_FastBackwardTimeshift(mTvPlayDevId, -speed);
+    else
+        ret = AM_AV_FastForwardTimeshift(mTvPlayDevId, speed);
+#endif
+    return ret;
+}
+
+int CAv::switchTimeShiftAudio(int apid, int afmt)
+{
+    LOGD ( "switchTimeShiftAudio [pid:%d, fmt:%d]", apid, afmt);
+#ifdef SUPPORT_ADTV
+    return AM_AV_SwitchTimeshiftAudio (mTvPlayDevId, apid, afmt);
+#else
+    return -1;
+#endif
+}
+
+int CAv::playTimeShift()
+{
+    LOGD ( "playTimeShift");
+
+#ifdef SUPPORT_ADTV
+    return AM_AV_PlayTimeshift (mTvPlayDevId);
+#else
+    return -1;
+#endif
+}
+
+//auto enable,
+int CAv::EnableVideoAuto()
+{
+    LOGD("EnableVideoAuto");
+    if (mVideoLayerState == VIDEO_LAYER_ENABLE) {
+        LOGW("video is enable");
+        return 0;
+    }
+    mVideoLayerState = VIDEO_LAYER_ENABLE;
+    LOGD("DisableVideoWithBlackColor");
+    SetVideoScreenColor ( 0, 16, 128, 128 ); // Show black with vdin0, postblending disabled
+    ClearVideoBuffer();//disable video 2
+    return 0;
 }
 
 int CAv::WaittingVideoPlaying(int minFrameCount , int waitTime )
@@ -290,13 +522,6 @@ tvin_sig_fmt_t CAv::getVideoResolutionToFmt()
         sig_fmt = TVIN_SIG_FMT_HDMI_3840_2160_00HZ;
     }
     return sig_fmt;
-}
-
-//call disable video 2
-int CAv::ClearVideoBuffer()
-{
-    LOGD("ClearVideoBuffer");
-    return AM_AV_ClearVideoBuffer(mTvPlayDevId);
 }
 
 int CAv::SetVideoScreenColor ( int vdin_blending_mask, int y, int u, int v )
@@ -392,6 +617,7 @@ void CAv::av_evt_callback ( long dev_no, int event_type, void *param, void *user
         LOGD ( "%s, ERROR : mpObserver NULL == mpObserver\n", __FUNCTION__ );
         return;
     }
+#ifdef SUPPORT_ADTV
     switch ( event_type ) {
     case AM_AV_EVT_AV_NO_DATA:
         pAv->mCurAvEvent.type = AVEvent::EVENT_AV_STOP;
@@ -434,6 +660,7 @@ void CAv::av_evt_callback ( long dev_no, int event_type, void *param, void *user
     default:
         break;
     }
+#endif
     LOGD ( "%s, av_evt_callback : dev_no %ld type %d param = %d\n",
         __FUNCTION__, dev_no, pAv->mCurAvEvent.type , (long)param);
 }
@@ -447,64 +674,4 @@ int CAv::setLookupPtsForDtmb(int enable)
     tvWriteSysfs(PATH_MEPG_DTMB_LOOKUP_PTS_FLAG, value);
     return 0;
 }
-
-int CAv::startTimeShift(const AM_AV_TimeshiftPara_t *para)
-{
-    LOGD("startTimeShift");
-    return AM_AV_StartTimeshift(mTvPlayDevId, para);
-}
-
-int CAv::stopTimeShift()
-{
-    LOGD ("stopTimeShift");
-    return AM_AV_StopTimeshift(mTvPlayDevId);
-}
-
-int CAv::pauseTimeShift()
-{
-    LOGD ( "pauseTimeShift");
-    return AM_AV_PauseTimeshift (mTvPlayDevId);
-}
-
-int CAv::resumeTimeShift()
-{
-    LOGD ( "resumeTimeShift");
-    return AM_AV_ResumeTimeshift (mTvPlayDevId);
-}
-
-int CAv::seekTimeShift(int pos, AM_Bool_t start)
-{
-    LOGD ( "seekTimeShift [pos:%d start:%d]", pos, start);
-    return AM_AV_SeekTimeshift (mTvPlayDevId, pos, start);
-}
-
-int CAv::setTimeShiftSpeed(int speed)
-{
-    LOGD ( "setTimeShiftSpeed [%d]", speed);
-    int ret = 0;
-    if (speed < 0)
-        ret = AM_AV_FastBackwardTimeshift(mTvPlayDevId, -speed);
-    else
-        ret = AM_AV_FastForwardTimeshift(mTvPlayDevId, speed);
-    return ret;
-}
-
-int CAv::switchTimeShiftAudio(int apid, int afmt)
-{
-    LOGD ( "switchTimeShiftAudio [pid:%d, fmt:%d]", apid, afmt);
-    return AM_AV_SwitchTimeshiftAudio (mTvPlayDevId, apid, afmt);
-}
-
-int CAv::playTimeShift()
-{
-    LOGD ( "playTimeShift");
-    return AM_AV_PlayTimeshift (mTvPlayDevId);
-}
-
-int CAv::getTimeShiftInfo(AM_AV_TimeshiftInfo_t *info)
-{
-    LOGD ( "getTimeShiftInfo");
-    return AM_AV_GetTimeshiftInfo (mTvPlayDevId, info);
-}
-
 

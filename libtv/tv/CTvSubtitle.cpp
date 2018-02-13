@@ -12,8 +12,10 @@
 #define UNUSED(x) (void)x
 
 #include "CTvSubtitle.h"
+#ifdef SUPPORT_ADTV
 #include "am_misc.h"
 #include "am_dmx.h"
+#endif
 
 CTvSubtitle::CTvSubtitle()
 {
@@ -166,7 +168,8 @@ static void clear_bitmap(CTvSubtitle *pSub)
     }
 }
 
-static void show_sub_cb(AM_SUB2_Handle_t handle, AM_SUB2_Picture_t *pic)
+#ifdef SUPPORT_ADTV
+static void show_sub_cb(void * handle, AM_SUB2_Picture_t *pic)
 {
     LOGD("dvb callback-----------");
 
@@ -254,9 +257,11 @@ static void show_sub_cb(AM_SUB2_Handle_t handle, AM_SUB2_Picture_t *pic)
     pthread_mutex_unlock(&pSub->lock);
 
 }
+#endif
 
 static uint64_t get_pts_cb(void *handle __unused, uint64_t pts __unused)
 {
+#ifdef SUPPORT_ADTV
     char buf[32];
     AM_ErrorCode_t ret;
     uint32_t v;
@@ -275,27 +280,34 @@ static uint64_t get_pts_cb(void *handle __unused, uint64_t pts __unused)
     }
 
     return r;
+#else
+    return -1;
+#endif
 }
 
 static void pes_data_cb(int dev_no __unused, int fhandle __unused,
     const uint8_t *data, int len, void *user_data)
 {
+#ifdef SUPPORT_ADTV
     CTvSubtitle *pSub = ((CTvSubtitle *) user_data);
     AM_PES_Decode(pSub->pes_handle, (uint8_t *)data, len);
+#endif
 }
 
 static int close_dmx(CTvSubtitle *pSub)
 {
+#ifdef SUPPORT_ADTV
     AM_DMX_FreeFilter(pSub->dmx_id, pSub->filter_handle);
     AM_DMX_Close(pSub->dmx_id);
     pSub->dmx_id = -1;
     pSub->filter_handle = -1;
-
+#endif
     return 0;
 }
 
 static int open_dmx(CTvSubtitle *pSub, int dmx_id, int pid)
 {
+#ifdef SUPPORT_ADTV
     close_dmx(pSub);
     AM_DMX_OpenPara_t op;
     struct dmx_pes_filter_params pesp;
@@ -306,21 +318,21 @@ static int open_dmx(CTvSubtitle *pSub, int dmx_id, int pid)
     memset(&op, 0, sizeof(op));
 
     ret = AM_DMX_Open(dmx_id, &op);
-    if (ret != AM_SUCCESS) {
-        LOGD("error AM_DMX_Open != AM_SUCCESS");
+    if (ret != DVB_SUCCESS) {
+        LOGD("error AM_DMX_Open != DVB_SUCCESS");
         goto error;
     }
     pSub->dmx_id = dmx_id;
 
     ret = AM_DMX_AllocateFilter(dmx_id, &pSub->filter_handle);
-    if (ret != AM_SUCCESS) {
-        LOGD("error AM_DMX_AllocateFilter != AM_SUCCESS");
+    if (ret != DVB_SUCCESS) {
+        LOGD("error AM_DMX_AllocateFilter != DVB_SUCCESS");
         goto error;
     }
 
     ret = AM_DMX_SetBufferSize(dmx_id, pSub->filter_handle, 0x80000);
-    if (ret != AM_SUCCESS) {
-        LOGD("error AM_DMX_SetBufferSize != AM_SUCCESS");
+    if (ret != DVB_SUCCESS) {
+        LOGD("error AM_DMX_SetBufferSize != DVB_SUCCESS");
         goto error;
     }
 
@@ -330,20 +342,20 @@ static int open_dmx(CTvSubtitle *pSub, int dmx_id, int pid)
     pesp.pes_type = DMX_PES_TELETEXT0;
 
     ret = AM_DMX_SetPesFilter(dmx_id, pSub->filter_handle, &pesp);
-    if (ret != AM_SUCCESS) {
-        LOGD("error AM_DMX_SetPesFilter != AM_SUCCESS, err = %s", strerror(errno));
+    if (ret != DVB_SUCCESS) {
+        LOGD("error AM_DMX_SetPesFilter != DVB_SUCCESS, err = %s", strerror(errno));
         goto error;
     }
 
     ret = AM_DMX_SetCallback(dmx_id, pSub->filter_handle, pes_data_cb, pSub);
-    if (ret != AM_SUCCESS) {
-        LOGD("error AM_DMX_SetCallback != AM_SUCCESS");
+    if (ret != DVB_SUCCESS) {
+        LOGD("error AM_DMX_SetCallback != DVB_SUCCESS");
         goto error;
     }
 
     ret = AM_DMX_StartFilter(dmx_id, pSub->filter_handle);
-    if (ret != AM_SUCCESS) {
-        LOGD("error AM_DMX_StartFilter != AM_SUCCESS,dmx_id=%d,filter_handle=%d, ret = %d", dmx_id, pSub->filter_handle, ret);
+    if (ret != DVB_SUCCESS) {
+        LOGD("error AM_DMX_StartFilter != DVB_SUCCESS,dmx_id=%d,filter_handle=%d, ret = %d", dmx_id, pSub->filter_handle, ret);
         goto error;
     }
 
@@ -355,24 +367,27 @@ error:
     if (pSub->dmx_id != -1) {
         AM_DMX_Close(dmx_id);
     }
-
+#endif
     return -1;
 }
 
-static void pes_sub_cb(AM_PES_Handle_t handle, uint8_t *buf, int size)
+static void pes_sub_cb(void* handle, uint8_t *buf, int size)
 {
+#ifdef SUPPORT_ADTV
     CTvSubtitle *pSub = ((CTvSubtitle *) AM_SUB2_GetUserData(handle));
     AM_SUB2_Decode(pSub->sub_handle, buf, size);
+#endif
 }
 
 int CTvSubtitle::sub_switch_status()
 {
     return isSubOpen ? 1 : 0;
 }
+
 int CTvSubtitle::sub_start_dvb_sub(int dmx_id, int pid, int page_id, int anc_page_id)
 {
     LOGD("start dvb subtitle=----------------");
-
+#ifdef SUPPORT_ADTV
     AM_PES_Para_t pesp;
     AM_SUB2_Para_t subp;
     int ret;
@@ -381,8 +396,8 @@ int CTvSubtitle::sub_start_dvb_sub(int dmx_id, int pid, int page_id, int anc_pag
     pesp.packet    = pes_sub_cb;
     pesp.user_data = this;
     ret = AM_PES_Create(&pes_handle, &pesp);
-    if (ret != AM_SUCCESS) {
-        LOGD("error AM_PES_Create != AM_SUCCESS");
+    if (ret != DVB_SUCCESS) {
+        LOGD("error AM_PES_Create != DVB_SUCCESS");
         goto error;
     }
 
@@ -393,20 +408,20 @@ int CTvSubtitle::sub_start_dvb_sub(int dmx_id, int pid, int page_id, int anc_pag
     subp.ancillary_id   = anc_page_id;
     subp.user_data = this;
     ret = AM_SUB2_Create(&sub_handle, &subp);
-    if (ret != AM_SUCCESS) {
-        LOGD("error AM_SUB2_Create != AM_SUCCESS");
+    if (ret != DVB_SUCCESS) {
+        LOGD("error AM_SUB2_Create != DVB_SUCCESS");
         goto error;
     }
 
     ret = AM_SUB2_Start(sub_handle);
-    if (ret != AM_SUCCESS) {
-        LOGD("error AM_SUB2_Start != AM_SUCCESS");
+    if (ret != DVB_SUCCESS) {
+        LOGD("error AM_SUB2_Start != DVB_SUCCESS");
         goto error;
     }
 
     ret = open_dmx(this, dmx_id, pid);
     if (ret < 0) {
-        LOGD("error open_dmx != AM_SUCCESS");
+        LOGD("error open_dmx != DVB_SUCCESS");
         goto error;
     }
     isSubOpen = true;
@@ -420,6 +435,7 @@ error:
         AM_PES_Destroy(pes_handle);
         pes_handle = NULL;
     }
+#endif
     return -1;
 }
 
@@ -431,6 +447,7 @@ int CTvSubtitle::sub_start_dtv_tt(int dmx_id __unused, int region_id __unused, i
 
 int CTvSubtitle::sub_stop_dvb_sub()
 {
+#ifdef SUPPORT_ADTV
     pthread_mutex_lock(&lock);
     close_dmx(this);
     AM_SUB2_Destroy(sub_handle);
@@ -443,6 +460,7 @@ int CTvSubtitle::sub_stop_dvb_sub()
     pes_handle = NULL;
     isSubOpen = false;
     pthread_mutex_unlock(&lock);
+#endif
     return 0;
 }
 

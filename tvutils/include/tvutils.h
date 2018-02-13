@@ -18,6 +18,13 @@
 #include <map>
 #include "PQType.h"
 
+#ifndef DVB_SUCCESS
+#define DVB_SUCCESS     (0)
+#endif
+
+#ifndef DVB_FAILURE
+#define DVB_FAILURE     (-1)
+#endif
 
 #define SYS_STR_LEN                         1024
 #define AUDIO_OUTMODE_PATH "/sys/module/atvdemod_fe/parameters/aud_mode"

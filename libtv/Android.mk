@@ -41,26 +41,32 @@ LOCAL_SRC_FILES := \
   tv/AutoBackLight.cpp \
   tv/CBootvideoStatusDetect.cpp \
   tv/CTvEv.cpp \
-  tv/CTvEpg.cpp \
-  tv/CTvRrt.cpp \
-  tv/CTvEas.cpp \
-  tv/CTvRecord.cpp \
   tv/CTvSubtitle.cpp \
-  tv/CTvScanner.cpp \
   tv/CTvTime.cpp \
   tv/CTv.cpp \
   tv/CTvBooking.cpp \
-  tv/CFrontEnd.cpp \
   tv/CTvVchipCheck.cpp \
   tv/CTvScreenCapture.cpp \
   tv/CAv.cpp \
   tv/CTvDmx.cpp \
   tv/CTvFactory.cpp \
-  tv/CTvPlayer.cpp \
   tvin/CTvin.cpp \
   tvin/CDevicesPollStatusDetect.cpp \
   tvin/CHDMIRxManager.cpp \
   tvdb/CTvDimension.cpp \
+  tv/CTvPlayer.cpp \
+  tvdb/CTvChannel.cpp \
+  tvdb/CTvEvent.cpp \
+  tvdb/CTvGroup.cpp \
+  tvdb/CTvProgram.cpp \
+  tvdb/CTvRegion.cpp \
+  tvdb/CTvDatabase.cpp \
+  tv/CTvScanner.cpp \
+  tv/CFrontEnd.cpp \
+  tv/CTvEpg.cpp \
+  tv/CTvRrt.cpp \
+  tv/CTvEas.cpp \
+  tv/CTvRecord.cpp \
   vpp/CVpp.cpp \
   audio/CTvAudio.cpp \
   audio/audio_effect.cpp \
@@ -70,12 +76,6 @@ LOCAL_SRC_FILES := \
   tvsetting/CTvSetting.cpp  \
   tvsetting/TvKeyData.cpp \
   version/version.cpp \
-  tvdb/CTvChannel.cpp \
-  tvdb/CTvDatabase.cpp \
-  tvdb/CTvEvent.cpp \
-  tvdb/CTvGroup.cpp \
-  tvdb/CTvProgram.cpp \
-  tvdb/CTvRegion.cpp \
   fbcutils/CFbcCommunication.cpp \
   fbcutils/fbcutils.cpp \
   gpio/CTvGpio.cpp
@@ -88,18 +88,35 @@ LOCAL_SHARED_LIBRARIES := \
   libsqlite \
   libmedia \
   libtinyxml \
-  libzvbi \
-  libntsc_decode \
   liblog \
   libaudioclient \
   libbinder
 
 LOCAL_SHARED_LIBRARIES += \
-  libam_mw \
-  libam_adp \
-  libam_ver \
   libtvbinder \
   libsystemcontrolservice
+
+#DVB define
+ifeq ($(BOARD_HAS_ADTV),true)
+LOCAL_CFLAGS += -DSUPPORT_ADTV
+
+LOCAL_SHARED_LIBRARIES += \
+  libzvbi \
+  libntsc_decode \
+  libam_mw \
+  libam_adp \
+  libam_ver
+
+LOCAL_C_INCLUDES += \
+  $(DVB_PATH)/include/am_adp \
+  $(DVB_PATH)/include/am_mw \
+  $(DVB_PATH)/include/am_ver \
+  $(DVB_PATH)/android/ndk/include \
+  $(LIB_ZVBI_PATH)/ntsc_decode/include \
+  $(LIB_ZVBI_PATH)/ntsc_decode/include/ntsc_dmx \
+  $(LIB_ZVBI_PATH)/src
+
+endif
 
 ifeq ($(strip $(BOARD_TV_AUDIO_AMAUDIO_LIB_TYPE)), external)
   LOCAL_SHARED_LIBRARIES += libTVaudio
@@ -184,18 +201,10 @@ LOCAL_C_INCLUDES += \
 endif
 
 LOCAL_C_INCLUDES += \
-  $(DVB_PATH)/include/am_adp \
-  $(DVB_PATH)/include/am_mw \
-  $(DVB_PATH)/include/am_ver \
-  $(DVB_PATH)/android/ndk/include \
-  $(LIB_ZVBI_PATH)/ntsc_decode/include \
-  $(LIB_ZVBI_PATH)/ntsc_decode/include/ntsc_dmx \
-  $(LIB_ZVBI_PATH)/src \
   $(LOCAL_PATH)/tvdb \
   $(LOCAL_PATH)/tv \
   $(LOCAL_PATH)/gpio \
   $(LOCAL_PATH)/include \
-  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include \
   external/jsoncpp/include
 
 LOCAL_LDLIBS  += -L$(SYSROOT)/usr/lib -llog

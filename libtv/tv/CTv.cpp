@@ -15,8 +15,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <am_epg.h>
-#include <am_mem.h>
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
@@ -44,7 +42,6 @@
 #include <media/AudioSystem.h>
 #include <sys/wait.h>
 
-
 #include <tvutils.h>
 #include <tvconfig.h>
 #include <CFile.h>
@@ -57,12 +54,17 @@
 
 #include <hardware_legacy/power.h>
 
+#ifdef SUPPORT_ADTV
+#include <am_epg.h>
+#include <am_mem.h>
+
 extern "C" {
 #include "am_ver.h"
 #include "am_misc.h"
 #include "am_debug.h"
 #include "am_fend.h"
 }
+#endif
 
 #include <math.h>
 #include <sys/ioctl.h>
@@ -147,8 +149,9 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
         }
     }
 
+#ifdef SUPPORT_ADTV
     AM_EVT_Init();
-
+#endif
     mpObserver = NULL;
     fbcIns = NULL;
     mAutoSetDisplayFreq = false;
@@ -340,6 +343,33 @@ void CTv::onEvent ( const CTvEpg::EpgEvent &ev )
     sendTvEvent ( ev );
 }
 
+void CTv::onEvent(const CTvRecord::RecEvent &ev)
+{
+    LOGD ( "RecEvent = %d", ev.type);
+    switch ( ev.type ) {
+        case CTvRecord::RecEvent::EVENT_REC_START: {
+            TvEvent::RecorderEvent RecorderEvent;
+            RecorderEvent.mStatus = TvEvent::RecorderEvent::EVENT_RECORD_START;
+            RecorderEvent.mError = (int)ev.error;
+            sendTvEvent(RecorderEvent);
+            }break;
+        case CTvRecord::RecEvent::EVENT_REC_STOP: {
+            TvEvent::RecorderEvent RecorderEvent;
+            RecorderEvent.mStatus = TvEvent::RecorderEvent::EVENT_RECORD_STOP;
+            RecorderEvent.mError = (int)ev.error;
+            RecorderEvent.mId = String8(ev.id.c_str());
+            sendTvEvent(RecorderEvent);
+            }break;
+        default:
+            break;
+    }
+}
+
+void CTv::onEvent (const CTvRrt::RrtEvent &ev)
+{
+    sendTvEvent ( ev );
+}
+
 void CTv::onEvent(const CAv::AVEvent &ev)
 {
     LOGD ( "[source_switch_time]: %fs, AVEvent = %d", getUptimeSeconds(), ev.type);
@@ -435,33 +465,6 @@ void CTv::onEvent(const CAv::AVEvent &ev)
     default:
         break;
     }
-}
-
-void CTv::onEvent(const CTvRecord::RecEvent &ev)
-{
-    LOGD ( "RecEvent = %d", ev.type);
-    switch ( ev.type ) {
-        case CTvRecord::RecEvent::EVENT_REC_START: {
-            TvEvent::RecorderEvent RecorderEvent;
-            RecorderEvent.mStatus = TvEvent::RecorderEvent::EVENT_RECORD_START;
-            RecorderEvent.mError = (int)ev.error;
-            sendTvEvent(RecorderEvent);
-            }break;
-        case CTvRecord::RecEvent::EVENT_REC_STOP: {
-            TvEvent::RecorderEvent RecorderEvent;
-            RecorderEvent.mStatus = TvEvent::RecorderEvent::EVENT_RECORD_STOP;
-            RecorderEvent.mError = (int)ev.error;
-            RecorderEvent.mId = String8(ev.id.c_str());
-            sendTvEvent(RecorderEvent);
-            }break;
-        default:
-            break;
-    }
-}
-
-void CTv::onEvent (const CTvRrt::RrtEvent &ev)
-{
-    sendTvEvent ( ev );
 }
 
 CTv::CTvMsgQueue::CTvMsgQueue(CTv *tv)
@@ -698,9 +701,9 @@ int CTv::Scan(const char *feparas, const char *scanparas) {
     CTvScanner::ScanParas sp(scanparas);
     CFrontEnd::FEParas fp(feparas);
 
-    if (sp.getAtvMode() & AM_SCAN_ATVMODE_AUTO)
+    if (sp.getAtvMode() & TV_SCAN_ATVMODE_AUTO)
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_ATV );
-    if (sp.getDtvMode() & AM_SCAN_DTVMODE_MANUAL) {
+    if (sp.getDtvMode() & TV_SCAN_DTVMODE_MANUAL) {
         CTvChannel::DeleteBetweenFreq(sp.getDtvFrequency1(), sp.getDtvFrequency2());
     } else {
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_DTV );
@@ -711,7 +714,7 @@ int CTv::Scan(const char *feparas, const char *scanparas) {
     mTvScanner->setObserver(&mTvMsgQueue);
     mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
 
-    mFrontDev->Open(FE_AUTO);
+    mFrontDev->Open(TV_FE_AUTO);
 
     return mTvScanner->Scan(fp, sp);
 }
@@ -731,7 +734,7 @@ int CTv::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1,
         mAv.DisableVideoWithBlueColor();
     }
 
-    if (scan_mode == AM_SCAN_DTVMODE_MANUAL) {
+    if (scan_mode == TV_SCAN_DTVMODE_MANUAL) {
         CTvChannel::DeleteBetweenFreq(beginFreq, endFreq);
     } else {
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_DTV );
@@ -747,25 +750,25 @@ int CTv::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1,
 int CTv::dtvMode(const char *mode)
 {
     if ( strcmp ( mode, DTV_DTMB_MODE ) == 0 )
-        return (FE_DTMB);
+        return (TV_FE_DTMB);
     else if ( strcmp ( mode, DTV_DVBC_MODE ) == 0 )
-        return (FE_QAM);
+        return (TV_FE_QAM);
     else if ( strcmp ( mode, DTV_DVBS_MODE ) == 0 )
-        return (FE_QPSK);
+        return (TV_FE_QPSK);
     else if ( strcmp ( mode, DTV_ATSC_MODE ) == 0 )
-        return (FE_ATSC);
+        return (TV_FE_ATSC);
     else if ( strcmp ( mode, DTV_DVBT_MODE ) == 0 )
-        return (FE_OFDM);
+        return (TV_FE_OFDM);
     else if ( strcmp ( mode, DTV_ISDBT_MODE ) == 0 )
-        return (FE_ISDBT);
+        return (TV_FE_ISDBT);
 
-    return (FE_DTMB);
+    return (TV_FE_DTMB);
 }
 
 int CTv::dtvAutoScan()
 {
     const char *dtv_mode = config_get_str ( CFG_SECTION_TV, CFG_DTV_MODE, DTV_DTMB_MODE);
-    return dtvScan(dtvMode(dtv_mode), AM_SCAN_DTVMODE_ALLBAND, 0, 0, -1, -1);
+    return dtvScan(dtvMode(dtv_mode), TV_SCAN_DTVMODE_ALLBAND, 0, 0, -1, -1);
 }
 
 int CTv::dtvCleanProgramByFreq ( int freq )
@@ -784,7 +787,7 @@ int CTv::dtvCleanProgramByFreq ( int freq )
 int CTv::dtvManualScan (int beginFreq, int endFreq, int modulation)
 {
     const char *dtv_mode = config_get_str ( CFG_SECTION_TV, CFG_DTV_MODE, "dtmb");
-    return dtvScan(dtvMode(dtv_mode), AM_SCAN_DTVMODE_MANUAL, beginFreq, endFreq, modulation, -1);
+    return dtvScan(dtvMode(dtv_mode), TV_SCAN_DTVMODE_MANUAL, beginFreq, endFreq, modulation, -1);
 
 }
 
@@ -814,7 +817,7 @@ int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchTyp
     aStd = CC_ATV_AUDIO_STD_DK;
     tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceInput(SOURCE_TV);
     mpTvin->VDIN_OpenPort ( source_port );
-    v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor(vStd, aStd);
+    unsigned long stdAndColor = mFrontDev->enumToStdAndColor(vStd, aStd);
 
     int fmt = CFrontEnd::stdEnumToCvbsFmt (vStd, aStd);
     mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) TVIN_SIG_FMT_NULL );
@@ -872,7 +875,7 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
     mTvAction |= TV_ACTION_SCANNING;
     mTvScanner->setObserver ( &mTvMsgQueue );
     SetAudioMuteForTv ( CC_AUDIO_MUTE );
-    v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor(vStd, aStd);
+    unsigned long stdAndColor = mFrontDev->enumToStdAndColor(vStd, aStd);
 
     tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceInput(SOURCE_TV);
     mpTvin->VDIN_OpenPort ( source_port );
@@ -887,27 +890,19 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
 int CTv::getVideoFormatInfo ( int *pWidth, int *pHeight, int *pFPS, int *pInterlace )
 {
     int  iOutRet = -1;
-    AM_AV_VideoStatus_t video_status;
-
     do {
         if ( NULL == pWidth || NULL == pHeight || NULL == pFPS || NULL == pInterlace ) {
             break;
         }
 
-        iOutRet = mAv.GetVideoStatus (&video_status );
+        iOutRet = mAv.GetVideoStatus (pWidth, pHeight, pFPS, pInterlace);
 
-        if ( AM_SUCCESS != iOutRet ) {
+        if ( DVB_SUCCESS != iOutRet ) {
             LOGD ( "%s, ERROR: Cann't Get video format info\n", __FUNCTION__);
             break;
         }
-
-        *pWidth = video_status.src_w;
-        *pHeight = video_status.src_h;
-        *pFPS = video_status.fps;
-        *pInterlace = video_status.interlaced;
         //LOGD("%s, w : %d h : %d fps : %d  interlaced: %d\n", __FUNCTION__, video_status.src_w,video_status.src_h,video_status.fps,video_status.interlaced);
     } while ( false );
-
     return iOutRet;
 }
 
@@ -915,46 +910,13 @@ int CTv::getAudioFormatInfo ( int fmt[2], int sample_rate[2], int resolution[2],
     int lfepresent[2], int *frames, int *ab_size, int *ab_data, int *ab_free)
 {
     int  iOutRet = -1;
-    AM_AV_AudioStatus_t audio_status;
 
     do {
-
-        iOutRet = mAv.GetAudioStatus (&audio_status );
-
-        if ( AM_SUCCESS != iOutRet ) {
+        iOutRet = mAv.GetAudioStatus (fmt, sample_rate, resolution, channels, lfepresent, frames, ab_size, ab_data, ab_free);
+        if ( DVB_SUCCESS != iOutRet ) {
             LOGD ( "%s, ERROR: Cann't Get audio format info\n", __FUNCTION__);
             break;
         }
-
-        if (fmt) {
-            fmt[0] = audio_status.aud_fmt;
-            fmt[1] = audio_status.aud_fmt_orig;
-        }
-        if (sample_rate) {
-            sample_rate[0] = audio_status.sample_rate;
-            sample_rate[1] = audio_status.sample_rate_orig;
-        }
-        if (resolution) {
-            resolution[0] = audio_status.resolution;
-            resolution[1] = audio_status.resolution_orig;
-        }
-        if (channels) {
-            channels[0] = audio_status.channels;
-            channels[1] = audio_status.channels_orig;
-        }
-        if (lfepresent) {
-            lfepresent[0] = audio_status.lfepresent;
-            lfepresent[1] = audio_status.lfepresent_orig;
-        }
-        if (frames)
-            *frames = audio_status.frames;
-        if (ab_size)
-            *ab_size = audio_status.ab_size;
-        if (ab_data)
-            *ab_data = audio_status.ab_data;
-        if (ab_free)
-            *ab_free = audio_status.ab_free;
-
     } while ( false );
 
     return iOutRet;
@@ -1030,10 +992,10 @@ void CTv::operateDeviceForScan(int type)
 {
     LOGD("%s : type:%d\n", __FUNCTION__, type);
     if (type & OPEN_DEV_FOR_SCAN_ATV) {
-            mFrontDev->Open(FE_ANALOG);
+            mFrontDev->Open(TV_FE_ANALOG);
             mFrontDev->SetAnalogFrontEndTimerSwitch(1);
      }else if  (type & OPEN_DEV_FOR_SCAN_DTV) {
-            mFrontDev->Open(FE_AUTO);
+            mFrontDev->Open(TV_FE_AUTO);
             mFrontDev->SetAnalogFrontEndTimerSwitch(0);
      }else if  (type & CLOSE_DEV_FOR_SCAN) {
             mFrontDev->SetAnalogFrontEndTimerSwitch(0);
@@ -1041,11 +1003,13 @@ void CTv::operateDeviceForScan(int type)
 }
 void CTv::setDvbTextCoding(char *coding)
 {
+#ifdef SUPPORT_ADTV
     if (!strcmp(coding, "standard")) {
         AM_SI_SetDefaultDVBTextCoding("");
     } else {
         AM_SI_SetDefaultDVBTextCoding(coding);
     }
+#endif
 }
 
 int CTv::playDvbcProgram ( int progId )
@@ -1150,7 +1114,7 @@ int CTv::switchAudioTrack (int aPid, int aFmt, int aParam __unused)
             break;
         }
 
-        iOutRet = mAv.SwitchTSAudio (( uint16_t ) aPid, ( AM_AV_AFormat_t ) aFmt );
+        iOutRet = mAv.SwitchTSAudio (( unsigned short ) aPid, aFmt );
         LOGD ("%s, iOutRet = %d AM_AV_SwitchTSAudio\n", __FUNCTION__,  iOutRet );
     } while ( false );
 
@@ -1193,7 +1157,7 @@ int CTv::switchAudioTrack ( int progId, int idx )
             break;
         }
 
-        iOutRet = mAv.SwitchTSAudio (( uint16_t ) aPid, ( AM_AV_AFormat_t ) aFmt );
+        iOutRet = mAv.SwitchTSAudio (( unsigned short ) aPid, aFmt );
         LOGD ( "%s, iOutRet = %d AM_AV_SwitchTSAudio\n", __FUNCTION__,  iOutRet );
     } while ( false );
 
@@ -1214,7 +1178,7 @@ int CTv::setAudioAD (int enable, int aPid, int aFmt)
         return iOutRet;
     }
 
-    iOutRet = mAv.SetADAudio (enable, ( uint16_t ) aPid, ( AM_AV_AFormat_t ) aFmt );
+    iOutRet = mAv.SetADAudio (enable, ( unsigned short ) aPid, aFmt );
     LOGD ("%s, iOutRet = %d (%d,%d,%d)\n", __FUNCTION__,  iOutRet, enable, aPid, aFmt );
 
     return iOutRet;
@@ -1232,11 +1196,11 @@ int CTv::playDtvProgramUnlocked (const char *feparas, int mode, int freq, int pa
         mAv.DisableVideoBlackout();
     //mAv.ClearVideoBuffer();
 
-    mFrontDev->Open(FE_AUTO);
+    mFrontDev->Open(TV_FE_AUTO);
     if (!(mTvAction & TV_ACTION_SCANNING)) {
         if (!feparas) {
             if ( SOURCE_ADTV == m_source_input_virtual ) {
-                mFrontDev->setPara (FE_ATSC, freq, para1, para2);
+                mFrontDev->setPara (TV_FE_ATSC, freq, para1, para2);
             } else {
                 mFrontDev->setPara (mode, freq, para1, para2);
             }
@@ -1282,7 +1246,7 @@ int CTv::playDtvProgram(const char* feparas, int vpid, int vfmt, int apid,
 }
 
 
-int CTv::playDtvTimeShiftUnlocked (const char *feparas, AM_AV_TimeshiftPara_t *para, int audioCompetation)
+int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCompetation)
 {
     int ret = 0;
 
@@ -1295,21 +1259,22 @@ int CTv::playDtvTimeShiftUnlocked (const char *feparas, AM_AV_TimeshiftPara_t *p
     mAv.ClearVideoBuffer();
 
     if (feparas) {
-        mFrontDev->Open(FE_AUTO);
+        mFrontDev->Open(TV_FE_AUTO);
         if (!(mTvAction & TV_ACTION_SCANNING)) {
             mFrontDev->setPara(feparas);
         }
     }
 
     mTvAction |= TV_ACTION_PLAYING;
-    AM_FileEcho ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
+    tvWriteSysfs ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
     ret = mAv.startTimeShift(para);
 
     SetCurProgramAudioVolumeCompensationVal ( audioCompetation );
 
     return ret;
 }
-int CTv::playDtvTimeShift (const char *feparas, AM_AV_TimeshiftPara_t *para, int audioCompetation)
+
+int CTv::playDtvTimeShift (const char *feparas, void *para, int audioCompetation)
 {
     AutoMutex _l( mLock );
     return playDtvTimeShiftUnlocked(feparas, para, audioCompetation);
@@ -1377,14 +1342,14 @@ int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __u
     //image selecting channel
     mHDMIAudioCheckThread.requestAndWaitPauseCheck();
     mpTvin->Tvin_StopDecoder();
-    mFrontDev->Open(FE_ANALOG);
+    mFrontDev->Open(TV_FE_ANALOG);
     //set CVBS
     int fmt = CFrontEnd::stdEnumToCvbsFmt (videoStd, audioStd);
     mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
 
-    v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor (videoStd, audioStd);
+    unsigned long stdAndColor = mFrontDev->enumToStdAndColor (videoStd, audioStd);
     //set TUNER
-    mFrontDev->setPara (FE_ANALOG, freq, stdAndColor, 1);
+    mFrontDev->setPara (TV_FE_ANALOG, freq, stdAndColor, 1);
 
     mHDMIAudioCheckThread.setObserver(this);
     mHDMIAudioCheckThread.initCheckState();
@@ -1397,18 +1362,19 @@ int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __u
 int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 {
     LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
+#ifdef SUPPORT_ADTV
     if (mTvAction & TV_ACTION_SCANNING) {
         return -1;
     }
 
-    if ( feParms.mode == FE_ANALOG ) {
+    if ( feParms.mode == TV_FE_ANALOG ) {
         int progID = -1;
         int tmpFreq = feParms.freq;
         int tmpfineFreq = feParms.para2;
         int mode = feParms.mode;
 
         //get tunerStd from videoStd and audioStd
-        v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor (feParms.videoStd, feParms.audioStd);
+        unsigned long stdAndColor = mFrontDev->enumToStdAndColor (feParms.videoStd, feParms.audioStd);
 
         LOGD("%s, resetFrontEndPara- vstd=%d astd=%d stdandcolor=%lld", __FUNCTION__, feParms.videoStd, feParms.audioStd, stdAndColor);
 
@@ -1422,8 +1388,8 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 
         //set TUNER
         //usleep(400 * 1000);
-        mFrontDev->Open(FE_ANALOG);
-        mFrontDev->setPara ( FE_ANALOG, tmpFreq, stdAndColor, 1 );
+        mFrontDev->Open(TV_FE_ANALOG);
+        mFrontDev->setPara ( TV_FE_ANALOG, tmpFreq, stdAndColor, 1 );
         //usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
             mFrontDev->fineTune ( tmpfineFreq / 1000 );
@@ -1435,7 +1401,7 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
         mFrontDev->Open(feParms.mode);
         mFrontDev->setPara ( feParms.mode, feParms.freq, feParms.para1, feParms.para2 );
     }
-
+#endif
     return 0;
 }
 
@@ -1457,7 +1423,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         }
     }
 
-    if ( fp.getFEMode().getBase() == FE_ANALOG ) {
+    if ( fp.getFEMode().getBase() == TV_FE_ANALOG ) {
         if (SOURCE_DTV == m_source_input) {
             //mAv.DisableVideoBlackout();
             stopPlaying(false);
@@ -1466,7 +1432,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         int tmpfineFreq = fp.getFrequency2();
 
         //get tunerStd from videoStd and audioStd
-        v4l2_std_id stdAndColor = mFrontDev->enumToStdAndColor (fp.getVideoStd(), fp.getAudioStd());
+        unsigned long stdAndColor = mFrontDev->enumToStdAndColor (fp.getVideoStd(), fp.getAudioStd());
 
         LOGD("%s: vstd=%d astd=%d stdandcolor=%lld", __FUNCTION__, fp.getVideoStd(), fp.getAudioStd(), stdAndColor);
         SetAudioMuteForTv ( CC_AUDIO_MUTE);
@@ -1480,7 +1446,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
 
         //set TUNER
         //usleep(400 * 1000);
-        mFrontDev->Open(FE_AUTO);
+        mFrontDev->Open(TV_FE_AUTO);
         mFrontDev->setPara ( paras, force );
         //usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
@@ -1500,7 +1466,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
                 }
             }
         }
-        mFrontDev->Open(FE_AUTO);
+        mFrontDev->Open(TV_FE_AUTO);
         mFrontDev->setPara ( paras, force );
     }
 
@@ -1513,6 +1479,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
 
 int CTv::resetDmxAndAvSource()
 {
+#ifdef SUPPORT_ADTV
     AM_DMX_Source_t curdmxSource;
     mFrontDev->GetTSSource ( &curdmxSource );
     LOGD ( "%s, AM_FEND_GetTSSource %d", __FUNCTION__, curdmxSource );
@@ -1525,8 +1492,9 @@ int CTv::resetDmxAndAvSource()
     mTvDmx1.SetSource(curdmxSource);
     mTvDmx2.Open(para);
     mTvDmx2.SetSource(curdmxSource);
-    AM_AV_TSSource_t ts_source = ( AM_AV_TSSource_t ) curdmxSource;
+    int ts_source = ( int ) curdmxSource;
     mAv.SetTSSource (ts_source );
+#endif
     return 0;
 }
 
@@ -1566,10 +1534,10 @@ int CTv::GetAudioVolumeCompensationVal(int progxxId __unused)
 int CTv::startPlayTv ( int source, int vid, int aid, int pcrid, int vfat, int afat )
 {
     if ( source == SOURCE_DTV ) {
-        AM_FileEcho ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
+        tvWriteSysfs ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
         setDvbLogLevel();
         LOGD ( "%s, startPlayTv", __FUNCTION__);
-        return mAv.StartTS (vid, aid, pcrid, ( AM_AV_VFormat_t ) vfat, ( AM_AV_AFormat_t ) afat );
+        return mAv.StartTS (vid, aid, pcrid, vfat, afat );
     }
     return -1;
 }
@@ -1623,10 +1591,10 @@ int CTv::stopPlaying(bool isShowTestScreen, bool resetFE)
 int CTv::getAudioChannel()
 {
     int iRet = -1;
-    AM_AOUT_OutputMode_t audioChanneleMod;
+    int audioChanneleMod;
     do {
         iRet = mAv.AudioGetOutputMode (&audioChanneleMod );
-        if ( AM_SUCCESS != iRet ) {
+        if ( DVB_SUCCESS != iRet ) {
             LOGD ( "%s, audio GetOutputMode is FAILED %d\n", __FUNCTION__,  iRet );
             break;
         }
@@ -1638,20 +1606,20 @@ int CTv::getAudioChannel()
 int CTv::setAudioChannel ( int channelIdx )
 {
     int iOutRet = 0;
-    AM_AOUT_OutputMode_t audioChanneleMod;
+    int audioChanneleMod;
     LOGD ( "%s, channelIdx : %d\n", __FUNCTION__,  channelIdx );
-    audioChanneleMod = ( AM_AOUT_OutputMode_t ) channelIdx;
+    audioChanneleMod = ( int ) channelIdx;
     iOutRet = mAv.AudioSetOutputMode (audioChanneleMod );
     int aud_ch = 1;
-    if (audioChanneleMod == AM_AOUT_OUTPUT_STEREO) {
+    if (audioChanneleMod == TV_AOUT_OUTPUT_STEREO) {
         aud_ch = 1;
-    } else if (audioChanneleMod == AM_AOUT_OUTPUT_DUAL_LEFT) {
+    } else if (audioChanneleMod == TV_AOUT_OUTPUT_DUAL_LEFT) {
         aud_ch = 2;
-    } else if (audioChanneleMod == AM_AOUT_OUTPUT_DUAL_RIGHT) {
+    } else if (audioChanneleMod == TV_AOUT_OUTPUT_DUAL_RIGHT) {
         aud_ch = 3;
     }
     CTvProgram::updateAudioChannel(-1, aud_ch);
-    if ( AM_SUCCESS != iOutRet) {
+    if ( DVB_SUCCESS != iOutRet) {
         LOGD ( "%s, TV AM_AOUT_SetOutputMode device is FAILED %d\n", __FUNCTION__, iOutRet );
     }
     return 0;
@@ -1848,12 +1816,14 @@ void CTv::print_version_info ( void )
     LOGD ( "libtvservice Builer Name:%s\n", tvservice_get_build_name_info() );
     LOGD ( "libtvservice board version:%s\n", tvservice_get_board_version_info() );
     LOGD ( "\n\n");
+#ifdef SUPPORT_ADTV
     // print dvb version info
     LOGD ( "libdvb git branch:%s\n", dvb_get_git_branch_info() );
     LOGD ( "libdvb git version:%s\n", dvb_get_git_version_info() );
     LOGD ( "libdvb Last Changed:%s\n", dvb_get_last_chaned_time_info() );
     LOGD ( "libdvb Last Build:%s\n", dvb_get_build_time_info() );
     LOGD ( "libdvb Builer Name:%s\n", dvb_get_build_name_info() );
+#endif
 }
 
 int CTv::Tvin_GetTvinConfig ( void )
@@ -1974,7 +1944,7 @@ int CTv::OpenTv ( void )
     SSMReadBlackoutEnable(&enable);
     mBlackoutEnable = ((enable==1)?true:false);
 
-    mFrontDev->Open(FE_AUTO);
+    mFrontDev->Open(TV_FE_AUTO);
     mFrontDev->autoLoadFE();
     mAv.Open();
     resetDmxAndAvSource();
@@ -2060,7 +2030,7 @@ int CTv::StopTvLock ( void )
     stopScan();
     mFrontDev->SetAnalogFrontEndTimerSwitch(0);
     //
-    setAudioChannel(AM_AOUT_OUTPUT_STEREO);
+    setAudioChannel(TV_AOUT_OUTPUT_STEREO);
     mpTvin->setMpeg2Vdin(0);
     mAv.setLookupPtsForDtmb(0);
     SwitchAVOutBypass(0);
@@ -2232,10 +2202,10 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
     }
     //set front dev mode
     if ( source_input == SOURCE_TV ) {
-        mFrontDev->Open(FE_ANALOG);
+        mFrontDev->Open(TV_FE_ANALOG);
         mFrontDev->SetAnalogFrontEndTimerSwitch(1);
     } else if ( source_input == SOURCE_DTV ) {
-        mFrontDev->Open(FE_AUTO);
+        mFrontDev->Open(TV_FE_AUTO);
         mFrontDev->SetAnalogFrontEndTimerSwitch(0);
     } else {
         mFrontDev->Close();
@@ -2688,9 +2658,9 @@ tvin_info_t CTv::GetCurrentSignalInfo ( void )
     int feState = mFrontDev->getStatus();
     if ( (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_DTV ) ) {
         det_fmt = mpTvin->TvinApi_Get3DDectMode();
-        if ((feState & FE_HAS_LOCK) == FE_HAS_LOCK) {
+        if ((feState & TV_FE_HAS_LOCK) == TV_FE_HAS_LOCK) {
             m_cur_sig_info.status = TVIN_SIG_STATUS_STABLE;
-        } else if ((feState & FE_TIMEDOUT) == FE_TIMEDOUT) {
+        } else if ((feState & TV_FE_TIMEDOUT) == TV_FE_TIMEDOUT) {
             m_cur_sig_info.status = TVIN_SIG_STATUS_NOSIG;
         }
         if ( det_fmt != TVIN_TFMT_2D ) {
@@ -4944,7 +4914,7 @@ int CTv::setAmAudioPreMute(int mute)
 
 int CTv::getAmAudioPreMute()
 {
-    uint mute = -1;
+    unsigned int mute = -1;
     if (m_source_input == SOURCE_DTV) {
         mAv.AudioGetPreMute(&mute);
     } else {
@@ -5783,6 +5753,7 @@ ANDROID_SINGLETON_STATIC_INSTANCE(PlayerManager);
 int CTv::Tv_RrtUpdate(int freq, int modulation, int mode)
 {
     int ret = 0;
+#ifdef SUPPORT_ADTV
     if (mTvRrt->mRrtScanHandle != NULL) {
         ret = mTvRrt->StopRrtUpdate();
         if (ret < 0) {
@@ -5793,20 +5764,23 @@ int CTv::Tv_RrtUpdate(int freq, int modulation, int mode)
 
     if (mode == RRT_MANU_SEARCH) {//manual
         fe_status_t status = (fe_status_t)mFrontDev->getStatus();
-        if (status & FE_HAS_LOCK) {
+        if (status & TV_FE_HAS_LOCK) {
             return mTvRrt->StartRrtUpdate(RRT_MANU_SEARCH);
         }else {
-            mFrontDev->setPara(FE_ATSC, freq, modulation, 0);
+            mFrontDev->setPara(TV_FE_ATSC, freq, modulation, 0);
             return mTvRrt->StartRrtUpdate(RRT_MANU_SEARCH);
         }
     } else {//auto
         return mTvRrt->StartRrtUpdate(RRT_AUTO_SEARCH);
     }
+#endif
+    return ret;
 }
 
 int CTv::Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info)
 {
     int ret = 0;
+#ifdef SUPPORT_ADTV
     rrt_select_info_t tmp;
     memset(&tmp, 0, sizeof(rrt_select_info_t));
     ret = mTvRrt->GetRRTRating(rating_region_id, dimension_id, value_id, &tmp);
@@ -5815,12 +5789,14 @@ int CTv::Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_
     }
 
     *rrt_select_info = tmp;
-
+#endif
     return ret;
 }
 
 void CTv::setDvbLogLevel() {
+#ifdef SUPPORT_ADTV
     AM_DebugSetLogLevel(property_get_int32("tv.dvb.loglevel", 1));
+#endif
 }
 
 void CTv::dump(String8 &result)
@@ -5838,10 +5814,12 @@ void CTv::dump(String8 &result)
     result.appendFormat("tvserver Builer Name:%s\n", tvservice_get_build_name_info());
     result.appendFormat("tvserver board version:%s\n\n", tvservice_get_board_version_info());
 
+#ifdef SUPPORT_ADTV
     result.appendFormat("libdvb git branch:%s\n", dvb_get_git_branch_info());
     result.appendFormat("libdvb git version:%s\n", dvb_get_git_version_info());
     result.appendFormat("libdvb Last Changed:%s\n", dvb_get_last_chaned_time_info());
     result.appendFormat("libdvb Last Build:%s\n", dvb_get_build_time_info());
     result.appendFormat("libdvb Builer Name:%s\n\n", dvb_get_build_name_info());
+#endif
 }
 

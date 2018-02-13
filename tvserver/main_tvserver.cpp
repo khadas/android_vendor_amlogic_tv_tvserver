@@ -59,7 +59,7 @@ int main(int argc __unused, char** argv __unused)
         }
     }
     else {
-        TvService::instantiate();
+        //TvService::instantiate();
     }
 
     /*

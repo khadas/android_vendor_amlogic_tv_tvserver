@@ -15,9 +15,10 @@
 
 void CTvEpg::epg_evt_callback(long dev_no, int event_type, void *param, void *user_data __unused)
 {
+#ifdef SUPPORT_ADTV
     CTvEpg *pEpg;
 
-    AM_EPG_GetUserData((AM_EPG_Handle_t)dev_no, (void **)&pEpg);
+    AM_EPG_GetUserData((void *)dev_no, (void **)&pEpg);
 
     if (pEpg == NULL) return;
 
@@ -57,6 +58,7 @@ void CTvEpg::epg_evt_callback(long dev_no, int event_type, void *param, void *us
     default:
         break;
     }
+#endif
 }
 
 void CTvEpg::Init(int fend, int dmx, int fend_mod, char *textLanguages, char *dvb_text_coding)
@@ -70,6 +72,7 @@ void CTvEpg::Init(int fend, int dmx, int fend_mod, char *textLanguages, char *dv
 
 void CTvEpg::epg_create(int fend_id, int dmx_id, int src, char *textLangs)
 {
+#ifdef SUPPORT_ADTV
     AM_EPG_CreatePara_t para;
     AM_ErrorCode_t ret;
     AM_FEND_OpenPara_t fend_para;
@@ -84,12 +87,10 @@ void CTvEpg::epg_create(int fend_id, int dmx_id, int src, char *textLangs)
     para.source   = src;
     para.hdb      = NULL;
 
-
     snprintf(para.text_langs, sizeof(para.text_langs), "%s", textLangs);
 
-
     ret = AM_EPG_Create(&para, &mEpgScanHandle);
-    if (ret != AM_SUCCESS) {
+    if (ret != DVB_SUCCESS) {
         LOGD("AM_EPG_Create failed");
         return;
     }
@@ -102,12 +103,12 @@ void CTvEpg::epg_create(int fend_id, int dmx_id, int src, char *textLangs)
     AM_EVT_Subscribe((long)mEpgScanHandle, AM_EPG_EVT_UPDATE_PROGRAM_NAME, epg_evt_callback, NULL);
     AM_EVT_Subscribe((long)mEpgScanHandle, AM_EPG_EVT_UPDATE_TS, epg_evt_callback, NULL);
     AM_EPG_SetUserData(mEpgScanHandle, (void *)this);
+#endif
 }
-
-
 
 void CTvEpg::epg_destroy()
 {
+#ifdef SUPPORT_ADTV
     if (mEpgScanHandle != NULL) {
         /*unregister eit events notifications*/
         AM_EVT_Unsubscribe((long)mEpgScanHandle, AM_EPG_EVT_NEW_TDT, epg_evt_callback, NULL);
@@ -121,38 +122,38 @@ void CTvEpg::epg_destroy()
 
     if (mDmx_dev_id != INVALID_ID)
         AM_DMX_Close(mDmx_dev_id);
+#endif
 }
-
 
 void CTvEpg::epg_change_mode(int op, int mode)
 {
+#ifdef SUPPORT_ADTV
     AM_ErrorCode_t ret;
     ret = AM_EPG_ChangeMode(mEpgScanHandle, op, mode);
-    if (ret != AM_SUCCESS)
+    if (ret != DVB_SUCCESS)
         LOGD("AM_EPG_ChangeMode failed");
+#endif
 }
-
-
 
 void CTvEpg::epg_monitor_service(int srv_id)
 {
+#ifdef SUPPORT_ADTV
     int ret = AM_EPG_MonitorService(mEpgScanHandle, srv_id);
-    if (ret != AM_SUCCESS)
+    if (ret != DVB_SUCCESS)
         LOGD("AM_EPG_MonitorService failed");
+#endif
 }
-
-
 
 void CTvEpg::epg_set_dvb_text_coding(char *coding)
 {
+#ifdef SUPPORT_ADTV
     if (!strcmp(coding, "standard")) {
         AM_SI_SetDefaultDVBTextCoding("");
     } else {
         AM_SI_SetDefaultDVBTextCoding(coding);
     }
+#endif
 }
-
-
 
 /*Start scan the sections.*/
 void CTvEpg::startScan(int mode)
@@ -165,7 +166,6 @@ void CTvEpg::stopScan(int mode)
 {
     epg_change_mode(MODE_REMOVE, mode);
 }
-
 
 /*Enter a channel.*/
 void CTvEpg::enterChannel(int chan_id)

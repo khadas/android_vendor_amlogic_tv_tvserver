@@ -2156,9 +2156,10 @@ bool CTvin::CHDMIAudioCheck::threadLoop()
 }
 
 
-v4l2_std_id CTvin::CvbsFtmToV4l2ColorStd(tvin_sig_fmt_t fmt)
+unsigned long CTvin::CvbsFtmToV4l2ColorStd(tvin_sig_fmt_t fmt)
 {
-    v4l2_std_id v4l2_std;
+    unsigned long v4l2_std = 0;
+#ifdef SUPPORT_ADTV
     if (fmt == TVIN_SIG_FMT_CVBS_NTSC_M ||  fmt == TVIN_SIG_FMT_CVBS_NTSC_443) {
         v4l2_std = V4L2_COLOR_STD_NTSC;
     } else if (fmt >= TVIN_SIG_FMT_CVBS_PAL_I && fmt <= TVIN_SIG_FMT_CVBS_PAL_CN) {
@@ -2168,12 +2169,14 @@ v4l2_std_id CTvin::CvbsFtmToV4l2ColorStd(tvin_sig_fmt_t fmt)
     } else {
         v4l2_std = V4L2_COLOR_STD_PAL;
     }
+#endif
     return v4l2_std;
 }
 
 int CTvin::CvbsFtmToColorStdEnum(tvin_sig_fmt_t fmt)
 {
-    v4l2_std_id v4l2_std;
+    unsigned long v4l2_std = 0;
+#ifdef SUPPORT_ADTV
     if (fmt == TVIN_SIG_FMT_CVBS_NTSC_M ||  fmt == TVIN_SIG_FMT_CVBS_NTSC_443) {
         v4l2_std = CC_ATV_VIDEO_STD_NTSC;
     } else if (fmt >= TVIN_SIG_FMT_CVBS_PAL_I && fmt <= TVIN_SIG_FMT_CVBS_PAL_CN) {
@@ -2183,6 +2186,7 @@ int CTvin::CvbsFtmToColorStdEnum(tvin_sig_fmt_t fmt)
     } else {
         v4l2_std = CC_ATV_VIDEO_STD_PAL;
     }
+#endif
     return v4l2_std;
 }
 

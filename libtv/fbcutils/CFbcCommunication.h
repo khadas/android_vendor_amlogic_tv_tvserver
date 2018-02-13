@@ -23,7 +23,7 @@ typedef enum OUTPUT_MODE {
 
 typedef enum vpu_modules_e {
     VPU_MODULE_NULL = 0,
-    VPU_MODULE_VPU,        //vpu uint
+    VPU_MODULE_VPU,        //vpu unsigned int
     VPU_MODULE_TIMGEN,
     VPU_MODULE_PATGEN,
     VPU_MODULE_GAMMA,

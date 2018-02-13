@@ -10,8 +10,10 @@
 #ifndef _C_AV_H
 #define _C_AV_H
 
+#ifdef SUPPORT_ADTV
 #include "am_av.h"
 #include "am_aout.h"
+#endif
 #include "CTvEv.h"
 #include "CTvLog.h"
 #include "../tvin/CTvin.h"
@@ -30,6 +32,26 @@ static const char *PATH_MEPG_DTMB_LOOKUP_PTS_FLAG = "/sys/module/amvdec_mpeg12/p
 #define VIDEO_AXIS          "/sys/class/video/axis"
 #define VIDEO_DEVICE_RESOLUTION "/sys/class/video/device_resolution"
 
+//must sync with am_aout.h
+enum
+{
+	TV_AOUT_OUTPUT_STEREO,     /**< Stereo output*/
+	TV_AOUT_OUTPUT_DUAL_LEFT,  /**< Left audio output to dual channel*/
+	TV_AOUT_OUTPUT_DUAL_RIGHT, /**< Right audio output to dual channel*/
+	TV_AOUT_OUTPUT_SWAP        /**< Swap left and right channel*/
+};
+
+enum
+{
+	TV_AV_TS_SRC_TS0,                    /**< TS input port 0*/
+	TV_AV_TS_SRC_TS1,                    /**< TS input port 1*/
+	TV_AV_TS_SRC_TS2,                    /**< TS input port 2*/
+	TV_AV_TS_SRC_HIU,                    /**< HIU port (file input)*/
+	TV_AV_TS_SRC_DMX0,                   /**< Demux 0*/
+	TV_AV_TS_SRC_DMX1,                   /**< Demux 1*/
+	TV_AV_TS_SRC_DMX2                    /**< Demux 2*/
+};
+//end
 
 enum {
     VIDEO_LAYER_NONE                    = -1,
@@ -100,20 +122,32 @@ public:
     int Open();
     int Close();
     int SetVideoWindow(int x, int y, int w, int h);
-    int GetVideoStatus(AM_AV_VideoStatus_t *status);
-    int GetAudioStatus(AM_AV_AudioStatus_t *status);
-    int SwitchTSAudio(int apid, AM_AV_AFormat_t afmt);
+    int GetVideoStatus(int *w, int *h, int *fps, int *interlace);
+    int GetAudioStatus( int fmt[2], int sample_rate[2], int resolution[2], int channels[2],
+    int lfepresent[2], int *frames, int *ab_size, int *ab_data, int *ab_free);
+    int SwitchTSAudio(int apid, int afmt);
     int ResetAudioDecoder();
-    int SetADAudio(uint enable, int apid, AM_AV_AFormat_t afmt);
-    int SetTSSource(AM_AV_TSSource_t ts_source);
-    int StartTS(uint16_t vpid, uint16_t apid, uint16_t pcrid, AM_AV_VFormat_t vfmt, AM_AV_AFormat_t afmt);
+    int SetADAudio(unsigned int enable, int apid, int afmt);
+    int SetTSSource(int ts_source);
+    int StartTS(unsigned short vpid, unsigned short apid, unsigned short pcrid, int vfmt, int afmt);
     int StopTS();
-    int AudioGetOutputMode(AM_AOUT_OutputMode_t *mode);
-    int AudioSetOutputMode(AM_AOUT_OutputMode_t mode);
+    int AudioGetOutputMode(int *mode);
+    int AudioSetOutputMode(int mode);
+
+    /*TimeShifting*/
+    int startTimeShift(void *para);
+    int stopTimeShift();
+    int playTimeShift();
+    int pauseTimeShift();
+    int resumeTimeShift();
+    int seekTimeShift(int pos, bool start);
+    int setTimeShiftSpeed(int speed);
+    int switchTimeShiftAudio(int apid, int afmt);
+
     int AudioSetPreGain(float pre_gain);
     int AudioGetPreGain(float *gain);
-    int AudioSetPreMute(uint mute);
-    int AudioGetPreMute(uint *mute);
+    int AudioSetPreMute(unsigned int mute);
+    int AudioGetPreMute(unsigned int *mute);
     int SetVideoScreenColor (int vdin_blending_mask, int y, int u, int v);
     int DisableVideoWithBlueColor();
     int DisableVideoWithBlackColor();
@@ -134,17 +168,6 @@ public:
 
     int setLookupPtsForDtmb(int enable);
     tvin_sig_fmt_t getVideoResolutionToFmt();
-
-    /*TimeShifting*/
-    int startTimeShift(const AM_AV_TimeshiftPara_t *para);
-    int stopTimeShift();
-    int playTimeShift();
-    int pauseTimeShift();
-    int resumeTimeShift();
-    int seekTimeShift(int pos, AM_Bool_t start);
-    int setTimeShiftSpeed(int speed);
-    int switchTimeShiftAudio(int apid, int afmt);
-    int getTimeShiftInfo(AM_AV_TimeshiftInfo_t *info);
 
 private:
     static void av_evt_callback ( long dev_no, int event_type, void *param, void *user_data );

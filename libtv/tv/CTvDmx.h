@@ -11,15 +11,19 @@
 #define _C_TV_DMX_H
 #include "CTvEv.h"
 #include "CTvLog.h"
+#ifdef SUPPORT_ADTV
 #include "am_dmx.h"
+#endif
 
 class CTvDmx {
 public:
     CTvDmx(int id);
     ~CTvDmx();
+#ifdef SUPPORT_ADTV
     int Open(AM_DMX_OpenPara_t &para);
     int Close();
     int SetSource(AM_DMX_Source_t source);
+#endif
 private:
     int mDmxDevId;
 };

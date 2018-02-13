@@ -40,8 +40,9 @@ extern "C" {
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
-//#include "make_ext4fs.h"
+#ifdef SUPPORT_ADTV
 #include "am_ver.h"
+#endif
 }
 
 static int getCallingPid()
@@ -3375,7 +3376,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     case PLAY_PROGRAM: {
         int mode = p.readInt32();
         int freq = p.readInt32();
-        if (mode == FE_ANALOG) {
+        if (mode == TV_FE_ANALOG) {
             int videoStd = p.readInt32();
             int audioStd = p.readInt32();
             int fineTune = p.readInt32();

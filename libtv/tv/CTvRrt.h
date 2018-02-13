@@ -9,7 +9,9 @@
 #include <stdio.h>
 #include <string>
 #include <sys/stat.h>
+#ifdef SUPPORT_ADTV
 #include <am_epg.h>
+#endif
 #include "CTvEv.h"
 #include "CTvLog.h"
 
@@ -20,7 +22,7 @@
 
 typedef struct rrt_info
 {
-    INT16U rating_region;
+    unsigned short rating_region;
     int  dimensions_id;
     int  rating_value_id;
     char rating_region_name[2048];
@@ -92,28 +94,28 @@ public:
     int StopRrtUpdate(void);
     int GetRRTRating(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *ret);
 
-private:
-    int RrtCreate(int fend_id, int dmx_id, int src, char * textLangs);
-    int RrtDestroy();
-    int RrtChangeMode(int op, int mode);
-    int RrtScanStart(void);
-    int RrtScanStop(void);
-    static void RrtTableCallback(AM_EPG_Handle_t dev_no, int event_type, void *param, void *user_data);
-    void RrtDataUpdate(AM_EPG_Handle_t dev_no, int event_type, void *param, void *user_data);
-    void MultipleStringParser(atsc_multiple_string_t atsc_multiple_string, char *ret);
-    bool RrtUpdataCheck(int rating_region, int dimensions_defined, int version_number);
-    static CTvRrt *mInstance;
-    IObserver *mpObserver;
-    RrtEvent mCurRrtEv;
-public:
-    rrt_section_info_t *mpNewRrt;
     int mRrtScanStatus;
     int mScanResult;
     int mDmx_id ;
     int mLastRatingRegion;
     int mLastDimensionsDefined;
     int mLastVersion;
-    AM_EPG_Handle_t mRrtScanHandle;
+    void * mRrtScanHandle = nullptr;
+
+private:
+    int RrtCreate(int fend_id, int dmx_id, int src, char * textLangs);
+    int RrtDestroy();
+    int RrtChangeMode(int op, int mode);
+    int RrtScanStart(void);
+    int RrtScanStop(void);
+
+    static void RrtTableCallback(void * dev_no, int event_type, void *param, void *user_data);
+    void RrtDataUpdate(void * dev_no, int event_type, void *param, void *user_data);
+
+    bool RrtUpdataCheck(int rating_region, int dimensions_defined, int version_number);
+    static CTvRrt *mInstance;
+    IObserver *mpObserver;
+    RrtEvent mCurRrtEv;
 };
 
 

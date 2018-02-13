@@ -17,20 +17,22 @@
 
 #include "CTvLog.h"
 using namespace android;
-// 对应模拟电视中的一个频点，数字电视中的一个频点调制的TS流
+
+//must sync with dvb frontend.h
+enum {
+	TV_FE_HAS_SIGNAL	= 0x01,   /* found something above the noise level */
+	TV_FE_HAS_CARRIER	= 0x02,   /* found a DVB signal  */
+	TV_FE_HAS_VITERBI	= 0x04,   /* FEC is stable  */
+	TV_FE_HAS_SYNC	= 0x08,   /* found sync bytes  */
+	TV_FE_HAS_LOCK	= 0x10,   /* everything's working... */
+	TV_FE_TIMEDOUT	= 0x20,   /* no lock within the last ~2 seconds */
+	TV_FE_REINIT	= 0x40    /* frontend was reinitialized,  */
+};			  /* application is recommended to reset */
+//end
+
 class CTvChannel: public LightRefBase<CTvChannel> {
 
 public :
-    static const int FE_HAS_SIGNAL   = 0x01;
-    static const int FE_HAS_CARRIER  = 0x02;
-    static const int FE_HAS_VITERBI  = 0x04;
-    static const int FE_HAS_SYNC     = 0x08;
-    /**锁定*/
-    static const int FE_HAS_LOCK     = 0x10;
-    /**超时*/
-    static const int FE_TIMEDOUT     = 0x20;
-    static const int FE_REINIT       = 0x40;
-
     /**QPSK模式*/
     static const int MODE_QPSK = 0;
     /**QAM模式*/

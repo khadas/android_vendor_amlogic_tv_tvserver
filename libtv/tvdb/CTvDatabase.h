@@ -7,8 +7,10 @@
  * Description: header file
  */
 
-
+#ifdef SUPPORT_ADTV
 #include <am_db.h>
+#endif
+
 #if !defined(_CTVDATABASE_H)
 #define _CTVDATABASE_H
 #include <unistd.h>

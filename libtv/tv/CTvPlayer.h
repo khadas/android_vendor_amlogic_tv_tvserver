@@ -12,7 +12,9 @@
 
 #include <string.h>
 
+#ifdef SUPPORT_ADTV
 #include "am_misc.h"
+#endif
 #include "CTv.h"
 #include "CTvRecord.h"
 #include "CTvManager.h"
@@ -97,12 +99,13 @@ class CDTVTvPlayer : public CTvPlayer, public CTvRecord::IObserver {
 
         const char *mParam;
 
-        AM_TFile_t mTfile;
         int mOffset;
 
         bool mSourceChanged;
-
+#ifdef SUPPORT_ADTV
         static int readMediaInfoFromFile(const char *file_path, AM_AV_TimeshiftMediaInfo_t *info);
+        AM_TFile_t mTfile = nullptr;
+#endif
 
         int tryCloseTFile();
 

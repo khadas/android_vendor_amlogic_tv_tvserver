@@ -51,21 +51,28 @@ CTvDatabase::CTvDatabase()
 
 int CTvDatabase::isFreqListExist()
 {
+#ifdef SUPPORT_ADTV
     String8 cmd = String8("select * from region_table");
     CTvDatabase::Cursor c;
     select(cmd, c);
     return c.moveToFirst();
+#else
+    return -1;
+#endif
 }
 
 int CTvDatabase::UnInitTvDb()
 {
+#ifdef SUPPORT_ADTV
     AM_DB_UnSetup();
     closeDb();
+#endif
     return 0;
 }
 
 int CTvDatabase::InitTvDb(const char *path)
 {
+#ifdef SUPPORT_ADTV
     if (path != NULL) {
         if (isFileExist(path) && config_get_int("TV", "tv_db_created", 0) == 1) { //exist or created
             LOGD("tv db file(%s) exist and created, open it", path);
@@ -103,16 +110,20 @@ int CTvDatabase::InitTvDb(const char *path)
             config_set_int("TV", "tv_db_created", 1);
         }
     }
+#endif
     return 0;
 }
 
 CTvDatabase::~CTvDatabase()
 {
+#ifdef SUPPORT_ADTV
     AM_DB_UnSetup();
+#endif
 }
 
 int CTvDatabase::getChannelParaList(char *path, Vector<sp<ChannelPara> > &vcp)
 {
+#ifdef SUPPORT_ADTV
     TiXmlDocument myDocument(path);
     bool ret = myDocument.LoadFile();
     TiXmlElement *RootElement = myDocument.RootElement();
@@ -126,11 +137,15 @@ int CTvDatabase::getChannelParaList(char *path, Vector<sp<ChannelPara> > &vcp)
         vcp.push_back(pCp);
     }
     return vcp.size();
+#else
+    return -1;
+#endif
 }
 
 int CTvDatabase::ClearDbTable()
 {
     LOGD("Clearing database ...");
+#ifdef SUPPORT_ADTV
     exeSql("delete from net_table");
     exeSql("delete from ts_table");
     exeSql("delete from srv_table");
@@ -141,12 +156,14 @@ int CTvDatabase::ClearDbTable()
     exeSql("delete from dimension_table");
     exeSql("delete from sat_para_table");
     exeSql("delete from region_table");
+#endif
     return 0;
 }
 
 int CTvDatabase::clearDbAllProgramInfoTable()
 {
     LOGD("Clearing clearDbAllProgramInfoTable ...");
+#ifdef SUPPORT_ADTV
     exeSql("delete from net_table");
     exeSql("delete from ts_table");
     exeSql("delete from srv_table");
@@ -156,12 +173,14 @@ int CTvDatabase::clearDbAllProgramInfoTable()
     exeSql("delete from grp_map_table");
     exeSql("delete from dimension_table");
     exeSql("delete from sat_para_table");
+#endif
     return 0;
 }
 
 //showboz now just channellist
 int CTvDatabase::importXmlToDB(const char *xmlPath)
 {
+#ifdef SUPPORT_ADTV
     //delete region table before importing xml
     exeSql("delete from region_table");
 
@@ -198,19 +217,25 @@ int CTvDatabase::importXmlToDB(const char *xmlPath)
     }
 
     commitTransaction();//------------------------------------------------------
+#endif
     return 0;
 }
 
 bool CTvDatabase::isAtv256ProgInsertForSkyworth()
 {
+#ifdef SUPPORT_ADTV
     String8 select_ts_atvcount = String8("select * from ts_table where src = 4");
     Cursor c;
     select(select_ts_atvcount, c);
     return c.getCount() < 256 ? false : true;
+#else
+    return -1;
+#endif
 }
 
 int CTvDatabase::insert256AtvProgForSkyworth()
 {
+#ifdef SUPPORT_ADTV
     beginTransaction();
     for (int i = 0; i < 256; i++) {
         String8 insert_ts = String8("insert into ts_table(db_id, src, db_net_id, ts_id, freq, symb, mod, bw, snr, ber, strength, db_sat_para_id, polar, std, aud_mode, flags, dvbt_flag) values (");
@@ -227,20 +252,28 @@ int CTvDatabase::insert256AtvProgForSkyworth()
         exeSql(insert_srv.string());
     }
     commitTransaction();
+#endif
     return 0;
 }
 
 void CTvDatabase::deleteTvDb()
 {
+#ifdef SUPPORT_ADTV
     if (mpDb != NULL) {
         delete mpDb;
         mpDb = NULL;
     }
+#endif
 }
+
 CTvDatabase *CTvDatabase::GetTvDb()
 {
+#ifdef SUPPORT_ADTV
     if (mpDb == NULL) {
         mpDb = new CTvDatabase();
     }
     return mpDb;
+#else
+    return nullptr;
+#endif
 }

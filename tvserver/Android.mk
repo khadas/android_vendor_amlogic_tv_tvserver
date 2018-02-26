@@ -67,7 +67,7 @@ LOCAL_C_INCLUDES := \
   $(LIB_SQLITE_PATH)/dist
 
 LOCAL_C_INCLUDES += \
-  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include \
+  $(BOARD_AML_VENDOR_PATH)/frameworks/services/systemcontrol/PQ/include \
   system/extras/ext4_utils \
   $(LIB_TV_BINDER)/include \
   system/media/audio_effects/include \

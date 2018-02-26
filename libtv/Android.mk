@@ -173,7 +173,7 @@ LOCAL_C_INCLUDES += \
   $(LIB_TV_BINDER)/include \
   $(LIB_SQLITE_PATH)/dist \
   system/media/audio_effects/include \
-  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include
+  $(BOARD_AML_VENDOR_PATH)/frameworks/services/systemcontrol/PQ/include
 
 ifeq ($(strip $(BOARD_TV_AUDIO_AMAUDIO_LIB_TYPE)), external)
   LOCAL_C_INCLUDES += hardware/amlogic/audio/libTVaudio

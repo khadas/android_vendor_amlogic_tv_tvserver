@@ -26,10 +26,10 @@ LOCAL_SRC_FILES := \
   tvconfig/tvconfig.cpp
 
 LOCAL_C_INCLUDES += \
-  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include \
-  $(BOARD_AML_VENDOR_PATH)frameworks/services \
+  $(BOARD_AML_VENDOR_PATH)/frameworks/services/systemcontrol/PQ/include \
+  $(BOARD_AML_VENDOR_PATH)/frameworks/services \
   $(LIB_SQLITE_PATH)/dist \
-  $(BOARD_AML_VENDOR_PATH)tv/tvserver/libtv/include \
+  $(BOARD_AML_VENDOR_PATH)/tv/tvserver/libtv/include \
   external/jsoncpp/include
 
 LOCAL_SHARED_LIBRARIES += \

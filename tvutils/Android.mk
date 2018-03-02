@@ -33,7 +33,7 @@ LOCAL_C_INCLUDES += \
   external/jsoncpp/include
 
 LOCAL_SHARED_LIBRARIES += \
-  vendor.amlogic.hardware.systemcontrol@1.0_vendor \
+  vendor.amlogic.hardware.systemcontrol@1.0 \
   libsystemcontrolservice \
   liblog
 

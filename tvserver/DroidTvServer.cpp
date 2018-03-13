@@ -183,6 +183,17 @@ Return<int32_t> DroidTvServer::isVgaTimingInHdmi() {
     return mTvServiceIntf->getHdmiPorts();
 }
 
+Return<int32_t> DroidTvServer::ssmSaveHDMIEdidMode(int32_t port_id, int32_t ver) {
+    return mTvServiceIntf->ssmSaveHDMIEdidMode(port_id, ver);
+}
+
+Return<int32_t> DroidTvServer::setHdmiEdidVersion(int32_t port_id, int32_t ver) {
+    return mTvServiceIntf->setHdmiEdidVersion(port_id, ver);
+}
+
+Return<int32_t> DroidTvServer::handleGPIO(const hidl_string& key, int32_t is_out, int32_t edge) {
+    return mTvServiceIntf->handleGPIO(key, is_out, edge);
+}
 
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {

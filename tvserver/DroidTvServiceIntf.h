@@ -64,6 +64,9 @@ public:
 
     int isDviSIgnal();
     int isVgaTimingInHdmi();
+    int ssmSaveHDMIEdidMode(int port_id, int ver);
+    int setHdmiEdidVersion(int port_id, int ver);
+    int handleGPIO(const std::string& key, int is_out, int edge);
 
     virtual status_t dump(int fd, const Vector<String16>& args);
 

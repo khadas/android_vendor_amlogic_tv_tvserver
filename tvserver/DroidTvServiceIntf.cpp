@@ -535,6 +535,18 @@ int DroidTvServiceIntf::isVgaTimingInHdmi() {
     return mpTv->isVgaFmtInHdmi();
 }
 
+int DroidTvServiceIntf::ssmSaveHDMIEdidMode(int port_id, int ver) {
+    return SSMSaveHDMIEdidMode((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
+}
+
+int DroidTvServiceIntf::setHdmiEdidVersion(int port_id, int ver) {
+    return mpTv->SetHdmiEdidVersion((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
+}
+
+int DroidTvServiceIntf::handleGPIO(const std::string& key, int is_out, int edge) {
+    return mpTv->handleGPIO(key.c_str(), is_out, edge);
+}
+
 int DroidTvServiceIntf::processCmd(const Parcel &p) {
     unsigned char dataBuf[512] = {0};
     int ret = -1;

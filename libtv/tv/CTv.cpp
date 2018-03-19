@@ -2150,7 +2150,7 @@ void CTv::onSigToStable()
             } else {
                 MnoNeedAutoSwitchToMonitorMode = true;
             }
-            autoSwitchToMonitorMode();
+            //autoSwitchToMonitorMode();
 
         } else if ( CTvin::Tvin_is50HzFrameRateFmt ( m_cur_sig_info.fmt ) ) {
             freq = 50;

@@ -4,4 +4,4 @@ on post-fs
 service tvd /vendor/bin/tvserver
    class core
    user root
-   group system
+   group system root media audio mediadrm

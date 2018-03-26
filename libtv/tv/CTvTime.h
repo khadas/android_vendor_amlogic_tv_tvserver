@@ -15,9 +15,6 @@
 #include <sys/times.h>
 #include <sys/sysinfo.h>
 
-/**
- *TV时间管理
- */
 class CTvTime {
 public:
     CTvTime() {
@@ -28,18 +25,10 @@ public:
     long getSysUTCTime();
     void setTime(long t);
     long getTime();
-
-    /**
-     *取得TDT/STT与系统时间的差值
-     *@return 返回差值时间
-     */
     long getDiffTime() {
         return mDiff;
     }
 
-    /**
-     *设置TDT/STT与系统时间的差值
-     */
     void setDiffTime(long diff) {
         mDiff = diff;
     }

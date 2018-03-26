@@ -17,12 +17,12 @@ using namespace android;
 
 class CTvEv {
 public:
-    static const int TV_EVENT_COMMOM = 0;//通用消息
-    static const int TV_EVENT_SCANNER = 1;//搜索消息
+    static const int TV_EVENT_COMMOM = 0;
+    static const int TV_EVENT_SCANNER = 1;
     static const int TV_EVENT_EPG = 2;//EPG
-    static const int TV_EVENT_SOURCE_SWITCH = 3;//信源切换
+    static const int TV_EVENT_SOURCE_SWITCH = 3;
     static const int TV_EVENT_SIGLE_DETECT = 4;
-    static const int TV_EVENT_ADC_CALIBRATION = 5;//ADC校准
+    static const int TV_EVENT_ADC_CALIBRATION = 5;
     static const int TV_EVENT_VGA = 6;//VGA
     static const int TV_EVENT_3D_STATE = 7;//3D
     static const int TV_EVENT_AV_PLAYBACK = 8;//PLAYBACK EVENT MSG

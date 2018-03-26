@@ -94,56 +94,16 @@ public:
     void setObserver(IObserver *pObser);
     void setBuffer(char *share_mem);
     void stopDecoder();
-    /**
-     * 开始字幕信息解析showboz sync
-     */
     void startSub();
-    /**
-     * 停止图文/字幕信息解析
-     */
     void stop();
-
-    /**
-     * 停止图文/字幕信息解析并清除缓存数据
-     */
     void clear();
-    /**
-     * 在图文模式下进入下一页
-     */
     void nextPage();
-    /**
-     * 在图文模式下进入上一页
-     */
     void previousPage();
-    /**
-     * 在图文模式下跳转到指定页
-     * @param page 要跳转到的页号
-     */
     void gotoPage(int page);
-
-    /**
-     * 在图文模式下跳转到home页
-     */
     void goHome();
-    /**
-     * 在图文模式下根据颜色跳转到指定链接
-     * @param color 颜色，COLOR_RED/COLOR_GREEN/COLOR_YELLOW/COLOR_BLUE
-     */
     void colorLink(int color);
-
-    /**
-     * 在图文模式下设定搜索字符串
-     * @param pattern 搜索匹配字符串
-     * @param casefold 是否区分大小写
-     */
     void setSearchPattern(char *pattern, bool casefold);
-    /**
-     * 搜索下一页
-     */
     void searchNext();
-    /**
-     * 搜索上一页
-     */
     void searchPrevious();
 
     int sub_init(int, int);
@@ -186,22 +146,12 @@ public:
     int ResetVchipChgStat();
 private:
 
-    /**
-     * DVB subtitle 参数
-     */
     struct DVBSubParams {
         int mDmx_id;
         int mPid;
         int mComposition_page_id;
         int mAncillary_page_id;
 
-        /**
-         * 创建DVB subtitle参数
-         * @param dmx_id 接收使用demux设备的ID
-         * @param pid subtitle流的PID
-         * @param page_id 字幕的page_id
-         * @param anc_page_id 字幕的ancillary_page_id
-         */
         DVBSubParams()
         {
         }
@@ -214,9 +164,6 @@ private:
         }
     };
 
-    /**
-     * 数字电视teletext图文参数
-     */
     struct DTVTTParams {
         int mDmx_id;
         int mPid;
@@ -227,13 +174,6 @@ private:
         DTVTTParams()
         {
         }
-        /**
-         * 创建数字电视teletext图文参数
-         * @param dmx_id 接收使用demux设备的ID
-         * @param pid 图文信息流的PID
-         * @param page_no 要显示页号
-         * @param sub_page_no 要显示的子页号
-         */
         DTVTTParams(int dmx_id, int pid, int page_no, int sub_page_no, int region_id)
         {
             mDmx_id      = dmx_id;

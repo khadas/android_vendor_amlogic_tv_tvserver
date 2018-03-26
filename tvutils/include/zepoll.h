@@ -13,19 +13,13 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
-
-/**
- * @brief The Epoll class 对epoll的封装
- */
 class Epoll {
 public:
     /**
      *
      */
     enum EPOLL_OP {ADD = EPOLL_CTL_ADD, MOD = EPOLL_CTL_MOD, DEL = EPOLL_CTL_DEL};
-    /**
-     * 最大的连接数和最大的回传事件数
-     */
+
     Epoll(int _max = 30, int maxevents = 20);
     ~Epoll();
     int create();

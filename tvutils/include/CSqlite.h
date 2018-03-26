@@ -107,14 +107,12 @@ public:
         //String getColumnName(int columnIndex);
         //String[] getColumnNames();
         int getColumnCount();
-        //字符串长度问题,弃用
         int getString(char *str, int columnIndex)
         {
             if (columnIndex >= mColNums || str == NULL) return -1;
             strcpy(str, mData[mColNums * (mCurRowIndex + 1) + columnIndex]);
             return 0;
         }
-        //不限长度,依赖于String8
         String8 getString(int columnIndex)
         {
             if (columnIndex >= mColNums) return String8("");

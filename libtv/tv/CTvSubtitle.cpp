@@ -43,83 +43,46 @@ void CTvSubtitle::stopDecoder()
 {
 }
 
-/**
- * 开始字幕信息解析showboz sync
- */
 void CTvSubtitle::startSub()
 {
 }
 
-/**
- * 停止图文/字幕信息解析
- */
 void CTvSubtitle::stop()
 {
 }
 
-/**
- * 停止图文/字幕信息解析并清除缓存数据
- */
 void CTvSubtitle::clear()
 {
 }
 
-/**
- * 在图文模式下进入下一页
- */
 void CTvSubtitle::nextPage()
 {
 }
 
-/**
- * 在图文模式下进入上一页
- */
 void CTvSubtitle::previousPage()
 {
 }
 
-/**
- * 在图文模式下跳转到指定页
- * @param page 要跳转到的页号
- */
 void CTvSubtitle::gotoPage(int page __unused)
 {
 }
 
-/**
- * 在图文模式下跳转到home页
- */
 void CTvSubtitle::goHome()
 {
 }
 
-/**
- * 在图文模式下根据颜色跳转到指定链接
- * @param color 颜色，COLOR_RED/COLOR_GREEN/COLOR_YELLOW/COLOR_BLUE
- */
 void CTvSubtitle::colorLink(int color __unused)
 {
 }
 
-/**
- * 在图文模式下设定搜索字符串
- * @param pattern 搜索匹配字符串
- * @param casefold 是否区分大小写
- */
 void CTvSubtitle::setSearchPattern(char *pattern __unused, bool casefold __unused)
 {
 }
 
-/**
- * 搜索下一页
- */
 void CTvSubtitle::searchNext()
 {
 }
 
-/**
- * 搜索上一页
- */
 void CTvSubtitle::searchPrevious()
 {
 }

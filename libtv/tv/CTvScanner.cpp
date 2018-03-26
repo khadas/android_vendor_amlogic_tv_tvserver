@@ -617,7 +617,7 @@ void CTvScanner::extractSrvInfoFromSdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *s
 
     AM_SI_LIST_BEGIN(sdts, sdt)
     AM_SI_LIST_BEGIN(sdt->p_first_service, srv)
-    /*从SDT表中查找该service并获取信忿 */
+
     if (srv->i_service_id == srv_info->srv_id) {
         LOGD("SDT for service %d found!", srv_info->srv_id);
         srv_info->eit_sche = (uint8_t)srv->b_eit_schedule;
@@ -642,7 +642,7 @@ void CTvScanner::extractSrvInfoFromSdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *s
                 tmp_len = strlen(name);
                 COPY_NAME(name, tmp_len);
             }
-            /*业务类型*/
+
             srv_info->srv_type = psd->i_service_type;
             /*service type 0x16 and 0x19 is user defined, as digital television service*/
             /*service type 0xc0 is type of partial reception service in ISDBT*/

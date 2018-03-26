@@ -27,8 +27,7 @@
 #define CTV_DATABASE_DEFAULT_XML        "/vendor/etc/tv_default.xml"
 
 using namespace android;
-//根据现在情况需求,此类只针对电视功能绑定的单文件数据库,与AM_DB有关联性
-//无解的关联
+
 class CTvDatabase: public CSqlite {
 public:
     static const char *DEFAULT_DB_PATH;
@@ -62,12 +61,10 @@ public:
     }
 public:
     CTvDatabase();
-    //直接指定数据库连接句柄
     //CTvDatabase(char* path, sqlite3 * h);
     static CTvDatabase *GetTvDb();
     static void deleteTvDb();
     ~CTvDatabase();
-    //用指定路径创建TV数据库.
     int UnInitTvDb();
     int InitTvDb(const char *path);
     //showboz test

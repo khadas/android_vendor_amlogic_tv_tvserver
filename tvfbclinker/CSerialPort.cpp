@@ -270,7 +270,7 @@ int CSerialPort::set_opt(int speed, int db, int sb, char pb, int overtime, bool 
     setparity(&new_cfg, pb);
 
     if (overtime >= 0) {
-        new_cfg.c_cc[VTIME] = overtime / 100; /* 设置超时 seconds*/
+        new_cfg.c_cc[VTIME] = overtime / 100;
         new_cfg.c_cc[VMIN] = 0; /* Update the options and do it NOW */
     }
 

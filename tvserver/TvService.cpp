@@ -2036,7 +2036,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         int ret = -1;
         int port_id = p.readInt32();
         int ver = p.readInt32();
-        ret = SSMSaveHDMIEdidMode((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
+        ret = SSMSaveHDMIEdidVersion((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
         r->writeInt32(ret);
         break;
     }

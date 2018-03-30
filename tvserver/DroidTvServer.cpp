@@ -43,6 +43,7 @@ namespace implementation {
 using ::android::hidl::allocator::V1_0::IAllocator;
 using ::android::hidl::memory::V1_0::IMemory;
 
+static int nClient = 0;
 DroidTvServer::DroidTvServer() : mDeathRecipient(new DeathRecipient(this)) {
     mTvServiceIntf = new DroidTvServiceIntf();
     mTvServiceIntf->setListener(this);
@@ -202,19 +203,21 @@ Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, C
     }
 
     if (callback != nullptr) {
-        if (mClients[(int)type] != nullptr) {
-            ALOGW("%s this type:%s had a callback, cover it", __FUNCTION__, getConnectTypeStr(type));
-            mClients[(int)type]->unlinkToDeath(mDeathRecipient);
+        if (mClients[nClient] != nullptr) {
+            ALOGW("%s this type:%s had a callback, don't cover it", __FUNCTION__, getConnectTypeStr(type));
+            //mClients[(int)type]->unlinkToDeath(mDeathRecipient);
+        }
+        else {
+            mClients[nClient] = callback;
+            Return<bool> linkResult = callback->linkToDeath(mDeathRecipient, nClient);
+            bool linkSuccess = linkResult.isOk() ? static_cast<bool>(linkResult) : false;
+            if (!linkSuccess) {
+                ALOGW("Couldn't link death recipient for type: %s, client: %d", getConnectTypeStr(type), nClient);
+            }
+            ALOGI("%s client type:%s, client size:%d, nClient:%d", __FUNCTION__, getConnectTypeStr(type), (int)mClients.size(), nClient);
+            nClient++;
         }
 
-        mClients[(int)type] = callback;
-        Return<bool> linkResult = callback->linkToDeath(mDeathRecipient, (int)type);
-        bool linkSuccess = linkResult.isOk() ? static_cast<bool>(linkResult) : false;
-        if (!linkSuccess) {
-            ALOGW("Couldn't link death recipient for type: %s", getConnectTypeStr(type));
-        }
-
-        ALOGI("%s client type:%s, client size:%d", __FUNCTION__, getConnectTypeStr(type), (int)mClients.size());
     }
 
     if (!mListenerStarted) {
@@ -236,9 +239,10 @@ const char* DroidTvServer::getConnectTypeStr(ConnectType type) {
     }
 }
 
-void DroidTvServer::handleServiceDeath(uint32_t type) {
-    ALOGI("tvserver daemon client:%s died", getConnectTypeStr((ConnectType)type));
-    mClients[type].clear();
+void DroidTvServer::handleServiceDeath(uint32_t client) {
+    ALOGI("tvserver daemon client:%d died", client);
+    mClients[client].clear();
+    nClient--;
 }
 
 DroidTvServer::DeathRecipient::DeathRecipient(sp<DroidTvServer> server)
@@ -249,8 +253,8 @@ void DroidTvServer::DeathRecipient::serviceDied(
         const wp<::android::hidl::base::V1_0::IBase>& /*who*/) {
     ALOGE("droid tvserver daemon a client died cookie:%d", (int)cookie);
 
-    uint32_t type = static_cast<uint32_t>(cookie);
-    droidTvServer->handleServiceDeath(type);
+    uint32_t client = static_cast<uint32_t>(cookie);
+    droidTvServer->handleServiceDeath(client);
 }
 
 }  // namespace implementation

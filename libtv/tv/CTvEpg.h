@@ -16,6 +16,7 @@
 
 #include <utils/Log.h>
 #include "CTvEv.h"
+#include <tvutils.h>
 #if !defined(_CDTVEPG_H)
 #define _CDTVEPG_H
 class CTvEpg {

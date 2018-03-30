@@ -67,6 +67,26 @@ public:
     int ssmSaveHDMIEdidMode(int port_id, int ver);
     int setHdmiEdidVersion(int port_id, int ver);
     int handleGPIO(const std::string& key, int is_out, int edge);
+    int setSourceInput(int32_t inputSrc);
+    int setSourceInput(int32_t inputSrc, int32_t vInputSrc);
+    int getSaveBlackoutEnable();
+    int getATVMinMaxFreq(int32_t scanMinFreq, int32_t scanMaxFreq);
+    int setAmAudioPreMute(int32_t mute);
+    int setDvbTextCoding(const std::string& coding);
+    int operateDeviceForScan(int32_t type);
+    int atvAutoScan(int32_t videoStd, int32_t audioStd, int32_t searchType, int32_t procMode);
+    int atvMunualScan(int32_t startFreq, int32_t endFreq, int32_t videoStd, int32_t audioStd);
+    int Scan(const std::string& feparas, const std::string& scanparas);
+    int dtvScan(int32_t mode, int32_t scan_mode, int32_t beginFreq, int32_t endFreq, int32_t para1, int32_t para2);
+    int pauseScan();
+    int resumeScan();
+    int dtvStopScan();
+    int tvSetFrontEnd(const std::string& feparas, int32_t force);
+    int sendPlayCmd(int32_t cmd, const std::string& id, const std::string& param);
+    int getCurrentSourceInput();
+    int getCurrentVirtualSourceInput();
+    int dtvSetAudioChannleMod(int32_t audioChannelIdx);
+    int dtvGetVideoFormatInfo(int &srcWidth, int &srcHeight, int &srcFps, int &srcInterlace);
 
     virtual status_t dump(int fd, const Vector<String16>& args);
 

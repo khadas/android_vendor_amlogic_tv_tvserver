@@ -46,4 +46,9 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 26 && echo OK),OK)
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
+#DVB define
+ifeq ($(BOARD_HAS_ADTV),true)
+LOCAL_CFLAGS += -DSUPPORT_ADTV
+endif
+
 include $(BUILD_STATIC_LIBRARY)

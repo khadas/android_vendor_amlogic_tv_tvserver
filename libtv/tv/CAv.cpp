@@ -174,7 +174,7 @@ int CAv::ResetAudioDecoder()
 int CAv::SetADAudio(unsigned int enable, int apid, int afmt)
 {
 #ifdef SUPPORT_ADTV
-    return AM_AV_SetAudioAd(mTvPlayDevId, enable, apid, afmt);
+    return AM_AV_SetAudioAd(mTvPlayDevId, enable, apid, ( AM_AV_AFormat_t ) afmt);
 #else
     return -1;
 #endif
@@ -183,7 +183,7 @@ int CAv::SetADAudio(unsigned int enable, int apid, int afmt)
 int CAv::SetTSSource(int ts_source)
 {
 #ifdef SUPPORT_ADTV
-    return AM_AV_SetTSSource ( mTvPlayDevId, ts_source );
+    return AM_AV_SetTSSource ( mTvPlayDevId, (AM_AV_TSSource_t) ts_source );
 #else
     return -1;
 #endif
@@ -210,7 +210,7 @@ int CAv::StopTS()
 int CAv::AudioGetOutputMode(int *mode)
 {
 #ifdef SUPPORT_ADTV
-    return AM_AOUT_GetOutputMode ( mTvPlayDevId, mode );
+    return AM_AOUT_GetOutputMode ( mTvPlayDevId, (AM_AOUT_OutputMode_t *) mode );
 #else
     return -1;
 #endif
@@ -219,7 +219,7 @@ int CAv::AudioGetOutputMode(int *mode)
 int CAv::AudioSetOutputMode(int mode)
 {
 #ifdef SUPPORT_ADTV
-    return AM_AOUT_SetOutputMode ( mTvPlayDevId, mode );
+    return AM_AOUT_SetOutputMode ( mTvPlayDevId, (AM_AOUT_OutputMode_t) mode );
 #else
     return -1;
 #endif
@@ -260,7 +260,7 @@ int CAv::AudioGetPreMute(unsigned int *mute)
     int ret = -1;
 #ifdef SUPPORT_ADTV
     bool btemp_mute = 0;
-    ret = AM_AOUT_GetPreMute(0, &btemp_mute);
+    ret = AM_AOUT_GetPreMute(0, (AM_Bool_t *) &btemp_mute);
     *mute = btemp_mute ? 1 : 0;
 #endif
     return ret;

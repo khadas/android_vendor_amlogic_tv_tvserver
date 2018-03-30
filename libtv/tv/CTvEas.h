@@ -13,6 +13,7 @@
 #endif
 #include "CTvLog.h"
 #include "CTvEv.h"
+#include <tvutils.h>
 #if !defined(_CDTVEAS_H)
 #define _CDTVEAS_H
 

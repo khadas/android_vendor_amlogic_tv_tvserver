@@ -41,6 +41,7 @@ using ::vendor::amlogic::hardware::tvserver::V1_0::ITvServer;
 using ::vendor::amlogic::hardware::tvserver::V1_0::ITvServerCallback;
 using ::vendor::amlogic::hardware::tvserver::V1_0::ConnectType;
 using ::vendor::amlogic::hardware::tvserver::V1_0::SignalInfo;
+using ::vendor::amlogic::hardware::tvserver::V1_0::FormatInfo;
 using ::vendor::amlogic::hardware::tvserver::V1_0::TvHidlParcel;
 using ::vendor::amlogic::hardware::tvserver::V1_0::Result;
 using ::android::hardware::hidl_vec;
@@ -83,6 +84,26 @@ public:
     Return<int32_t> ssmSaveHDMIEdidMode(int32_t port_id, int32_t ver) override;
     Return<int32_t> setHdmiEdidVersion(int32_t port_id, int32_t ver) override;
     Return<int32_t> handleGPIO(const hidl_string& key, int32_t is_out, int32_t edge) override;
+    Return<int32_t> setSourceInput(int32_t inputSrc) override;
+    Return<int32_t> setSourceInputExt(int32_t inputSrc, int32_t vInputSrc) override;
+    Return<int32_t> getSaveBlackoutEnable() override;
+    Return<void> getATVMinMaxFreq(getATVMinMaxFreq_cb _hidl_cb) override;
+    Return<int32_t> setAmAudioPreMute(int32_t mute) override;
+    Return<int32_t> setDvbTextCoding(const hidl_string& coding) override;
+    Return<int32_t> operateDeviceForScan(int32_t type) override;
+    Return<int32_t> atvAutoScan(int32_t videoStd, int32_t audioStd, int32_t searchType, int32_t procMode) override;
+    Return<int32_t> atvMunualScan(int32_t startFreq, int32_t endFreq, int32_t videoStd, int32_t audioStd) override;
+    Return<int32_t> Scan(const hidl_string& feparas, const hidl_string& scanparas) override;
+    Return<int32_t> dtvScan(int32_t mode, int32_t scan_mode, int32_t beginFreq, int32_t endFreq, int32_t para1, int32_t para2) override;
+    Return<int32_t> pauseScan() override;
+    Return<int32_t> resumeScan() override;
+    Return<int32_t> dtvStopScan() override;
+    Return<int32_t> tvSetFrontEnd(const hidl_string& feparas, int32_t force) override;
+    Return<int32_t> sendPlayCmd(int32_t cmd, const hidl_string& id, const hidl_string& param) override;
+    Return<int32_t> getCurrentSourceInput() override;
+    Return<int32_t> getCurrentVirtualSourceInput() override;
+    Return<int32_t> dtvSetAudioChannleMod(int32_t audioChannelIdx) override;
+    Return<void> dtvGetVideoFormatInfo(dtvGetVideoFormatInfo_cb _hidl_cb) override;
 
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;
 

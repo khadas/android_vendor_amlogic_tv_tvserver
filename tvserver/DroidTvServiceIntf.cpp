@@ -546,6 +546,87 @@ int DroidTvServiceIntf::setHdmiEdidVersion(int port_id, int ver) {
 int DroidTvServiceIntf::handleGPIO(const std::string& key, int is_out, int edge) {
     return mpTv->handleGPIO(key.c_str(), is_out, edge);
 }
+int DroidTvServiceIntf::setSourceInput(int32_t inputSrc) {
+    return mpTv->SetSourceSwitchInput((tv_source_input_t)inputSrc);
+}
+
+int DroidTvServiceIntf::setSourceInput(int32_t inputSrc, int32_t vInputSrc) {
+    return mpTv->SetSourceSwitchInput((tv_source_input_t)vInputSrc, (tv_source_input_t)inputSrc);
+}
+
+int DroidTvServiceIntf::getSaveBlackoutEnable() {
+    return mpTv->getSaveBlackoutEnable();
+}
+
+int DroidTvServiceIntf::getATVMinMaxFreq(int32_t scanMinFreq, int32_t scanMaxFreq) {
+    return mpTv->getATVMinMaxFreq(&scanMinFreq, &scanMaxFreq);
+}
+
+int DroidTvServiceIntf::setAmAudioPreMute(int32_t mute) {
+    return 0;//mpTv->setAmAudioPreMute(mute);//wxl for hidl compile
+}
+
+int DroidTvServiceIntf::setDvbTextCoding(const std::string& coding) {
+    mpTv->setDvbTextCoding((char *)coding.c_str());
+    return 0;
+}
+
+int DroidTvServiceIntf::operateDeviceForScan(int32_t type) {
+    mpTv->operateDeviceForScan(type);
+    return 0;
+}
+
+int DroidTvServiceIntf::atvAutoScan(int32_t videoStd, int32_t audioStd, int32_t searchType, int32_t procMode) {
+    return mpTv->atvAutoScan(videoStd, audioStd, searchType, procMode);
+}
+
+int DroidTvServiceIntf::atvMunualScan(int32_t startFreq, int32_t endFreq, int32_t videoStd, int32_t audioStd) {
+    return mpTv->atvMunualScan(startFreq, endFreq, videoStd, audioStd);
+}
+
+int DroidTvServiceIntf::Scan(const std::string& feparas, const std::string& scanparas) {
+    return mpTv->Scan(feparas.c_str(), scanparas.c_str());
+}
+
+int DroidTvServiceIntf::dtvScan(int32_t mode, int32_t scan_mode, int32_t beginFreq, int32_t endFreq, int32_t para1, int32_t para2) {
+    return mpTv->dtvScan(mode, scan_mode, beginFreq, endFreq, para1, para2);
+}
+
+int DroidTvServiceIntf::pauseScan() {
+    return mpTv->pauseScan();
+}
+
+int DroidTvServiceIntf::resumeScan() {
+    return mpTv->resumeScan();
+}
+
+int DroidTvServiceIntf::dtvStopScan() {
+    return mpTv->stopScanLock();
+}
+
+int DroidTvServiceIntf::tvSetFrontEnd(const std::string& feparas, int32_t force) {
+    return mpTv->setFrontEnd(feparas.c_str(), (force != 0));
+}
+
+int DroidTvServiceIntf::sendPlayCmd(int32_t cmd, const std::string& id, const std::string& param) {
+    return mpTv->doPlayCommand(cmd, id.c_str(), param.c_str());
+}
+
+int DroidTvServiceIntf::getCurrentSourceInput() {
+    return (int)mpTv->GetCurrentSourceInputLock();
+}
+
+int DroidTvServiceIntf::getCurrentVirtualSourceInput() {
+    return (int)mpTv->GetCurrentSourceInputVirtualLock();
+}
+
+int DroidTvServiceIntf::dtvSetAudioChannleMod(int32_t audioChannelIdx) {
+    return mpTv->setAudioChannel(audioChannelIdx);
+}
+
+int DroidTvServiceIntf::dtvGetVideoFormatInfo(int &srcWidth, int &srcHeight, int &srcFps, int &srcInterlace) {
+    return mpTv->getVideoFormatInfo(&srcWidth, &srcHeight, &srcFps, &srcInterlace);
+}
 
 int DroidTvServiceIntf::processCmd(const Parcel &p) {
     unsigned char dataBuf[512] = {0};

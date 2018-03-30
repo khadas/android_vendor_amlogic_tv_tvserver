@@ -23,6 +23,11 @@
 
 #include <list>
 
+#ifndef SUPPORT_ADTV
+typedef uint8_t        AM_Bool_t;
+#define AM_TRUE        (1)
+#define AM_FALSE       (0)
+#endif
 
 //must sync with dvb am_scan.h
 enum
@@ -308,8 +313,8 @@ public:
     int Scan(CFrontEnd::FEParas &fp, ScanParas &sp);
 
 private:
-    bool checkAtvCvbsLock(unsigned long  *colorStd);
-    static bool checkAtvCvbsLockHelper(void *);
+    AM_Bool_t checkAtvCvbsLock(unsigned long  *colorStd);
+    static AM_Bool_t checkAtvCvbsLockHelper(void *);
 
     static void evtCallback(long dev_no, int event_type, void *param, void *data);
 

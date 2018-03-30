@@ -284,7 +284,7 @@ int CFrontEnd::setPara(const char *paras, bool force )
     case TV_FE_OFDM:
         dvbfepara.terrestrial.para.frequency = mFEParas.getFrequency();
         dvbfepara.terrestrial.para.u.ofdm.bandwidth = (fe_bandwidth_t)mFEParas.getBandwidth();
-        dvbfepara.terrestrial.para.u.ofdm.ofdm_mode = (fe_ofdm_mode_t)mFEParas.getFEMode().getGen();
+        dvbfepara.terrestrial.ofdm_mode = (fe_ofdm_mode_t)mFEParas.getFEMode().getGen();
         break;
     case TV_FE_DTMB:
         dvbfepara.dtmb.para.frequency = mFEParas.getFrequency();

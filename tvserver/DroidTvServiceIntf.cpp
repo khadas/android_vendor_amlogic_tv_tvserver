@@ -535,12 +535,16 @@ int DroidTvServiceIntf::isVgaTimingInHdmi() {
     return mpTv->isVgaFmtInHdmi();
 }
 
-int DroidTvServiceIntf::ssmSaveHDMIEdidMode(int port_id, int ver) {
-    return SSMSaveHDMIEdidMode((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
-}
-
 int DroidTvServiceIntf::setHdmiEdidVersion(int port_id, int ver) {
     return mpTv->SetHdmiEdidVersion((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
+}
+
+int DroidTvServiceIntf::getHdmiEdidVersion(int port_id) {
+    return mpTv->GetHdmiEdidVersion((tv_hdmi_port_id_t)port_id);
+}
+
+int DroidTvServiceIntf::saveHdmiEdidVersion(int port_id, int ver) {
+    return mpTv->SaveHdmiEdidVersion((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
 }
 
 int DroidTvServiceIntf::handleGPIO(const std::string& key, int is_out, int edge) {
@@ -1230,7 +1234,7 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
         case SSM_SAVE_HDMI_EDID_VER: {
             int port_id = p.readInt32();
             int ver = p.readInt32();
-            ret = SSMSaveHDMIEdidMode((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
+            ret = SSMSaveHDMIEdidVersion((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
             break;
         }
         case SSM_READ_HDMI_EDID_VER: {

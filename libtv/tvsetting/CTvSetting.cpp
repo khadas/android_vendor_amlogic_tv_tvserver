@@ -1825,7 +1825,7 @@ int SSMRead_PANEL_ID_Val(void)
     return tmp_val;
 }
 
-int SSMSaveHDMIEdidMode(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t rw_val)
+int SSMSaveHDMIEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t rw_val)
 {
     int ret = -1;
     int tmp_val = rw_val;

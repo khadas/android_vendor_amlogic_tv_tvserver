@@ -80,8 +80,9 @@ public:
 
     Return<int32_t> isDviSIgnal() override;
     Return<int32_t> isVgaTimingInHdmi() override;
-    Return<int32_t> ssmSaveHDMIEdidMode(int32_t port_id, int32_t ver) override;
     Return<int32_t> setHdmiEdidVersion(int32_t port_id, int32_t ver) override;
+    Return<int32_t> getHdmiEdidVersion(int32_t port_id) override;
+    Return<int32_t> saveHdmiEdidVersion(int32_t port_id, int32_t ver) override;
     Return<int32_t> handleGPIO(const hidl_string& key, int32_t is_out, int32_t edge) override;
 
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;

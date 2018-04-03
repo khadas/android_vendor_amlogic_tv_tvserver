@@ -2732,7 +2732,7 @@ int CTv::Tv_HandeHDMIEDIDFilePathConfig()
     if (1 == GetSSMHandleHDMIEdidByCustomerEnableCFG()) {
         //set file's path for hdmi edid of each port
         for (int i = 1; i <= SSM_HDMI_PORT_MAX; i++) {
-            Tv_HDMIEDIDFileSelect((tv_hdmi_port_id_t)i, SSMReadHDMIEdidVersion((tv_hdmi_port_id_t)i));
+            Tv_HDMIEDIDFileSelect((tv_hdmi_port_id_t)i, (tv_hdmi_edid_version_t)GetHdmiEdidVersion((tv_hdmi_port_id_t)i));
         }
     }
     mSetHdmiEdid = true;
@@ -3132,6 +3132,16 @@ int CTv::SetHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t versi
     SSMSetHDMIEdid(port);
     mHDMIRxManager.HdmiRxEdidUpdate();
     return 0;
+}
+
+int CTv::GetHdmiEdidVersion(tv_hdmi_port_id_t port)
+{
+    return SSMReadHDMIEdidVersion(port);
+}
+
+int CTv::SaveHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version)
+{
+    return SSMSaveHDMIEdidVersion(port, version);
 }
 
 int CTv::SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable)

@@ -2113,6 +2113,15 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         }
     }
 
+    if (source_input == SOURCE_SPDIF) { //audio only in spdif source
+        TvEvent::SignalInfoEvent ev;
+        ev.mTrans_fmt = TVIN_TFMT_2D;
+        ev.mFmt = TVIN_SIG_FMT_NULL;
+        ev.mStatus = TVIN_SIG_STATUS_NOSIG;
+        ev.mReserved = 0;
+        sendTvEvent ( ev );
+    }
+
     mTvAction &= ~ TV_ACTION_SOURCE_SWITCHING;
     return 0;
 }

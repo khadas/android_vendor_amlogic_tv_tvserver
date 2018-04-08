@@ -17,8 +17,6 @@
 #include <tvutils.h>
 #include <tvconfig.h>
 
-const char *CTvDatabase::DEFAULT_DB_PATH = "/param/tv_default.xml";
-
 const char *CTvDatabase::DB_VERSION_FIELD = "DATABASE_VERSION";
 using namespace android;
 

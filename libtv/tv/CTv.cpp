@@ -106,28 +106,6 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     char buf[PROPERTY_VALUE_MAX] = {0};
     int len = property_get("tv.tvconfig.force_copy", buf, "true");
 
-    if (isFileExist(TV_CONFIG_FILE_SYSTEM_PATH)) {
-        if ( !isFileExist(TV_CONFIG_FILE_PARAM_PATH) ) {
-            CFile file ( TV_CONFIG_FILE_SYSTEM_PATH );
-
-            if ( file.copyTo ( TV_CONFIG_FILE_PARAM_PATH ) != 0 ) {
-                LOGE ( "%s, copy file = %s , error", __FUNCTION__, TV_CONFIG_FILE_PARAM_PATH );
-            }
-            else {
-                LOGD ("%s copy from %s to %s success.", __func__, TV_CONFIG_FILE_SYSTEM_PATH, TV_CONFIG_FILE_PARAM_PATH);
-            }
-        }
-    }
-
-    if (isFileExist(TV_CHANNEL_LIST_SYSTEM_PATH)) {
-        if (!isFileExist(TV_CHANNEL_LIST_PARAM_PATH)) {
-            CFile file ( TV_CHANNEL_LIST_SYSTEM_PATH );
-
-            if ( file.copyTo ( TV_CHANNEL_LIST_PARAM_PATH ) != 0 ) {
-                LOGE ( "%s, copy file = %s , error", __FUNCTION__, TV_CHANNEL_LIST_PARAM_PATH );
-            }
-        }
-    }
     if (isFileExist(TV_RRT_DEFINE_SYSTEM_PATH)) {
         if (!isFileExist(TV_RRT_DEFINE_PARAM_PATH)) {
             CFile file ( TV_RRT_DEFINE_SYSTEM_PATH );
@@ -2712,12 +2690,12 @@ int CTv::Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t ve
 
     config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "customer_edid");
     if ( HDMI_EDID_VER_14== version ) {
-        sprintf(edid_path, "/vendor/etc/port_%d.bin", 14);
+        sprintf(edid_path, "/vendor/etc/tvconfig/hdmi/port_%d.bin", 14);
     } else if (HDMI_EDID_VER_20== version) {
-        sprintf(edid_path, "/vendor/etc/port_%d.bin", 20);
+        sprintf(edid_path, "/vendor/etc/tvconfig/hdmi/port_%d.bin", 20);
     } else {
         LOGE("%s HDMI EDID VERSION error!\n", __FUNCTION__);
-        sprintf(edid_path, "/vendor/etc/port_%d.bin", 14);
+        sprintf(edid_path, "/vendor/etc/tvconfig/hdmi/port_%d.bin", 14);
     }
     sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
     if (access(edid_path, 0) < 0) {

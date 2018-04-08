@@ -24,13 +24,12 @@
 #include "CTvLog.h"
 
 
-#define CTV_DATABASE_DEFAULT_XML        "/vendor/etc/tv_default.xml"
+#define CTV_DATABASE_DEFAULT_XML        "/vendor/etc/tvconfig/tv_default.xml"
 
 using namespace android;
 
 class CTvDatabase: public CSqlite {
 public:
-    static const char *DEFAULT_DB_PATH;
     static const int DB_VERSION = 8;
     static const char *DB_VERSION_FIELD;
 

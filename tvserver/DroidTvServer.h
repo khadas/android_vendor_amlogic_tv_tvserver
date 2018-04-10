@@ -105,6 +105,8 @@ public:
     Return<int32_t> getCurrentVirtualSourceInput() override;
     Return<int32_t> dtvSetAudioChannleMod(int32_t audioChannelIdx) override;
     Return<void> dtvGetVideoFormatInfo(dtvGetVideoFormatInfo_cb _hidl_cb) override;
+    Return<void> dtvGetScanFreqListMode(int32_t mode, dtvGetScanFreqListMode_cb _hidl_cb) override;
+    Return<int32_t> atvdtvGetScanStatus() override;
 
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;
 

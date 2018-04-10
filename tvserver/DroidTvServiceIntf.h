@@ -33,6 +33,7 @@
 using namespace android;
 
 using ::vendor::amlogic::hardware::tvserver::V1_0::TvHidlParcel;
+using ::vendor::amlogic::hardware::tvserver::V1_0::FreqList;
 
 class TvServiceNotify : virtual public RefBase {
 public:
@@ -88,6 +89,8 @@ public:
     int getCurrentVirtualSourceInput();
     int dtvSetAudioChannleMod(int32_t audioChannelIdx);
     int dtvGetVideoFormatInfo(int &srcWidth, int &srcHeight, int &srcFps, int &srcInterlace);
+    void dtvGetScanFreqListMode(int mode, std::vector<FreqList> &freqlist);
+    int atvdtvGetScanStatus();
 
     virtual status_t dump(int fd, const Vector<String16>& args);
 

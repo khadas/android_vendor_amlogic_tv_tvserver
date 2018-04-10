@@ -20,7 +20,7 @@
 
 #ifdef SUPPORT_ADTV
 #define dvb_fend_para(_p) ((struct dvb_frontend_parameters*)(&_p))
-#define IS_DVBT2_TS(_para) (_para.m_type == TV_FE_OFDM && _para.terrestrial.para.u.ofdm.ofdm_mode == OFDM_DVBT2)
+#define IS_DVBT2_TS(_para) (_para.m_type == TV_FE_OFDM && _para.terrestrial.ofdm_mode == OFDM_DVBT2)
 #define IS_ISDBT_TS(_para) (_para.m_type == TV_FE_ISDBT)
 #endif
 
@@ -1436,11 +1436,11 @@ int CTvScanner::createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEP
 
     dtv_para.source = fp.getFEMode().getBase();
     dtv_para.dmx_dev_id = 0;//default 0
-    dtv_para.standard = TV_SCAN_DTV_STD_DVB;
+    dtv_para.standard = (AM_SCAN_DTVStandard_t) TV_SCAN_DTV_STD_DVB;
     if (dtv_para.source == TV_FE_ATSC)
-        dtv_para.standard = TV_SCAN_DTV_STD_ATSC;
+        dtv_para.standard = (AM_SCAN_DTVStandard_t) TV_SCAN_DTV_STD_ATSC;
     else if (dtv_para.source == TV_FE_ISDBT)
-        dtv_para.standard = TV_SCAN_DTV_STD_ISDB;
+        dtv_para.standard = (AM_SCAN_DTVStandard_t) TV_SCAN_DTV_STD_ISDB;
 
     int forceDtvStd = getScanDtvStandard(scp);
     if (forceDtvStd != -1) {
@@ -1518,7 +1518,7 @@ int CTvScanner::createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEP
                 dtv_para.fe_paras[i].terrestrial.para.frequency = vcp[i]->getFrequency();
                 dtv_para.fe_paras[i].terrestrial.para.inversion = INVERSION_OFF;
                 dtv_para.fe_paras[i].terrestrial.para.u.ofdm.bandwidth = (fe_bandwidth_t)(vcp[i]->getBandwidth());
-                dtv_para.fe_paras[i].terrestrial.para.u.ofdm.ofdm_mode = (fe_ofdm_mode_t)fp.getFEMode().getGen();
+                dtv_para.fe_paras[i].terrestrial.ofdm_mode = (fe_ofdm_mode_t)fp.getFEMode().getGen();
                 if (fp.getBandwidth() != -1)
                     dtv_para.fe_paras[i].terrestrial.para.u.ofdm.bandwidth = (fe_bandwidth_t)fp.getBandwidth();
                 break;
@@ -1660,7 +1660,7 @@ const char *CTvScanner::getDtvScanListName(int mode)
     return list_name;
 }
 
-bool CTvScanner::checkAtvCvbsLock(unsigned long  *colorStd)
+AM_Bool_t CTvScanner::checkAtvCvbsLock(unsigned long  *colorStd)
 {
     tvafe_cvbs_video_t cvbs_lock_status;
     int ret, i = 0;
@@ -1677,28 +1677,28 @@ bool CTvScanner::checkAtvCvbsLock(unsigned long  *colorStd)
             CTvin::getInstance()->VDIN_GetSignalInfo(&info);
             *colorStd = CTvin::CvbsFtmToV4l2ColorStd(info.fmt);
             LOGD("checkAtvCvbsLock locked and cvbs fmt = %d std = 0x%x", info.fmt, (unsigned int) *colorStd);
-            return true;
+            return AM_TRUE;
         }
         usleep(50 * 1000);
         i++;
     }
-    return false;
+    return AM_FALSE;
 }
 
-bool CTvScanner::checkAtvCvbsLockHelper(void *data)
+AM_Bool_t CTvScanner::checkAtvCvbsLockHelper(void *data)
 {
     if (data == NULL) return false;
 #ifdef SUPPORT_ADTV
     AM_SCAN_ATV_LOCK_PARA_t *pAtvPara = (AM_SCAN_ATV_LOCK_PARA_t *)data;
     CTvScanner *pScan = (CTvScanner *)(pAtvPara->pData);
     if (mInstance != pScan)
-        return false;
+        return AM_FALSE;
     unsigned long std;
-    bool isLock = pScan->checkAtvCvbsLock(&std);
+    AM_Bool_t isLock = pScan->checkAtvCvbsLock(&std);
     pAtvPara->pOutColorSTD = std;
     return isLock;
 #else
-    return false;
+    return AM_FALSE;
 #endif
 }
 

@@ -19,6 +19,7 @@
 #include "am_pes.h"
 #endif
 #include "CTvEv.h"
+#include <tvutils.h>
 
 enum cc_param_country {
     CC_PARAM_COUNTRY_USA = 0,

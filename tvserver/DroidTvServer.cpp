@@ -199,6 +199,94 @@ Return<int32_t> DroidTvServer::saveHdmiEdidVersion(int32_t port_id, int32_t ver)
 Return<int32_t> DroidTvServer::handleGPIO(const hidl_string& key, int32_t is_out, int32_t edge) {
     return mTvServiceIntf->handleGPIO(key, is_out, edge);
 }
+Return<int32_t> DroidTvServer::setSourceInput(int32_t inputSrc) {
+    return mTvServiceIntf->setSourceInput(inputSrc);
+}
+
+Return<int32_t> DroidTvServer::setSourceInputExt(int32_t inputSrc, int32_t vInputSrc) {
+    return mTvServiceIntf->setSourceInput(inputSrc, vInputSrc);
+}
+
+Return<int32_t> DroidTvServer::getSaveBlackoutEnable() {
+    return mTvServiceIntf->getSaveBlackoutEnable();
+}
+
+Return<void> DroidTvServer::getATVMinMaxFreq(getATVMinMaxFreq_cb _hidl_cb) {
+    int32_t scanMinFreq = 0;
+    int32_t scanMaxFreq = 0;
+    int32_t ret = mTvServiceIntf->getATVMinMaxFreq(scanMinFreq, scanMaxFreq);
+    _hidl_cb(ret, scanMinFreq, scanMaxFreq);
+
+    return Void();
+}
+
+Return<int32_t> DroidTvServer::setAmAudioPreMute(int32_t mute) {
+    return mTvServiceIntf->setAmAudioPreMute(mute);
+}
+
+Return<int32_t> DroidTvServer::setDvbTextCoding(const hidl_string& coding) {
+    return mTvServiceIntf->setDvbTextCoding(coding);
+}
+
+Return<int32_t> DroidTvServer::operateDeviceForScan(int32_t type) {
+    return mTvServiceIntf->operateDeviceForScan(type);
+}
+
+Return<int32_t> DroidTvServer::atvAutoScan(int32_t videoStd, int32_t audioStd, int32_t searchType, int32_t procMode) {
+    return mTvServiceIntf->atvAutoScan(videoStd, audioStd, searchType, procMode);
+}
+
+Return<int32_t> DroidTvServer::atvMunualScan(int32_t startFreq, int32_t endFreq, int32_t videoStd, int32_t audioStd) {
+    return mTvServiceIntf->atvMunualScan(startFreq, endFreq, videoStd, audioStd);
+}
+
+Return<int32_t> DroidTvServer::Scan(const hidl_string& feparas, const hidl_string& scanparas) {
+    return mTvServiceIntf->Scan(feparas, scanparas);
+}
+
+Return<int32_t> DroidTvServer::dtvScan(int32_t mode, int32_t scan_mode, int32_t beginFreq, int32_t endFreq, int32_t para1, int32_t para2) {
+    return mTvServiceIntf->dtvScan(mode, scan_mode, beginFreq, endFreq, para1, para2);
+}
+
+Return<int32_t> DroidTvServer::pauseScan() {
+    return mTvServiceIntf->pauseScan();
+}
+
+Return<int32_t> DroidTvServer::resumeScan() {
+    return mTvServiceIntf->resumeScan();
+}
+
+Return<int32_t> DroidTvServer::dtvStopScan() {
+    return mTvServiceIntf->dtvStopScan();
+}
+
+Return<int32_t> DroidTvServer::tvSetFrontEnd(const hidl_string& feparas, int32_t force) {
+    return mTvServiceIntf->tvSetFrontEnd(feparas, force);
+}
+
+Return<int32_t> DroidTvServer::sendPlayCmd(int32_t cmd, const hidl_string& id, const hidl_string& param) {
+    return mTvServiceIntf->sendPlayCmd(cmd, id, param);
+}
+
+Return<int32_t> DroidTvServer::getCurrentSourceInput() {
+    return mTvServiceIntf->getCurrentSourceInput();
+}
+
+Return<int32_t> DroidTvServer::getCurrentVirtualSourceInput() {
+    return mTvServiceIntf->getCurrentVirtualSourceInput();
+}
+
+Return<int32_t> DroidTvServer::dtvSetAudioChannleMod(int32_t audioChannelIdx) {
+    return mTvServiceIntf->dtvSetAudioChannleMod(audioChannelIdx);
+}
+
+Return<void> DroidTvServer::dtvGetVideoFormatInfo(dtvGetVideoFormatInfo_cb _hidl_cb) {
+    FormatInfo info;
+    mTvServiceIntf->dtvGetVideoFormatInfo(info.width, info.height, info.fps, info.interlace);
+
+    _hidl_cb(info);
+    return Void();
+}
 
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {

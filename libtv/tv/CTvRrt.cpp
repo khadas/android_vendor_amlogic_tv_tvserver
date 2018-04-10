@@ -594,7 +594,7 @@ void CTvRrt::RrtDataUpdate(void * dev_no, int event_type, void *param, void *use
 #endif
 }
 
-#if 0
+#ifdef SUPPORT_ADTV
 /**
  * @Function: MultipleStringParser
  * @Description: Multiple string data parser

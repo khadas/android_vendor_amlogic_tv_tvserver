@@ -117,7 +117,7 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_SHARED_LIBRARIES += libtv_linker
 
-LOCAL_CFLAGS := \
+LOCAL_CFLAGS += \
   -fPIC -fsigned-char -D_POSIX_SOURCE \
   -DALSA_CONFIG_DIR=\"/system/usr/share/alsa\" \
   -DALSA_PLUGIN_DIR=\"/system/usr/lib/alsa-lib\" \

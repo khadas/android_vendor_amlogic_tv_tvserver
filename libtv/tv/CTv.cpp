@@ -1821,7 +1821,7 @@ int CTv::StartTvLock ()
 
     setDvbLogLevel();
     //mAv.ClearVideoBuffer();
-    mAv.SetVideoLayerDisable(1);
+    mAv.SetVideoLayerDisable(0);
     mTvMsgQueue.startMsgQueue();
     SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( m_source_input ), m_source_input, m_cur_sig_info.fmt);
     TvMisc_EnableWDT ( gTvinConfig.kernelpet_disable, gTvinConfig.userpet, gTvinConfig.kernelpet_timeout, gTvinConfig.userpet_timeout, gTvinConfig.userpet_reset );
@@ -3207,11 +3207,11 @@ int CTv::autoSwitchToMonitorMode()
 
 void CTv::onVdinSignalChange()
 {
+    AutoMutex _l( mLock );
     if (!(mTvAction & TV_ACTION_IN_VDIN) || (mTvAction & TV_ACTION_SCANNING) || (SOURCE_SPDIF == m_source_input)) {
         return;
     }
 
-    AutoMutex _l( mLock );
     int ret = mpTvin->VDIN_GetSignalInfo ( &m_cur_sig_info );
     if (ret < 0) {
         LOGD("Get Signal Info error!\n");

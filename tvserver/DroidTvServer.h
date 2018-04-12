@@ -107,6 +107,10 @@ public:
     Return<void> dtvGetVideoFormatInfo(dtvGetVideoFormatInfo_cb _hidl_cb) override;
     Return<void> dtvGetScanFreqListMode(int32_t mode, dtvGetScanFreqListMode_cb _hidl_cb) override;
     Return<int32_t> atvdtvGetScanStatus() override;
+    Return<int32_t> SSMInitDevice() override;
+    Return<void> startAutoBacklight() override;
+    Return<void> stopAutoBacklight() override;
+    Return<int32_t> FactoryCleanAllTableForProgram() override;
 
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;
 

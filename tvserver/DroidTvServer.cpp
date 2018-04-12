@@ -300,6 +300,23 @@ Return<int32_t> DroidTvServer::atvdtvGetScanStatus() {
     return mTvServiceIntf->atvdtvGetScanStatus();
 }
 
+Return<int32_t> DroidTvServer::SSMInitDevice() {
+    return mTvServiceIntf->SSMInitDevice();
+}
+
+Return<void> DroidTvServer::startAutoBacklight() {
+    mTvServiceIntf->startAutoBacklight();
+    return Void();
+}
+
+Return<void> DroidTvServer::stopAutoBacklight() {
+    mTvServiceIntf->stopAutoBacklight();
+    return Void();
+}
+
+Return<int32_t> DroidTvServer::FactoryCleanAllTableForProgram() {
+    return mTvServiceIntf->FactoryCleanAllTableForProgram();
+}
 
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {

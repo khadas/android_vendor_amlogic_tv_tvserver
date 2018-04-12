@@ -91,6 +91,10 @@ public:
     int dtvGetVideoFormatInfo(int &srcWidth, int &srcHeight, int &srcFps, int &srcInterlace);
     void dtvGetScanFreqListMode(int mode, std::vector<FreqList> &freqlist);
     int atvdtvGetScanStatus();
+    int SSMInitDevice();
+    void startAutoBacklight();
+    void stopAutoBacklight();
+    int FactoryCleanAllTableForProgram();
 
     virtual status_t dump(int fd, const Vector<String16>& args);
 

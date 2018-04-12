@@ -653,6 +653,23 @@ int DroidTvServiceIntf::atvdtvGetScanStatus() {
     return mpTv->getScanStatus();
 }
 
+int DroidTvServiceIntf::SSMInitDevice() {
+    return mpTv->Tv_SSMRestoreDefaultSetting();
+}
+
+void DroidTvServiceIntf::startAutoBacklight() {
+    mpTv->setAutoBackLightStatus(1);
+}
+
+void DroidTvServiceIntf::stopAutoBacklight() {
+    mpTv->setAutoBackLightStatus(0);
+}
+
+int DroidTvServiceIntf::FactoryCleanAllTableForProgram() {
+    int ret = mpTv->ClearAnalogFrontEnd();
+    mpTv->clearDbAllProgramInfoTable();
+    return ret;
+}
 
 int DroidTvServiceIntf::processCmd(const Parcel &p) {
     unsigned char dataBuf[512] = {0};

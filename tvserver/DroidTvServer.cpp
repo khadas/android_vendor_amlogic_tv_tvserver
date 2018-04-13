@@ -288,6 +288,19 @@ Return<void> DroidTvServer::dtvGetVideoFormatInfo(dtvGetVideoFormatInfo_cb _hidl
     return Void();
 }
 
+Return<void> DroidTvServer::dtvGetScanFreqListMode(int32_t mode, dtvGetScanFreqListMode_cb _hidl_cb) {
+    std::vector<FreqList> freqlist;
+    mTvServiceIntf->dtvGetScanFreqListMode(mode, freqlist);
+
+    _hidl_cb(freqlist);
+    return Void();
+}
+
+Return<int32_t> DroidTvServer::atvdtvGetScanStatus() {
+    return mTvServiceIntf->atvdtvGetScanStatus();
+}
+
+
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {
         ALOGE("%s don't support type:%d", __FUNCTION__, (int)type);

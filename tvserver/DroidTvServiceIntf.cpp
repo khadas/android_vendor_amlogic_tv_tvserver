@@ -632,6 +632,28 @@ int DroidTvServiceIntf::dtvGetVideoFormatInfo(int &srcWidth, int &srcHeight, int
     return mpTv->getVideoFormatInfo(&srcWidth, &srcHeight, &srcFps, &srcInterlace);
 }
 
+void DroidTvServiceIntf::dtvGetScanFreqListMode(int mode, std::vector<FreqList> &freqlist) {
+    Vector<sp<CTvChannel>> out;
+    int ret = CTvRegion::getChannelListByName((char *)CTvScanner::getDtvScanListName(mode), out);
+    //r->writeInt32(out.size());
+    int size = out.size();
+    LOGD("DroidTvServiceIntf dtvGetScanFreqListMode size = %d, mode = %d", size, mode);
+
+    for (int i = 0; i < (int)out.size(); i++) {
+        freqlist[i].ID = out[i]->getID();
+        freqlist[i].freq = out[i]->getFrequency();
+        freqlist[i].channelNum = out[i]->getLogicalChannelNum();
+        //r->writeInt32(out[i]->getID());
+        //r->writeInt32(out[i]->getFrequency());
+        //r->writeInt32(out[i]->getLogicalChannelNum());
+    }
+}
+
+int DroidTvServiceIntf::atvdtvGetScanStatus() {
+    return mpTv->getScanStatus();
+}
+
+
 int DroidTvServiceIntf::processCmd(const Parcel &p) {
     unsigned char dataBuf[512] = {0};
     int ret = -1;

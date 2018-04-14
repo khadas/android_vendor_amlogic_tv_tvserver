@@ -1215,6 +1215,7 @@ int CTv::playDtmbProgram ( int progId )
 int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __unused, int audioCompetation)
 {
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_TV);
+    mTvAction |= TV_ACTION_IN_VDIN;
     mTvAction |= TV_ACTION_PLAYING;
     if ( mBlackoutEnable ) {
         mAv.EnableVideoBlackout();

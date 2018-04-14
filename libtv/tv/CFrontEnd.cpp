@@ -325,7 +325,23 @@ int CFrontEnd::setPara(const char *paras, bool force )
         break;
     }
 
-    ret = AM_FENDCTRL_SetPara(mFrontDevID, &dvbfepara);
+    if (dvbfepara.m_type == TV_FE_ANALOG)
+    {
+        struct dvb_frontend_parameters atv_para;
+        atv_para.frequency = dvbfepara.analog.para.frequency;
+        atv_para.u.analog.audmode = dvbfepara.analog.para.u.analog.audmode;
+        atv_para.u.analog.soundsys = dvbfepara.analog.para.u.analog.soundsys;
+        atv_para.u.analog.std = dvbfepara.analog.para.u.analog.std;
+        atv_para.u.analog.flag = dvbfepara.analog.para.u.analog.flag;
+        atv_para.u.analog.afc_range = dvbfepara.analog.para.u.analog.afc_range;
+        ret = AM_FEND_SetMode(mFrontDevID, dvbfepara.m_type);
+        ret = AM_FEND_SetPara(mFrontDevID, &atv_para);
+    }
+    else
+    {
+        ret = AM_FENDCTRL_SetPara(mFrontDevID, &dvbfepara);
+    }
+
     if (ret != 0) {
         LOGD("%s,fend set para failed! dvb error id is %d\n", __FUNCTION__, ret);
         return -1;

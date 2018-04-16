@@ -357,10 +357,7 @@ void CTv::onEvent(const CAv::AVEvent &ev)
             if (mAutoSetDisplayFreq && !mPreviewEnabled) {
                 mpTvin->VDIN_SetDisplayVFreq(50, mHdmiOutFbc);
             }
-            SetDisplayMode(CVpp::getInstance()->GetDisplayMode(m_source_input),
-                m_source_input,
-                mAv.getVideoResolutionToFmt());
-            //usleep(50 * 1000);
+
             mAv.EnableVideoNow(true);
             LOGD("[source_switch_time]: %fs, EVENT_AV_VIDEO_AVAILABLE, video available ok", getUptimeSeconds());
         }
@@ -1828,7 +1825,7 @@ int CTv::StartTvLock ()
     //mAv.ClearVideoBuffer();
     mAv.SetVideoLayerDisable(0);
     mTvMsgQueue.startMsgQueue();
-    SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( m_source_input ), m_source_input, m_cur_sig_info.fmt);
+    Tv_SetDisplayMode ( Tv_GetDisplayMode ( m_source_input ), m_source_input, m_cur_sig_info.fmt, 1);
     TvMisc_EnableWDT ( gTvinConfig.kernelpet_disable, gTvinConfig.userpet, gTvinConfig.kernelpet_timeout, gTvinConfig.userpet_timeout, gTvinConfig.userpet_reset );
     mpTvin->TvinApi_SetCompPhaseEnable ( 1 );
     mpTvin->VDIN_EnableRDMA ( 1 );
@@ -1877,7 +1874,7 @@ int CTv::StopTvLock ( void )
     setAudioChannel(TV_AOUT_OUTPUT_STEREO);
     mpTvin->setMpeg2Vdin(0);
     mAv.setLookupPtsForDtmb(0);
-    SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( SOURCE_MPEG ), SOURCE_MPEG, m_cur_sig_info.fmt);
+    Tv_SetDisplayMode ( Tv_GetDisplayMode ( SOURCE_MPEG ), SOURCE_MPEG, m_cur_sig_info.fmt, 1);
     m_last_source_input = SOURCE_INVALID;
     m_source_input = SOURCE_INVALID;
     m_source_input_virtual = SOURCE_INVALID;
@@ -2070,6 +2067,7 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
 
         CVpp::getInstance()->LoadVppSettings(SOURCE_DTV, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, INDEX_2D, TVIN_TFMT_2D);
 
+        Tv_SetDisplayMode(Tv_GetDisplayMode(SOURCE_DTV), SOURCE_DTV, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, 1);
     } else {
         mpTvin->setMpeg2Vdin(0);
         mAv.setLookupPtsForDtmb(0);
@@ -2156,7 +2154,7 @@ void CTv::onSigToStable()
         mAv.setVideoAxis(m_win_pos.x1, m_win_pos.y1, m_win_pos.x2, m_win_pos.y2);
         mAv.setVideoScreenMode ( CAv::VIDEO_WIDEOPTION_FULL_STRETCH );
     } else {
-        SetDisplayMode ( CVpp::getInstance()->GetDisplayMode ( m_source_input ), m_source_input, m_cur_sig_info.fmt);
+        Tv_SetDisplayMode ( Tv_GetDisplayMode ( m_source_input ), m_source_input, m_cur_sig_info.fmt, 1);
     }
     LOGD ( "[source_switch_time]: %fs, onSigToStable end", getUptimeSeconds());
 }
@@ -2893,116 +2891,22 @@ vpp_color_temperature_mode_t CTv::Tv_GetColorTemperature ( tv_source_input_t tv_
 
 int CTv::Tv_SaveColorTemperature ( vpp_color_temperature_mode_t mode, tv_source_input_t tv_source_input )
 {
-    return CVpp::getInstance()->SaveColorTemperature ( mode, tv_source_input );
+    return CVpp::getInstance()->SaveColorTemperature(mode, tv_source_input );
 }
 
 int CTv::Tv_SetDisplayMode ( vpp_display_mode_t mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t fmt, int is_save )
 {
-    int ret = SetDisplayMode((vpp_display_mode_t)mode, tv_source_input, GetCurrentSignalInfo().fmt);
-
-    if (ret == 0) {
-        if (is_save == 1) {
-            ret = ret | SSMSaveDisplayMode ( tv_source_input, (int)mode );
-        }
-    }
-    return ret;
-}
-
-int CTv::SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt )
-{
-    tv_source_input_type_t source_type;
-    source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-    LOGD("SetDisplayMode, display_mode = %d, source_type = %d sigfmt = %d  tranfmt = %d\n",
-         display_mode, source_type, sig_fmt, m_cur_sig_info.trans_fmt);
-
-    tvin_cutwin_t cutwin = CVpp::getInstance()->GetOverscan(tv_source_input, sig_fmt,
-                                                            INDEX_2D, m_cur_sig_info.trans_fmt);
-    LOGD("SetDisplayMode , get crop %d %d %d %d \n", cutwin.vs, cutwin.hs, cutwin.ve, cutwin.he);
-
-    int video_screen_mode = CAv::VIDEO_WIDEOPTION_16_9;
-    tvin_window_pos_t win_pos;
-    int display_resolution = Vpp_GetDisplayResolutionInfo(&win_pos);
-
-    switch ( display_mode ) {
-    case VPP_DISPLAY_MODE_169:
-        video_screen_mode = CAv::VIDEO_WIDEOPTION_16_9;
-        break;
-    case VPP_DISPLAY_MODE_MODE43:
-        video_screen_mode = CAv::VIDEO_WIDEOPTION_4_3;
-        break;
-    case VPP_DISPLAY_MODE_NORMAL:
-        video_screen_mode = CAv::VIDEO_WIDEOPTION_NORMAL;
-        break;
-    case VPP_DISPLAY_MODE_FULL:
-        video_screen_mode = CAv::VIDEO_WIDEOPTION_NONLINEAR;
-        CVpp::getInstance()->VPP_SetNonLinearFactor ( 20 );
-        break;
-    case VPP_DISPLAY_MODE_CROP_FULL:
-        cutwin.vs = 0;
-        cutwin.hs = 0;
-        cutwin.ve = 0;
-        cutwin.he = 0;
-        break;
-    case VPP_DISPLAY_MODE_NOSCALEUP:
-        video_screen_mode = CAv::VIDEO_WIDEOPTION_NORMAL_NOSCALEUP;
-        break;
-    case VPP_DISPLAY_MODE_FULL_REAL:
-        video_screen_mode = CAv::VIDEO_WIDEOPTION_16_9;    //added for N360 by haifeng.liu
-        break;
-    case VPP_DISPLAY_MODE_PERSON:
-        video_screen_mode = CAv::VIDEO_WIDEOPTION_FULL_STRETCH;
-        cutwin.vs = cutwin.vs + 20;
-        cutwin.ve = cutwin.ve + 20;
-        break;
-    case VPP_DISPLAY_MODE_MOVIE:
-        video_screen_mode = CAv::VIDEO_WIDEOPTION_FULL_STRETCH;
-        cutwin.vs = cutwin.vs + 40;
-        cutwin.ve = cutwin.ve + 40;
-        break;
-    case VPP_DISPLAY_MODE_CAPTION:
-        video_screen_mode = CAv::VIDEO_WIDEOPTION_FULL_STRETCH;
-        cutwin.vs = cutwin.vs + 55;
-        cutwin.ve = cutwin.ve + 55;
-        break;
-    case VPP_DISPLAY_MODE_ZOOM:
-        video_screen_mode = CAv::VIDEO_WIDEOPTION_FULL_STRETCH;
-        cutwin.vs = cutwin.vs + 70;
-        cutwin.ve = cutwin.ve + 70;
-        break;
-    default:
-        break;
-    }
-    if (source_type == SOURCE_TYPE_DTV) {
-        cutwin.vs = cutwin.vs + 12;
-        cutwin.ve = cutwin.ve + 12;
-        cutwin.hs = cutwin.hs + 12;
-        cutwin.he = cutwin.he + 12;
-    }
-    if (source_type == SOURCE_TYPE_HDMI) {
-        if ((IsDVISignal())
-            || (mpTvin->GetITContent() == 1)
-            || (display_mode == VPP_DISPLAY_MODE_FULL_REAL)
-            || (CVpp::getInstance()->GetPQMode(tv_source_input) == VPP_PICTURE_MODE_MONITOR)) {
-            cutwin.vs = 0;
-            cutwin.hs = 0;
-            cutwin.ve = 0;
-            cutwin.he = 0;
-        }
-    }
-
-    mAv.setVideoScreenMode(video_screen_mode);
-    CVpp::getInstance()->VPP_SetVideoCrop(cutwin.vs, cutwin.hs, cutwin.ve, cutwin.he);
-    return 0;
+    return CVpp::getInstance()->SetDisplayMode(mode, tv_source_input, is_save);
 }
 
 vpp_display_mode_t CTv::Tv_GetDisplayMode ( tv_source_input_t tv_source_input )
 {
-    return CVpp::getInstance()->GetDisplayMode((tv_source_input_t)tv_source_input);
+    return CVpp::getInstance()->GetDisplayMode(tv_source_input);
 }
 
 int CTv::Tv_SaveDisplayMode ( vpp_display_mode_t mode, tv_source_input_t tv_source_input )
 {
-    return SSMSaveDisplayMode ( tv_source_input, (int)mode );
+    return CVpp::getInstance()->SaveDisplayMode(mode, tv_source_input);
 }
 
 int CTv::setEyeProtectionMode(int enable)
@@ -3011,13 +2915,12 @@ int CTv::setEyeProtectionMode(int enable)
     if (getEyeProtectionMode() == enable)
         return ret;
 
-    return CVpp::getInstance()->SetEyeProtectionMode(
-        m_source_input, enable);
+    return CVpp::getInstance()->SetEyeProtectionMode(m_source_input, enable, 1);
 }
 
 int CTv::getEyeProtectionMode()
 {
-    return CVpp::getInstance()->GetEyeProtectionMode();
+    return CVpp::getInstance()->GetEyeProtectionMode(m_source_input);
 }
 
 int CTv::setGamma(vpp_gamma_curve_t gamma_curve, int is_save)
@@ -3184,8 +3087,8 @@ int CTv::autoSwitchToMonitorMode()
     LOGD("%s, CurSigInfo.cfmt is %d , CurSigInfo.fmt is %x \n", __FUNCTION__, m_cur_sig_info.cfmt, m_cur_sig_info.fmt);
     int ret = -1;
     if (!MnoNeedAutoSwitchToMonitorMode) {
-        if ((m_cur_sig_info.cfmt == TVIN_YUV444)
-            || (m_cur_sig_info.cfmt == TVIN_RGB444)
+        if ((m_cur_sig_info.cfmt == YUV444)
+            || (m_cur_sig_info.cfmt == RGB444)
             || (1 == IsDVISignal())//iS DVI
             || (1 == mpTvin->GetITContent())
             || (m_cur_sig_info.fmt == TVIN_SIG_FMT_HDMI_1440X240P_60HZ)
@@ -3251,9 +3154,18 @@ void CTv::onSetPQPCMode(int source, int status)
                 CVpp::getInstance()->enableMonitorMode(true);
             }
 
-            tvin_port_t cur_port = mpTvin->Tvin_GetSourcePortBySourceInput(m_source_input);
-            mpTvin->SwitchPort(cur_port);
-            CVpp::getInstance()->Vpp_ResetLastVppSettingsSourceType();
+            if (CVpp::getInstance()->Vpp_GetAutoSwitchPCModeFlag() == 1) {
+                MnoNeedAutoSwitchToMonitorMode = false;
+            } else {
+                MnoNeedAutoSwitchToMonitorMode = true;
+            }
+
+            LOGD("MnoNeedAutoSwitchToMonitorMode = %d\n", MnoNeedAutoSwitchToMonitorMode);
+            if (MnoNeedAutoSwitchToMonitorMode) {
+                tvin_port_t cur_port = mpTvin->Tvin_GetSourcePortBySourceInput(m_source_input);
+                mpTvin->SwitchPort(cur_port);
+                CVpp::getInstance()->Vpp_ResetLastVppSettingsSourceType();
+            }
         }
     }
 }

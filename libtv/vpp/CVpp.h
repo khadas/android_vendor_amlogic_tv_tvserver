@@ -13,15 +13,7 @@
 #include "fbcutils/CFbcCommunication.h"
 #include <tvutils.h>
 
-#define GLOBAL_OGO_FORMAT_FLAG  0x6688
-#define RGB_FORMAT          0
-#define YCbCr_422_FORMAT    1
-#define YCbCr_444_FORMAT    2
-#define PQ_USER_DATA_FROM_E2P   0
-#define PQ_USER_DATA_FROM_DB    1
-
 #define VPP_PANEL_BACKLIGHT_DEV_PATH   "/sys/class/aml_bl/power"
-#define BACKLIGHT_BRIGHTNESS           "/sys/class/backlight/aml-bl/brightness"
 #define DI_NR2_ENABLE                  "/sys/module/di/parameters/nr2_en"
 #define AMVECM_PC_MODE                 "/sys/class/amvecm/pc_mode"
 
@@ -63,11 +55,10 @@ public:
     int Vpp_ResetLastVppSettingsSourceType(void);
     int LoadVppLdimRegs();
     int LoadVppSettings ( tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
-    int Vpp_GetVppConfig();
+    int Vpp_SetVppConfig();
     int SetPQMode ( vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save, int is_autoswitch);
     vpp_picture_mode_t GetPQMode ( tv_source_input_t tv_source_input );
     int SavePQMode ( vpp_picture_mode_t pq_mode,  tv_source_input_t tv_source_input );
-    int Vpp_GetPQModeValue ( tv_source_input_t, vpp_picture_mode_t, vpp_pq_para_t * );
     int Vpp_GetAutoSwitchPCModeFlag(void);
     void enableMonitorMode(bool enable);
     int SetBrightness ( int value, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
@@ -92,14 +83,15 @@ public:
     int SetContrast ( int value, tv_source_input_t tv_source_input,  tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save );
     int GetContrast ( tv_source_input_t tv_source_input );
     int SaveContrast ( int value, tv_source_input_t tv_source_input );
-    int SetEyeProtectionMode(tv_source_input_t tv_source_input, int enable);
-    int GetEyeProtectionMode();
+    int SetEyeProtectionMode(tv_source_input_t tv_source_input, int enable, int is_save);
+    int GetEyeProtectionMode(tv_source_input_t tv_source_input);
     int SetGammaValue(vpp_gamma_curve_t gamma_curve, int is_save);
     int GetGammaValue();
-    vpp_display_mode_t GetDisplayMode ( tv_source_input_t tv_source_input );
+    int SetDisplayMode(vpp_display_mode_t disp_mode, tv_source_input_t tv_source_input, int is_save);
+    vpp_display_mode_t GetDisplayMode ( tv_source_input_t tv_source_input);
+    int SaveDisplayMode(vpp_display_mode_t disp_mode, tv_source_input_t tv_source_input);
     int SetBacklight ( int value, tv_source_input_t tv_source_input, int is_save );
     int GetBacklight ( tv_source_input_t tv_source_input );
-    int SetBacklightWithoutSave ( int value, tv_source_input_t tv_source_input );
     int SaveBacklight ( int value, tv_source_input_t tv_source_input );
     int FactorySetPQMode_Brightness ( int source_type, int pq_mode, int brightness );
     int FactoryGetPQMode_Brightness ( int tv_source_input, int pq_mode );
@@ -152,7 +144,6 @@ public:
     int SaveColorTemperatureParams ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params );
 
     int FactoryResetNonlinear();
-    tvin_cutwin_t GetOverscan ( tv_source_input_t tv_source_input, tvin_sig_fmt_t fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt );
     int VPP_SetPLLValues (tv_source_input_t tv_source_input, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt);
     int VPP_SetCVD2Values (tv_source_input_t tv_source_input, tvin_port_t source_port, tvin_sig_fmt_t sig_fmt);
     //api
@@ -172,7 +163,6 @@ private:
     int VPP_SetCMRegisterMap ( struct cm_regmap_s *pRegMap );
     void video_set_saturation_hue ( signed char saturation, signed char hue, signed long *mab );
     void video_get_saturation_hue ( signed char *sat, signed char *hue, signed long *mab );
-    int VPP_SetBackLightLevel ( int value );
     int VPP_FBCColorTempBatchGet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t *);
     int VPP_FBCColorTempBatchSet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t);
     int VPP_FBCSetColorTemperature(vpp_color_temperature_mode_t);

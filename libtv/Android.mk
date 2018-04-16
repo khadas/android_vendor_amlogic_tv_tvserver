@@ -158,7 +158,6 @@ LOCAL_C_INCLUDES += \
   $(LOCAL_PATH)/tvdb \
   $(LOCAL_PATH)/tv \
   $(LOCAL_PATH)/gpio \
-  $(LOCAL_PATH)/include \
   external/jsoncpp/include
 
 LOCAL_LDLIBS  += -L$(SYSROOT)/usr/lib -llog

@@ -985,11 +985,6 @@ int SSMRead3DTO2D(unsigned char *rw_val)
     return ret;
 }
 
-int SSMSaveDisplayMode(int offset, int rw_val)
-{
-    return TVSSMWriteNTypes(VPP_DATA_POS_DISPLAY_MODE_START, 1, rw_val, offset);
-}
-
 int SSMSaveSceneMode(int rw_val)
 {
     return TVSSMWriteNTypes(VPP_DATA_POS_SCENE_MODE_START, 1, rw_val);
@@ -999,27 +994,6 @@ int SSMReadSceneMode(int *rw_val)
 {
     int tmp_ret = 0;
     tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_SCENE_MODE_START, 1, rw_val);
-
-    return tmp_ret;
-}
-
-int SSMSaveBackLightVal(int offset, int rw_val)
-{
-    return TVSSMWriteNTypes(VPP_DATA_POS_BACKLIGHT_START, 1, rw_val, offset);
-}
-
-int SSMReadBackLightVal(int offset, int *rw_val)
-{
-    int tmp_ret = 0;
-    tmp_ret = TVSSMReadNTypes(VPP_DATA_POS_BACKLIGHT_START, 1, rw_val, offset);
-    //TODO
-    if (tmp_ret < 0 || tmp_ret > 100) {
-        int i = 0;
-        for (i = 0; i < SOURCE_MAX; i++) {
-            SSMSaveBackLightVal(i, DEFAULT_BACKLIGHT_BRIGHTNESS);
-        }
-        tmp_ret = DEFAULT_BACKLIGHT_BRIGHTNESS;
-    }
 
     return tmp_ret;
 }

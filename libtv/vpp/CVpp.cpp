@@ -58,18 +58,7 @@ int CVpp::Vpp_Init(bool hdmiOutFbc)
 
     mHdmiOutFbc = hdmiOutFbc;
 
-    Vpp_GetVppConfig();
-
-    backlight = GetBacklight(SOURCE_TV);
-
-    if (mbVppCfg_backlight_init) {
-        backlight = (backlight + 100) * 255 / 200;
-
-        if (backlight < 127 || backlight > 255) {
-            backlight = 255;
-        }
-    }
-    SetBacklight(backlight, SOURCE_TV, 0);
+    Vpp_SetVppConfig();
 
     if (SSMReadNonStandardValue() & 1) {
         Set_Fixed_NonStandard(0); //close
@@ -109,29 +98,29 @@ int CVpp::LoadVppSettings(tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_
     return tvLoadPQSettings(source_input_param);
 }
 
-int CVpp::Vpp_GetVppConfig(void)
+int CVpp::Vpp_SetVppConfig(void)
 {
     const char *config_value;
 
     config_value = config_get_str(CFG_SECTION_TV, "vpp.pqmode.depend.bklight", "null");
     if (strcmp(config_value, "enable") == 0) {
-        mbVppCfg_pqmode_depend_bklight = true;
+        tvSetPQConfig(PQ_DEPEND_BACKLIGHT, 1);
     } else {
-        mbVppCfg_pqmode_depend_bklight = false;
+        tvSetPQConfig(PQ_DEPEND_BACKLIGHT, 0);
     }
 
     config_value = config_get_str(CFG_SECTION_TV, "vpp.backlight.reverse", "null");
     if (strcmp(config_value, "enable") == 0) {
-        mbVppCfg_backlight_reverse = true;
+        tvSetPQConfig(BACKLIGHT_REVERSE, 1);
     } else {
-        mbVppCfg_backlight_reverse = false;
+        tvSetPQConfig(BACKLIGHT_REVERSE, 0);
     }
 
     config_value = config_get_str(CFG_SECTION_TV, "vpp.backlight.init", "null");
     if (strcmp(config_value, "enable") == 0) {
-        mbVppCfg_backlight_init = true;
+        tvSetPQConfig(BACKLIGHT_INIT, 1);
     } else {
-        mbVppCfg_backlight_init = false;
+        tvSetPQConfig(BACKLIGHT_INIT, 0);
     }
 
     config_value = config_get_str(CFG_SECTION_TV, "vpp.color.temp.bysource", "enable");
@@ -223,17 +212,6 @@ int CVpp::SavePQMode(vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_inp
 {
 
     return tvSavePQMode(pq_mode);
-}
-
-int CVpp::Vpp_GetPQModeValue(tv_source_input_t tv_source_input, vpp_picture_mode_t pq_mode,
-                             vpp_pq_para_t *pq_para)
-{
-    source_input_param_t source_input_param;
-    source_input_param.source_input = tv_source_input;
-    source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-    source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-    return tvGetPQParams(source_input_param, pq_mode, pq_para);
 }
 
 int CVpp::Vpp_GetAutoSwitchPCModeFlag(void)
@@ -371,19 +349,14 @@ void CVpp::enableMonitorMode(bool enable)
      return tvSaveContrast(value);
  }
 
- int CVpp::SetEyeProtectionMode(tv_source_input_t tv_source_input, int enable)
+ int CVpp::SetEyeProtectionMode(tv_source_input_t tv_source_input, int enable, int is_save)
  {
-     source_input_param_t source_input_param;
-     source_input_param.source_input = tv_source_input;
-     source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-     source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-
-     return tvSetEyeProtectionMode(source_input_param, enable);
+     return tvSetEyeProtectionMode(tv_source_input, enable, is_save);
  }
 
- int CVpp::GetEyeProtectionMode()
+ int CVpp::GetEyeProtectionMode(tv_source_input_t tv_source_input)
  {
-     return tvGetEyeProtectionMode();
+     return tvGetEyeProtectionMode(tv_source_input);
  }
 
 int CVpp::VPP_SetNonLinearFactor(int value)
@@ -411,12 +384,19 @@ int CVpp::GetGammaValue()
     return tvGetGamma();
 }
 
+int CVpp::SetDisplayMode(vpp_display_mode_t disp_mode, tv_source_input_t tv_source_input, int is_save)
+{
+    return tvSetDisplayMode(disp_mode, tv_source_input, is_save);
+}
 
 vpp_display_mode_t CVpp::GetDisplayMode(tv_source_input_t tv_source_input)
 {
-    source_input_param_t source_input_param;;
-    source_input_param.source_input = tv_source_input;
-    return (vpp_display_mode_t)tvGetDisplayMode(source_input_param);
+    return (vpp_display_mode_t)tvGetDisplayMode(tv_source_input);
+}
+
+int CVpp::SaveDisplayMode(vpp_display_mode_t disp_mode, tv_source_input_t tv_source_input)
+{
+    return tvSaveDisplayMode(disp_mode, tv_source_input);
 }
 
 int CVpp::SetBacklight(int value, tv_source_input_t tv_source_input, int is_save)
@@ -427,11 +407,7 @@ int CVpp::SetBacklight(int value, tv_source_input_t tv_source_input, int is_save
             ret = fbcIns->cfbc_Set_Backlight(COMM_DEV_SERIAL, value*255/100);
         }
     } else {
-        ret = SetBacklightWithoutSave(value, tv_source_input);
-    }
-
-    if (ret >= 0 && is_save == 1) {
-        ret = SaveBacklight(value, tv_source_input);
+        ret = tvSetBacklight(tv_source_input, value, is_save);
     }
 
     return ret;
@@ -439,68 +415,13 @@ int CVpp::SetBacklight(int value, tv_source_input_t tv_source_input, int is_save
 
 int CVpp::GetBacklight(tv_source_input_t tv_source_input)
 {
-    int data = 0;
-    vpp_pq_para_t pq_para;
-
-    if (mbVppCfg_pqmode_depend_bklight) {
-        vpp_picture_mode_t pq_mode = GetPQMode(tv_source_input);
-        if (pq_mode == VPP_PICTURE_MODE_USER) {
-            SSMReadBackLightVal(tv_source_input, &data);
-        } else {
-            Vpp_GetPQModeValue(tv_source_input, pq_mode, &pq_para);
-            data = pq_para.backlight;
-        }
-    } else {
-        tv_source_input = SOURCE_TV;
-        SSMReadBackLightVal(tv_source_input, &data);
-    }
-
-    if (data < 0 || data > 100) {
-        data = DEFAULT_BACKLIGHT_BRIGHTNESS;
-    }
-    return data;
+    return tvGetBacklight(tv_source_input);
 }
 
 int CVpp::SaveBacklight(int value, tv_source_input_t tv_source_input)
 {
-    int backlight_value, backlight_reverse = 0;
-    int ret = -1;
-    int tmp_pic_mode = 0;
-
-    if (!mbVppCfg_pqmode_depend_bklight) {
-        tv_source_input = SOURCE_TV;
-    }
-
-    if (value < 0 || value > 100) {
-        value = 100;
-    }
-    ret = SSMSaveBackLightVal(tv_source_input, value);
-
-    return ret;
+    return tvSaveBacklight(tv_source_input, value);
 }
-
-int CVpp::SetBacklightWithoutSave(int value, tv_source_input_t tv_source_input __unused)
-{
-    int backlight_value;
-
-    if (value < 0 || value > 100) {
-        value = 100;
-    }
-
-    if (mbVppCfg_backlight_reverse) {
-        backlight_value = (100 - value) * 255 / 100;
-    } else {
-        backlight_value = value * 255 / 100;
-    }
-    return VPP_SetBackLightLevel(backlight_value);
-}
-
-int CVpp::VPP_SetBackLightLevel(int value)
-{
-    LOGD("VPP_SetBackLightLevel %s : %d", BACKLIGHT_BRIGHTNESS, value);
-    return tvWriteSysfs(BACKLIGHT_BRIGHTNESS, value);
-}
-
 
 int CVpp::VPP_SetBackLight_Switch(int value)
 {
@@ -1043,27 +964,6 @@ int CVpp::VPP_GetGrayPattern()
     }
 }
 
-tvin_cutwin_t CVpp::GetOverscan(tv_source_input_t tv_source_input, tvin_sig_fmt_t fmt,
-                                is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt)
-{
-    int ret = 0;
-    tvin_cutwin_t cutwin_t;
-    source_input_param_t source_input_param;
-    memset(&cutwin_t, 0, sizeof(cutwin_t));
-    source_input_param.source_input = tv_source_input;
-    source_input_param.source_type = CTvin::Tvin_SourceInputToSourceInputType(tv_source_input);
-    source_input_param.source_port = CTvin::Tvin_GetSourcePortBySourceType(source_input_param.source_type);
-    source_input_param.sig_fmt = fmt;
-    source_input_param.is3d = is3d;
-    source_input_param.trans_fmt = trans_fmt;
-    cutwin_t.he = tvGetOverscanParam(source_input_param, CUTWIN_HE);
-    cutwin_t.hs = tvGetOverscanParam(source_input_param, CUTWIN_HS);
-    cutwin_t.ve = tvGetOverscanParam(source_input_param, CUTWIN_VE);
-    cutwin_t.vs = tvGetOverscanParam(source_input_param, CUTWIN_VS);
-
-    return cutwin_t;
-}
-
 int CVpp::VPP_SetVideoCrop(int Voffset0, int Hoffset0, int Voffset1, int Hoffset1)
 {
     char set_str[32];
@@ -1103,7 +1003,7 @@ int CVpp::VPP_FBCSetColorTemperature(vpp_color_temperature_mode_t temp_mode)
 {
     int ret = -1;
     if (fbcIns != NULL) {
-        ret = fbcIns->fbcSetEyeProtection(COMM_DEV_SERIAL, GetEyeProtectionMode());
+        ret = fbcIns->fbcSetEyeProtection(COMM_DEV_SERIAL, 1/*GetEyeProtectionMode()*/);
         ret |= fbcIns->cfbc_Set_ColorTemp_Mode(COMM_DEV_SERIAL, temp_mode);
     }
     return ret;
@@ -1246,10 +1146,6 @@ int CVpp::VPP_SSMRestorToDefault(int id, bool resetAll)
                 SSMSavePanoramaStart(i, tmp_panorama_nor);
             }
         }
-
-        tmp_val = DEFAULT_BACKLIGHT_BRIGHTNESS;
-        if (resetAll || VPP_DATA_POS_BACKLIGHT_START == id)
-            SSMSaveBackLightVal(i, tmp_val);
     }
 
     return 0;

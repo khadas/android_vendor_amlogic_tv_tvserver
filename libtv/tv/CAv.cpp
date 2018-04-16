@@ -20,7 +20,6 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
-#include <amstream.h>
 
 CAv::CAv()
 {

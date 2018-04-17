@@ -91,6 +91,7 @@ int CTvScanner::Scan(CFrontEnd::FEParas &fp, ScanParas &sp) {
     // Create the scan
     memset(&para, 0, sizeof(para));
     para.fend_dev_id = 0;//default
+    para.vlfend_dev_id = 0;
     para.mode = sp.getMode();
     para.proc_mode = sp.getProc();
     if (createAtvParas(para.atv_para, fp, sp) != 0)

@@ -100,6 +100,7 @@ class CFrontEnd {
 public:
 
     static const int FE_DEV_ID = 0;
+    static const int VLFE_DEV_ID = 0;
     static const int AFC_RANGE = 1000000;
 
     CFrontEnd();
@@ -277,18 +278,22 @@ private:
     static CFrontEnd *mInstance;
 
     int mFrontDevID;
+    int mVLFrontDevID;
     int mDemuxDevID;
     int mTvPlayDevID;
     int mCurFineFreq;
     IObserver *mpObserver;
     FEEvent mCurSigEv;
     int mCurMode;
+    int mVLCurMode;
     int mCurFreq;
     int mCurPara1;
     int mCurPara2;
     bool mbFEOpened;
+    bool mbVLFEOpened;
     FEParas mFEParas;
     static void dmd_fend_callback(long dev_no, int event_type, void *param, void *user_data);
+    static void v4l2_fend_callback(int dev_no, struct dvb_frontend_event *evt, void *user_data);
     void saveCurrentParas(FEParas &paras);
     int setPropLocked(int cmd, int val);
 

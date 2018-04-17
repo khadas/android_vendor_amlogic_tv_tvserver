@@ -38,6 +38,7 @@ extern "C" {
 #include "am_dmx.h"
 #include "linux/videodev2.h"
 #include "am_fend_ctrl.h"
+#include "am_vlfend.h"
 }
 #endif
 
@@ -52,13 +53,16 @@ CFrontEnd *CFrontEnd::getInstance()
 CFrontEnd::CFrontEnd()
 {
     mFrontDevID = FE_DEV_ID;
+    mVLFrontDevID = VLFE_DEV_ID;
     mpObserver = NULL;
     mCurFineFreq = 0;
-    mCurMode =  -1;
+    mCurMode = -1;
+    mVLCurMode = -1;
     mCurFreq = -1;
     mCurPara1 = -1;
     mCurPara2 = -1;
     mbFEOpened = false;
+    mbVLFEOpened = false;
 }
 
 CFrontEnd::~CFrontEnd()
@@ -67,7 +71,11 @@ CFrontEnd::~CFrontEnd()
     AM_EVT_Unsubscribe(mFrontDevID, AM_FEND_EVT_STATUS_CHANGED, dmd_fend_callback, NULL);
     if (mFrontDevID == FE_DEV_ID)
         AM_FEND_Close(mFrontDevID);
+    //AM_EVT_Unsubscribe(mVLFrontDevID, AM_VLFEND_EVT_STATUS_CHANGED, v4l2_fend_callback, NULL);
+    if (mVLFrontDevID == VLFE_DEV_ID)
+        AM_FEND_Close(mVLFrontDevID);
     mFrontDevID = -1;
+    mVLFrontDevID = -1;
 #endif
 }
 
@@ -78,29 +86,49 @@ int CFrontEnd::Open(int mode)
 
     AM_FEND_OpenPara_t para;
     int rc = 0;
+    int devID = 0;
 
     LOGD("FE Open [%d->%d]", mCurMode, mode);
 
-    if (mbFEOpened && (mCurMode == mode || mode == TV_FE_AUTO)) {
+    if (mbFEOpened && (mCurMode == mode || mode == TV_FE_ATSC)) {
         LOGD("FrontEnd already opened, return");
         return 0;
     }
 
-    if (mbFEOpened)
-        AM_FEND_Close(mFrontDevID);
+    LOGD("VLFE Open [%d->%d]", mVLCurMode, mode);
+
+    if (mbVLFEOpened && (mVLCurMode == mode || mode == TV_FE_ANALOG)) {
+        LOGD("VLFrontEnd already opened, return");
+        return 0;
+    }
 
     memset(&para, 0, sizeof(AM_FEND_OpenPara_t));
     para.mode = mode;
-    rc = AM_FEND_Open(mFrontDevID, &para);
-    if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
-        LOGD("%s,frontend dev open failed! dvb error id is %d\n", __FUNCTION__, rc);
-        return -1;
+
+    if (TV_FE_ANALOG == mode) {
+        rc = AM_VLFEND_Open(mVLFrontDevID, &para);
+        if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
+            LOGD("%s,frontend dev[%d] open failed! dvb error id is %d\n",
+                    __FUNCTION__, mVLFrontDevID, rc);
+            return -1;
+        }
+        AM_VLFEND_SetCallback(mVLFrontDevID, v4l2_fend_callback, (void *)this);
+        LOGD("%s,frontend dev[%d] open success!\n", __FUNCTION__, mVLFrontDevID);
+        mbVLFEOpened = true;
+        mVLCurMode = mode;
+    } else {
+        rc = AM_FEND_Open(mFrontDevID, &para);
+        if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
+            LOGD("%s,frontend dev[%d] open failed! dvb error id is %d\n",
+                    __FUNCTION__, mFrontDevID, rc);
+            return -1;
+        }
+        AM_EVT_Subscribe(mFrontDevID, AM_FEND_EVT_STATUS_CHANGED, dmd_fend_callback, (void *)this);
+        LOGD("%s,frontend dev[%d] open success!\n", __FUNCTION__, mFrontDevID);
+        mbFEOpened = true;
+        mCurMode = mode;
     }
 
-    AM_EVT_Subscribe(mFrontDevID, AM_FEND_EVT_STATUS_CHANGED, dmd_fend_callback, this);
-    LOGD("%s,frontend dev open success!\n", __FUNCTION__);
-    mbFEOpened = true;
-    mCurMode =  mode;
     mCurFreq = -1;
     mCurPara1 = -1;
     mCurPara2 = -1;
@@ -114,6 +142,7 @@ int CFrontEnd::Close()
     AutoMutex _l( mLock );
 
     int rc = 0;
+    int rc1 = 0;
 
     LOGD("FE Close");
 
@@ -121,18 +150,33 @@ int CFrontEnd::Close()
         LOGD("FrontEnd already closed.");
     }
 
-    mbFEOpened = false;
-    mCurMode =  -1;
+    if (!mbVLFEOpened) {
+        LOGD("VLFrontEnd already closed.");
+    }
+
+    mCurMode = -1;
+    mVLCurMode = -1;
     mCurFreq = -1;
     mCurPara1 = -1;
     mCurPara2 = -1;
     mFEParas.setFrequency(-1);
 
-    rc = AM_FEND_Close(mFrontDevID);
-    if (rc != 0) {
-        LOGD("%s,frontend_close fail! dvb error id is %d\n", __FUNCTION__, rc);
-        return -1;
+    if (mbFEOpened) {
+        rc = AM_FEND_Close(mFrontDevID);
+        if (rc != 0) {
+            LOGD("%s,frontend_close fail! dvb error id is %d\n", __FUNCTION__, rc);
+        }
     }
+
+    if (mbVLFEOpened) {
+        rc1 = AM_VLFEND_Close(mVLFrontDevID);
+        if (rc1 != 0) {
+            LOGD("%s,vlfrontend_close fail! dvb error id is %d\n", __FUNCTION__, rc1);
+        }
+    }
+
+    mbFEOpened = false;
+    mbVLFEOpened = false;
 #endif
     LOGD("%s,close frontend is ok\n", __FUNCTION__);
     return 0;
@@ -144,14 +188,27 @@ int CFrontEnd::setMode(int mode)
     AutoMutex _l( mLock );
 
     int rc = 0;
+    int devID = 0;
     if (mCurMode == mode) return 0;
-    rc = AM_FEND_SetMode(mFrontDevID, mode);
+    if (mVLCurMode == mode) return 0;
+    if (mode == TV_FE_ANALOG) {
+        devID = mVLFrontDevID;
+        rc = AM_VLFEND_SetMode(devID, mode);
+    } else {
+        devID = mFrontDevID;
+        rc = AM_FEND_SetMode(devID, mode);
+    }
     if (rc != 0) {
         LOGD("%s,front dev set mode failed! dvb error id is %d\n", __FUNCTION__, rc);
         return -1;
     }
+
+    if (devID == mFrontDevID)
+        mCurMode = mode;
+    else
+        mVLCurMode = mode;
 #endif
-    mCurMode = mode;
+
     return 0;
 }
 
@@ -220,7 +277,8 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
     mFEParas = paras;
 
     /*for compatible*/
-    mCurMode = mFEParas.getFEMode().getBase();
+    if (mFEParas.getFEMode().getBase() != TV_FE_ANALOG)
+        mCurMode = mFEParas.getFEMode().getBase();
     mCurFreq = mFEParas.getFrequency();
     mCurPara1 = mCurPara2 = 0;
     switch (mFEParas.getFEMode().getBase())
@@ -239,6 +297,7 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
         case TV_FE_ANALOG:
             mCurPara1 = enumToStdAndColor(mFEParas.getVideoStd(), mFEParas.getAudioStd());
             mCurPara2 = mFEParas.getAfc();
+            mVLCurMode = mFEParas.getFEMode().getBase();
             break;
         case TV_FE_ISDBT:
             mCurPara1 = mFEParas.getBandwidth();
@@ -334,8 +393,8 @@ int CFrontEnd::setPara(const char *paras, bool force )
         atv_para.u.analog.std = dvbfepara.analog.para.u.analog.std;
         atv_para.u.analog.flag = dvbfepara.analog.para.u.analog.flag;
         atv_para.u.analog.afc_range = dvbfepara.analog.para.u.analog.afc_range;
-        ret = AM_FEND_SetMode(mFrontDevID, dvbfepara.m_type);
-        ret = AM_FEND_SetPara(mFrontDevID, &atv_para);
+        ret = AM_VLFEND_SetMode(mVLFrontDevID, dvbfepara.m_type);
+        ret = AM_VLFEND_SetPara(mVLFrontDevID, &atv_para);
     }
     else
     {
@@ -403,6 +462,36 @@ void CFrontEnd::dmd_fend_callback(long dev_no __unused, int event_type __unused,
         return;
 
     LOGD("fend callback: status[0x%x]\n", evt->status);
+    if (evt->status &  TV_FE_HAS_LOCK) {
+        pFront->mCurSigEv.mCurSigStaus = FEEvent::EVENT_FE_HAS_SIG;
+        pFront->mCurSigEv.mCurFreq = evt->parameters.frequency;
+        pFront->mpObserver->onEvent(pFront->mCurSigEv);
+    } else if (evt->status & TV_FE_TIMEDOUT) {
+        pFront->mCurSigEv.mCurSigStaus = FEEvent::EVENT_FE_NO_SIG;
+        pFront->mCurSigEv.mCurFreq = evt->parameters.frequency;
+        pFront->mpObserver->onEvent(pFront->mCurSigEv);
+    }
+#endif
+}
+
+void CFrontEnd::v4l2_fend_callback(int dev_no, struct dvb_frontend_event *evt, void *user_data)
+{
+#ifdef SUPPORT_ADTV
+    CFrontEnd *pFront = (CFrontEnd *)user_data;
+    if (NULL == pFront) {
+        LOGD("%s,warnning : v4l2_fend_callback NULL == pFront\n", __FUNCTION__);
+        return ;
+    }
+    if (pFront->mpObserver == NULL) {
+        LOGD("%s,warnning : mpObserver NULL == mpObserver\n", __FUNCTION__);
+        return;
+    }
+
+    /*struct dvb_frontend_event *evt = (struct dvb_frontend_event *) param;*/
+    if (!evt)
+        return;
+
+    LOGD("vlfend callback: status[0x%x]\n", evt->status);
     if (evt->status &  TV_FE_HAS_LOCK) {
         pFront->mCurSigEv.mCurSigStaus = FEEvent::EVENT_FE_HAS_SIG;
         pFront->mCurSigEv.mCurFreq = evt->parameters.frequency;

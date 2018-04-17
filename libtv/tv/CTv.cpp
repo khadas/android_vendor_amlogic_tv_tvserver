@@ -595,20 +595,22 @@ int CTv::Scan(const char *feparas, const char *scanparas) {
     CTvScanner::ScanParas sp(scanparas);
     CFrontEnd::FEParas fp(feparas);
 
-    if (sp.getAtvMode() & TV_SCAN_ATVMODE_AUTO)
+    if (sp.getAtvMode() & TV_SCAN_ATVMODE_AUTO) {
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_ATV );
+        mFrontDev->Open(TV_FE_ANALOG);
+    }
     if (sp.getDtvMode() & TV_SCAN_DTVMODE_MANUAL) {
         CTvChannel::DeleteBetweenFreq(sp.getDtvFrequency1(), sp.getDtvFrequency2());
+        mFrontDev->Open(TV_FE_ATSC);
     } else {
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_DTV );
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_RADIO );
         CTvEvent::CleanAllEvent();
+        mFrontDev->Open(TV_FE_ATSC);
     }
 
     mTvScanner->setObserver(&mTvMsgQueue);
     mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
-
-    mFrontDev->Open(TV_FE_AUTO);
 
     return mTvScanner->Scan(fp, sp);
 }
@@ -884,7 +886,7 @@ void CTv::operateDeviceForScan(int type)
             mFrontDev->Open(TV_FE_ANALOG);
             mFrontDev->SetAnalogFrontEndTimerSwitch(1);
      }else if  (type & OPEN_DEV_FOR_SCAN_DTV) {
-            mFrontDev->Open(TV_FE_AUTO);
+            mFrontDev->Open(TV_FE_ATSC);
             mFrontDev->SetAnalogFrontEndTimerSwitch(0);
      }else if  (type & CLOSE_DEV_FOR_SCAN) {
             mFrontDev->SetAnalogFrontEndTimerSwitch(0);
@@ -1085,7 +1087,7 @@ int CTv::playDtvProgramUnlocked (const char *feparas, int mode, int freq, int pa
         mAv.DisableVideoBlackout();
     //mAv.ClearVideoBuffer();
 
-    mFrontDev->Open(TV_FE_AUTO);
+    mFrontDev->Open(TV_FE_ATSC);
     if (!(mTvAction & TV_ACTION_SCANNING)) {
         if (!feparas) {
             if ( SOURCE_ADTV == m_source_input_virtual ) {
@@ -1147,7 +1149,7 @@ int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCom
     mAv.ClearVideoBuffer();
 
     if (feparas) {
-        mFrontDev->Open(TV_FE_AUTO);
+        mFrontDev->Open(TV_FE_ATSC);
         if (!(mTvAction & TV_ACTION_SCANNING)) {
             mFrontDev->setPara(feparas);
         }
@@ -1317,7 +1319,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
 
         //set TUNER
         //usleep(400 * 1000);
-        mFrontDev->Open(TV_FE_AUTO);
+        mFrontDev->Open(TV_FE_ANALOG);
         mFrontDev->setPara ( paras, force );
         //usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
@@ -1333,12 +1335,13 @@ int CTv::setFrontEnd ( const char *paras, bool force )
                 }
             }
         }
-        mFrontDev->Open(TV_FE_AUTO);
+        mFrontDev->Open(TV_FE_ATSC);
         mFrontDev->setPara ( paras, force );
     }
 
     int mode, freq, para1, para2;
     mFrontDev->getPara(&mode, &freq, &para1, &para2);
+    mode = fp.getFEMode().getBase() == TV_FE_ANALOG;
     Tv_RrtUpdate(freq, mode, 0);
     Tv_Easupdate();
     return 0;
@@ -1787,7 +1790,8 @@ int CTv::OpenTv ( void )
     SSMReadBlackoutEnable(&enable);
     mBlackoutEnable = ((enable==1)?true:false);
 
-    mFrontDev->Open(TV_FE_AUTO);
+    mFrontDev->Open(TV_FE_ANALOG);
+    mFrontDev->Open(TV_FE_ATSC);
     mFrontDev->autoLoadFE();
     mAv.Open();
     resetDmxAndAvSource();
@@ -2032,7 +2036,7 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         mFrontDev->Open(TV_FE_ANALOG);
         mFrontDev->SetAnalogFrontEndTimerSwitch(1);
     } else if ( source_input == SOURCE_DTV ) {
-        mFrontDev->Open(TV_FE_AUTO);
+        mFrontDev->Open(TV_FE_ATSC);
         mFrontDev->SetAnalogFrontEndTimerSwitch(0);
     } else {
         mFrontDev->Close();

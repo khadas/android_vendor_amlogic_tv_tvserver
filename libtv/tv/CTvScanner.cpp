@@ -71,7 +71,7 @@ int CTvScanner::Scan(CFrontEnd::FEParas &fp, ScanParas &sp) {
 
     AM_SCAN_CreatePara_t para;
     AM_DMX_OpenPara_t dmx_para;
-    void* handle =nullptr;
+    AM_SCAN_Handle_t handle = 0;
     int i;
 
     LOGD("Scan fe[%s] scan[%s]", fp.toString().c_str(), sp.toString().c_str());

@@ -105,7 +105,7 @@ int CFrontEnd::Open(int mode)
     memset(&para, 0, sizeof(AM_FEND_OpenPara_t));
     para.mode = mode;
 
-    if (TV_FE_ANALOG == mode) {
+    if (TV_FE_ANALOG == mode || mode == FE_AUTO) {
         rc = AM_VLFEND_Open(mVLFrontDevID, &para);
         if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
             LOGD("%s,frontend dev[%d] open failed! dvb error id is %d\n",
@@ -116,7 +116,10 @@ int CFrontEnd::Open(int mode)
         LOGD("%s,frontend dev[%d] open success!\n", __FUNCTION__, mVLFrontDevID);
         mbVLFEOpened = true;
         mVLCurMode = mode;
-    } else {
+    }
+
+    para.mode = mode;
+    if (TV_FE_ANALOG != mode) {
         rc = AM_FEND_Open(mFrontDevID, &para);
         if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
             LOGD("%s,frontend dev[%d] open failed! dvb error id is %d\n",

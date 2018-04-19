@@ -1790,8 +1790,7 @@ int CTv::OpenTv ( void )
     SSMReadBlackoutEnable(&enable);
     mBlackoutEnable = ((enable==1)?true:false);
 
-    mFrontDev->Open(TV_FE_ANALOG);
-    mFrontDev->Open(TV_FE_ATSC);
+    mFrontDev->Open(FE_AUTO);
     mFrontDev->autoLoadFE();
     mAv.Open();
     resetDmxAndAvSource();

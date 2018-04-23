@@ -84,6 +84,8 @@ public:
     Return<int32_t> setHdmiEdidVersion(int32_t port_id, int32_t ver) override;
     Return<int32_t> getHdmiEdidVersion(int32_t port_id) override;
     Return<int32_t> saveHdmiEdidVersion(int32_t port_id, int32_t ver) override;
+    Return<int32_t> setHdmiColorRangeMode(int32_t range_mode) override;
+    Return<int32_t> getHdmiColorRangeMode() override;
     Return<int32_t> handleGPIO(const hidl_string& key, int32_t is_out, int32_t edge) override;
     Return<int32_t> setSourceInput(int32_t inputSrc) override;
     Return<int32_t> setSourceInputExt(int32_t inputSrc, int32_t vInputSrc) override;

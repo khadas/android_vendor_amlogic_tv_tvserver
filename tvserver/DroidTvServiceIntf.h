@@ -65,9 +65,11 @@ public:
 
     int isDviSIgnal();
     int isVgaTimingInHdmi();
-    int setHdmiEdidVersion(int port_id, int ver);
-    int getHdmiEdidVersion(int port_id);
-    int saveHdmiEdidVersion(int port_id, int ver);
+    int setHdmiEdidVersion(int32_t port_id, int32_t ver);
+    int getHdmiEdidVersion(int32_t port_id);
+    int saveHdmiEdidVersion(int32_t port_id, int32_t ver);
+    int setHdmiColorRangeMode(int32_t range_mode);
+    int getHdmiColorRangeMode();
     int handleGPIO(const std::string& key, int is_out, int edge);
     int setSourceInput(int32_t inputSrc);
     int setSourceInput(int32_t inputSrc, int32_t vInputSrc);

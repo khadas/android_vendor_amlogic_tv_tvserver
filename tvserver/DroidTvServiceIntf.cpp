@@ -535,16 +535,26 @@ int DroidTvServiceIntf::isVgaTimingInHdmi() {
     return mpTv->isVgaFmtInHdmi();
 }
 
-int DroidTvServiceIntf::setHdmiEdidVersion(int port_id, int ver) {
+int DroidTvServiceIntf::setHdmiEdidVersion(int32_t port_id, int32_t ver) {
     return mpTv->SetHdmiEdidVersion((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
 }
 
-int DroidTvServiceIntf::getHdmiEdidVersion(int port_id) {
+int DroidTvServiceIntf::getHdmiEdidVersion(int32_t port_id) {
     return mpTv->GetHdmiEdidVersion((tv_hdmi_port_id_t)port_id);
 }
 
-int DroidTvServiceIntf::saveHdmiEdidVersion(int port_id, int ver) {
+int DroidTvServiceIntf::saveHdmiEdidVersion(int32_t port_id, int32_t ver) {
     return mpTv->SaveHdmiEdidVersion((tv_hdmi_port_id_t)port_id, (tv_hdmi_edid_version_t)ver);
+}
+
+int DroidTvServiceIntf::setHdmiColorRangeMode(int32_t range_mode)
+{
+    return mpTv->SetHdmiColorRangeMode((tv_hdmi_color_range_t)range_mode);
+}
+
+int DroidTvServiceIntf::getHdmiColorRangeMode()
+{
+    return mpTv->GetHdmiColorRangeMode();
 }
 
 int DroidTvServiceIntf::handleGPIO(const std::string& key, int is_out, int edge) {

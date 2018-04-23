@@ -196,6 +196,14 @@ Return<int32_t> DroidTvServer::saveHdmiEdidVersion(int32_t port_id, int32_t ver)
     return mTvServiceIntf->saveHdmiEdidVersion(port_id, ver);
 }
 
+Return<int32_t> DroidTvServer::setHdmiColorRangeMode(int32_t range_mode) {
+    return mTvServiceIntf->setHdmiColorRangeMode(range_mode);
+}
+
+Return<int32_t> DroidTvServer::getHdmiColorRangeMode() {
+    return mTvServiceIntf->getHdmiColorRangeMode();
+}
+
 Return<int32_t> DroidTvServer::handleGPIO(const hidl_string& key, int32_t is_out, int32_t edge) {
     return mTvServiceIntf->handleGPIO(key, is_out, edge);
 }

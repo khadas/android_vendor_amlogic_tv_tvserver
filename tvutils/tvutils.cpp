@@ -301,27 +301,6 @@ int tvSavePQMode ( vpp_picture_mode_t mode )
     return -1;
 }
 
-int tvGetPQParams(source_input_param_t source_input_param, vpp_picture_mode_t pq_mode, vpp_pq_para_t *pq_para)
-{
-    const sp<SystemControlClient> &sws = getSystemControlService();
-
-    if (sws != nullptr) {
-        vpp_pq_para_t tmp_value;
-        tmp_value.brightness = sws->getPQParams(source_input_param, pq_mode, BRIGHTNESS);
-        tmp_value.contrast = sws->getPQParams(source_input_param, pq_mode, CONTRAST);
-        tmp_value.hue = sws->getPQParams(source_input_param, pq_mode, HUE);
-        tmp_value.nr = sws->getPQParams(source_input_param, pq_mode, NR);
-        tmp_value.saturation = sws->getPQParams(source_input_param, pq_mode, SATURATION);
-        tmp_value.sharpness = sws->getPQParams(source_input_param, pq_mode, SHARPNESS);
-        tmp_value.backlight = sws->getPQParams(source_input_param, pq_mode, BACKLIGHT);
-
-        *pq_para = tmp_value;
-        return 0;
-    }
-
-    return -1;
-}
-
 int tvGetAutoSwitchPCModeFlag(void)
 {
     const sp<SystemControlClient> &sws = getSystemControlService();
@@ -591,31 +570,81 @@ int tvGetGamma(void)
     return -1;
 }
 
-int tvSetEyeProtectionMode(source_input_param_t source_input_param, int enable)
+int tvSetEyeProtectionMode(tv_source_input_t source_input, int enable, int is_save)
 {
     const sp<SystemControlClient> &sws = getSystemControlService();
     if (sws != nullptr) {
-        return sws->setEyeProtectionMode(source_input_param, enable);
+        return sws->setEyeProtectionMode((int)source_input, enable, is_save);
     }
 
     return -1;
 }
 
-int tvGetEyeProtectionMode(void)
+int tvGetEyeProtectionMode(tv_source_input_t source_input)
 {
     const sp<SystemControlClient> &sws = getSystemControlService();
     if (sws != nullptr) {
-        return sws->getEyeProtectionMode();
+        return sws->getEyeProtectionMode((int)source_input);
     }
 
     return -1;
 }
 
-int tvGetDisplayMode(source_input_param_t source_input_param)
+int tvSetDisplayMode(vpp_display_mode_t disp_mode, tv_source_input_t source_input, int is_save)
 {
     const sp<SystemControlClient> &sws = getSystemControlService();
     if (sws != nullptr) {
-        return sws->getDisplayMode(source_input_param);
+        return sws->setDisplayMode((int)source_input, (int)disp_mode, 1);
+    }
+
+    return -1;
+}
+
+int tvGetDisplayMode(tv_source_input_t source_input)
+{
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
+        return sws->getDisplayMode((int)source_input);
+    }
+
+    return -1;
+}
+
+int tvSaveDisplayMode(vpp_display_mode_t disp_mode, tv_source_input_t source_input)
+{
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
+        return sws->saveDisplayMode((int)disp_mode, (int)source_input);
+    }
+
+    return -1;
+}
+
+int tvSetBacklight(tv_source_input_t source_input, int value, int is_save)
+{
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
+        return sws->setBacklight((int)source_input, value, is_save);
+    }
+
+    return -1;
+}
+
+int tvGetBacklight(tv_source_input_t source_input)
+{
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
+        return sws->getBacklight((int)source_input);
+    }
+
+    return -1;
+}
+
+int tvSaveBacklight(tv_source_input_t source_input, int value)
+{
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
+        return sws->saveBacklight((int)source_input, value);
     }
 
     return -1;
@@ -626,16 +655,6 @@ int tvFactoryResetNonlinear(void)
     const sp<SystemControlClient> &sws = getSystemControlService();
     if (sws != nullptr) {
         return sws->factoryResetNonlinear();
-    }
-
-    return -1;
-}
-
-int tvGetOverscanParam(source_input_param_t source_input_param, tvin_cutwin_param_t id)
-{
-    const sp<SystemControlClient> &sws = getSystemControlService();
-    if (sws != nullptr) {
-        return sws->getOverscanParam(source_input_param, (int)id);
     }
 
     return -1;

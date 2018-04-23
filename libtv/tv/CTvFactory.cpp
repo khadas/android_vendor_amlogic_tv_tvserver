@@ -1256,7 +1256,7 @@ int CTvFactory::formatOutputGainParams(int value)
 int CTvFactory::fbcSetColorTemperature(vpp_color_temperature_mode_t temp_mode)
 {
     int ret = -1;
-    if (CVpp::getInstance()->GetEyeProtectionMode()) {
+    if (1/*CVpp::getInstance()->GetEyeProtectionMode()*/) {
         tcon_rgb_ogo_t rgb_ogo;
         colorTempBatchGet(temp_mode, &rgb_ogo);
         rgb_ogo.b_gain /= 2;

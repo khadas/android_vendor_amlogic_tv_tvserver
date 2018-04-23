@@ -17,7 +17,6 @@
 #include <string>
 #include <map>
 #include "PQType.h"
-#include "amstream.h"
 
 #ifndef DVB_SUCCESS
 #define DVB_SUCCESS     (0)
@@ -48,7 +47,6 @@ int tvGetActualSize(int id);
 int tvSetPQMode ( vpp_picture_mode_t mode, int is_save, int is_autoswitch);
 vpp_picture_mode_t tvGetPQMode ( void );
 int tvSavePQMode ( vpp_picture_mode_t mode);
-int tvGetPQParams(source_input_param_t source_input_param, vpp_picture_mode_t pq_mode, vpp_pq_para_t *pq_para);
 int tvGetAutoSwitchPCModeFlag(void);
 
 int tvSetBrightness ( int brightness, int is_save );
@@ -77,11 +75,15 @@ int tvGetNoiseReductionMode ( void );
 int tvSaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode );
 int tvSetGamma(int gamma_curve, int is_save);
 int tvGetGamma(void);
-int tvSetEyeProtectionMode(source_input_param_t source_input_param, int enable);
-int tvGetEyeProtectionMode(void);
-int tvGetDisplayMode(source_input_param_t source_input_param);
+int tvSetEyeProtectionMode(tv_source_input_t source_input, int enable, int is_save);
+int tvGetEyeProtectionMode(tv_source_input_t source_input);
+int tvSetDisplayMode(vpp_display_mode_t disp_mode, tv_source_input_t source_input, int is_save);
+int tvGetDisplayMode(tv_source_input_t source_input);
+int tvSaveDisplayMode(vpp_display_mode_t disp_mode, tv_source_input_t source_input);
+int tvSetBacklight(tv_source_input_t source_input, int value, int is_save);
+int tvGetBacklight(tv_source_input_t source_input);
+int tvSaveBacklight(tv_source_input_t source_input, int value);
 int tvFactoryResetNonlinear(void);
-int tvGetOverscanParam(source_input_param_t source_input_param, tvin_cutwin_param_t id);
 
 int tvFactoryResetPQMode(void);
 int tvFactoryResetColorTemp(void);

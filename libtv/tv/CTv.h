@@ -207,7 +207,6 @@ public:
     virtual int playDtvTimeShiftUnlocked(const char *feparas, void *para, int audioCompetation);
     virtual int stopPlayingLock();
     virtual int resetFrontEndPara ( frontend_para_set_t feParms );
-    virtual int SetDisplayMode ( vpp_display_mode_t display_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt );
     int GetAudioVolumeCompensationVal(int progDbId);
     //dtv audio track info
     int getAudioTrackNum ( int progId );
@@ -321,10 +320,10 @@ public:
     int Tv_GetBacklight_Switch ( void );
     int Tv_SetColorTemperature ( vpp_color_temperature_mode_t mode, tv_source_input_t tv_source_input, int is_save );
     vpp_color_temperature_mode_t Tv_GetColorTemperature ( tv_source_input_t tv_source_input );
-    virtual int Tv_SetDisplayMode ( vpp_display_mode_t mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t fmt, int is_save );
-    virtual int Tv_SaveDisplayMode ( vpp_display_mode_t mode, tv_source_input_t tv_source_input );
     virtual int Tv_SaveColorTemperature ( vpp_color_temperature_mode_t mode, tv_source_input_t tv_source_input );
+    virtual int Tv_SetDisplayMode ( vpp_display_mode_t mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t fmt, int is_save );
     virtual vpp_display_mode_t Tv_GetDisplayMode ( tv_source_input_t tv_source_input );
+    virtual int Tv_SaveDisplayMode ( vpp_display_mode_t mode, tv_source_input_t tv_source_input );
     virtual int Tv_SetNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_t tv_source_input, int is_save );
     virtual vpp_noise_reduction_mode_t Tv_GetNoiseReductionMode ( tv_source_input_t tv_source_input );
     virtual int Tv_SaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_t tv_source_input );

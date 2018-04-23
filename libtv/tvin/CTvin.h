@@ -11,8 +11,6 @@
 #define _CTVIN_H
 
 #include <pthread.h>
-#include <cm.h>
-#include <ve.h>
 #include <utils/Thread.h>
 #include <utils/Mutex.h>
 #include "PQType.h"
@@ -73,61 +71,12 @@ enum {
 // ***************************************************************************
 // *** TVIN general definition/enum/struct ***********************************
 // ***************************************************************************
-/* tvin input port select */
-
-const char *tvin_port_str(enum tvin_port_e port);
-
-//tvin signal status
-typedef enum tvin_sig_status_e {
-    TVIN_SIG_STATUS_NULL = 0, // processing status from init to the finding of the 1st confirmed status
-    TVIN_SIG_STATUS_NOSIG,    // no signal - physically no signal
-    TVIN_SIG_STATUS_UNSTABLE, // unstable - physically bad signal
-    TVIN_SIG_STATUS_NOTSUP,   // not supported - physically good signal & not supported
-    TVIN_SIG_STATUS_STABLE,   // stable - physically good signal & supported
-} tvin_sig_status_t;
-
-const char *tvin_sig_status_str(enum tvin_sig_status_e status);
 
 // tvin parameters
 #define TVIN_PARM_FLAG_CAP      0x00000001 //tvin_parm_t.flag[ 0]: 1/enable or 0/disable frame capture function
 #define TVIN_PARM_FLAG_CAL      0x00000002 //tvin_parm_t.flag[ 1]: 1/enable or 0/disable adc calibration
 /*used for processing 3d in ppmgr set this flag to drop one field and send real height in vframe*/
 #define TVIN_PARM_FLAG_2D_TO_3D 0x00000004 //tvin_parm_t.flag[ 2]: 1/enable or 0/disable 2D->3D mode
-
-const char *tvin_trans_fmt_str(enum tvin_trans_fmt trans_fmt);
-
-typedef enum tvin_color_fmt_e {
-    TVIN_RGB444 = 0,
-    TVIN_YUV422, // 1
-    TVIN_YUV444, // 2
-    TVIN_YUYV422,// 3
-    TVIN_YVYU422,// 4
-    TVIN_UYVY422,// 5
-    TVIN_VYUY422,// 6
-    TVIN_NV12,   // 7
-    TVIN_NV21,   // 8
-    TVIN_BGGR,   // 9  raw data
-    TVIN_RGGB,   // 10 raw data
-    TVIN_GBRG,   // 11 raw data
-    TVIN_GRBG,   // 12 raw data
-    TVIN_COLOR_FMT_MAX,
-} tvin_color_fmt_t;
-
-const char *tvin_color_fmt_str(enum tvin_color_fmt_e color_fmt);
-typedef enum tvin_scan_mode_e {
-    TVIN_SCAN_MODE_NULL = 0,
-    TVIN_SCAN_MODE_PROGRESSIVE,
-    TVIN_SCAN_MODE_INTERLACED,
-} tvin_scan_mode_t;
-
-typedef struct tvin_info_s {
-    enum tvin_trans_fmt    trans_fmt;
-    enum tvin_sig_fmt_e    fmt;
-    volatile enum tvin_sig_status_e status;
-    enum tvin_color_fmt_e  cfmt;
-    unsigned int           fps;
-    unsigned int           reserved;
-} tvin_info_t;
 
 typedef struct tvin_buf_info_s {
     unsigned int vf_size;

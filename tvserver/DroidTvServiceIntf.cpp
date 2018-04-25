@@ -622,6 +622,17 @@ int DroidTvServiceIntf::tvSetFrontEnd(const std::string& feparas, int32_t force)
     return mpTv->setFrontEnd(feparas.c_str(), (force != 0));
 }
 
+int DroidTvServiceIntf::tvSetFrontendParms(int32_t feType, int32_t freq, int32_t vStd, int32_t aStd,  int32_t p1, int32_t p2) {
+    frontend_para_set_t feParms;
+    feParms.mode = (fe_type_t)feType;
+    feParms.freq = freq;
+    feParms.videoStd = (atv_video_std_t)vStd;
+    feParms.audioStd = (atv_audio_std_t)aStd;
+    feParms.para1 = p1;
+    feParms.para2 = p2;
+    return mpTv->resetFrontEndPara(feParms);
+}
+
 int DroidTvServiceIntf::sendPlayCmd(int32_t cmd, const std::string& id, const std::string& param) {
     return mpTv->doPlayCommand(cmd, id.c_str(), param.c_str());
 }

@@ -86,6 +86,7 @@ public:
     int resumeScan();
     int dtvStopScan();
     int tvSetFrontEnd(const std::string& feparas, int32_t force);
+    int tvSetFrontendParms(int32_t feType, int32_t freq, int32_t vStd, int32_t aStd, int32_t p1, int32_t p2);
     int sendPlayCmd(int32_t cmd, const std::string& id, const std::string& param);
     int getCurrentSourceInput();
     int getCurrentVirtualSourceInput();

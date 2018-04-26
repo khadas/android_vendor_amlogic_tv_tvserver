@@ -500,6 +500,29 @@ int CTvin::VDIN_EnableRDMA ( int enable )
     return 0;
 }
 
+int CTvin::VDIN_SetColorRangeMode(tvin_color_range_t range_mode)
+{
+    LOGD("%s: mode = %d\n", __FUNCTION__, range_mode);
+    int rt = VDIN_DeviceIOCtl ( TVIN_IOC_SET_COLOR_RANGE, &range_mode );
+    if ( rt < 0 ) {
+        LOGW ( "Vdin Set ColorRange Mode error(%s)!\n", strerror(errno ));
+    }
+
+    return rt;
+}
+
+int CTvin::VDIN_GetColorRangeMode(void)
+{
+    int range_mode = TVIN_COLOR_RANGE_AUTO;
+    int rt = VDIN_DeviceIOCtl ( TVIN_IOC_GET_COLOR_RANGE, &range_mode );
+    if ( rt < 0 ) {
+        LOGW ( "Vdin Get ColorRange Mode error(%s)!\n", strerror(errno ));
+    }
+    LOGD("%s: mode = %d\n", __FUNCTION__, range_mode);
+
+    return range_mode;
+}
+
 // AFE
 int CTvin::AFE_OpenModule ( void )
 {

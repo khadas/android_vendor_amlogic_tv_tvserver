@@ -105,22 +105,6 @@ int CHDMIRxManager::GetHdmiHdcpKeyKsvInfo(struct _hdcp_ksv *msg)
     return 0;
 }
 
-int CHDMIRxManager::SetHdmiColorRangeMode(tv_hdmi_color_range_t range_mode)
-{
-    char val[5] = {0};
-    sprintf(val, "%d", range_mode);
-    tvWriteSysfs(HDMI_FORCE_COLOR_RANGE, val);
-    return 0;
-}
-
-tv_hdmi_color_range_t CHDMIRxManager::GetHdmiColorRangeMode()
-{
-    char value[5] = {0};
-    tvReadSysfs(HDMI_FORCE_COLOR_RANGE, value);
-
-    return (tv_hdmi_color_range_t)atoi(value);
-}
-
 int CHDMIRxManager::SetHdmiPortCecPhysicAddr()
 {
     char val[10] = {0};

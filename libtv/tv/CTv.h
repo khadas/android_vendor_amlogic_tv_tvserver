@@ -329,8 +329,8 @@ public:
     virtual int Tv_SaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_t tv_source_input );
     int setEyeProtectionMode(int enable);
     int getEyeProtectionMode();
-    int SetHdmiColorRangeMode(tv_hdmi_color_range_t range_mode);
-    tv_hdmi_color_range_t GetHdmiColorRangeMode();
+    int SetHdmiColorRangeMode(tvin_color_range_t range_mode);
+    tvin_color_range_t GetHdmiColorRangeMode();
     int setGamma(vpp_gamma_curve_t gamma_curve, int is_save);
     virtual void updateSubtitle(int, int);
     int GetHdmiAvHotplugDetectOnoff();

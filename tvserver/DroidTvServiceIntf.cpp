@@ -549,7 +549,7 @@ int DroidTvServiceIntf::saveHdmiEdidVersion(int32_t port_id, int32_t ver) {
 
 int DroidTvServiceIntf::setHdmiColorRangeMode(int32_t range_mode)
 {
-    return mpTv->SetHdmiColorRangeMode((tv_hdmi_color_range_t)range_mode);
+    return mpTv->SetHdmiColorRangeMode((tvin_color_range_t)range_mode);
 }
 
 int DroidTvServiceIntf::getHdmiColorRangeMode()
@@ -816,7 +816,7 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
         }
         case SET_HDMI_COLOR_RANGE_MODE: {
             int range_mode = p.readInt32();
-            ret = mpTv->SetHdmiColorRangeMode((tv_hdmi_color_range_t)range_mode);
+            ret = mpTv->SetHdmiColorRangeMode((tvin_color_range_t)range_mode);
             break;
         }
         case GET_HDMI_COLOR_RANGE_MODE:

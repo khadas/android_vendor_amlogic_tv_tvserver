@@ -3044,14 +3044,14 @@ int CTv::SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable)
     return 0;
 }
 
-int CTv::SetHdmiColorRangeMode(tv_hdmi_color_range_t range_mode)
+int CTv::SetHdmiColorRangeMode(tvin_color_range_t range_mode)
 {
-    return mHDMIRxManager.SetHdmiColorRangeMode(range_mode);
+    return mpTvin->VDIN_SetColorRangeMode(range_mode);
 }
 
-tv_hdmi_color_range_t CTv::GetHdmiColorRangeMode()
+tvin_color_range_t CTv::GetHdmiColorRangeMode()
 {
-    return mHDMIRxManager.GetHdmiColorRangeMode();
+    return (tvin_color_range_t)mpTvin->VDIN_GetColorRangeMode();
 }
 
 int CTv::SetVideoAxis(int x, int y, int width, int heigth)

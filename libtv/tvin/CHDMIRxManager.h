@@ -45,8 +45,6 @@ class CHDMIRxManager {
         int HdmiRxHdcpVerSwitch(tv_hdmi_hdcp_version_t version);
         int HdmiRxHdcpOnOff(tv_hdmi_hdcpkey_enable_t flag);
         int GetHdmiHdcpKeyKsvInfo(struct _hdcp_ksv *msg);
-        int SetHdmiColorRangeMode(tv_hdmi_color_range_t range_mode);
-        tv_hdmi_color_range_t GetHdmiColorRangeMode();
         int SetHdmiPortCecPhysicAddr();
 };
 

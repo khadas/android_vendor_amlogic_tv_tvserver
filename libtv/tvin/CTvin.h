@@ -419,6 +419,8 @@ typedef struct tvafe_pin_mux_s {
 #define TVIN_IOC_UNFREEZE_VF        _IO(TVIN_IOC_MAGIC, 0x46)
 #define TVIN_IOC_SNOWON             _IO(TVIN_IOC_MAGIC, 0x47)
 #define TVIN_IOC_SNOWOFF            _IO(TVIN_IOC_MAGIC, 0x48)
+#define TVIN_IOC_GET_COLOR_RANGE	_IOR(TVIN_IOC_MAGIC, 0X49, enum tvin_color_range_e)
+#define TVIN_IOC_SET_COLOR_RANGE	_IOW(TVIN_IOC_MAGIC, 0X4a, enum tvin_color_range_e)
 
 
 //TVAFE
@@ -495,13 +497,11 @@ typedef enum tv_hdmi_hdcpkey_enable_e {
     hdcpkey_disable ,
 } tv_hdmi_hdcpkey_enable_t;
 
-typedef enum tv_hdmi_color_range_e {
-    AUTO_RANGE = 0,
-    FULL_RANGE,
-    LIMIT_RANGE,
-} tv_hdmi_color_range_t;
-
-
+typedef enum tvin_color_range_e {
+    TVIN_COLOR_RANGE_AUTO = 0,
+    TVIN_COLOR_RANGE_FULL,
+    TVIN_COLOR_RANGE_LIMIT,
+} tvin_color_range_t;
 
 typedef struct adc_cal_s {
     unsigned int rcr_max;
@@ -636,6 +636,8 @@ public:
     int VDIN_SetDIBypassProg ( int enable );
     int VDIN_SetDIBypassDynamic ( int flag );
     int VDIN_EnableRDMA ( int enable );
+    int VDIN_SetColorRangeMode(tvin_color_range_t range_mode);
+    int VDIN_GetColorRangeMode(void);
 
     int getVdinDeviceFd();
     int AFE_OpenModule ( void );

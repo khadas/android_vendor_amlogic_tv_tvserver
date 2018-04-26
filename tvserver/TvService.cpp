@@ -920,7 +920,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     }
     case SET_HDMI_COLOR_RANGE_MODE: {
         int range_mode = p.readInt32();
-        int tmpRet = mpTv->SetHdmiColorRangeMode((tv_hdmi_color_range_t)range_mode);
+        int tmpRet = mpTv->SetHdmiColorRangeMode((tvin_color_range_t)range_mode);
         r->writeInt32(tmpRet);
         break;
     }

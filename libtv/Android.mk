@@ -32,7 +32,6 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
   tv/CAutoPQparam.cpp \
-  tv/AutoBackLight.cpp \
   tv/CBootvideoStatusDetect.cpp \
   tv/CTvEv.cpp \
   tv/CTvSubtitle.cpp \

@@ -31,7 +31,6 @@
 #include "CTvSubtitle.h"
 #include "CAv.h"
 #include "CTvDmx.h"
-#include "AutoBackLight.h"
 #include "CAutoPQparam.h"
 #include "CBootvideoStatusDetect.h"
 #include "tvin/CDevicesPollStatusDetect.h"
@@ -484,7 +483,6 @@ protected:
     CTvDmx mTvDmx1;
     CTvDmx mTvDmx2;
     CTvMsgQueue mTvMsgQueue;
-    AutoBackLight mAutoBackLight;
     //
     volatile int mTvAction;
     volatile TvRunStatus_t mTvStatus;

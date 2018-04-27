@@ -545,14 +545,8 @@ int CTv::setTvObserver ( TvIObserver *ob )
 
 void CTv::sendTvEvent ( const CTvEv &ev )
 {
-    /* send sigstate to AutoBackLight */
     if (ev.getEvType() == CTvEv::TV_EVENT_SIGLE_DETECT) {
         TvEvent::SignalInfoEvent *pEv = (TvEvent::SignalInfoEvent *)(&ev);
-        if (pEv->mStatus == TVIN_SIG_STATUS_STABLE) {
-            mAutoBackLight.updateSigState(mAutoBackLight.SIG_STATE_STABLE);
-        } else {
-            mAutoBackLight.updateSigState(mAutoBackLight.SIG_STATE_NOSIG);
-        }
     }
 
     LOGD ( "%s, tvaction=%x", __FUNCTION__, mTvAction);

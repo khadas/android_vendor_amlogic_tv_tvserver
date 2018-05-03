@@ -660,14 +660,16 @@ void DroidTvServiceIntf::dtvGetScanFreqListMode(int mode, std::vector<FreqList> 
     int size = out.size();
     LOGD("DroidTvServiceIntf dtvGetScanFreqListMode size = %d, mode = %d", size, mode);
 
+    std::vector<FreqList> freqlisttmp(size);
     for (int i = 0; i < (int)out.size(); i++) {
-        freqlist[i].ID = out[i]->getID();
-        freqlist[i].freq = out[i]->getFrequency();
-        freqlist[i].channelNum = out[i]->getLogicalChannelNum();
+        freqlisttmp[i].ID = out[i]->getID();
+        freqlisttmp[i].freq = out[i]->getFrequency();
+        freqlisttmp[i].channelNum = out[i]->getLogicalChannelNum();
         //r->writeInt32(out[i]->getID());
         //r->writeInt32(out[i]->getFrequency());
         //r->writeInt32(out[i]->getLogicalChannelNum());
     }
+    freqlist = freqlisttmp;
 }
 
 int DroidTvServiceIntf::atvdtvGetScanStatus() {

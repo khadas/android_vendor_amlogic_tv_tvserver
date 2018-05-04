@@ -1605,55 +1605,55 @@ const char *CTvScanner::getDtvScanListName(int mode)
 
     switch (base) {
         case TV_FE_DTMB:
-            list_name = (char *)"CHINA,Default DTMB ALL";
+            list_name = (char *)"CN,Default DTMB ALL";
             break;
         case TV_FE_QAM:
-            list_name = (char *)"China,DVB-C allband";
+            list_name = (char *)"CN,DVB-C allband";
             break;
         case TV_FE_OFDM:
-            list_name = (char *)"UK,Default DVB-T";
+            list_name = (char *)"GB,Default DVB-T";
             break;
         case TV_FE_ATSC:
             switch (list) {
             case 1:
-                list_name = (char *)"U.S.,ATSC Cable Standard";
+                list_name = (char *)"US,ATSC Cable Standard";
                 break;
             case 2:
-                list_name = (char *)"U.S.,ATSC Cable IRC";
+                list_name = (char *)"US,ATSC Cable IRC";
                 break;
             case 3:
-                list_name = (char *)"U.S.,ATSC Cable HRC";
+                list_name = (char *)"US,ATSC Cable HRC";
                 break;
             case 4:
-                list_name = (char *)"U.S.,ATSC Cable Auto";
+                list_name = (char *)"US,ATSC Cable Auto";
                 break;
             case 5:
-                list_name = (char *)"U.S.,ATSC Air";
+                list_name = (char *)"US,ATSC Air";
                 break;
             case 6:
-                list_name = (char *)"U.S.,NTSC Cable Standard";
+                list_name = (char *)"US,NTSC Cable Standard";
                 break;
             case 7:
-                list_name = (char *)"U.S.,NTSC Cable IRC";
+                list_name = (char *)"US,NTSC Cable IRC";
                 break;
             case 8:
-                list_name = (char *)"U.S.,NTSC Cable HRC";
+                list_name = (char *)"US,NTSC Cable HRC";
                 break;
             case 9:
-                list_name = (char *)"U.S.,NTSC Cable Auto";
+                list_name = (char *)"US,NTSC Cable Auto";
                 break;
             case 10:
-                list_name = (char *)"U.S.,NTSC Air";
+                list_name = (char *)"US,NTSC Air";
                 break;
             default:
-                list_name = (char *)"U.S.,ATSC Air";
+                list_name = (char *)"US,ATSC Air";
                 break;
             }break;
         case TV_FE_ISDBT:
-            list_name = (char *)"BRAZIL,Default ISDBT";
+            list_name = (char *)"BR,Default ISDBT";
             break;
         default:
-            list_name = (char *)"CHINA,Default DTMB ALL";
+            list_name = (char *)"CN,Default DTMB ALL";
             LOGD("unknown scan mode %d, using default[%s]", mode, list_name);
             break;
     }
@@ -2182,16 +2182,16 @@ int CTvScanner::getAtscChannelPara(int attennaType, Vector<sp<CTvChannel> > &vcp
 {
     switch (attennaType) { //region name should be remove to config file and read here
     case 1:
-        CTvRegion::getChannelListByName((char *)"U.S.,ATSC Air", vcp);
+        CTvRegion::getChannelListByName((char *)"US,ATSC Air", vcp);
         break;
     case 2:
-        CTvRegion::getChannelListByName((char *)"U.S.,ATSC Cable Standard", vcp);
+        CTvRegion::getChannelListByName((char *)"US,ATSC Cable Standard", vcp);
         break;
     case 3:
-        CTvRegion::getChannelListByName((char *)"U.S.,ATSC Cable IRC", vcp);
+        CTvRegion::getChannelListByName((char *)"US,ATSC Cable IRC", vcp);
         break;
     case 4:
-        CTvRegion::getChannelListByName((char *)"U.S.,ATSC Cable HRC", vcp);
+        CTvRegion::getChannelListByName((char *)"US,ATSC Cable HRC", vcp);
         break;
     default:
         return -1;

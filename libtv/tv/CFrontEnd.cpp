@@ -32,6 +32,7 @@
 #ifdef SUPPORT_ADTV
 #include "am_misc.h"
 #include "am_debug.h"
+#include <tvconfig.h>
 
 extern "C" {
 #include "am_av.h"
@@ -1051,7 +1052,15 @@ bool CFrontEnd::FEParas::operator == (const FEParas &fep) const
 #ifdef SUPPORT_ADTV
 int CFrontEnd::GetTSSource(AM_DMX_Source_t *src)
 {
-    AM_FEND_GetTSSource(mFrontDevID, src);
+    int isTV = config_get_int(CFG_SECTION_TV, FRONTEND_TS_SOURCE, 0);
+
+    if (isTV == 2) {
+        *src = AM_DMX_SRC_TS2;
+    } else if (isTV == 1) {
+        *src = AM_DMX_SRC_TS1;
+    }else{
+        *src = AM_DMX_SRC_TS0;
+    }
     return 0;
 }
 

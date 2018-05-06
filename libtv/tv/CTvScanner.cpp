@@ -1725,13 +1725,17 @@ int CTvScanner::getScanDtvStandard(ScanParas &scp) {
 void CTvScanner::reconnectDmxToFend(int dmx_no, int fend_no)
 {
 #ifdef SUPPORT_ADTV
-    AM_DMX_Source_t src;
+    int isTV = config_get_int(CFG_SECTION_TV, FRONTEND_TS_SOURCE, 0);
 
-    if (AM_FEND_GetTSSource(fend_no, &src) == DVB_SUCCESS) {
-        LOGD("Set demux%d source to %d", dmx_no, src);
-        AM_DMX_SetSource(dmx_no, src);
-    } else {
-        LOGD("Cannot get frontend ts source!!");
+    if (isTV == 2) {
+        AM_DMX_SetSource(dmx_no, AM_DMX_SRC_TS2);
+        LOGD("TV Set demux%d source to AM_DMX_SRC_TS2", dmx_no);
+    }else if (isTV == 1) {
+        AM_DMX_SetSource(dmx_no, AM_DMX_SRC_TS1);
+        LOGD("TV Set demux%d source to AM_DMX_SRC_TS1", dmx_no);
+    }else{
+        AM_DMX_SetSource(dmx_no, AM_DMX_SRC_TS0);
+        LOGD("NON-TV Set demux%d source to AM_DMX_SRC_TS0", dmx_no);
     }
 #endif
 }

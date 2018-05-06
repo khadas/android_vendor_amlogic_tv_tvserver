@@ -100,6 +100,8 @@
 #define CFG_AUDIO_VIRTUAL_ENABLE                "audio.virtual.enable"
 #define CFG_AUDIO_VIRTUAL_LEVEL                 "audio.virtual.level"
 
+#define FRONTEND_TS_SOURCE                      "frontend.ts.source"
+
 extern int tv_config_load(const char *file_name);
 extern int tv_config_unload();
 extern int tv_config_save();

@@ -1356,7 +1356,7 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
     atv_para.channel_id = -1;
     //atv_para.afc_range = 2000000;
 
-    if (mAtvIsAtsc && !is_analog_auto) {// atsc scan with list-mode, not auto mode
+    if (!is_analog_auto) {// atsc scan with list-mode, not auto mode
         int mode = scp.getAtvModifier(CFrontEnd::FEParas::FEP_MODE, -1);
         if (mode == -1)
             mode = fp.getFEMode().getMode();
@@ -1602,8 +1602,21 @@ const char *CTvScanner::getDtvScanListName(int mode)
     CFrontEnd::FEMode feMode(mode);
     int base = feMode.getBase();
     int list = feMode.getList();
+    const char* pCountry = CTvRegion::getTvCountry();
 
+    LOGD(" pCountry = %s", pCountry);
     switch (base) {
+        case TV_FE_ANALOG:
+            if (strcmp(pCountry, "IN") == 0) {
+                list_name = (char *)"IN,Default ATV";
+            }
+            else if (strcmp(pCountry, "ID") == 0) {
+                list_name = (char *)"ID,Default ATV";
+            }
+            else {
+                list_name = (char *)"IN,Default ATV";
+            }
+            break;
         case TV_FE_DTMB:
             list_name = (char *)"CN,Default DTMB ALL";
             break;
@@ -1611,7 +1624,12 @@ const char *CTvScanner::getDtvScanListName(int mode)
             list_name = (char *)"CN,DVB-C allband";
             break;
         case TV_FE_OFDM:
-            list_name = (char *)"GB,Default DVB-T";
+            if (strcmp(pCountry, "ID") == 0) {
+                list_name = (char *)"ID,Default DVB-T";
+            }
+            else {
+                list_name = (char *)"GB,Default DVB-T";
+            }
             break;
         case TV_FE_ATSC:
             switch (list) {

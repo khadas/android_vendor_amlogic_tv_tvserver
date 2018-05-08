@@ -98,6 +98,8 @@ public:
     void startAutoBacklight();
     void stopAutoBacklight();
     int FactoryCleanAllTableForProgram();
+    std::string getTvSupportCountries();
+    void setTvCountry(const std::string& country);
 
     virtual status_t dump(int fd, const Vector<String16>& args);
 

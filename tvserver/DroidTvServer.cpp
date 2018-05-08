@@ -330,6 +330,17 @@ Return<int32_t> DroidTvServer::FactoryCleanAllTableForProgram() {
     return mTvServiceIntf->FactoryCleanAllTableForProgram();
 }
 
+Return<void> DroidTvServer::getTvSupportCountries(getTvSupportCountries_cb _hidl_cb) {
+    std::string Countries = mTvServiceIntf->getTvSupportCountries();
+    _hidl_cb(Countries);
+    return Void();
+}
+
+Return<void> DroidTvServer::setTvCountry(const hidl_string& country) {
+    mTvServiceIntf->setTvCountry(country);
+    return Void();
+}
+
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {
         ALOGE("%s don't support type:%d", __FUNCTION__, (int)type);

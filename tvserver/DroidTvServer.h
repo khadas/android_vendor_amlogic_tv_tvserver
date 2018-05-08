@@ -114,6 +114,8 @@ public:
     Return<void> startAutoBacklight() override;
     Return<void> stopAutoBacklight() override;
     Return<int32_t> FactoryCleanAllTableForProgram() override;
+	Return<void> getTvSupportCountries(getTvSupportCountries_cb _hidl_cb) override;
+    Return<void> setTvCountry(const hidl_string& country) override;
 
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;
 

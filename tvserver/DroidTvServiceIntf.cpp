@@ -694,6 +694,17 @@ int DroidTvServiceIntf::FactoryCleanAllTableForProgram() {
     return ret;
 }
 
+std::string DroidTvServiceIntf::getTvSupportCountries() {
+    const char *CountryStr = config_get_str(CFG_SECTION_TV, CGF_TV_SUPPORT_COUNTRY, "null");
+    LOGD("get TV support country = %s", CountryStr);
+    return std::string(CountryStr);
+}
+
+void DroidTvServiceIntf::setTvCountry(const std::string& country) {
+    CTvRegion::setTvCountry(country.c_str());
+    LOGD("set Tv country = %s", country.c_str());
+}
+
 int DroidTvServiceIntf::processCmd(const Parcel &p) {
     unsigned char dataBuf[512] = {0};
     int ret = -1;

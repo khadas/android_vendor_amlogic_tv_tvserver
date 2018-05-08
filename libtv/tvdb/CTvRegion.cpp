@@ -14,6 +14,7 @@
 #include "CTvRegion.h"
 #include "CTvDatabase.h"
 
+char CTvRegion::stCountry[COUNTRY_NAME_LEN] = "US";
 CTvRegion::CTvRegion(CTvDatabase db __unused)
 {
 }
@@ -133,8 +134,16 @@ int CTvRegion::getChannelListByNameAndFreqRange(char *name, int beginFreq, int e
     return ret;
 }
 
-void CTvRegion::selectByCountry()
+char* CTvRegion::getTvCountry()
 {
+    return stCountry;
+}
+
+void CTvRegion::setTvCountry(const char* country)
+{
+    if (NULL != country) {
+        strcpy(stCountry, country);
+    }
 }
 
 Vector<String8> CTvRegion::getAllCountry()

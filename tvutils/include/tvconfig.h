@@ -24,6 +24,7 @@
 
 #define CGF_DEFAULT_INPUT_IDS                   "tv.source.input.ids.default"
 #define CGF_DEFAULT_HDMI_PORTS                  "tv.source.input.hdmi.ports"
+#define CGF_TV_SUPPORT_COUNTRY                  "tv.support.country.name"
 #define CFG_DTV_MODE                            "dtv.mode"
 #define CFG_SSM_HDMI_AV_DETECT                  "ssm.hdmi_av.hotplug.detect.en"
 #define CFG_SSM_HDMI_EDID_EN                    "ssm.handle.hdmi.edid.en"

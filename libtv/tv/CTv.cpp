@@ -129,6 +129,7 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     fbcIns = NULL;
     mAutoSetDisplayFreq = false;
     mPreviewEnabled = false;
+    mTvMsgQueue.startMsgQueue();
 
     mFrontDev = CFrontEnd::getInstance();
     mpTvin = CTvin::getInstance();
@@ -1823,7 +1824,6 @@ int CTv::StartTvLock ()
     setDvbLogLevel();
     //mAv.ClearVideoBuffer();
     mAv.SetVideoLayerDisable(0);
-    mTvMsgQueue.startMsgQueue();
     Tv_SetDisplayMode ( Tv_GetDisplayMode ( m_source_input ), m_source_input, m_cur_sig_info.fmt, 1);
     TvMisc_EnableWDT ( gTvinConfig.kernelpet_disable, gTvinConfig.userpet, gTvinConfig.kernelpet_timeout, gTvinConfig.userpet_timeout, gTvinConfig.userpet_reset );
     mpTvin->TvinApi_SetCompPhaseEnable ( 1 );

@@ -881,10 +881,10 @@ void CTv::operateDeviceForScan(int type)
 {
     LOGD("%s : type:%d\n", __FUNCTION__, type);
     if (type & OPEN_DEV_FOR_SCAN_ATV) {
-            mFrontDev->Open(TV_FE_ANALOG);
+            mFrontDev->Open(TV_FE_AUTO);
             mFrontDev->SetAnalogFrontEndTimerSwitch(1);
      }else if  (type & OPEN_DEV_FOR_SCAN_DTV) {
-            mFrontDev->Open(TV_FE_ATSC);
+            mFrontDev->Open(TV_FE_AUTO);
             mFrontDev->SetAnalogFrontEndTimerSwitch(0);
      }else if  (type & CLOSE_DEV_FOR_SCAN) {
             mFrontDev->SetAnalogFrontEndTimerSwitch(0);

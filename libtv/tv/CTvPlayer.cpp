@@ -711,6 +711,7 @@ int CATVTvPlayer::start(const char *param) {
     ret = pTv->playAtvProgram(paramGetInt(mFEParam, NULL, "freq", 44250000),
                             paramGetInt(mFEParam, NULL, "vtd", 1),
                             paramGetInt(mFEParam, NULL, "atd", 0),
+                            paramGetInt(mFEParam, NULL, "vfmt", 0),
                             0,
                             paramGetInt(mAparam, NULL, "AudComp", 0));
     return ret;

@@ -243,7 +243,7 @@ int CFrontEnd::setPropLocked(int cmd, int val)
 #endif
 }
 
-int CFrontEnd::convertParas(char *paras, int mode, int freq1, int freq2, int para1, int para2)
+int CFrontEnd::convertParas(char *paras, int mode, int freq1, int freq2, int para1, int para2, int para3)
 {
     char p[128] = {0};
     sprintf(paras, "{\"mode\":%d,\"freq\":%d,\"freq2\":%d", mode, freq1, freq2);
@@ -260,10 +260,10 @@ int CFrontEnd::convertParas(char *paras, int mode, int freq1, int freq2, int par
             sprintf(p, ",\"mod\":%d}", para1);
             break;
         case TV_FE_ANALOG:
-            sprintf(p, ",\"vtd\":%d,\"atd\":%d,\"afc\":%d}",
+            sprintf(p, ",\"vtd\":%d,\"atd\":%d,\"afc\":%d,\"vfmt\":%d}",
                 stdAndColorToVideoEnum(para1),
                 stdAndColorToAudioEnum(para1),
-                para2);
+                para2, para3);
             break;
         case TV_FE_ISDBT:
             sprintf(p, ",\"bw\":%d,\"lyr\":%d}", para1, para2);
@@ -284,7 +284,7 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
     if (mFEParas.getFEMode().getBase() != TV_FE_ANALOG)
         mCurMode = mFEParas.getFEMode().getBase();
     mCurFreq = mFEParas.getFrequency();
-    mCurPara1 = mCurPara2 = 0;
+    mCurPara1 = mCurPara2 = mCurPara3 = 0;
     switch (mFEParas.getFEMode().getBase())
     {
         case TV_FE_DTMB:
@@ -301,6 +301,7 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
         case TV_FE_ANALOG:
             mCurPara1 = enumToStdAndColor(mFEParas.getVideoStd(), mFEParas.getAudioStd());
             mCurPara2 = mFEParas.getAfc();
+            mCurPara3 = mFEParas.getVFmt();
             mVLCurMode = mFEParas.getFEMode().getBase();
             break;
         case TV_FE_ISDBT:
@@ -312,10 +313,10 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
     }
 }
 
-int CFrontEnd::setPara(int mode, int freq, int para1, int para2)
+int CFrontEnd::setPara(int mode, int freq, int para1, int para2, int para3)
 {
     char paras[128];
-    convertParas(paras, mode, freq, freq, para1, para2);
+    convertParas(paras, mode, freq, freq, para1, para2, para3);
     return setPara(paras);
 }
 
@@ -373,6 +374,7 @@ int CFrontEnd::setPara(const char *paras, bool force )
         /*para2 is finetune data */
         dvbfepara.analog.para.frequency = mFEParas.getFrequency();
         dvbfepara.analog.para.u.analog.std = enumToStdAndColor(mFEParas.getVideoStd(), mFEParas.getAudioStd());
+        dvbfepara.analog.para.u.analog.audmode = dvbfepara.analog.para.u.analog.std & 0x00FFFFFF;
         dvbfepara.analog.para.u.analog.afc_range = AFC_RANGE;
         if (mFEParas.getAfc() == 0) {
             dvbfepara.analog.para.u.analog.flag |= ANALOG_FLAG_ENABLE_AFC;
@@ -513,7 +515,7 @@ int CFrontEnd::stdAndColorToAudioEnum(int data)
     atv_audio_std_t std = CC_ATV_AUDIO_STD_DK;
 #ifdef SUPPORT_ADTV
     if (((data & V4L2_STD_PAL_DK) == V4L2_STD_PAL_DK) ||
-            ((data & V4L2_STD_SECAM_DK) == V4L2_STD_SECAM_DK)) {
+        ((data & V4L2_STD_SECAM_DK) == V4L2_STD_SECAM_DK)) {
         std =  CC_ATV_AUDIO_STD_DK;
     } else if ((data & V4L2_STD_PAL_I) == V4L2_STD_PAL_I) {
         std =  CC_ATV_AUDIO_STD_I;
@@ -880,45 +882,55 @@ int CFrontEnd::checkStatusOnce()
     return 0;
 }
 
-int CFrontEnd::stdEnumToCvbsFmt (int videoStd, int audioStd)
+int CFrontEnd::stdEnumToCvbsFmt (int vfmt)
 {
     tvin_sig_fmt_e cvbs_fmt = TVIN_SIG_FMT_NULL;
-
-    if ( videoStd == CC_ATV_VIDEO_STD_PAL ) {
-        cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_I;
-        if ( audioStd == CC_ATV_AUDIO_STD_DK ) {
+    if ((vfmt & 0xff000000) == V4L2_COLOR_STD_NTSC) {
+        switch (vfmt & 0x00ffffff) {
+        case V4L2_STD_NTSC_M:
+            cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_M;
+            break;
+        case V4L2_STD_NTSC_443:
+            cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_443;
+            break;
+        default:
+            cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_M;
+            break;
+        }
+    } else if ((vfmt & 0xff000000) == V4L2_COLOR_STD_PAL) {
+        switch (vfmt & 0x00ffffff) {
+        case V4L2_STD_PAL_DK:
+        case V4L2_STD_PAL_BG:
+        case V4L2_STD_PAL_I:
             cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_I;
-        } else if ( audioStd == CC_ATV_AUDIO_STD_I ) {
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_I;
-        } else if ( audioStd == CC_ATV_AUDIO_STD_BG ) {
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_I;
-        } else if ( audioStd == CC_ATV_AUDIO_STD_M ) {
+            break;
+        case V4L2_STD_PAL_M:
             cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_M;
+            break;
+        case V4L2_STD_PAL_60:
+            cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_60;
+            break;
+        case V4L2_STD_PAL_Nc:
+            cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_CN;
+            break;
+        default:
+            cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_I;
+            break;
         }
-    } else if ( videoStd == CC_ATV_VIDEO_STD_NTSC ) {
-        cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_M;
-        if ( audioStd == CC_ATV_AUDIO_STD_DK ) {
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_M;
-        } else if ( audioStd == CC_ATV_AUDIO_STD_I ) {
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_M;
-        } else if ( audioStd == CC_ATV_AUDIO_STD_BG ) {
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_M;
-        } else if ( audioStd == CC_ATV_AUDIO_STD_M ) {
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_M;
-        }
-    } else if ( videoStd == CC_ATV_VIDEO_STD_SECAM ) {
-        if ( audioStd == CC_ATV_AUDIO_STD_DK ) {
+    } else if ((vfmt & 0xff000000) == V4L2_COLOR_STD_SECAM) {
+        switch (vfmt & 0x00ffffff) {
+        case V4L2_STD_SECAM_L:
+        case V4L2_STD_SECAM_LC:
             cvbs_fmt = TVIN_SIG_FMT_CVBS_SECAM;
-        } else if ( audioStd == CC_ATV_AUDIO_STD_I ) {
+            break;
+        default:
             cvbs_fmt = TVIN_SIG_FMT_CVBS_SECAM;
-        } else if ( audioStd == CC_ATV_AUDIO_STD_BG ) {
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_SECAM;
-        } else if ( audioStd == CC_ATV_AUDIO_STD_M ) {
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_SECAM;
-        } else if ( audioStd == CC_ATV_AUDIO_STD_L ) {
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_SECAM;
+            break;
         }
     }
+
+    LOGD("stdEnumToCvbsFmt vfmt:0x%x, cvbs_fmt:0x%x", vfmt, cvbs_fmt);
+
     return cvbs_fmt;
 }
 
@@ -1010,6 +1022,7 @@ const char* CFrontEnd::FEParas::FEP_LAYR = "layr";
 const char* CFrontEnd::FEParas::FEP_VSTD = "vtd";
 const char* CFrontEnd::FEParas::FEP_ASTD = "atd";
 const char* CFrontEnd::FEParas::FEP_AFC = "afc";
+const char* CFrontEnd::FEParas::FEP_VFMT = "vfmt";
 
 bool CFrontEnd::FEParas::operator == (const FEParas &fep) const
 {
@@ -1039,7 +1052,7 @@ bool CFrontEnd::FEParas::operator == (const FEParas &fep) const
                 return false;
             break;
         case TV_FE_ANALOG:
-            if (getVideoStd() != fep.getVideoStd() || getAudioStd() != fep.getAudioStd() || getAfc() != fep.getAfc())
+            if (getVideoStd() != fep.getVideoStd() || getAudioStd() != fep.getAudioStd() || getAfc() != fep.getAfc() || getVFmt() != fep.getVFmt())
                 return false;
             break;
         default:

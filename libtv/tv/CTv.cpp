@@ -710,7 +710,7 @@ int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchTyp
     mpTvin->VDIN_OpenPort ( source_port );
     unsigned long stdAndColor = mFrontDev->enumToStdAndColor(vStd, aStd);
 
-    int fmt = CFrontEnd::stdEnumToCvbsFmt (vStd, aStd);
+    int fmt = CFrontEnd::stdEnumToCvbsFmt (0);
     mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) TVIN_SIG_FMT_NULL );
 
     if (searchType == 0) {
@@ -769,7 +769,7 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
     tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceInput(SOURCE_TV);
     mpTvin->VDIN_OpenPort ( source_port );
 
-    int fmt = CFrontEnd::stdEnumToCvbsFmt (vStd, aStd);
+    int fmt = CFrontEnd::stdEnumToCvbsFmt (0);
     mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) TVIN_SIG_FMT_NULL );
     LOGD("%s, atv manual scan vstd=%d, astd=%d stdandcolor=%lld", __FUNCTION__, vStd, aStd, stdAndColor);
 
@@ -1210,7 +1210,7 @@ int CTv::playDtmbProgram ( int progId )
     return 0;
 }
 
-int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __unused, int audioCompetation)
+int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int vfmt, int fineTune __unused, int audioCompetation)
 {
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_TV);
     mTvAction |= TV_ACTION_IN_VDIN;
@@ -1224,12 +1224,12 @@ int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int fineTune __u
     mpTvin->Tvin_StopDecoder();
     mFrontDev->Open(TV_FE_ANALOG);
     //set CVBS
-    int fmt = CFrontEnd::stdEnumToCvbsFmt (videoStd, audioStd);
+    int fmt = CFrontEnd::stdEnumToCvbsFmt (vfmt);
     mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
 
     unsigned long stdAndColor = mFrontDev->enumToStdAndColor (videoStd, audioStd);
     //set TUNER
-    mFrontDev->setPara (TV_FE_ANALOG, freq, stdAndColor, 1);
+    mFrontDev->setPara (TV_FE_ANALOG, freq, stdAndColor, 1, vfmt);
 
     return 0;
 }
@@ -1257,13 +1257,13 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
         mpTvin->Tvin_StopDecoder();
 
         //set CVBS
-        int fmt = CFrontEnd::stdEnumToCvbsFmt (feParms.videoStd, feParms.audioStd );
+        int fmt = CFrontEnd::stdEnumToCvbsFmt (feParms.vfmt);
         mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
 
         //set TUNER
         //usleep(400 * 1000);
         mFrontDev->Open(TV_FE_ANALOG);
-        mFrontDev->setPara ( TV_FE_ANALOG, tmpFreq, stdAndColor, 1 );
+        mFrontDev->setPara ( TV_FE_ANALOG, tmpFreq, stdAndColor, 1, feParms.vfmt);
         //usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
             mFrontDev->fineTune ( tmpfineFreq / 1000 );
@@ -1310,7 +1310,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         mpTvin->Tvin_StopDecoder();
 
         //set CVBS
-        int fmt = CFrontEnd::stdEnumToCvbsFmt (fp.getVideoStd(), fp.getAudioStd() );
+        int fmt = CFrontEnd::stdEnumToCvbsFmt (fp.getVFmt());
         mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
 
         //set TUNER
@@ -2080,7 +2080,7 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
             {
                 unsigned char std;
                 SSMReadCVBSStd(&std);
-                int fmt = CFrontEnd::stdEnumToCvbsFmt (std, CC_ATV_AUDIO_STD_AUTO);
+                int fmt = CFrontEnd::stdEnumToCvbsFmt (std);
                 mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
 
                 //for HDMI source connect detect

@@ -351,6 +351,7 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
 
         mCurEv.mVideoStd = mCurEv.mFEParas.getVideoStd();
         mCurEv.mAudioStd = mCurEv.mFEParas.getAudioStd();
+        mCurEv.mVfmt = mCurEv.mFEParas.getVFmt();
         mCurEv.mIsAutoStd = ((mCurEv.mVideoStd & V4L2_COLOR_STD_AUTO) == V4L2_COLOR_STD_AUTO) ? 1 : 0;
 
         if (mAtvIsAtsc) {
@@ -375,8 +376,8 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
         }
 
         mCurEv.mType = ScannerEvent::EVENT_ATV_PROG_DATA;
-        LOGD("notifyService freq:%d, vstd:%x astd:%x",
-            mCurEv.mFrequency, mCurEv.mFEParas.getVideoStd(), mCurEv.mFEParas.getAudioStd());
+        LOGD("notifyService freq:%d, vstd:%x astd:%x vfmt:%x",
+            mCurEv.mFrequency, mCurEv.mFEParas.getVideoStd(), mCurEv.mFEParas.getAudioStd(), mCurEv.mFEParas.getVFmt());
     }
 
     if ((feType == TV_FE_ANALOG) || (mCurEv.mVid != 0x1fff) || mCurEv.mAcnt)
@@ -483,7 +484,8 @@ void CTvScanner::processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
         ts_info->fe.clear();
         ts_info->fe.setFEMode(mode).setFrequency(ts->analog.freq)
             .setVideoStd(CFrontEnd::stdAndColorToVideoEnum(ts->analog.std))
-            .setAudioStd(CFrontEnd::stdAndColorToAudioEnum(ts->analog.std));
+            .setAudioStd(CFrontEnd::stdAndColorToAudioEnum(ts->analog.audmode))
+            .setVFmt(ts->analog.std);
     } else {
         /*tsid*/
        dvbpsi_pat_t *pats = getValidPats(ts);
@@ -1393,7 +1395,10 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
         int i;
         for (i = 0; i < size; i++) {
             atv_para.fe_paras[i].m_type = TV_FE_ANALOG;
+            atv_para.fe_paras[i].analog.para.u.analog.std = atv_para.default_std;
+            atv_para.fe_paras[i].analog.para.u.analog.audmode = atv_para.default_std & 0x00FFFFFF;
             atv_para.fe_paras[i].analog.para.frequency = vcp[i]->getFrequency();
+            atv_para.fe_paras[i].m_logicalChannelNum = vcp[i]->getLogicalChannelNum();
         }
         atv_para.fe_cnt = size;
 
@@ -1405,10 +1410,16 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
         memset(atv_para.fe_paras, 0, 3 * sizeof(AM_FENDCTRL_DVBFrontendParameters_t));
         atv_para.fe_paras[0].m_type = TV_FE_ANALOG;
         atv_para.fe_paras[0].analog.para.frequency = scp.getAtvFrequency1();
+        atv_para.fe_paras[0].analog.para.u.analog.std = atv_para.default_std;
+        atv_para.fe_paras[0].analog.para.u.analog.audmode = atv_para.default_std & 0x00FFFFFF;
         atv_para.fe_paras[1].m_type = TV_FE_ANALOG;
         atv_para.fe_paras[1].analog.para.frequency = scp.getAtvFrequency2();
+        atv_para.fe_paras[1].analog.para.u.analog.std = atv_para.default_std;
+        atv_para.fe_paras[1].analog.para.u.analog.audmode = atv_para.default_std & 0x00FFFFFF;
         atv_para.fe_paras[2].m_type = TV_FE_ANALOG;
         atv_para.fe_paras[2].analog.para.frequency = (atv_para.mode == TV_SCAN_ATVMODE_AUTO)? 0 : scp.getAtvFrequency1();
+        atv_para.fe_paras[2].analog.para.u.analog.std = atv_para.default_std;
+        atv_para.fe_paras[2].analog.para.u.analog.audmode = atv_para.default_std & 0x00FFFFFF;
     }
     atv_para.fe_cnt = 3;
     if (atv_para.mode == TV_SCAN_ATVMODE_AUTO) {
@@ -2229,7 +2240,7 @@ int CTvScanner::ATVManualScan(int min_freq, int max_freq, int std, int store_Typ
     UNUSED(channel_num);
 
     char paras[128];
-    CFrontEnd::convertParas(paras, TV_FE_ANALOG, min_freq, max_freq, std, 0);
+    CFrontEnd::convertParas(paras, TV_FE_ANALOG, min_freq, max_freq, std, 0, 0);
 
     CFrontEnd::FEParas fe(paras);
 
@@ -2251,7 +2262,7 @@ int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type
     UNUSED(search_type);
 
     char paras[128];
-    CFrontEnd::convertParas(paras, TV_FE_ANALOG, min_freq, max_freq, std, 0);
+    CFrontEnd::convertParas(paras, TV_FE_ANALOG, min_freq, max_freq, std, 0, 0);
 
     CFrontEnd::FEParas fe(paras);
 
@@ -2276,7 +2287,7 @@ int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type
 int CTvScanner::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2)
 {
     char feparas[128];
-    CFrontEnd::convertParas(feparas, mode, beginFreq, endFreq, para1, para2);
+    CFrontEnd::convertParas(feparas, mode, beginFreq, endFreq, para1, para2, 0);
     return dtvScan(feparas, scan_mode, beginFreq, endFreq);
 }
 

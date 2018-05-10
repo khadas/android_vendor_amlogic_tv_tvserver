@@ -595,18 +595,16 @@ int CTv::Scan(const char *feparas, const char *scanparas) {
 
     if (sp.getAtvMode() & TV_SCAN_ATVMODE_AUTO) {
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_ATV );
-        mFrontDev->Open(TV_FE_ANALOG);
     }
     if (sp.getDtvMode() & TV_SCAN_DTVMODE_MANUAL) {
         CTvChannel::DeleteBetweenFreq(sp.getDtvFrequency1(), sp.getDtvFrequency2());
-        mFrontDev->Open(TV_FE_ATSC);
     } else {
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_DTV );
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_RADIO );
         CTvEvent::CleanAllEvent();
-        mFrontDev->Open(TV_FE_ATSC);
     }
 
+    mFrontDev->Open(TV_FE_AUTO);
     mTvScanner->setObserver(&mTvMsgQueue);
     mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
 

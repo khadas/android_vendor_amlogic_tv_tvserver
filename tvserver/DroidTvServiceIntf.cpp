@@ -706,6 +706,21 @@ void DroidTvServiceIntf::setTvCountry(const std::string& country) {
     LOGD("set Tv country = %s", country.c_str());
 }
 
+int DroidTvServiceIntf::setAudioOutmode(int32_t mode) {
+    int ret = SetAudioOutmode(mode);
+    return ret;
+}
+
+int DroidTvServiceIntf::getAudioOutmode() {
+    int ret = GetAudioOutmode();
+    return ret;
+}
+
+int DroidTvServiceIntf::getAudioStreamOutmode() {
+    int ret = GetAudioStreamOutmode();
+    return ret;
+}
+
 int DroidTvServiceIntf::processCmd(const Parcel &p) {
     unsigned char dataBuf[512] = {0};
     int ret = -1;

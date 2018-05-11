@@ -341,6 +341,18 @@ Return<void> DroidTvServer::setTvCountry(const hidl_string& country) {
     return Void();
 }
 
+Return<int32_t> DroidTvServer::setAudioOutmode(int32_t mode) {
+    return mTvServiceIntf->setAudioOutmode(mode);
+}
+
+Return<int32_t> DroidTvServer::getAudioOutmode() {
+    return mTvServiceIntf->getAudioOutmode();
+}
+
+Return<int32_t> DroidTvServer::getAudioStreamOutmode() {
+    return mTvServiceIntf->getAudioStreamOutmode();
+}
+
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {
         ALOGE("%s don't support type:%d", __FUNCTION__, (int)type);

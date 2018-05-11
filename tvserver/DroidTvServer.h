@@ -116,6 +116,9 @@ public:
     Return<int32_t> FactoryCleanAllTableForProgram() override;
 	Return<void> getTvSupportCountries(getTvSupportCountries_cb _hidl_cb) override;
     Return<void> setTvCountry(const hidl_string& country) override;
+    Return<int32_t> setAudioOutmode(int32_t mode) override;
+    Return<int32_t> getAudioOutmode() override;
+    Return<int32_t> getAudioStreamOutmode() override;
 
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;
 

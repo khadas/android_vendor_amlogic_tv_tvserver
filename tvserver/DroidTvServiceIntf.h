@@ -100,6 +100,9 @@ public:
     int FactoryCleanAllTableForProgram();
     std::string getTvSupportCountries();
     void setTvCountry(const std::string& country);
+    int setAudioOutmode(int32_t mode);
+    int getAudioOutmode();
+    int getAudioStreamOutmode();
 
     virtual status_t dump(int fd, const Vector<String16>& args);
 

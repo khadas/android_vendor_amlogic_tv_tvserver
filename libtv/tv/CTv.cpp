@@ -2542,6 +2542,7 @@ int CTv::Tv_SSMRestoreDefaultSetting()
     saveATVProgramID ( -1 );
     SSMSaveStandbyMode( 0 );
     SSMHDMIEdidRestoreDefault();
+    SSMSaveHDMIColorRangeMode(TVIN_COLOR_RANGE_AUTO);
     return 0;
 }
 
@@ -3044,12 +3045,25 @@ int CTv::SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable)
 
 int CTv::SetHdmiColorRangeMode(tvin_color_range_t range_mode)
 {
-    return mpTvin->VDIN_SetColorRangeMode(range_mode);
+    LOGD("%s, mode: %d!\n", __FUNCTION__, range_mode);
+    int ret = mpTvin->VDIN_SetColorRangeMode(range_mode);
+    if (ret >= 0) {
+        SSMSaveHDMIColorRangeMode(range_mode);
+    }
+
+    return ret;
 }
 
-tvin_color_range_t CTv::GetHdmiColorRangeMode()
+int CTv::GetHdmiColorRangeMode()
 {
-    return (tvin_color_range_t)mpTvin->VDIN_GetColorRangeMode();
+    int mode = 0;
+    SSMReadHDMIColorRangeMode(&mode);
+    if ((mode > TVIN_COLOR_RANGE_LIMIT) || (mode < TVIN_COLOR_RANGE_AUTO)) {
+        LOGE("%s error!\n", __FUNCTION__);
+        mode = TVIN_COLOR_RANGE_AUTO;
+    }
+    LOGD("%s: mode = %d!\n", __FUNCTION__, mode);
+    return mode;
 }
 
 int CTv::SetVideoAxis(int x, int y, int width, int heigth)

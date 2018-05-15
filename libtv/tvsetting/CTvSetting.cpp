@@ -1869,6 +1869,20 @@ tv_hdmi_edid_version_t SSMReadHDMIEdidVersion(tv_hdmi_port_id_t port)
     return (tv_hdmi_edid_version_t)tmp_val;
 }
 
+int SSMSaveHDMIColorRangeMode(tvin_color_range_t rw_val)
+{
+    return TVSSMWriteNTypes(CUSTOMER_DATA_POS_HDMI_COLOR_RANGE_START, 1, rw_val);
+}
+
+int SSMReadHDMIColorRangeMode(int *rw_val)
+{
+    int tmp_val = 0;
+    int ret = 0;
+    ret = TVSSMReadNTypes(CUSTOMER_DATA_POS_HDMI_COLOR_RANGE_START, 1, &tmp_val);
+    *rw_val = tmp_val;
+
+    return ret;
+}
 
 int SSMSaveHDMIHdcpSwitcher(int rw_val)
 {

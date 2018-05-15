@@ -330,7 +330,7 @@ public:
     int setEyeProtectionMode(int enable);
     int getEyeProtectionMode();
     int SetHdmiColorRangeMode(tvin_color_range_t range_mode);
-    tvin_color_range_t GetHdmiColorRangeMode();
+    int GetHdmiColorRangeMode();
     int setGamma(vpp_gamma_curve_t gamma_curve, int is_save);
     virtual void updateSubtitle(int, int);
     int GetHdmiAvHotplugDetectOnoff();

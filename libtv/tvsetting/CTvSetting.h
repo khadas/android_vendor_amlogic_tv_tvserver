@@ -223,6 +223,8 @@ int SSMSave_PANEL_ID_Val(int rw_val);
 int SSMRead_PANEL_ID_Val(void);
 int SSMSaveHDMIEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t rw_val);
 tv_hdmi_edid_version_t SSMReadHDMIEdidVersion(tv_hdmi_port_id_t port);
+int SSMSaveHDMIColorRangeMode(tvin_color_range_t rw_val);
+int SSMReadHDMIColorRangeMode(int *rw_val);
 int SSMSaveHDMIHdcpSwitcher(int rw_val);
 int SSMReadHDMIHdcpSwitcher(void);
 int SSMHDMIEdidRestoreDefault(void);

@@ -109,14 +109,15 @@ int CFrontEnd::Open(int mode)
     if (TV_FE_ANALOG == mode || mode == FE_AUTO) {
         rc = AM_VLFEND_Open(mVLFrontDevID, &para);
         if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
-            LOGD("%s,frontend dev[%d] open failed! dvb error id is %d\n",
+            LOGD("%s,vlfrontend dev[%d] open failed! v4l2 error id is %d\n",
                     __FUNCTION__, mVLFrontDevID, rc);
-            return -1;
+            /*return -1;*/
+        } else {
+            AM_VLFEND_SetCallback(mVLFrontDevID, v4l2_fend_callback, (void *)this);
+            LOGD("%s,vlfrontend dev[%d] open success!\n", __FUNCTION__, mVLFrontDevID);
+            mbVLFEOpened = true;
+            mVLCurMode = mode;
         }
-        AM_VLFEND_SetCallback(mVLFrontDevID, v4l2_fend_callback, (void *)this);
-        LOGD("%s,frontend dev[%d] open success!\n", __FUNCTION__, mVLFrontDevID);
-        mbVLFEOpened = true;
-        mVLCurMode = mode;
     }
 
     para.mode = mode;

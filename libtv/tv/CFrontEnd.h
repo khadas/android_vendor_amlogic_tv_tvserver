@@ -24,6 +24,8 @@
 #ifdef SUPPORT_ADTV
 extern "C" {
 #include "am_fend.h"
+#include "am_vlfend.h"
+#include "atv_frontend.h"
 #include "am_vout.h"
 #include "linux/dvb/frontend.h"
 #include "am_fend_ctrl.h"
@@ -120,6 +122,8 @@ public:
     int setPara(const char *);
     int setPara(const char *paras, bool force );
     int setProp(int cmd, int val);
+    int setVLPropLocked(int cmd, int val);
+    int getVLPropLocked(int cmd, int *val);
     int ClearAnalogFrontEnd();
     int autoLoadFE();
     int SetAnalogFrontEndTimerSwitch(int onOff);
@@ -300,7 +304,7 @@ private:
     bool mbVLFEOpened;
     FEParas mFEParas;
     static void dmd_fend_callback(long dev_no, int event_type, void *param, void *user_data);
-    static void v4l2_fend_callback(int dev_no, struct dvb_frontend_event *evt, void *user_data);
+    static void v4l2_fend_callback(long dev_no, int event_type, void *param, void *user_data);
     void saveCurrentParas(FEParas &paras);
     int setPropLocked(int cmd, int val);
 

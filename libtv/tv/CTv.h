@@ -343,6 +343,11 @@ public:
     int Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info);
     int Tv_Easupdate();
     void dump(String8 &result);
+
+    int SetAtvAudioOutmode(int mode);
+    int GetAtvAudioOutmode();
+    int GetAtvAudioInputmode();
+
 private:
     int SendCmdToOffBoardFBCExternalDac(int, int);
     int KillMediaServerClient();

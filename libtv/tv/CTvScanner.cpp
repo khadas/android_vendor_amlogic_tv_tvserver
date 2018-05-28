@@ -505,6 +505,7 @@ void CTvScanner::processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
             .setVideoStd(CFrontEnd::stdAndColorToVideoEnum(ts->analog.std))
             .setAudioStd(CFrontEnd::stdAndColorToAudioEnum(ts->analog.audmode))
             .setVFmt(ts->analog.std);
+        LOGD("processTsInfo [%d][0x%x][0x%x].", ts->analog.freq, (unsigned int) ts->analog.std, ts->analog.audmode);
     } else {
         /*tsid*/
        dvbpsi_pat_t *pats = getValidPats(ts);

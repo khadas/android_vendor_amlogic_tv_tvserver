@@ -28,11 +28,11 @@
 
 #define SYS_STR_LEN                         1024
 #define PROPERTY_VALUE_MAX                  92
-#define AUDIO_OUTMODE_PATH                  "/sys/module/atvdemod_fe/parameters/aud_mode"
-#define ATVDEMODE_DEBUG_PATH                "/sys/class/amlatvdemod/atvdemod_debug"
-#define AUDIO_STREAM_OUTMODE_PATH           "/sys/module/atvdemod_fe/parameters/signal_audmode"
 #define SYS_VIDEO_INUSE_PATH                "/sys/class/video/video_inuse"
-
+#define AUDIO_STD_PATH                      "/sys/kernel/debug/aml_atvdemod/aud_std"
+#define AUDIO_OUTMODE_PATH                  "/sys/kernel/debug/aml_atvdemod/aud_mode"
+#define ATVDEMODE_DEBUG_PATH                "/sys/class/aml_atvdemod/atvdemod_debug"
+#define AUDIO_STREAM_OUTMODE_PATH           "/sys/kernel/debug/aml_atvdemod/signal_audmode"
 
 int tvReadSysfs(const char *path, char *value);
 int tvWriteSysfs(const char *path, const char *value);

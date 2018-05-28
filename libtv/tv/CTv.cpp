@@ -3434,3 +3434,30 @@ void CTv::dump(String8 &result)
 #endif
 }
 
+int CTv::SetAtvAudioOutmode(int mode)
+{
+    return mFrontDev->setVLPropLocked(V4L2_SOUND_SYS, mode);
+}
+
+int CTv::GetAtvAudioOutmode()
+{
+    int mode = 0;
+
+    mFrontDev->getVLPropLocked(V4L2_SOUND_SYS, &mode);
+
+    return (mode & 0xFF);
+}
+
+int CTv::GetAtvAudioInputmode()
+{
+    int mode = 0;
+
+    mFrontDev->getVLPropLocked(V4L2_SOUND_SYS, &mode);
+
+    /*
+     * bit24-16: audio std.
+     * bit15-8: audio input type.
+     * bit7-0: audio output mode.
+     */
+    return (mode >> 8 & 0xFFFF);
+}

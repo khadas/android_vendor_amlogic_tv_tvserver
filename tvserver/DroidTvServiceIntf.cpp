@@ -708,17 +708,17 @@ void DroidTvServiceIntf::setTvCountry(const std::string& country) {
 }
 
 int DroidTvServiceIntf::setAudioOutmode(int32_t mode) {
-    int ret = SetAudioOutmode(mode);
+    int ret = mpTv->SetAtvAudioOutmode(mode);
     return ret;
 }
 
 int DroidTvServiceIntf::getAudioOutmode() {
-    int ret = GetAudioOutmode();
+    int ret = mpTv->GetAtvAudioOutmode();
     return ret;
 }
 
 int DroidTvServiceIntf::getAudioStreamOutmode() {
-    int ret = GetAudioStreamOutmode();
+    int ret = mpTv->GetAtvAudioInputmode();
     return ret;
 }
 
@@ -2112,16 +2112,16 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
         }
         case SET_AUDIO_OUTMODE: {
             int mode = p.readInt32();
-            ret = SetAudioOutmode(mode);
+            ret = mpTv->SetAtvAudioOutmode(mode);
             break;
         }
 
         case GET_AUDIO_OUTMODE:
-            ret = GetAudioOutmode();
+            ret = mpTv->GetAtvAudioOutmode();
             break;
 
         case GET_AUDIO_STREAM_OUTMODE:
-            ret = GetAudioStreamOutmode();
+            ret = mpTv->GetAtvAudioInputmode();
             break;
 
         case SET_AMAUDIO_VOLUME: {

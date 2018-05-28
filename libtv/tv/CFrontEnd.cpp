@@ -75,7 +75,7 @@ CFrontEnd::~CFrontEnd()
     AM_EVT_Unsubscribe(mFrontDevID, AM_FEND_EVT_STATUS_CHANGED, dmd_fend_callback, NULL);
     if (mFrontDevID == FE_DEV_ID)
         AM_FEND_Close(mFrontDevID);
-    //AM_EVT_Unsubscribe(mVLFrontDevID, AM_VLFEND_EVT_STATUS_CHANGED, v4l2_fend_callback, NULL);
+    AM_EVT_Unsubscribe(mVLFrontDevID, AM_VLFEND_EVT_STATUS_CHANGED, v4l2_fend_callback, NULL);
     if (mVLFrontDevID == VLFE_DEV_ID)
         AM_FEND_Close(mVLFrontDevID);
     mFrontDevID = -1;
@@ -116,7 +116,7 @@ int CFrontEnd::Open(int mode)
                     __FUNCTION__, mVLFrontDevID, rc);
             /*return -1;*/
         } else {
-            AM_VLFEND_SetCallback(mVLFrontDevID, v4l2_fend_callback, (void *)this);
+            AM_EVT_Subscribe(mVLFrontDevID, AM_VLFEND_EVT_STATUS_CHANGED, v4l2_fend_callback, (void *)this);
             LOGD("%s,vlfrontend dev[%d] open success!\n", __FUNCTION__, mVLFrontDevID);
             mbVLFEOpened = true;
             mVLCurMode = mode;
@@ -245,6 +245,48 @@ int CFrontEnd::setPropLocked(int cmd, int val)
 #else
     return -1;
 #endif
+}
+
+int CFrontEnd::setVLPropLocked(int cmd, int val)
+{
+    AutoMutex _l( mLock );
+
+    struct dtv_properties props;
+    struct dtv_property prop;
+
+    memset(&props, 0, sizeof(props));
+    memset(&prop, 0, sizeof(prop));
+
+    prop.cmd = cmd;
+    prop.u.data = val;
+
+    props.num = 1;
+    props.props = &prop;
+
+    return AM_VLFEND_SetProp(mVLFrontDevID, &props);
+}
+
+int CFrontEnd::getVLPropLocked(int cmd, int *val)
+{
+    AutoMutex _l( mLock );
+
+    struct dtv_properties props;
+    struct dtv_property prop;
+
+    memset(&props, 0, sizeof(props));
+    memset(&prop, 0, sizeof(prop));
+
+    prop.cmd = cmd;
+    prop.u.data = 0;
+
+    props.num = 1;
+    props.props = &prop;
+
+    AM_VLFEND_GetProp(mVLFrontDevID, &props);
+
+    *val = prop.u.data;
+
+    return 0;
 }
 
 int CFrontEnd::convertParas(char *paras, int mode, int freq1, int freq2, int para1, int para2, int para3)
@@ -484,7 +526,7 @@ void CFrontEnd::dmd_fend_callback(long dev_no __unused, int event_type __unused,
 #endif
 }
 
-void CFrontEnd::v4l2_fend_callback(int dev_no, struct dvb_frontend_event *evt, void *user_data)
+void CFrontEnd::v4l2_fend_callback(long dev_no __unused, int event_type __unused, void *param, void *user_data)
 {
 #ifdef SUPPORT_ADTV
     CFrontEnd *pFront = (CFrontEnd *)user_data;
@@ -497,7 +539,7 @@ void CFrontEnd::v4l2_fend_callback(int dev_no, struct dvb_frontend_event *evt, v
         return;
     }
 
-    /*struct dvb_frontend_event *evt = (struct dvb_frontend_event *) param;*/
+    struct dvb_frontend_event *evt = (struct dvb_frontend_event *) param;
     if (!evt)
         return;
 

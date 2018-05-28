@@ -999,10 +999,12 @@ int GetAudioOutmode(){
 
 int GetAudioStreamOutmode(){
     char mode[32] = {0};
+    char std[32] = {0};
     char temp[] = "signal_audmode";
     tvWriteSysfs(ATVDEMODE_DEBUG_PATH,temp);
     tvReadSysfs(AUDIO_STREAM_OUTMODE_PATH, mode);
-    return atoi(mode);
+    tvReadSysfs(AUDIO_STD_PATH, std);
+    return (atoi(mode) & 0xFF) | ((atoi(std) & 0xFF) << 8);
 }
 
 int TvMisc_SetSystemPetCounterTimeOut(int timeout)

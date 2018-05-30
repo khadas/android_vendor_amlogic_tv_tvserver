@@ -13,6 +13,8 @@
 #include "CTvVchipCheck.h"
 CTvVchipCheck:: CTvVchipCheck()
 {
+    m_request_pause_detect = false;
+    mDetectState = 0;
 }
 
 CTvVchipCheck:: ~CTvVchipCheck()

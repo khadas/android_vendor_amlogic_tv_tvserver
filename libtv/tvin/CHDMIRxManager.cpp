@@ -75,9 +75,10 @@ int CHDMIRxManager::HdmiRxHdcpOnOff(tv_hdmi_hdcpkey_enable_t flag)
 
     if (hdcpkey_enable == flag) {
         ioctl(m_hdmi_fd, HDMI_IOC_HDCP_ON, NULL);
-    }else if (hdcpkey_enable == flag) {
+    }else if (hdcpkey_disable == flag) {
         ioctl(m_hdmi_fd, HDMI_IOC_HDCP_OFF, NULL);
     }else {
+        close(m_hdmi_fd);
         return -1;
     }
 

@@ -52,15 +52,76 @@ CTvProgram::~CTvProgram()
 CTvProgram::CTvProgram(int channelID __unused, int type __unused)
 {
     mpVideo = NULL;
+    major = 0;
+    minor = 0;
+    minorCheck = 0;
+    atscMode = false;
+    id = 0;
+    dvbServiceID = 0;
+    type = 0;
+    channelID = 0;
+    skip = 0;
+    favorite = 0;
+    volume = 0;
+    sourceID = 0;
+    pmtPID = 0;
+    src = 0;
+    audioTrack = 0;
+    chanOrderNum = 0;
+    currAudTrackIndex = 0;
+    lock = false;
+    scrambled = false;
+    pcrID = 0;
 }
 
 CTvProgram::CTvProgram()
 {
     mpVideo = NULL;
+    major = 0;
+    minor = 0;
+    minorCheck = 0;
+    atscMode = false;
+    id = 0;
+    dvbServiceID = 0;
+    type = 0;
+    channelID = 0;
+    skip = 0;
+    favorite = 0;
+    volume = 0;
+    sourceID = 0;
+    pmtPID = 0;
+    src = 0;
+    audioTrack = 0;
+    chanOrderNum = 0;
+    currAudTrackIndex = 0;
+    lock = false;
+    scrambled = false;
+    pcrID = 0;
 }
 
 CTvProgram::CTvProgram(const CTvProgram& UNUSED(cTvProgram))
 {
+    major = 0;
+    minor = 0;
+    minorCheck = 0;
+    atscMode = false;
+    id = 0;
+    dvbServiceID = 0;
+    type = 0;
+    channelID = 0;
+    skip = 0;
+    favorite = 0;
+    volume = 0;
+    sourceID = 0;
+    pmtPID = 0;
+    src = 0;
+    audioTrack = 0;
+    chanOrderNum = 0;
+    currAudTrackIndex = 0;
+    lock = false;
+    scrambled = false;
+    mpVideo = NULL;
+    pcrID = 0;
 }
 //TODO
 CTvProgram& CTvProgram::operator= (const CTvProgram& UNUSED(cTvProgram))
@@ -365,6 +426,28 @@ int CTvProgram::selectProgramInChannelByNumber(int channelID, int major, int min
 
 CTvProgram::CTvProgram(int channelID, int type, int num, int skipFlag)
 {
+    major = 0;
+    minor = 0;
+    minorCheck = 0;
+    atscMode = false;
+
+    dvbServiceID = 0;
+    this->type = 0;
+    this->channelID = 0;
+    skip = 0;
+    favorite = 0;
+    volume = 0;
+    sourceID = 0;
+    pmtPID = 0;
+    src = 0;
+    audioTrack = 0;
+    chanOrderNum = 0;
+    currAudTrackIndex = 0;
+    lock = false;
+    scrambled = false;
+    mpVideo = NULL;
+    pcrID = 0;
+
     CTvChannel channel;
     int ret = CTvChannel::selectByID(channelID, channel);
     if (ret != 0) {
@@ -419,6 +502,28 @@ CTvProgram::CTvProgram(int channelID, int type, int num, int skipFlag)
 
 CTvProgram::CTvProgram(int channelID, int type, int major, int minor, int skipFlag)
 {
+    this->major = 0;
+    this->minor = 0;
+    minorCheck = 0;
+    atscMode = false;
+
+    dvbServiceID = 0;
+    this->type = 0;
+    this->channelID = 0;
+    skip = 0;
+    favorite = 0;
+    volume = 0;
+    sourceID = 0;
+    pmtPID = 0;
+    src = 0;
+    audioTrack = 0;
+    chanOrderNum = 0;
+    currAudTrackIndex = 0;
+    lock = false;
+    scrambled = false;
+    mpVideo = NULL;
+    pcrID = 0;
+
     CTvChannel channel;
     int ret = CTvChannel::selectByID(channelID, channel);
     if (ret != 0) {

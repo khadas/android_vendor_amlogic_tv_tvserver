@@ -66,6 +66,7 @@ DroidTvServiceIntf::DroidTvServiceIntf()
     mpTv = new CTv();
     mpTv->setTvObserver(this);
     mpTv->OpenTv();
+    mIsStartTv = false;
 }
 
 DroidTvServiceIntf::~DroidTvServiceIntf()

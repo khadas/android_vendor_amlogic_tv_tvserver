@@ -88,7 +88,7 @@ TiXmlDocument *OpenXmlFile(void)
           rrt_info:Charge for GetRRTRating
  * @Return: true:save success;    false:save failed
  */
-bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t rrt_info)
+bool SaveDataToXml(TiXmlDocument *pRRTFile, rrt_info_t &rrt_info)
 {
     if (pRRTFile == NULL) {
         LOGE("xml file don't open!\n");
@@ -190,6 +190,7 @@ CTvRrt::CTvRrt()
     mLastDimensionsDefined = INVALID_ID;
     mLastVersion        = INVALID_ID;
     mScanResult         = 0;
+    mpObserver          = NULL;
 }
 
 CTvRrt::~CTvRrt()
@@ -602,7 +603,7 @@ void CTvRrt::RrtDataUpdate(void * dev_no, int event_type, void *param, void *use
           ret: data after parser
  * @Return:
  */
-void CTvRrt::MultipleStringParser(atsc_multiple_string_t atsc_multiple_string, char *ret)
+void CTvRrt::MultipleStringParser(atsc_multiple_string_t &atsc_multiple_string, char *ret)
 {
     int i;
     for (i=0;i<atsc_multiple_string.i_string_count;i++) {

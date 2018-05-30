@@ -56,7 +56,13 @@ namespace  TvEvent {
     //events
     class SignalInfoEvent: public CTvEv {
     public:
-        SignalInfoEvent() : CTvEv ( CTvEv::TV_EVENT_SIGLE_DETECT ) {}
+        SignalInfoEvent() : CTvEv ( CTvEv::TV_EVENT_SIGLE_DETECT )
+        {
+            mTrans_fmt = 0;
+            mFmt = 0;
+            mStatus = 0;
+            mReserved = 0;
+        }
         ~SignalInfoEvent() {}
         int mTrans_fmt;
         int mFmt;
@@ -66,21 +72,31 @@ namespace  TvEvent {
 
     class VGAEvent: public CTvEv {
     public:
-        VGAEvent() : CTvEv ( CTvEv::TV_EVENT_VGA ) {}
+        VGAEvent() : CTvEv ( CTvEv::TV_EVENT_VGA )
+        {
+            mState = 0;
+        }
         ~VGAEvent() {}
         int mState;
     };
 
     class ADCCalibrationEvent: public CTvEv {
     public:
-        ADCCalibrationEvent() : CTvEv ( CTvEv::TV_EVENT_ADC_CALIBRATION ) {}
+        ADCCalibrationEvent() : CTvEv ( CTvEv::TV_EVENT_ADC_CALIBRATION )
+        {
+            mState = 0;
+        }
         ~ADCCalibrationEvent() {}
         int mState;
     };
 
     class SerialCommunicationEvent: public CTvEv {
     public:
-        SerialCommunicationEvent(): CTvEv(CTvEv::TV_EVENT_SERIAL_COMMUNICATION) {}
+        SerialCommunicationEvent(): CTvEv(CTvEv::TV_EVENT_SERIAL_COMMUNICATION)
+        {
+            mDevId = 0;
+            mDataCount = 0;
+        }
         ~SerialCommunicationEvent() {}
 
         int mDevId;
@@ -90,7 +106,11 @@ namespace  TvEvent {
 
     class SourceConnectEvent: public CTvEv {
     public:
-        SourceConnectEvent() : CTvEv ( CTvEv::TV_EVENT_SOURCE_CONNECT ) {}
+        SourceConnectEvent() : CTvEv ( CTvEv::TV_EVENT_SOURCE_CONNECT )
+        {
+            mSourceInput = 0;
+            connectionState = 0;
+        }
         ~SourceConnectEvent() {}
         int mSourceInput;
         int connectionState;
@@ -98,7 +118,11 @@ namespace  TvEvent {
 
     class HDMIRxCECEvent: public CTvEv {
     public:
-        HDMIRxCECEvent() : CTvEv ( CTvEv::TV_EVENT_HDMIRX_CEC ) {}
+        HDMIRxCECEvent() : CTvEv ( CTvEv::TV_EVENT_HDMIRX_CEC )
+        {
+            mDataCount = 0;
+            memset(mDataBuf, 0, sizeof(mDataBuf));
+        }
         ~HDMIRxCECEvent() {}
         int mDataCount;
         int mDataBuf[32];
@@ -106,7 +130,11 @@ namespace  TvEvent {
 
     class AVPlaybackEvent: public CTvEv {
     public:
-        AVPlaybackEvent() : CTvEv ( CTvEv::TV_EVENT_AV_PLAYBACK ) {}
+        AVPlaybackEvent() : CTvEv ( CTvEv::TV_EVENT_AV_PLAYBACK )
+        {
+            mMsgType = 0;
+            mProgramId = 0;
+        }
         ~AVPlaybackEvent() {}
         static const int EVENT_AV_PLAYBACK_NODATA       = 1;
         static const int EVENT_AV_PLAYBACK_RESUME       = 2;
@@ -125,7 +153,14 @@ namespace  TvEvent {
 
     class BlockEvent: public CTvEv {
     public:
-        BlockEvent() : CTvEv ( CTvEv::TV_EVENT_BLOCK ) {}
+        BlockEvent() : CTvEv ( CTvEv::TV_EVENT_BLOCK )
+        {
+            block_status = false;
+            programBlockType = 0;
+            vchipDimension = String8("");
+            vchipAbbrev = String8("");
+            vchipAbbtext = String8("");
+        }
         ~BlockEvent() {}
 
         bool block_status;
@@ -137,7 +172,11 @@ namespace  TvEvent {
 
     class UpgradeFBCEvent: public CTvEv {
     public:
-        UpgradeFBCEvent() : CTvEv ( CTvEv::TV_EVENT_UPGRADE_FBC ) {}
+        UpgradeFBCEvent() : CTvEv ( CTvEv::TV_EVENT_UPGRADE_FBC )
+        {
+            mState = 0;
+            param = 0;
+        }
         ~UpgradeFBCEvent() {}
         int mState;
         int param;
@@ -145,7 +184,11 @@ namespace  TvEvent {
 
     class HeadSetOf2d4GEvent: public CTvEv {
     public:
-        HeadSetOf2d4GEvent(): CTvEv(CTvEv::TV_EVENT_2d4G_HEADSET) {}
+        HeadSetOf2d4GEvent(): CTvEv(CTvEv::TV_EVENT_2d4G_HEADSET)
+        {
+            state = 0;
+            para = 0;
+        }
         ~HeadSetOf2d4GEvent() {}
 
         int state;
@@ -154,22 +197,42 @@ namespace  TvEvent {
 
     class SubtitleEvent: public CTvEv {
     public:
-        SubtitleEvent(): CTvEv(CTvEv::TV_EVENT_SUBTITLE) {}
+        SubtitleEvent(): CTvEv(CTvEv::TV_EVENT_SUBTITLE)
+        {
+            pic_width = 0;
+            pic_height = 0;
+        }
         ~SubtitleEvent() {}
+
         int pic_width;
         int pic_height;
     };
 
     class ScanningFrameStableEvent: public CTvEv {
     public:
-        ScanningFrameStableEvent(): CTvEv(CTvEv::TV_EVENT_SCANNING_FRAME_STABLE) {}
+        ScanningFrameStableEvent(): CTvEv(CTvEv::TV_EVENT_SCANNING_FRAME_STABLE)
+        {
+            CurScanningFreq = 0;
+        }
         ~ScanningFrameStableEvent() {}
         int CurScanningFreq;
     };
 
     class FrontendEvent: public CTvEv {
     public:
-        FrontendEvent() : CTvEv ( CTvEv::TV_EVENT_FRONTEND ) {}
+        FrontendEvent() : CTvEv ( CTvEv::TV_EVENT_FRONTEND )
+        {
+            mStatus = 0;
+            mFrequency = 0;
+            mParam1 = 0;
+            mParam2 = 0;
+            mParam3 = 0;
+            mParam4 = 0;
+            mParam5 = 0;
+            mParam6 = 0;
+            mParam7 = 0;
+            mParam8 = 0;
+        }
         ~FrontendEvent() {}
         static const int EVENT_FE_HAS_SIG = 0x01;
         static const int EVENT_FE_NO_SIG = 0x02;
@@ -189,7 +252,12 @@ namespace  TvEvent {
 
     class RecorderEvent: public CTvEv {
     public:
-        RecorderEvent() : CTvEv ( CTvEv::TV_EVENT_RECORDER) {}
+        RecorderEvent() : CTvEv ( CTvEv::TV_EVENT_RECORDER)
+        {
+            mId = String8("");
+            mStatus = 0;
+            mError = 0;
+        }
         ~RecorderEvent() {}
         static const int EVENT_RECORD_START = 0x01;
         static const int EVENT_RECORD_STOP = 0x02;

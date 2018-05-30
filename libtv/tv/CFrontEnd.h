@@ -151,6 +151,8 @@ public:
 
         FEEvent(): CTvEv(CTvEv::TV_EVENT_SIGLE_DETECT)
         {
+            mCurSigStaus = 0;
+            mCurFreq = 0;
         }
         ~FEEvent()
         {

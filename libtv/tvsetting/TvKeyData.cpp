@@ -1069,8 +1069,16 @@ static int ReadDataFromFile(char *file_name, int offset, int nsize,
         return -1;
     }
 
-    lseek(device_fd, offset, SEEK_SET);
-    read(device_fd, data_buf, nsize);
+    tmp_ret = lseek(device_fd, offset, SEEK_SET);
+    if (tmp_ret == -1)
+    {
+        return -1;
+    }
+    tmp_ret = read(device_fd, data_buf, nsize);
+    if (tmp_ret < 0)
+    {
+        return -1;
+    }
 
     close(device_fd);
     device_fd = -1;
@@ -1111,7 +1119,11 @@ static int SaveDataToFile(char *file_name, int offset, int nsize,
         return -1;
     }
 
-    lseek(device_fd, offset, SEEK_SET);
+    tmp_ret = lseek(device_fd, offset, SEEK_SET);
+    if (tmp_ret == -1)
+    {
+        return -1;
+    }
     write(device_fd, data_buf, nsize);
     fsync(device_fd);
 
@@ -1200,7 +1212,7 @@ static int HandleRWData(RWDataInfo *data_info)
                 }
             }
 
-            delete tmp_cptr;
+            delete[] tmp_cptr;
             tmp_cptr = NULL;
 
             return tmp_ret;

@@ -90,10 +90,10 @@ int CTvFactory::replacePQDb(const char *newFilePath)
     return 0;
 }
 
-int CTvFactory::setGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b)
+int CTvFactory::setGamma(tcon_gamma_table_t *gamma_r, tcon_gamma_table_t *gamma_g, tcon_gamma_table_t *gamma_b)
 {
     if (mHdmiOutFbc) {
-        return mFbcObj->fbcSetGammaPattern(COMM_DEV_SERIAL, gamma_r.data[0], gamma_g.data[0], gamma_b.data[0]);
+        return mFbcObj->fbcSetGammaPattern(COMM_DEV_SERIAL, gamma_r->data[0], gamma_g->data[0], gamma_b->data[0]);
     } else {
         return CVpp::getInstance()->FactorySetGamma(gamma_r, gamma_g, gamma_b);
     }

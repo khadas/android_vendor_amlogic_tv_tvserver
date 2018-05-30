@@ -154,7 +154,7 @@ public:
 
     int setObserver(TvIObserver *ob)
     {
-        mpObserver = ob;
+        //mpObserver = ob;
         return 0;
     }
 
@@ -174,12 +174,12 @@ private:
     int AmvideocapCapFrame(char *buf, int size, int *w, int *h, int *ret_size);
 private:
     sp<IMemory> m_pMem;
-    camera m_capV4l2Cam;
-    unsigned int m_capNumBuffers;
+    //camera m_capV4l2Cam;
+    //unsigned int m_capNumBuffers;
 
-    char *m_pData;
-    TvIObserver *mpObserver;
-    CapEvent mCapEvt;
+    //char *m_pData;
+    //TvIObserver *mpObserver;
+    //CapEvent mCapEvt;
 };
 #endif
 

@@ -51,7 +51,7 @@ public:
     int setOverscan ( int tv_source_input, int fmt, int transFmt, tvin_cutwin_t cutwin );
     tvin_cutwin_t getOverscan ( int tv_source_input, int fmt, int transFmt );
     int replacePQDb(const char *newFilePath = NULL);
-    int setGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b);
+    int setGamma(tcon_gamma_table_t *gamma_r, tcon_gamma_table_t *gamma_g, tcon_gamma_table_t *gamma_b);
     int setRGBPattern(int r, int g, int b);
     int getRGBPattern();
 

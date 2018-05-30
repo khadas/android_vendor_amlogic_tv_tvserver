@@ -17,10 +17,16 @@
 char CTvRegion::stCountry[COUNTRY_NAME_LEN] = "US";
 CTvRegion::CTvRegion(CTvDatabase db __unused)
 {
+    id = 0;
+    name = String8("");
+    country = String8("");
 }
 
 CTvRegion::CTvRegion()
 {
+    id = 0;
+    name = String8("");
+    country = String8("");
 }
 
 CTvRegion::~CTvRegion()

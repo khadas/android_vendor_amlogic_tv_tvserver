@@ -20,6 +20,19 @@
 CTvSubtitle::CTvSubtitle()
 {
     mpObser = NULL;
+    sub_handle = NULL;
+    pes_handle = NULL;
+    dmx_id = 0;
+    filter_handle = 0;
+    bmp_w = 0;
+    bmp_h = 0;
+    bmp_pitch = 0;
+    buffer = NULL;
+    sub_w = 0;
+    sub_h = 0;
+    avchip_chg = 0;
+    mSubType = 0;
+    isSubOpen = false;
 }
 
 CTvSubtitle::~CTvSubtitle()

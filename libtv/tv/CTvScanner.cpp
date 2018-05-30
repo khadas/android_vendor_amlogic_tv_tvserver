@@ -44,6 +44,25 @@ CTvScanner::CTvScanner()
     mCurScanStartFreq = 1;
     mCurScanEndFreq = 100;
     mVbi = NULL;
+    mScanHandle = NULL;
+    mpTvin = NULL;
+    mMode = 0;
+    mFendID = 0;
+    mTvMode = 0;
+    mTvOptions = 0;
+    mSat_id = 0;
+    mTsSourceID = 0;
+    mAtvMode = 0;
+    mStartFreq = 0;
+    mDirection = 0;
+    mChannelID = 0;
+    tunerStd = 0;
+    demuxID = 0;
+    user_band = 0;
+    ub_freq = 0;
+    mFEType = 0;
+    mVbiTsId = 0;
+    mAtvIsAtsc = 0;
 }
 
 CTvScanner::~CTvScanner()
@@ -1427,7 +1446,10 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
         atv_para.cvbs_unlocked_step = 1500000;
         atv_para.cvbs_locked_step = 6000000;
     } else {
-        atv_para.direction = (atv_para.fe_paras[1].analog.para.frequency >= atv_para.fe_paras[0].analog.para.frequency)? 1 : 0;
+        if (atv_para.fe_paras != NULL)
+        {
+            atv_para.direction = (atv_para.fe_paras[1].analog.para.frequency >= atv_para.fe_paras[0].analog.para.frequency)? 1 : 0;
+        }
         atv_para.cvbs_unlocked_step = 1000000;
         atv_para.cvbs_locked_step = 3000000;
     }

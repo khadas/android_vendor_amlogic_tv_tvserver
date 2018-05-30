@@ -152,6 +152,13 @@ public:
         ScannerEvent(): CTvEv(CTvEv::TV_EVENT_SCANNER)
         {
             reset();
+            mPercent           = 0;
+            mTotalChannelCount = 0;
+            mLockedStatus      = 0;
+            mChannelIndex      = 0;
+            mMode              = 0;
+            mFrequency         = 0;
+            mSymbolRate        = 0;
         }
         void reset()
         {
@@ -172,6 +179,32 @@ public:
 
             mMajorChannelNumber = -1;
             mMinorChannelNumber = -1;
+
+            mModulation = 0;
+            mBandwidth = 0;
+            mReserved = 0;
+            mSat_polarisation = 0;
+            mStrength = 0;
+            mSnr = 0;
+            mprogramType = 0;
+            mVideoStd = 0;
+            mAudioStd = 0;
+            mIsAutoStd = 0;
+            mTsId = 0;
+            mONetId = 0;
+            mServiceId = 0;
+            mVid = 0;
+            mVfmt = 0;
+            mPcr = 0;
+            mFree_ca = 0;
+            mScrambled = 0;
+            mScanMode = 0;
+            mSdtVer = 0;
+            mSortMode = 0;
+            mSourceId = 0;
+            mAccessControlled = 0;
+            mHidden = 0;
+            mHideGuide = 0;
         }
         ~ScannerEvent()
         {

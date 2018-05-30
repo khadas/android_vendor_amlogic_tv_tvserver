@@ -81,6 +81,10 @@ public:
         //static const int CC_DATA_LEN = 512;
         CloseCaptionEvent(): CTvEv(CTvEv::TV_EVENT_CC)
         {
+            mCmdBufSize = 0;
+            mpCmdBuffer = NULL;
+            mDataBufSize = 0;
+            mpDataBuffer = NULL;
         }
         ~CloseCaptionEvent()
         {

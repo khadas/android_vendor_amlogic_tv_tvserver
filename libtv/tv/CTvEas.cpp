@@ -149,7 +149,7 @@ int CTvEas::EasCreate(int fend_id, int dmx_id, int src, char *textLangs)
 int CTvEas::EasDestroy()
 {
 #ifdef SUPPORT_ADTV
-    AM_ErrorCode_t ret;
+    AM_ErrorCode_t ret = -1;
     if (mEasScanHandle != NULL) {
         /*unregister eit events notifications*/
         AM_EVT_Unsubscribe((long)mEasScanHandle, AM_EPG_EVT_NEW_CEA, EasEvtCallback, NULL);

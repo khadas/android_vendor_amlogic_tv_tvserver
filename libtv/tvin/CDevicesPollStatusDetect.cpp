@@ -28,8 +28,14 @@
 
 CDevicesPollStatusDetect::CDevicesPollStatusDetect()
 {
-    mVdinDetectFd = -1;
+    m_event.events = 0;
+    m_avin_status[0].status = AVIN_STATUS_IN;
+    m_avin_status[0].channel = AVIN_CHANNEL1;
+    m_avin_status[1].status = AVIN_STATUS_IN;
+    m_avin_status[1].channel = AVIN_CHANNEL1;
+    m_hdmi_status = 0;
     mpObserver = NULL;
+    mVdinDetectFd = -1;
     if (mEpoll.create() < 0) {
         return;
     }

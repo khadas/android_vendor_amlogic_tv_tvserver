@@ -62,7 +62,7 @@ const char *tvservice_get_last_chaned_time_info(void)
     return LIBTVSERVICE_LAST_CHANGED;
 #endif
 #endif
-    return " Unknow ";
+    //return " Unknow ";
 }
 
 const char *tvservice_get_git_branch_info(void)
@@ -72,7 +72,7 @@ const char *tvservice_get_git_branch_info(void)
     return LIBTVSERVICE_GIT_BRANCH;
 #endif
 #endif
-    return " Unknow ";
+    //return " Unknow ";
 }
 
 const char *tvservice_get_build_time_info(void)
@@ -82,7 +82,7 @@ const char *tvservice_get_build_time_info(void)
     return LIBTVSERVICE_BUILD_TIME;
 #endif
 #endif
-    return " Unknow ";
+    //return " Unknow ";
 }
 
 const char *tvservice_get_build_name_info(void)
@@ -92,7 +92,7 @@ const char *tvservice_get_build_name_info(void)
     return LIBTVSERVICE_BUILD_NAME;
 #endif
 #endif
-    return " Unknow ";
+    //return " Unknow ";
 }
 
 const char *tvservice_get_board_version_info(void)
@@ -102,5 +102,5 @@ const char *tvservice_get_board_version_info(void)
     return TVAPI_BOARD_VERSION;
 #endif
 #endif
-    return " Unknow ";
+    //return " Unknow ";
 }

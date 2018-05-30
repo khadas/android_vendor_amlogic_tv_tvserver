@@ -33,6 +33,7 @@ CDTVTvPlayer::CDTVTvPlayer(CTv *tv) : CTvPlayer(tv) {
     mPparam = NULL;
     mParam = NULL;
     mSourceChanged = true;
+    mOffset = -1;
     mDisableTimeShifting = propertyGetBool("tv.dtv.tf.disable", false);
 }
 CDTVTvPlayer::~CDTVTvPlayer() {

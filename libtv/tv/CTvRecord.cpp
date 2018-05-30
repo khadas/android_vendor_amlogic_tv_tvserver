@@ -29,6 +29,8 @@ CTvRecord::CTvRecord()
     mCreateParam.dvr_dev = DVR_DEV_NO;
     mCreateParam.async_fifo_id = 0;
     mRec = NULL;
+    mId = NULL;
+    mpObserver = NULL;
 #endif
 }
 
@@ -124,9 +126,9 @@ int CTvRecord::setMediaInfoExt(int type, int val)
             mRecParam.program.i_number = val;
             break;
         case REC_EXT_TYPE_ADD_PID:
-            mExtPids.add(val);
         case REC_EXT_TYPE_REMOVE_PID:
             mExtPids.add(val);
+            break;
         default:
             return -1;
             break;

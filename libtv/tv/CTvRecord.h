@@ -59,7 +59,13 @@ public:
 
     class RecEvent : public CTvEv {
     public:
-        RecEvent(): CTvEv(CTvEv::TV_EVENT_RECORDER) { }
+        RecEvent(): CTvEv(CTvEv::TV_EVENT_RECORDER)
+        {
+            type = 0;
+            error = 0;
+            size = 0;
+            time = 0;
+        }
         ~RecEvent() {}
         static const int EVENT_REC_START=1;
         static const int EVENT_REC_STOP=2;

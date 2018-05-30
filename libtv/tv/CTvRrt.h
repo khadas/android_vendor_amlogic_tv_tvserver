@@ -61,7 +61,7 @@ public:
         public:
             RrtEvent(): CTvEv(CTvEv::TV_EVENT_RRT)
             {
-
+                satus = 0;
             };
             ~RrtEvent()
             {
@@ -114,7 +114,7 @@ private:
     void RrtDataUpdate(void * dev_no, int event_type, void *param, void *user_data);
 
 #ifdef SUPPORT_ADTV
-    void MultipleStringParser(atsc_multiple_string_t atsc_multiple_string, char *ret);
+    void MultipleStringParser(atsc_multiple_string_t &atsc_multiple_string, char *ret);
 #endif
 
     bool RrtUpdataCheck(int rating_region, int dimensions_defined, int version_number);

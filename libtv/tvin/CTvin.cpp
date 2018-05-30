@@ -64,7 +64,13 @@ CTvin::CTvin() : mAfeDevFd(-1), mVdin0DevFd(-1)
 {
     m_snow_status = false;
 
-    m_tvin_param.index = 0;
+    memset(&gTvinAFEParam, 0, sizeof(gTvinAFEParam));
+    memset(&gTvinAFESignalInfo, 0, sizeof(gTvinAFESignalInfo));
+    memset(&m_tvin_param, 0, sizeof(m_tvin_param));
+
+    memset(&gTvinVDINParam, 0, sizeof(gTvinVDINParam));
+    memset(&gTvinVDINSignalInfo, 0, sizeof(gTvinVDINSignalInfo));
+
     mDecoderStarted = false;
     gVideoPath[0] = '\0';
 
@@ -86,6 +92,7 @@ CTvin::CTvin() : mAfeDevFd(-1), mVdin0DevFd(-1)
     mSourceInputToPortMap[SOURCE_DTV] = TVIN_PORT_DTV;
     mSourceInputToPortMap[SOURCE_IPTV] = TVIN_PORT_BT656;
     mSourceInputToPortMap[SOURCE_SPDIF] = TVIN_PORT_CVBS3;
+
     //init_vdin();
 }
 
@@ -172,7 +179,7 @@ int CTvin::getVdinDeviceFd() {
 
 int CTvin::VDIN_OpenModule()
 {
-    char file_name[64];
+    char file_name[64] = {0};
     sprintf ( file_name, "/dev/vdin%d", CC_SEL_VDIN_DEV );
     int fd = open ( file_name, O_RDWR );
     if ( fd < 0 ) {
@@ -180,8 +187,6 @@ int CTvin::VDIN_OpenModule()
         return -1;
     }
 
-    memset ( &gTvinVDINParam, 0, sizeof ( gTvinVDINParam ) );
-    memset ( &gTvinVDINSignalInfo, 0, sizeof ( gTvinVDINSignalInfo ) );
 
     LOGD ( "Open vdin%d module fd = [%d]", CC_SEL_VDIN_DEV, fd );
 
@@ -672,11 +677,11 @@ int CTvin::AFE_VGAAutoAdjust ( struct tvafe_vga_parm_s *timingadj )
         return -1;
     }
 
-    for ( i = 0, CMDStatus == TVAFE_CMD_STATUS_PROCESSING; i < 50; i++ ) {
+    for ( i = 0, CMDStatus = TVAFE_CMD_STATUS_PROCESSING; i < 50; i++ ) {
         rt = AFE_DeviceIOCtl ( TVIN_IOC_G_AFE_CMD_STATUS, &CMDStatus );
 
         if ( rt < 0 ) {
-            LOGD ( "get afe CMD status, error(%s), return(%d).\n", strerror ( errno ), rt );
+            LOGD ( "get afe CMD status, error(%s),  return(%d).\n", strerror ( errno ),  rt);
         }
 
         if ( ( CMDStatus == TVAFE_CMD_STATUS_IDLE ) || ( CMDStatus == TVAFE_CMD_STATUS_SUCCESSFUL ) ) {

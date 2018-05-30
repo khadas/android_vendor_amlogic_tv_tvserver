@@ -783,7 +783,7 @@ static unsigned char gTempDataBuf[4096] = { 0 };
 int SSMHandlePreCopying()
 {
     int device_fd = -1;
-    int i = 0, tmp_size = 0;
+    int i = 0, tmp_size = 0, ret = 0, remove_ret = 0;
     int tmp_ch = 0;
     char tmpPreCopyingDevicePath[256] = { '\0' };
 
@@ -807,15 +807,22 @@ int SSMHandlePreCopying()
     tmp_size = lseek(device_fd, 0, SEEK_END);
     if (tmp_size == 4096) {
         lseek(device_fd, 0, SEEK_SET);
-        read(device_fd, gTempDataBuf, tmp_size);
-        for (i=0;i<tmp_size;i++) {
-            TVSSMWriteNTypes(0, 1, gTempDataBuf[i]);
+        ret = read(device_fd, gTempDataBuf, tmp_size);
+        if (ret > 0)
+        {
+            for (i=0;i<tmp_size;i++) {
+                TVSSMWriteNTypes(0, 1, gTempDataBuf[i]);
+            }
         }
     }
 
     close(device_fd);
 
-    remove(tmpPreCopyingDevicePath);
+    remove_ret = remove(tmpPreCopyingDevicePath);
+    if (remove_ret == -1)
+    {
+        return -1;
+    }
 
     return 0;
 }
@@ -1076,7 +1083,7 @@ int SSMReadDnlpStart(unsigned char *rw_val)
 
 int SSMSavePanoramaStart(int offset, unsigned char rw_val)
 {
-    int tmp_val = tmp_val;
+    int tmp_val = rw_val;
     return TVSSMWriteNTypes(VPP_DATA_POS_PANORAMA_START, 1, tmp_val, offset);
 }
 

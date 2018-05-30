@@ -64,6 +64,9 @@ CFrontEnd::CFrontEnd()
     mCurPara2 = -1;
     mbFEOpened = false;
     mbVLFEOpened = false;
+    mDemuxDevID = -1;
+    mTvPlayDevID = -1;
+    mCurPara3 = -1;
 }
 
 CFrontEnd::~CFrontEnd()

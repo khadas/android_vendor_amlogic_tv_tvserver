@@ -120,10 +120,44 @@ void CTvChannel::createFromCursor(CTvDatabase::Cursor &c)
 
 CTvChannel::CTvChannel()
 {
+    id = 0;
+    dvbTSID = 0;
+    dvbOrigNetID = 0;
+    fendID = 0;
+    tsSourceID = 0;
+
+    this->mode = 0;
+    frequency = 0;
+    symbolRate = 0;
+    modulation = 0;
+    bandwidth = 0;
+    audio = 0;
+    standard = 0;
+    afc_data = 0;
+    sat_id = 0;
+    logicalChannelNum = 0;
+    sat_polarisation = 0;
 }
 
 CTvChannel::CTvChannel(int dbID, int mode, int freq, int bw, int mod, int symb, int ofdm __unused, int channelNum)
 {
+    id = 0;
+    dvbTSID = 0;
+    dvbOrigNetID = 0;
+    fendID = 0;
+    tsSourceID = 0;
+
+    this->mode = 0;
+    frequency = 0;
+    symbolRate = 0;
+    modulation = 0;
+    bandwidth = 0;
+    audio = 0;
+    standard = 0;
+    afc_data = 0;
+    sat_id = 0;
+    logicalChannelNum = 0;
+    sat_polarisation = 0;
     //other member not init,just a paras
     if (mode == MODE_QAM) {
         id = dbID;

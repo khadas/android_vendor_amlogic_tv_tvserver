@@ -135,7 +135,7 @@ public:
     noline_params_t FactoryGetNolineParams ( int type, int source_type );
     int FactorySetOverscan ( int source_type, int fmt, int trans_fmt, tvin_cutwin_t cutwin_t );
     tvin_cutwin_t FactoryGetOverscan ( int source_type, int fmt, is_3d_type_t is3d, int trans_fmt );
-    int FactorySetGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b);
+    int FactorySetGamma(tcon_gamma_table_t *gamma_r, tcon_gamma_table_t *gamma_g, tcon_gamma_table_t *gamma_b);
 
     int VPPSSMFacRestoreDefault();
 

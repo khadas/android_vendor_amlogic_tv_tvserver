@@ -193,7 +193,10 @@ public :
 
         Subtitle(int pid, String8 lang, int type, int num1, int num2): MultiLangElement(pid, lang)
         {
-
+            compositionPage = 0;
+            ancillaryPage = 0;
+            magazineNo = 0;
+            pageNo = 0;
             this->type = type;
             if (type == TYPE_DVB_SUBTITLE) {
                 compositionPage = num1;

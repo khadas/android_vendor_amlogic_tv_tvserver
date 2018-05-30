@@ -65,7 +65,14 @@ public :
     public:
         EpgEvent(): CTvEv(CTvEv::TV_EVENT_EPG)
         {
-
+            type = 0;
+            channelID = 0;
+            programID = 0;
+            dvbOrigNetID = 0;
+            dvbTSID = 0;
+            dvbServiceID = 0;
+            time = 0;
+            dvbVersion = 0;
         };
         ~EpgEvent()
         {
@@ -113,8 +120,14 @@ public :
     {
         mCurScanChannelId  = INVALID_ID;
         mCurScanProgramId  = INVALID_ID;
+        #ifdef SUPPORT_ADTV
+        mEpgScanHandle = NULL;
+        #endif
         mpObserver = NULL;
         mDmx_dev_id = INVALID_ID;
+        mFend_dev_id = 0;
+        mFend_mod = 0;
+
     }
     void Init(int fend, int dmx, int fend_mod, char *textLanguages, char *dvb_text_coding);
 

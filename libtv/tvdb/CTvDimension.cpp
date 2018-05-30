@@ -76,7 +76,15 @@ CTvDimension::CTvDimension(CTvDatabase::Cursor &c)
 }
 CTvDimension::CTvDimension()
 {
-
+    id = 0;
+    indexj = 0;
+    ratingRegion = 0;
+    graduatedScale = 0;
+    valuesDefined = 0;
+    lockValues = NULL;
+    abbrevValues = NULL;
+    textValues = NULL;
+    isPGAll = false;
 }
 CTvDimension::~CTvDimension()
 {
@@ -419,6 +427,9 @@ CTvDimension::VChipRating::VChipRating(int region, int dimension, int value)
 }
 CTvDimension::VChipRating::VChipRating()
 {
+    region = 0;
+    dimension = 0;
+    value = 0;
 }
 
 CTvDimension::VChipRating::~VChipRating()
@@ -474,6 +485,7 @@ void CTvDimension::insertNewDimension(const int region, String8 regionName, Stri
             cmd += String8(",-1");
         }
     }
+
     cmd += String8(")");
     CTvDatabase::GetTvDb()->exeSql(cmd.string());
 }

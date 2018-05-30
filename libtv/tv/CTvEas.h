@@ -64,7 +64,33 @@ public :
     public:
         EasEvent(): CTvEv(CTvEv::TV_EVENT_EAS)
         {
-
+            eas_section_count = 0;
+            table_id = 0;
+            extension = 0;
+            version = 0;
+            current_next = 0;
+            sequence_num = 0;
+            protocol_version = 0;
+            eas_event_id = 0;
+            memset(eas_orig_code, 0, sizeof(eas_orig_code));
+            eas_event_code_len = 0;
+            memset(eas_event_code, 0, sizeof(eas_event_code));
+            alert_message_time_remaining = 0;
+            event_start_time = 0;
+            event_duration = 0;
+            alert_priority = 0;
+            details_OOB_source_ID = 0;
+            details_major_channel_number = 0;
+            details_minor_channel_number = 0;
+            audio_OOB_source_ID = 0;
+            location_count = 0;
+            memset(location, 0, sizeof(location));
+            exception_count = 0;
+            memset(exception, 0, sizeof(exception));
+            multi_text_count = 0;
+            memset(multi_text, 0, sizeof(multi_text));
+            descriptor_text_count = 0;
+            memset(descriptor, 0, sizeof(descriptor));
         };
         ~EasEvent()
         {

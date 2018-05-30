@@ -86,7 +86,9 @@ public:
     public:
         AVEvent(): CTvEv(CTvEv::TV_EVENT_AV)
         {
-
+            type = 0;
+            param = 0;
+            status = 0;
         };
         ~AVEvent()
         {};

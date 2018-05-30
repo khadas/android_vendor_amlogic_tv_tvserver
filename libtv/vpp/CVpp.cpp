@@ -42,6 +42,10 @@ CVpp *CVpp::getInstance()
 
 CVpp::CVpp()
 {
+    mHdmiOutFbc = false;
+    mbVppCfg_backlight_reverse = false;
+    mbVppCfg_backlight_init = false;
+    mbVppCfg_pqmode_depend_bklight = false;
     fbcIns = GetSingletonFBC();
 }
 
@@ -441,6 +445,7 @@ int CVpp::VPP_SetBackLight_Switch(int value)
 int CVpp::VPP_GetBackLight_Switch(void)
 {
     int value;
+    int ret;
 
     FILE *fp = fopen(VPP_PANEL_BACKLIGHT_DEV_PATH, "w");
     if (fp == NULL) {
@@ -448,7 +453,11 @@ int CVpp::VPP_GetBackLight_Switch(void)
         return -1;
     }
 
-    fscanf(fp, "%d", &value);
+    ret = fscanf(fp, "%d", &value);
+    if (ret == -1)
+    {
+        return -1;
+    }
     LOGD("VPP_GetBackLight_Switch VPP_PANEL_BACKLIGHT_DEV_PATH : %d", value);
     fclose(fp);
     fp = NULL;
@@ -698,30 +707,7 @@ int CVpp::FactorySetParamsDefault(void)
 
 int CVpp::FactorySetDDRSSC(int step)
 {
-    int ret = -1;
-
-    switch (step) {
-    case 1:
-        break;
-
-    case 2:
-        break;
-
-    case 3:
-        break;
-
-    case 4:
-        break;
-
-    case 5:
-        break;
-
-    case 0:
-    default:
-        break;
-    }
-
-    if (ret < 0) {
+    if (step < 0 || step > 5) {
         return -1;
     }
 
@@ -844,11 +830,11 @@ tvin_cutwin_t CVpp::FactoryGetOverscan(int source_type, int fmt, is_3d_type_t is
     return cutwin_t;
 }
 
-int CVpp::FactorySetGamma(tcon_gamma_table_t gamma_r, tcon_gamma_table_t gamma_g, tcon_gamma_table_t gamma_b)
+int CVpp::FactorySetGamma(tcon_gamma_table_t *gamma_r, tcon_gamma_table_t *gamma_g, tcon_gamma_table_t *gamma_b)
 {
-    int gamma_r_value = gamma_r.data[0];
-    int gamma_g_value = gamma_g.data[0];
-    int gamma_b_value = gamma_b.data[0];
+    int gamma_r_value = gamma_r->data[0];
+    int gamma_g_value = gamma_g->data[0];
+    int gamma_b_value = gamma_b->data[0];
     LOGD("%s", __FUNCTION__);
     return tvFactorySetGamma(gamma_r_value, gamma_g_value, gamma_b_value);
 }
@@ -942,6 +928,7 @@ int CVpp::VPP_SetGrayPattern(int value)
 int CVpp::VPP_GetGrayPattern()
 {
     int value;
+    int ret;
 
     LOGD("VPP_GetGrayPattern /sys/class/video/test_screen");
     FILE *fp = fopen("/sys/class/video/test_screen", "r+");
@@ -950,7 +937,11 @@ int CVpp::VPP_GetGrayPattern()
         return -1;
     }
 
-    fscanf(fp, "%d", &value);
+    ret = fscanf(fp, "%d", &value);
+    if (ret == -1)
+    {
+        return -1;
+    }
     fclose(fp);
     fp = NULL;
     if (value < 0) {

@@ -672,7 +672,7 @@ int CTv::dtvCleanProgramByFreq ( int freq )
         LOGD("%s, Warnning: Current Freq not have program info in the ts_table\n", __FUNCTION__);
     }
 
-    iOutRet == CTvProgram::deleteChannelsProgram ( channel );
+    iOutRet = CTvProgram::deleteChannelsProgram ( channel );
     return iOutRet;
 }
 
@@ -1490,7 +1490,7 @@ int CTv::getChannelInfoBydbID ( int dbID, channel_info_t &chan_info )
     CTvProgram prog;
     CTvChannel channel;
     Vector<sp<CTvProgram> > out;
-    memset ( &chan_info, sizeof ( chan_info ), 0 );
+    memset ( &chan_info, 0, sizeof(chan_info));
     chan_info.freq = 44250000;
     chan_info.uInfo.atvChanInfo.videoStd = CC_ATV_VIDEO_STD_PAL;
     chan_info.uInfo.atvChanInfo.audioStd = CC_ATV_AUDIO_STD_DK;
@@ -1612,7 +1612,10 @@ int CTv::getATVMinMaxFreq ( int *scanMinFreq, int *scanMaxFreq )
 
     char *pSave;
     token = strtok_r ( data_str, strDelimit, &pSave);
-    sscanf ( token, "%d", scanMinFreq );
+    if (token != NULL)
+    {
+        sscanf ( token, "%d", scanMinFreq );
+    }
     token = strtok_r ( NULL, strDelimit , &pSave);
     if ( token != NULL ) {
         sscanf ( token, "%d", scanMaxFreq );
@@ -1916,6 +1919,7 @@ int CTv::Tv_MiscSetBySource ( tv_source_input_t source_input )
 
     case SOURCE_DTV:
         CVpp::getInstance()->VPP_SetScalerPathSel(0);
+        break;
 
     case SOURCE_AV1:
     case SOURCE_AV2:
@@ -1927,6 +1931,7 @@ int CTv::Tv_MiscSetBySource ( tv_source_input_t source_input )
     case SOURCE_SVIDEO:
     case SOURCE_IPTV:
         CVpp::getInstance()->VPP_SetScalerPathSel(1);
+        break;
     default:
         CVpp::getInstance()->VPP_SetScalerPathSel(0);
         ret |= tvWriteSysfs ( SYS_VECM_DNLP_ADJ_LEVEL, "5" );

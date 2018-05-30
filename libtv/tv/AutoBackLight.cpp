@@ -31,10 +31,11 @@ AutoBackLight::AutoBackLight()
 {
     mAutoBacklightSource = SOURCE_TV;
     mCur_source_default_backlight = 100;
-    mCur_sig_state == SIG_STATE_NOSIG;
+    mCur_sig_state = SIG_STATE_NOSIG;
     mAutoBacklight_OnOff_Flag = false;
     mCurrent_backlight = 100;
     mCur_dest_backlight = 100;
+    mCur_sig_state = 0;
 }
 
 AutoBackLight::~AutoBackLight()
@@ -96,7 +97,7 @@ void AutoBackLight::adjustDstBacklight()
         //the node is used to adjust current ts is static or dynamtic frame
         char temp_str = 0;
         int fd = open("/sys/module/di/parameters/frame_dynamic", O_RDWR);
-        if (fd <= 0) {
+        if (fd < 0) {
             LOGE("open /sys/module/di/parameters/frame_dynamic ERROR!!\n");
             return;
         }

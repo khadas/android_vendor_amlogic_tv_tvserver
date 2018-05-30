@@ -99,7 +99,9 @@ int CTvBooking::bookProgram(CTvProgram &prog, CTvEvent &evt)
     String8 progName = String8(prog.getName());
     String8 evtName = String8(evt.getName());
 
-
+    if (!prog.getAudio(0)) {
+        return -1;
+    }
     /*book this program*/
     cmd = String8("insert into booking_table(db_srv_id, db_evt_id, srv_name, evt_name,")
           + String8("start,duration,flag,status,file_name,vid_pid,vid_fmt,aud_pids,aud_fmts,aud_languages,")
@@ -160,6 +162,16 @@ CTvBooking::CTvBooking(CTvDatabase::Cursor &c)
 
 CTvBooking::CTvBooking()
 {
+    id = 0;
+    programId = 0;
+    eventId = 0;
+    flag = 0;
+    status = 0;
+    repeat = 0;
+    start = 0;
+    duration = 0;
+    progName = String8("");
+    evtName = String8("");
 }
 
 CTvBooking::~CTvBooking()

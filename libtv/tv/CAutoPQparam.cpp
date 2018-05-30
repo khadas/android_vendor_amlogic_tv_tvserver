@@ -36,6 +36,7 @@ CAutoPQparam::CAutoPQparam()
     autofreq_checkcount = 0;
     autofreq_checkflag = 0;
     mAutoPQ_OnOff_Flag = false;
+    mAutoPQSource = SOURCE_INVALID;
 }
 
 CAutoPQparam::~CAutoPQparam()
@@ -83,7 +84,7 @@ TVIN_SIG_FMT_HDMI_3840_2160_00HZ = 0x445            nodeVal>2000
 int CAutoPQparam::adjustPQparameters()
 {
     int fd = -1;
-    int nodeVal = 0, ret = 0;
+    int nodeVal = 0, ret = 0, read_ret = 0;
     int new_frame_count = 0;
     float frame_rate = 0;
     float frame_rate_ave = 0;
@@ -94,26 +95,32 @@ int CAutoPQparam::adjustPQparameters()
     tvin_trans_fmt trans_fmt = TVIN_TFMT_2D;
 
     fd = open("/sys/module/amvideo/parameters/new_frame_count", O_RDONLY);
-    if (fd <= 0) {
+    if (fd < 0) {
         LOGE("open /sys/module/amvideo/parameters/new_frame_count  ERROR!!error = -%s- \n", strerror ( errno ));
         return -1;
     }
     memset(s, 0, sizeof(s));
-    read(fd, s, sizeof(s));
+    read_ret = read(fd, s, sizeof(s));
     close(fd);
-    new_frame_count = atoi(s);
+    if (read_ret > 0)
+    {
+        new_frame_count = atoi(s);
+    }
 
     if (new_frame_count != 0) {
 
         fd = open(SYS_VIDEO_FRAME_HEIGHT, O_RDONLY);
-        if (fd <= 0) {
+        if (fd < 0) {
             LOGE("open %s ERROR!!error = -%s- \n",SYS_VIDEO_FRAME_HEIGHT, strerror ( errno ));
             return -1;
         }
         memset(s, 0, sizeof(s));
-        read(fd, s, sizeof(s));
+        read_ret = read(fd, s, sizeof(s));
         close(fd);
-        nodeVal = atoi(s);
+        if (read_ret > 0)
+        {
+            nodeVal = atoi(s);
+        }
 
         if (nodeVal <= 576) {
             curFmtType = 1;

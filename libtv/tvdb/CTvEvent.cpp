@@ -223,6 +223,15 @@ CTvEvent::CTvEvent(CTvDatabase::Cursor &c)
 
 CTvEvent::CTvEvent()
 {
+    id = 0;
+    dvbEventID = 0;
+    programID = 0;
+    start = false;
+    end = false;
+    dvbContent = 0;
+    dvbViewAge = 0;
+    sub_flag = 0;
+    rating_len = 0;
 }
 
 CTvEvent::~CTvEvent()

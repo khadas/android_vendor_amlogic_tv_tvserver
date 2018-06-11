@@ -2067,6 +2067,7 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
     } else {
         mpTvin->setMpeg2Vdin(0);
         mAv.setLookupPtsForDtmb(0);
+        Tv_SetDisplayMode(Tv_GetDisplayMode(m_source_input), m_source_input, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, 1);
     }
 
     cur_port = mpTvin->Tvin_GetSourcePortBySourceInput ( source_input );

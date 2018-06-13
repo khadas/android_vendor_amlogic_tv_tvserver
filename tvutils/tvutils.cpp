@@ -624,7 +624,7 @@ int tvSetBacklight(tv_source_input_t source_input, int value, int is_save)
 {
     const sp<SystemControlClient> &sws = getSystemControlService();
     if (sws != nullptr) {
-        return sws->setBacklight((int)source_input, value, is_save);
+        return sws->setBacklight(value, is_save);
     }
 
     return -1;
@@ -634,7 +634,7 @@ int tvGetBacklight(tv_source_input_t source_input)
 {
     const sp<SystemControlClient> &sws = getSystemControlService();
     if (sws != nullptr) {
-        return sws->getBacklight((int)source_input);
+        return sws->getBacklight();
     }
 
     return -1;
@@ -644,7 +644,7 @@ int tvSaveBacklight(tv_source_input_t source_input, int value)
 {
     const sp<SystemControlClient> &sws = getSystemControlService();
     if (sws != nullptr) {
-        return sws->saveBacklight((int)source_input, value);
+        return sws->saveBacklight(value);
     }
 
     return -1;

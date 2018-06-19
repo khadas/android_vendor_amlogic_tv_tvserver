@@ -257,9 +257,13 @@ int CTvin::VDIN_StartDec ( const struct tvin_parm_s *vdinParam )
 
     LOGD ( "VDIN_StartDec: index = [%d] port = [0x%x] format = [0x%x]\n",
         vdinParam->index, ( unsigned int ) vdinParam->port, ( unsigned int ) ( vdinParam->info.fmt ));
+    if ( !isVideoInuse() ) {
+        return -1;
+    }
     int rt = VDIN_DeviceIOCtl ( TVIN_IOC_START_DEC, vdinParam );
     if ( rt < 0 ) {
         LOGW ( "Vdin start decode, error(%s)!\n", strerror ( errno ) );
+        tvWriteSysfs(SYS_VIDEO_INUSE_PATH, 0);
     }
 
     return rt;
@@ -270,8 +274,9 @@ int CTvin::VDIN_StopDec()
     int rt = VDIN_DeviceIOCtl ( TVIN_IOC_STOP_DEC );
     if ( rt < 0 ) {
         LOGW ( "Vdin stop decode, error(%s)", strerror ( errno ) );
+    } else {
+        tvWriteSysfs(SYS_VIDEO_INUSE_PATH, 0);
     }
-
     return rt;
 }
 

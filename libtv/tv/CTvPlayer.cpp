@@ -105,6 +105,9 @@ int CDTVTvPlayer::setParam(const char *param) {
 int CDTVTvPlayer::start(const char *param) {
     LOGD("start(%s:%s) current mode(%d)", toReadable(getId()), toReadable(param), mMode);
     int ret = -1;
+    if ( !isVideoInuse() ) {
+        return ret;
+    }
 #ifdef SUPPORT_ADTV
     switch (mMode) {
         case PLAY_MODE_LIVE: {//start play live and rec in the backgroud
@@ -169,6 +172,8 @@ int CDTVTvPlayer::stop(const char *param) {
 
     if (ret == 0)
         tryCloseTFile();
+
+    tvWriteSysfs(SYS_VIDEO_INUSE_PATH, 0);
 
     LOGD("stop(%s)=%d", toReadable(param), ret);
     return ret;

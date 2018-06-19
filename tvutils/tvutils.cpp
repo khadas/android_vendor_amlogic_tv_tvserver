@@ -1421,3 +1421,30 @@ bool propertyGetBool(const char *prop, bool def) {
     return property_get_bool(prop, def ? 1 : 0) ? true : false;
 }
 
+bool isVideoInuse() {
+    char buf[32] = {0}, value[PROPERTY_VALUE_MAX] = {0};
+    int video_inuse = 0, tmp_read = 0, wait_number = 0;
+    tvReadSysfs(SYS_VIDEO_INUSE_PATH, buf);
+    video_inuse = atoi(buf);
+    property_get("media.video.waitnumber", value, "200");
+    wait_number = atoi(value);
+    tmp_read = wait_number;
+    LOGD("start CTvin video in_use = %d,wait_number=%d\n", video_inuse,wait_number);
+
+    if (video_inuse != 0) {
+        while (video_inuse && wait_number) {
+            tvReadSysfs( SYS_VIDEO_INUSE_PATH, buf);
+            video_inuse = atoi(buf);
+            wait_number--;
+            LOGD("waiting resource =%d\n", wait_number);
+            usleep (50*1000);
+        }
+    }
+    if (wait_number == 0 && video_inuse != 0) {
+        LOGD("have waited %d ms,return -1,CTvin start with video in use\n", tmp_read*50);
+        return false;
+    } else {
+        return true;
+    }
+}
+

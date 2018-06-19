@@ -32,7 +32,34 @@ CAv::CAv()
 CAv::~CAv()
 {
 }
+void CAv::av_audio_callback(int event_type, AudioParms* param, void *user_data)
+{
+    LOGD ( "%s, av_audio_callback \n", __FUNCTION__ );
 
+    CAv *pAv = ( CAv * ) user_data;
+    if (NULL == pAv ) {
+        LOGD ( "%s, ERROR : av_audio_callback NULL == pTv\n", __FUNCTION__ );
+        return ;
+    }
+    if ( pAv->mpObserver == NULL ) {
+        LOGD ( "%s, ERROR : mpObserver NULL == mpObserver\n", __FUNCTION__ );
+        return ;
+    }
+#ifdef SUPPORT_ADTV
+    switch ( event_type ) {
+        case AM_AV_EVT_AUDIO_CB:
+            pAv->mCurAvEvent.type = AVEvent::EVENT_AUDIO_CB;
+            pAv->mCurAvEvent.status = param->cmd;
+            pAv->mCurAvEvent.param = param->param1;
+            pAv->mCurAvEvent.param1 = param->param2;
+
+            pAv->mpObserver->onEvent(pAv->mCurAvEvent);
+
+            break;
+     }
+     return ;
+#endif
+}
 int CAv::SetVideoWindow(int x, int y, int w, int h)
 {
 #ifdef SUPPORT_ADTV
@@ -75,6 +102,7 @@ int CAv::Open()
     AM_EVT_Subscribe ( mTvPlayDevId, AM_AV_EVT_VIDEO_AVAILABLE, av_evt_callback, this );
     AM_EVT_Subscribe ( mTvPlayDevId, AM_AV_EVT_PLAYER_UPDATE_INFO, av_evt_callback, this );
 
+    AM_AV_SetAudioCallback(0,av_audio_callback,this);
     return rt;
 #else
     return -1;
@@ -91,6 +119,8 @@ int CAv::Close()
         close(mFdAmVideo);
         mFdAmVideo = -1;
     }
+
+    AM_AV_SetAudioCallback(0,NULL,NULL);
 #endif
     return iRet;
 }

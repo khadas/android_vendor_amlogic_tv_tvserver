@@ -35,21 +35,21 @@ static const char *PATH_MEPG_DTMB_LOOKUP_PTS_FLAG = "/sys/module/amvdec_mpeg12/p
 //must sync with am_aout.h
 enum
 {
-	TV_AOUT_OUTPUT_STEREO,     /**< Stereo output*/
-	TV_AOUT_OUTPUT_DUAL_LEFT,  /**< Left audio output to dual channel*/
-	TV_AOUT_OUTPUT_DUAL_RIGHT, /**< Right audio output to dual channel*/
-	TV_AOUT_OUTPUT_SWAP        /**< Swap left and right channel*/
+    TV_AOUT_OUTPUT_STEREO,     /**< Stereo output*/
+    TV_AOUT_OUTPUT_DUAL_LEFT,  /**< Left audio output to dual channel*/
+    TV_AOUT_OUTPUT_DUAL_RIGHT, /**< Right audio output to dual channel*/
+    TV_AOUT_OUTPUT_SWAP        /**< Swap left and right channel*/
 };
 
 enum
 {
-	TV_AV_TS_SRC_TS0,                    /**< TS input port 0*/
-	TV_AV_TS_SRC_TS1,                    /**< TS input port 1*/
-	TV_AV_TS_SRC_TS2,                    /**< TS input port 2*/
-	TV_AV_TS_SRC_HIU,                    /**< HIU port (file input)*/
-	TV_AV_TS_SRC_DMX0,                   /**< Demux 0*/
-	TV_AV_TS_SRC_DMX1,                   /**< Demux 1*/
-	TV_AV_TS_SRC_DMX2                    /**< Demux 2*/
+    TV_AV_TS_SRC_TS0,                    /**< TS input port 0*/
+    TV_AV_TS_SRC_TS1,                    /**< TS input port 1*/
+    TV_AV_TS_SRC_TS2,                    /**< TS input port 2*/
+    TV_AV_TS_SRC_HIU,                    /**< HIU port (file input)*/
+    TV_AV_TS_SRC_DMX0,                   /**< Demux 0*/
+    TV_AV_TS_SRC_DMX1,                   /**< Demux 1*/
+    TV_AV_TS_SRC_DMX2                    /**< Demux 2*/
 };
 //end
 
@@ -88,6 +88,7 @@ public:
         {
             type = 0;
             param = 0;
+            param1 = 0;
             status = 0;
         };
         ~AVEvent()
@@ -98,9 +99,11 @@ public:
         static const int EVENT_AV_UNSUPPORT        = 4;
         static const int EVENT_AV_VIDEO_AVAILABLE  = 5;
         static const int EVENT_PLAY_UPDATE  = 6;
+        static const int EVENT_AUDIO_CB  = 7;
         std::string player;
         int type;
         long param;
+        long param1;
         int status;
     };
 
@@ -173,6 +176,7 @@ public:
 
 private:
     static void av_evt_callback ( long dev_no, int event_type, void *param, void *user_data );
+    static void av_audio_callback(int event_type, AudioParms* param, void *user_data);
     int getVideoFrameCount();
     int mTvPlayDevId;
     IObserver *mpObserver;

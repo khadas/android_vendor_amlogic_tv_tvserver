@@ -390,7 +390,17 @@ void CTv::onEvent(const CAv::AVEvent &ev)
         }
         break;
     }
+    case CAv::AVEvent::EVENT_AUDIO_CB: {
+        TvEvent::AVAudioCBEvent AvAudiocbEvt;
 
+        LOGD("cmd:%d, param1:%d,param2:%d\n",ev.status,ev.param,ev.param1);
+
+        AvAudiocbEvt.cmd = ev.status;
+        AvAudiocbEvt.param1 = ev.param;
+        AvAudiocbEvt.param2 = ev.param1;
+        sendTvEvent(AvAudiocbEvt);
+        break;
+    }
     default:
         break;
     }

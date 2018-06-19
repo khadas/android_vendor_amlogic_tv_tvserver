@@ -42,6 +42,7 @@ public:
     static const int TV_EVENT_RECORDER = 22;
     static const int TV_EVENT_RRT = 23;//RRT
     static const int TV_EVENT_EAS = 24;//EAS
+    static const int TV_EVENT_AUDIO_CB = 25;
 
     CTvEv(int type);
     virtual ~CTvEv() {};
@@ -150,7 +151,19 @@ namespace  TvEvent {
         int mMsgType;
         int mProgramId;
     };
+    class AVAudioCBEvent:public CTvEv {
+    public:
+        AVAudioCBEvent():CTvEv ( CTvEv::TV_EVENT_AUDIO_CB ) {
+            cmd = 0;
+            param1 = 0;
+            param2 = 0;
+        }
+        ~AVAudioCBEvent(){}
 
+        int cmd;
+        int param1;
+        int param2;
+    };
     class BlockEvent: public CTvEv {
     public:
         BlockEvent() : CTvEv ( CTvEv::TV_EVENT_BLOCK )

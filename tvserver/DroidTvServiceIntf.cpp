@@ -467,6 +467,20 @@ void DroidTvServiceIntf::onTvEvent(const CTvEv &ev)
 
         break;
     }
+    case CTvEv::TV_EVENT_AUDIO_CB: {
+        TvEvent::AVAudioCBEvent *pEv = (TvEvent::AVAudioCBEvent *)(&ev);
+
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = AUDIO_EVENT_CALLBACK;
+        hidlParcel.bodyInt.resize(3);
+        hidlParcel.bodyInt[0] = pEv->cmd;
+        hidlParcel.bodyInt[1] = pEv->param1;
+        hidlParcel.bodyInt[2] = pEv->param2;
+        mNotifyListener->onEvent(hidlParcel);
+
+        break;
+    }
+
 
     default:
         break;

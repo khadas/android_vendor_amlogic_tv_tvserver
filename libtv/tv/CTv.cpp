@@ -2130,14 +2130,7 @@ void CTv::onSigToStable()
             } else {
                 freq = 50;
             }
-
-            if (CVpp::getInstance()->Vpp_GetAutoSwitchPCModeFlag() == 1) {
-                MnoNeedAutoSwitchToMonitorMode = false;
-            } else {
-                MnoNeedAutoSwitchToMonitorMode = true;
-            }
-            //autoSwitchToMonitorMode();
-
+            autoSwitchToMonitorMode();
         } else if ( CTvin::Tvin_is50HzFrameRateFmt ( m_cur_sig_info.fmt ) ) {
             freq = 50;
         }
@@ -2824,6 +2817,18 @@ int CTv::Tv_SavePQMode ( vpp_picture_mode_t mode, tv_source_input_t tv_source_in
     return CVpp::getInstance()->SavePQMode ( mode, tv_source_input );
 }
 
+int CTv::Tv_SetVdinForPQ (int gameStatus, int pcStatus, int autoSwitchFlag)
+{
+    int ret = -1;
+    if (autoSwitchFlag) {
+        MnoNeedAutoSwitchToMonitorMode = false;
+    } else {
+        MnoNeedAutoSwitchToMonitorMode = true;
+    }
+
+    return mpTvin->VDIN_UpdateForPQMode((pq_status_update_e)gameStatus, (pq_status_update_e)pcStatus);
+}
+
 int CTv::Tv_SetSharpness ( int value, tv_source_input_t tv_source_input, int en, int is_save )
 {
     return CVpp::getInstance()->SetSharpness(value,
@@ -3150,34 +3155,6 @@ void CTv::onVdinSignalChange()
         onSigToNoSig();
     } else {
         InitCurrenSignalInfo();
-    }
-}
-
-void CTv::onSetPQPCMode(int source, int status)
-{
-    LOGD("source = %d, m_source_input = %d, status = %d\n",source, m_source_input, status);
-    if (( CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_HDMI ) ) {
-        if ((source == -1 ) || (source == (int)m_source_input)) {
-
-            if (status == 0) {
-                CVpp::getInstance()->enableMonitorMode(false);
-            }else {
-                CVpp::getInstance()->enableMonitorMode(true);
-            }
-
-            if (CVpp::getInstance()->Vpp_GetAutoSwitchPCModeFlag() == 1) {
-                MnoNeedAutoSwitchToMonitorMode = false;
-            } else {
-                MnoNeedAutoSwitchToMonitorMode = true;
-            }
-
-            LOGD("MnoNeedAutoSwitchToMonitorMode = %d\n", MnoNeedAutoSwitchToMonitorMode);
-            if (MnoNeedAutoSwitchToMonitorMode) {
-                tvin_port_t cur_port = mpTvin->Tvin_GetSourcePortBySourceInput(m_source_input);
-                mpTvin->SwitchPort(cur_port);
-                CVpp::getInstance()->Vpp_ResetLastVppSettingsSourceType();
-            }
-        }
     }
 }
 

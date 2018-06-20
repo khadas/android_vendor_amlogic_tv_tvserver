@@ -64,7 +64,6 @@ public:
         virtual ~ISourceConnectObserver() {};
         virtual void onSourceConnect(int source __unused, int connect_status __unused) {};
         virtual void onVdinSignalChange() {};
-        virtual void onSetPQPCMode(int source, int status) {};
     };
 
     void setObserver ( ISourceConnectObserver *pOb ) {

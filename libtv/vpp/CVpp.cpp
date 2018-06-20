@@ -218,11 +218,6 @@ int CVpp::SavePQMode(vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_inp
     return tvSavePQMode(pq_mode);
 }
 
-int CVpp::Vpp_GetAutoSwitchPCModeFlag(void)
-{
-    return tvGetAutoSwitchPCModeFlag();
-}
-
 void CVpp::enableMonitorMode(bool enable)
 {
     if (enable) {

@@ -421,6 +421,7 @@ typedef struct tvafe_pin_mux_s {
 #define TVIN_IOC_SNOWOFF            _IO(TVIN_IOC_MAGIC, 0x48)
 #define TVIN_IOC_GET_COLOR_RANGE	_IOR(TVIN_IOC_MAGIC, 0X49, enum tvin_color_range_e)
 #define TVIN_IOC_SET_COLOR_RANGE	_IOW(TVIN_IOC_MAGIC, 0X4a, enum tvin_color_range_e)
+#define TVIN_IOC_GAME_MODE          _IOW(TVIN_IOC_MAGIC, 0x4b, unsigned int)
 
 
 //TVAFE
@@ -638,7 +639,7 @@ public:
     int VDIN_EnableRDMA ( int enable );
     int VDIN_SetColorRangeMode(tvin_color_range_t range_mode);
     int VDIN_GetColorRangeMode(void);
-
+    int VDIN_UpdateForPQMode(pq_status_update_e gameStatus, pq_status_update_e pcStatus);
     int getVdinDeviceFd();
     int AFE_OpenModule ( void );
     void AFE_CloseModule ( void );    int AFE_SetCVBSStd ( tvin_sig_fmt_t cvbs_fmt );

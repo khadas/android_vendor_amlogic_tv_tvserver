@@ -103,7 +103,7 @@ public:
     int setAudioOutmode(int32_t mode);
     int getAudioOutmode();
     int getAudioStreamOutmode();
-
+    int vdinUpdateForPQ(int32_t gameStatus, int32_t pcStatus, int32_t autoSwitchFlag);
     virtual status_t dump(int fd, const Vector<String16>& args);
 
     //wp<Client> mpScannerClient;

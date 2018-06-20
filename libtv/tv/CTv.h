@@ -309,6 +309,7 @@ public:
     virtual int Tv_SetPQMode ( vpp_picture_mode_t mode, tv_source_input_t tv_source_input, int is_save );
     virtual vpp_picture_mode_t Tv_GetPQMode ( tv_source_input_t tv_source_input );
     virtual int Tv_SavePQMode ( vpp_picture_mode_t mode, tv_source_input_t tv_source_input );
+    virtual int Tv_SetVdinForPQ (int gameStatus, int pcStatus, int autoSwitchFlag);
     virtual int Tv_SetSharpness ( int value, tv_source_input_t tv_source_input, int en, int is_save );
     virtual int Tv_GetSharpness ( tv_source_input_t tv_source_input );
     virtual int Tv_SaveSharpness ( int value, tv_source_input_t tv_source_input );
@@ -459,7 +460,6 @@ protected:
 
     virtual void onSourceConnect(int source_type, int connect_status);
     virtual void onVdinSignalChange();
-    virtual void onSetPQPCMode(int source, int status);
     virtual void onUpgradeStatus(int status, int progress);
     virtual void onThermalDetect(int state);
 

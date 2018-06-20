@@ -119,6 +119,7 @@ public:
     Return<int32_t> setAudioOutmode(int32_t mode) override;
     Return<int32_t> getAudioOutmode() override;
     Return<int32_t> getAudioStreamOutmode() override;
+    Return<int32_t> vdinUpdateForPQ(int32_t gameStatus, int32_t pcStatus, int32_t autoSwitchFlag) override;
 
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;
 

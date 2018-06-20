@@ -50,8 +50,6 @@ int tvGetActualSize(int id);
 int tvSetPQMode ( vpp_picture_mode_t mode, int is_save, int is_autoswitch);
 vpp_picture_mode_t tvGetPQMode ( void );
 int tvSavePQMode ( vpp_picture_mode_t mode);
-int tvGetAutoSwitchPCModeFlag(void);
-
 int tvSetBrightness ( int brightness, int is_save );
 int tvGetBrightness ( void );
 int tvSaveBrightness ( int brightness);

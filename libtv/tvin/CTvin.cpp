@@ -533,6 +533,53 @@ int CTvin::VDIN_GetColorRangeMode(void)
     return range_mode;
 }
 
+int CTvin::VDIN_UpdateForPQMode(pq_status_update_e gameStatus, pq_status_update_e pcStatus)
+{
+    int ret = 0;
+    tvin_info_t signal_info;
+    memset(&signal_info, 0, sizeof(tvin_info_t));
+    LOGD("%s: gameStatus= %d, pcStatus= %d\n", __FUNCTION__, gameStatus, pcStatus);
+    if (gameStatus != MODE_STABLE) {
+        ret = VDIN_DeviceIOCtl(TVIN_IOC_GAME_MODE, &gameStatus);
+        if (ret < 0) {
+            LOGE("Vdin set game mode failed, error(%s)!", strerror(errno));
+            return -1;
+        }
+    }
+
+    if ((gameStatus != MODE_STABLE) || (pcStatus != MODE_STABLE)) {
+        if (mDecoderStarted) {
+            ret = VDIN_StopDec();
+            if (ret >= 0) {
+                LOGD("%s: stopDecoder success!\n", __FUNCTION__ );
+                mDecoderStarted = false;
+                VDIN_GetSignalInfo(&signal_info);
+                if (signal_info.status != TVIN_SIG_STATUS_STABLE) {
+                    usleep(100000);//100ms
+                    VDIN_GetSignalInfo(&signal_info);
+                }
+
+                m_tvin_param.info = signal_info;
+                if ( VDIN_StartDec ( &m_tvin_param ) >= 0 ) {
+                    mDecoderStarted = true;
+                    ret = 0;
+                } else {
+                    LOGE("%s: StartDecoder failed!\n", __FUNCTION__ );
+                    ret = -1;
+                }
+            } else {
+                LOGE("%s: StopDecoder failed!\n", __FUNCTION__);
+                ret = -1;
+            }
+        }
+    }else {
+        LOGD("no need update!\n");
+        ret = 0;
+    }
+
+    return ret;
+}
+
 // AFE
 int CTvin::AFE_OpenModule ( void )
 {

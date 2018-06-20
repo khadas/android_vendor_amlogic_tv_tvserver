@@ -722,6 +722,10 @@ int DroidTvServiceIntf::getAudioStreamOutmode() {
     return ret;
 }
 
+int DroidTvServiceIntf::vdinUpdateForPQ(int32_t gameStatus, int32_t pcStatus, int32_t autoSwitchFlag) {
+    return mpTv->Tv_SetVdinForPQ(gameStatus, pcStatus, autoSwitchFlag);
+}
+
 int DroidTvServiceIntf::processCmd(const Parcel &p) {
     unsigned char dataBuf[512] = {0};
     int ret = -1;

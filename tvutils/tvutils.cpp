@@ -301,16 +301,6 @@ int tvSavePQMode ( vpp_picture_mode_t mode )
     return -1;
 }
 
-int tvGetAutoSwitchPCModeFlag(void)
-{
-    const sp<SystemControlClient> &sws = getSystemControlService();
-    if (sws != nullptr) {
-        return sws->getAutoSwitchPCModeFlag();
-    }
-
-    return -1;
-}
-
 int tvSetBrightness(int brightness, int is_save)
 {
     const sp<SystemControlClient> &sws = getSystemControlService();

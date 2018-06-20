@@ -20,7 +20,9 @@
  */
 
 #define LOG_TAG "tvserver"
+#define LOG_TV_TAG "main"
 
+#include "CTvLog.h"
 #include <binder/IPCThreadState.h>
 #include <binder/ProcessState.h>
 #include <binder/IServiceManager.h>
@@ -44,18 +46,18 @@ int main(int argc __unused, char** argv __unused)
         android::ProcessState::initWithDriver("/dev/vndbinder");
     }
 
-    ALOGI("tvserver daemon starting in %s mode", treble?"treble":"normal");
+    LOGI("tvserver daemon starting in %s mode", treble?"treble":"normal");
     configureRpcThreadpool(4, false);
     sp<ProcessState> proc(ProcessState::self());
 
     if (treble) {
         sp<ITvServer> hidltvserver = new DroidTvServer();
         if (hidltvserver == nullptr) {
-            ALOGE("Cannot create ITvServer service");
+            LOGE("Cannot create ITvServer service");
         } else if (hidltvserver->registerAsService() != OK) {
-            ALOGE("Cannot register ITvServer service.");
+            LOGE("Cannot register ITvServer service.");
         } else {
-            ALOGI("Treble ITvServer service created.");
+            LOGI("Treble ITvServer service created.");
         }
     }
     else {

@@ -56,12 +56,12 @@ DroidTvServer::~DroidTvServer() {
 void DroidTvServer::onEvent(const TvHidlParcel &hidlParcel) {
     int clientSize = mClients.size();
 
-    ALOGI("onEvent event:%d, client size:%d", hidlParcel.msgType, clientSize);
+    LOGI("onEvent event:%d, client size:%d", hidlParcel.msgType, clientSize);
 
 #if 0
     sp<IAllocator> ashmemAllocator = IAllocator::getService("ashmem");
     if (ashmemAllocator == nullptr) {
-        ALOGE("can not get ashmem service");
+        LOGE("can not get ashmem service");
         return;
     }
 
@@ -69,13 +69,13 @@ void DroidTvServer::onEvent(const TvHidlParcel &hidlParcel) {
     android::hardware::hidl_memory hidlMemory;
     auto res = ashmemAllocator->allocate(size, [&](bool success, const android::hardware::hidl_memory& memory) {
                 if (!success) {
-                    ALOGE("ashmem allocate size:%d fail", size);
+                    LOGE("ashmem allocate size:%d fail", size);
                 }
                 hidlMemory = memory;
             });
 
     if (!res.isOk()) {
-        ALOGE("ashmem allocate result fail");
+        LOGE("ashmem allocate result fail");
         return;
     }
 
@@ -88,7 +88,7 @@ void DroidTvServer::onEvent(const TvHidlParcel &hidlParcel) {
 #endif
     for (int i = 0; i < clientSize; i++) {
         if (mClients[i] != nullptr) {
-            ALOGI("%s, client cookie:%d notifyCallback", __FUNCTION__, i);
+            LOGI("%s, client cookie:%d notifyCallback", __FUNCTION__, i);
             mClients[i]->notifyCallback(hidlParcel);
         }
     }
@@ -167,7 +167,7 @@ Return<int32_t> DroidTvServer::setMiscCfg(const hidl_string& key, const hidl_str
 Return<void> DroidTvServer::getMiscCfg(const hidl_string& key, const hidl_string& def, getMiscCfg_cb _hidl_cb) {
     std::string cfg = mTvServiceIntf->getMiscCfg(key, def);
 
-    ALOGI("%s, key:%s def:%s, cfg:%s", __FUNCTION__, key.c_str(), def.c_str(), cfg.c_str());
+    LOGI("%s, key:%s def:%s, cfg:%s", __FUNCTION__, key.c_str(), def.c_str(), cfg.c_str());
     _hidl_cb(cfg);
     return Void();
 }
@@ -355,27 +355,20 @@ Return<int32_t> DroidTvServer::getAudioStreamOutmode() {
 
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {
-        ALOGE("%s don't support type:%d", __FUNCTION__, (int)type);
+        LOGE("%s don't support type:%d", __FUNCTION__, (int)type);
         return Void();
     }
 
     if (callback != nullptr) {
-        if (mClients[nClient] != nullptr) {
-            ALOGW("%s this type:%s had a callback, don't cover it", __FUNCTION__, getConnectTypeStr(type));
-            //mClients[(int)type]->unlinkToDeath(mDeathRecipient);
+        mClients[nClient] = callback;
+        Return<bool> linkResult = callback->linkToDeath(mDeathRecipient, nClient);
+        bool linkSuccess = linkResult.isOk() ? static_cast<bool>(linkResult) : false;
+        if (!linkSuccess) {
+            LOGW("Couldn't link death recipient for type: %s, client: %d", getConnectTypeStr(type), nClient);
         }
-        else {
-            mClients[nClient] = callback;
-            Return<bool> linkResult = callback->linkToDeath(mDeathRecipient, nClient);
-            bool linkSuccess = linkResult.isOk() ? static_cast<bool>(linkResult) : false;
-            if (!linkSuccess) {
-                ALOGW("Couldn't link death recipient for type: %s, client: %d", getConnectTypeStr(type), nClient);
-            }
-            ALOGI("%s client type:%s, client size:%d, nClient:%d", __FUNCTION__, getConnectTypeStr(type), (int)mClients.size(), nClient);
-            nClient++;
-        }
-
-    }
+        LOGI("%s client type:%s, client size:%d, nClient:%d", __FUNCTION__, getConnectTypeStr(type), (int)mClients.size(), nClient);
+        nClient++;
+   }
 
     if (!mListenerStarted) {
         mTvServiceIntf->startListener();
@@ -397,9 +390,10 @@ const char* DroidTvServer::getConnectTypeStr(ConnectType type) {
 }
 
 void DroidTvServer::handleServiceDeath(uint32_t client) {
-    ALOGI("tvserver daemon client:%d died", client);
-    mClients[client].clear();
-    nClient--;
+    LOGI("tvserver daemon client:%d died", client);
+    mClients.erase(client);
+    nClient = mClients.size();
+    LOGI("%s, client size:%d, nClient:%d", __FUNCTION__,(int)mClients.size(), nClient);
 }
 
 DroidTvServer::DeathRecipient::DeathRecipient(sp<DroidTvServer> server)
@@ -408,7 +402,7 @@ DroidTvServer::DeathRecipient::DeathRecipient(sp<DroidTvServer> server)
 void DroidTvServer::DeathRecipient::serviceDied(
         uint64_t cookie,
         const wp<::android::hidl::base::V1_0::IBase>& /*who*/) {
-    ALOGE("droid tvserver daemon a client died cookie:%d", (int)cookie);
+    LOGE("droid tvserver daemon a client died cookie:%d", (int)cookie);
 
     uint32_t client = static_cast<uint32_t>(cookie);
     droidTvServer->handleServiceDeath(client);

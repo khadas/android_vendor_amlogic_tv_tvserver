@@ -35,6 +35,12 @@ extern int __tv_log_print(int prio, const char *tag, const char *tv_tag, const c
     __tv_log_print(ANDROID_LOG_WARN, LOG_TAG, LOG_TV_TAG, __VA_ARGS__)
 #endif
 
+#ifndef LOGI
+#define LOGI(...) \
+    __tv_log_print(ANDROID_LOG_INFO, LOG_TAG, LOG_TV_TAG, __VA_ARGS__)
+#endif
+
+
 #if LOG_NDEBUG
 #define LOGV(...) \
     do {if (0) { __tv_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, LOG_TV_TAG, __VA_ARGS__);} } while(0)

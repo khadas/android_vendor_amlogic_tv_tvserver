@@ -387,6 +387,7 @@ private:
     static const int TYPE_ATV_TELETEXT = 3;
     static const int TYPE_DTV_CC = 4;
     static const int TYPE_ATV_CC = 5;
+    static const int TYPE_DTV_TELETEXT_IMG = 6;
 
     typedef struct {
         int nid;

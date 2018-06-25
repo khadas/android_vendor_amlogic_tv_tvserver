@@ -383,6 +383,20 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
                     scnt++;
                 }
             }
+            for (int i = 0; i < srv->ttx_info.teletext_count; i++) {
+                if (srv->ttx_info.teletexts[i].type != 0x2 &&
+                        srv->ttx_info.teletexts[i].type != 0x5) {
+                    if (scnt >= (int)(sizeof(mCurEv.mStype) / sizeof(int)))
+                        break;
+                    mCurEv.mStype[scnt] = TYPE_DTV_TELETEXT_IMG;
+                    mCurEv.mSid[scnt] = srv->ttx_info.teletexts[i].pid;
+                    mCurEv.mSstype[scnt] = srv->ttx_info.teletexts[i].type;
+                    mCurEv.mSid1[scnt] = srv->ttx_info.teletexts[i].magazine_no;
+                    mCurEv.mSid2[scnt] = srv->ttx_info.teletexts[i].page_no;
+                    strncpy(mCurEv.mSlang[scnt], srv->ttx_info.teletexts[i].lang, 10);
+                    scnt++;
+                }
+            }
             mCurEv.mScnt = scnt;
 
             mCurEv.mFEParas.setPlp(srv->plp_id);

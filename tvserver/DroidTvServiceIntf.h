@@ -107,7 +107,7 @@ public:
     int DtvSetAudioAD(int32_t enable, int32_t audio_pid, int32_t audio_format);
     int DtvSwitchAudioTrack(int32_t prog_id, int32_t audio_track_id);
     int DtvSwitchAudioTrack(int32_t audio_pid, int32_t audio_format, int32_t audio_param);
-
+    int setWssStatus(int status);
     virtual status_t dump(int fd, const Vector<String16>& args);
 
     //wp<Client> mpScannerClient;

@@ -170,10 +170,11 @@ int CTvin::VDIN_AddVideoPath ( int selPath )
     return ret;
 }
 
-int CTvin::getVdinDeviceFd() {
+int CTvin::VDIN_GetVdinDeviceFd() {
     if (mVdin0DevFd < 0) {
         mVdin0DevFd = VDIN_OpenModule();
     }
+
     return mVdin0DevFd;
 }
 
@@ -187,10 +188,8 @@ int CTvin::VDIN_OpenModule()
         return -1;
     }
 
-
     LOGD ( "Open vdin%d module fd = [%d]", CC_SEL_VDIN_DEV, fd );
 
-    //mVdin0DevFd = fd;
     return fd;
 }
 
@@ -575,6 +574,17 @@ int CTvin::VDIN_UpdateForPQMode(pq_status_update_e gameStatus, pq_status_update_
     }else {
         LOGD("no need update!\n");
         ret = 0;
+    }
+
+    return ret;
+}
+
+int CTvin::VDIN_SetWssStatus ( int status )
+{
+    LOGD("%s: status = %d\n", __FUNCTION__, status);
+    int ret = VDIN_DeviceIOCtl ( TVIN_IOC_SET_AUTO_RATIO_EN, &status );
+    if ( ret < 0 ) {
+        LOGW ( "Vdin Set WSS status error(%s)!\n", strerror(errno ));
     }
 
     return ret;

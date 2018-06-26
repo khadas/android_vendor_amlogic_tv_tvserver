@@ -422,7 +422,7 @@ typedef struct tvafe_pin_mux_s {
 #define TVIN_IOC_GET_COLOR_RANGE	_IOR(TVIN_IOC_MAGIC, 0X49, enum tvin_color_range_e)
 #define TVIN_IOC_SET_COLOR_RANGE	_IOW(TVIN_IOC_MAGIC, 0X4a, enum tvin_color_range_e)
 #define TVIN_IOC_GAME_MODE          _IOW(TVIN_IOC_MAGIC, 0x4b, unsigned int)
-
+#define TVIN_IOC_SET_AUTO_RATIO_EN  _IOW(TVIN_IOC_MAGIC, 0x4c, unsigned int)
 
 //TVAFE
 #define TVIN_IOC_S_AFE_ADC_CAL      _IOW(TVIN_IOC_MAGIC, 0x11, struct tvafe_adc_cal_s)
@@ -640,7 +640,9 @@ public:
     int VDIN_SetColorRangeMode(tvin_color_range_t range_mode);
     int VDIN_GetColorRangeMode(void);
     int VDIN_UpdateForPQMode(pq_status_update_e gameStatus, pq_status_update_e pcStatus);
-    int getVdinDeviceFd();
+    int VDIN_GetVdinDeviceFd(void);
+    int VDIN_SetWssStatus(int status);
+
     int AFE_OpenModule ( void );
     void AFE_CloseModule ( void );    int AFE_SetCVBSStd ( tvin_sig_fmt_t cvbs_fmt );
     int AFE_SetVGAEdid ( const unsigned char *ediddata );

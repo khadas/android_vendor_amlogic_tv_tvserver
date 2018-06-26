@@ -2829,6 +2829,11 @@ int CTv::Tv_SetVdinForPQ (int gameStatus, int pcStatus, int autoSwitchFlag)
     return mpTvin->VDIN_UpdateForPQMode((pq_status_update_e)gameStatus, (pq_status_update_e)pcStatus);
 }
 
+int CTv::Tv_SetWssStatus (int status)
+{
+    return mpTvin->VDIN_SetWssStatus(status);
+}
+
 int CTv::Tv_SetSharpness ( int value, tv_source_input_t tv_source_input, int en, int is_save )
 {
     return CVpp::getInstance()->SetSharpness(value,

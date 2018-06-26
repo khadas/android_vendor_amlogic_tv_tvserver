@@ -60,7 +60,7 @@ CDevicesPollStatusDetect::~CDevicesPollStatusDetect()
 int CDevicesPollStatusDetect::startDetect()
 {
     //signal status
-    int fd = CTvin::getInstance()->getVdinDeviceFd();
+    int fd = CTvin::getInstance()->VDIN_GetVdinDeviceFd();
     if (fd > 0) {
         m_event.data.fd = fd;
         m_event.events = EPOLLIN | EPOLLET;

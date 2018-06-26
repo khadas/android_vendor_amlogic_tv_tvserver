@@ -371,6 +371,10 @@ Return<int32_t> DroidTvServer::DtvSwitchAudioTrack3(int32_t audio_pid, int32_t a
     return mTvServiceIntf->DtvSwitchAudioTrack(audio_pid, audio_format,audio_param);
 }
 
+Return<int32_t> DroidTvServer::setWssStatus(int32_t status) {
+    return mTvServiceIntf->setWssStatus(status);
+}
+
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {
         LOGE("%s don't support type:%d", __FUNCTION__, (int)type);

@@ -123,6 +123,7 @@ public:
     Return<int32_t> DtvSetAudioAD(int32_t enable, int32_t audio_pid, int32_t audio_format) override;
     Return<int32_t> DtvSwitchAudioTrack(int32_t prog_id, int32_t audio_track_id) override;
     Return<int32_t> DtvSwitchAudioTrack3(int32_t audio_pid, int32_t audio_format,int32_t audio_param) override;
+    Return<int32_t> setWssStatus(int32_t status) override;
 
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;
 

@@ -342,6 +342,7 @@ public:
     int Tv_RrtUpdate(int freq, int modulation, int mode);
     int Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info);
     int Tv_Easupdate();
+    int Tv_SetWssStatus (int status);
     void dump(String8 &result);
 
     int SetAtvAudioOutmode(int mode);

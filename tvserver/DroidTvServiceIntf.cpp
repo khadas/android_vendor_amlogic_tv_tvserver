@@ -737,6 +737,10 @@ int DroidTvServiceIntf::vdinUpdateForPQ(int32_t gameStatus, int32_t pcStatus, in
     return mpTv->Tv_SetVdinForPQ(gameStatus, pcStatus, autoSwitchFlag);
 }
 
+int DroidTvServiceIntf::setWssStatus (int status) {
+    return mpTv->Tv_SetWssStatus(status);
+}
+
 int DroidTvServiceIntf::processCmd(const Parcel &p) {
     unsigned char dataBuf[512] = {0};
     int ret = -1;

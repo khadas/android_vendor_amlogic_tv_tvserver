@@ -170,6 +170,7 @@ int CFrontEnd::Close()
     mFEParas.setFrequency(-1);
 
     if (mbFEOpened) {
+        AM_FEND_SetMode(mFrontDevID, FE_ANALOG);
         rc = AM_FEND_Close(mFrontDevID);
         if (rc != 0) {
             LOGD("%s,frontend_close fail! dvb error id is %d\n", __FUNCTION__, rc);
@@ -403,11 +404,13 @@ int CFrontEnd::setPara(const char *paras, bool force )
         atv_para.u.analog.std = dvbfepara.analog.para.u.analog.std;
         atv_para.u.analog.flag = dvbfepara.analog.para.u.analog.flag;
         atv_para.u.analog.afc_range = dvbfepara.analog.para.u.analog.afc_range;
+        AM_FEND_SetMode(mFrontDevID, FE_ANALOG);
         ret = AM_VLFEND_SetMode(mVLFrontDevID, dvbfepara.m_type);
         ret = AM_VLFEND_SetPara(mVLFrontDevID, &atv_para);
     }
     else
     {
+        AM_VLFEND_SetMode(mVLFrontDevID, 0);
         ret = AM_FENDCTRL_SetPara(mFrontDevID, &dvbfepara);
     }
 

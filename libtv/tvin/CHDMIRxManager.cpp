@@ -106,9 +106,8 @@ int CHDMIRxManager::GetHdmiHdcpKeyKsvInfo(struct _hdcp_ksv *msg)
     return 0;
 }
 
-int CHDMIRxManager::SetHdmiPortCecPhysicAddr()
+int CHDMIRxManager::CalHdmiPortCecPhysicAddr()
 {
-    char val[10] = {0};
     tv_source_input_t tmpHdmiPortCecPhysicAddr[4] = {SOURCE_MAX};
     tvin_port_t tvInport[4] = {TVIN_PORT_HDMI0,TVIN_PORT_HDMI1,TVIN_PORT_HDMI2,TVIN_PORT_HDMI3};
     int HdmiPortCecPhysicAddr = 0x0;
@@ -119,11 +118,20 @@ int CHDMIRxManager::SetHdmiPortCecPhysicAddr()
                              |((tmpHdmiPortCecPhysicAddr[1] == SOURCE_MAX? 0xf:(tmpHdmiPortCecPhysicAddr[1]-4)) << 4)
                              |((tmpHdmiPortCecPhysicAddr[2] == SOURCE_MAX? 0xf:(tmpHdmiPortCecPhysicAddr[2]-4)) << 8)
                              |((tmpHdmiPortCecPhysicAddr[3] == SOURCE_MAX? 0xf:(tmpHdmiPortCecPhysicAddr[3]-4)) << 12));
-    sprintf(val, "%x", HdmiPortCecPhysicAddr);
-    tvWriteSysfs(HDMI_CEC_PORT_SEQUENCE, val);
-    memset(val,0,10);
-    sprintf(val, "%d", HdmiPortCecPhysicAddr);
-    tvWriteSysfs(HDMI_CEC_PORT_MAP,val);
+
+    LOGD("%s:hdmi port map: 0x%x\n", __FUNCTION__, HdmiPortCecPhysicAddr);
+    return HdmiPortCecPhysicAddr;
+}
+
+int CHDMIRxManager::SetHdmiPortCecPhysicAddr()
+{
+    char buf[10] = {0};
+    int val = CalHdmiPortCecPhysicAddr();
+    sprintf(buf, "%x", val);
+    tvWriteSysfs(HDMI_CEC_PORT_SEQUENCE, buf);
+    memset(buf, 0, sizeof(buf));
+    sprintf(buf, "%d", val);
+    tvWriteSysfs(HDMI_CEC_PORT_MAP,buf);
     return 0;
 }
 

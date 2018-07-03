@@ -481,6 +481,7 @@ typedef enum tv_hdmi_port_id_e {
     HDMI_PORT_2,
     HDMI_PORT_3,
     HDMI_PORT_4,
+    HDMI_PORT_MAX,
 } tv_hdmi_port_id_t;
 
 typedef enum tv_hdmi_hdcp_version_e {

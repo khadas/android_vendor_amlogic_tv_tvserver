@@ -130,13 +130,12 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     mAutoSetDisplayFreq = false;
     mPreviewEnabled = false;
     mTvMsgQueue.startMsgQueue();
-
+    tv_config_load (TV_CONFIG_FILE_PATH);
     mFrontDev = CFrontEnd::getInstance();
     mpTvin = CTvin::getInstance();
     mTvScanner = CTvScanner::getInstance();
     mTvRrt = CTvRrt::getInstance();
     mTvRrt->setObserver(&mTvMsgQueue);
-    tv_config_load (TV_CONFIG_FILE_PATH);
     sqlite3_config (SQLITE_CONFIG_SERIALIZED);
     sqlite3_soft_heap_limit(8 * 1024 * 1024);
     // Initialize SQLite.
@@ -152,6 +151,7 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
 
     mHdmiOutFbc = insertedFbcDevice();
 
+    SetHdmiEdidForUboot();
     mSetHdmiEdid = false;
 
     mBootvideoStatusDetectThread = new CBootvideoStatusDetect();
@@ -1756,8 +1756,6 @@ int CTv::OpenTv ( void )
         rebootSystemByUartPanelInfo(fbcIns);
     }
 
-    mpTvin->Tvin_LoadSourceInputToPortMap();
-
     //tv ssm check
     SSMHandlePreCopying();
 
@@ -2699,18 +2697,26 @@ int CTv::Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t ve
 
     config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "customer_edid");
     if ( HDMI_EDID_VER_14== version ) {
-        sprintf(edid_path, "/vendor/etc/tvconfig/hdmi/port_%d.bin", 14);
+        sprintf(edid_path, "%s", TV_CONFIG_EDID14_FILE_PATH);
     } else if (HDMI_EDID_VER_20== version) {
-        sprintf(edid_path, "/vendor/etc/tvconfig/hdmi/port_%d.bin", 20);
+        sprintf(edid_path, "%s", TV_CONFIG_EDID20_FILE_PATH);
     } else {
         LOGE("%s HDMI EDID VERSION error!\n", __FUNCTION__);
-        sprintf(edid_path, "/vendor/etc/tvconfig/hdmi/port_%d.bin", 14);
+        sprintf(edid_path, "%s", TV_CONFIG_EDID14_FILE_PATH);
     }
     sprintf(edid_path_cfg, "ssm.handle.hdmi.port%d.edid.file.path", port);
     if (access(edid_path, 0) < 0) {
         config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "hdmi_edid");
     }
     config_set_str(CFG_SECTION_TV, edid_path_cfg, edid_path);
+
+    int EdidVersion = 0;
+    char tmp[32] = {0};
+    for (int i=HDMI_PORT_1;i<HDMI_PORT_MAX;i++) {
+        EdidVersion |= (SSMReadHDMIEdidVersion((tv_hdmi_port_id_t)i)<<(4*i-4));
+        sprintf(tmp, "%x", EdidVersion);
+    }
+    setBootEnv(UBOOTENV_EDID_VERSION, tmp);
     return 0;
 }
 
@@ -2718,7 +2724,7 @@ int CTv::Tv_HandeHDMIEDIDFilePathConfig()
 {
     if (1 == GetSSMHandleHDMIEdidByCustomerEnableCFG()) {
         //set file's path for hdmi edid of each port
-        for (int i = 1; i <= SSM_HDMI_PORT_MAX; i++) {
+        for (int i = HDMI_PORT_1; i < HDMI_PORT_MAX; i++) {
             Tv_HDMIEDIDFileSelect((tv_hdmi_port_id_t)i, (tv_hdmi_edid_version_t)GetHdmiEdidVersion((tv_hdmi_port_id_t)i));
         }
     }
@@ -3053,6 +3059,26 @@ int CTv::SaveHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t vers
     return SSMSaveHDMIEdidVersion(port, version);
 }
 
+void CTv::SetHdmiEdidForUboot(void)
+{
+    char tmp[32] = {0};
+    //set edid file path
+    setBootEnv(UBOOTENV_EDID14_PATH, TV_CONFIG_EDID14_FILE_PATH);
+    setBootEnv(UBOOTENV_EDID20_PATH, TV_CONFIG_EDID20_FILE_PATH);
+    //set hdmi port map
+    int portmap = mHDMIRxManager.CalHdmiPortCecPhysicAddr();
+    sprintf(tmp, "%x", portmap);
+    setBootEnv(UBOOTENV_PORT_MAP, tmp);
+    //set edid version
+    memset(tmp, 0x0, sizeof(tmp));
+    int EdidVersion = 0;
+    for (int i=HDMI_PORT_1;i<HDMI_PORT_MAX;i++) {
+        EdidVersion |= (SSMReadHDMIEdidVersion((tv_hdmi_port_id_t)i)<<(4*i-4));
+        sprintf(tmp, "%x", EdidVersion);
+    }
+    setBootEnv(UBOOTENV_EDID_VERSION, tmp);
+}
+
 int CTv::SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable)
 {
     mHDMIRxManager.HdmiRxHdcpOnOff(enable);
@@ -3080,6 +3106,17 @@ int CTv::GetHdmiColorRangeMode()
     }
     LOGD("%s: mode = %d!\n", __FUNCTION__, mode);
     return mode;
+}
+
+tvin_port_t CTv::Tv_GetHdmiPortBySourceInput(tv_source_input_t source_input)
+{
+    tv_source_input_type_t source_type = mpTvin->Tvin_SourceInputToSourceInputType(source_input);
+    if (source_type == SOURCE_TYPE_HDMI) {
+        return mpTvin->Tvin_GetSourcePortBySourceInput(source_input);
+    } else {
+        LOGE("Not HDMI source!\n");
+        return TVIN_PORT_NULL;
+    }
 }
 
 int CTv::SetVideoAxis(int x, int y, int width, int heigth)

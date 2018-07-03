@@ -74,26 +74,8 @@ CTvin::CTvin() : mAfeDevFd(-1), mVdin0DevFd(-1)
     mDecoderStarted = false;
     gVideoPath[0] = '\0';
 
-    for (int i = 0; i < SOURCE_MAX; i++) {
-        mSourceInputToPortMap[i] = TVIN_PORT_NULL;
-    }
-
-    mSourceInputToPortMap[SOURCE_TV] = TVIN_PORT_CVBS3;
-    mSourceInputToPortMap[SOURCE_AV1] = TVIN_PORT_CVBS1;
-    mSourceInputToPortMap[SOURCE_AV2] = TVIN_PORT_CVBS2;
-    mSourceInputToPortMap[SOURCE_YPBPR1] = TVIN_PORT_COMP0;
-    mSourceInputToPortMap[SOURCE_YPBPR2] = TVIN_PORT_COMP1;
-    mSourceInputToPortMap[SOURCE_HDMI1] = TVIN_PORT_HDMI0;
-    mSourceInputToPortMap[SOURCE_HDMI2] = TVIN_PORT_HDMI2;
-    mSourceInputToPortMap[SOURCE_HDMI3] = TVIN_PORT_HDMI1;
-    mSourceInputToPortMap[SOURCE_HDMI4] = TVIN_PORT_HDMI3;
-    mSourceInputToPortMap[SOURCE_VGA] = TVIN_PORT_VGA0;
-    mSourceInputToPortMap[SOURCE_MPEG] = TVIN_PORT_MPEG0;
-    mSourceInputToPortMap[SOURCE_DTV] = TVIN_PORT_DTV;
-    mSourceInputToPortMap[SOURCE_IPTV] = TVIN_PORT_BT656;
-    mSourceInputToPortMap[SOURCE_SPDIF] = TVIN_PORT_CVBS3;
-
-    //init_vdin();
+    Tvin_LoadSourceInputToPortMap();
+    init_vdin();
 }
 
 CTvin::~CTvin()
@@ -1658,40 +1640,30 @@ unsigned int CTvin::Tvin_TransPortStringToValue(const char *port_str)
 void CTvin::Tvin_LoadSourceInputToPortMap()
 {
     const char *config_value = NULL;
-
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.atv", "TVIN_PORT_CVBS3");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, CFG_TVCHANNEL_ATV, "TVIN_PORT_CVBS3");
     mSourceInputToPortMap[SOURCE_TV] = Tvin_TransPortStringToValue(config_value);
-
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.av1", "TVIN_PORT_CVBS1");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, CFG_TVCHANNEL_AV1, "TVIN_PORT_CVBS1");
     mSourceInputToPortMap[SOURCE_AV1] = Tvin_TransPortStringToValue(config_value);
-
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.av2", "TVIN_PORT_CVBS2");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, CFG_TVCHANNEL_AV2, "TVIN_PORT_CVBS2");
     mSourceInputToPortMap[SOURCE_AV2] = Tvin_TransPortStringToValue(config_value);
-
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.ypbpr1", "TVIN_PORT_COMP0");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, CFG_TVCHANNEL_YPBPR1, "TVIN_PORT_COMP0");
     mSourceInputToPortMap[SOURCE_YPBPR1] = Tvin_TransPortStringToValue(config_value);
-
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.ypbpr2", "TVIN_PORT_COMP1");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, CFG_TVCHANNEL_YPBPR2, "TVIN_PORT_COMP1");
     mSourceInputToPortMap[SOURCE_YPBPR2] = Tvin_TransPortStringToValue(config_value);
-
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi1", "");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, CFG_TVCHANNEL_HDMI1, "");
     mSourceInputToPortMap[SOURCE_HDMI1] = Tvin_TransPortStringToValue(config_value);
-
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi2", "");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, CFG_TVCHANNEL_HDMI2, "");
     mSourceInputToPortMap[SOURCE_HDMI2] = Tvin_TransPortStringToValue(config_value);
-
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi3", "");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, CFG_TVCHANNEL_HDMI3, "");
     mSourceInputToPortMap[SOURCE_HDMI3] = Tvin_TransPortStringToValue(config_value);
-
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.hdmi4", "");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, CFG_TVCHANNEL_HDMI4, "");
     mSourceInputToPortMap[SOURCE_HDMI4] = Tvin_TransPortStringToValue(config_value);
-
-    config_value = config_get_str(CFG_SECTION_SRC_INPUT, "ro.tv.tvinchannel.vga", "TVIN_PORT_VGA0");
+    config_value = config_get_str(CFG_SECTION_SRC_INPUT, CFG_TVCHANNEL_VGA, "TVIN_PORT_VGA0");
     mSourceInputToPortMap[SOURCE_VGA] = Tvin_TransPortStringToValue(config_value);
-
     mSourceInputToPortMap[SOURCE_MPEG] = TVIN_PORT_MPEG0;
     mSourceInputToPortMap[SOURCE_DTV] = TVIN_PORT_DTV;
     mSourceInputToPortMap[SOURCE_IPTV] = TVIN_PORT_BT656;
+    mSourceInputToPortMap[SOURCE_SPDIF] = TVIN_PORT_CVBS3;
 }
 
 int CTvin::Tvin_GetSourcePortByCECPhysicalAddress(int physical_addr)

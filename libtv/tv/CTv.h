@@ -59,6 +59,10 @@ static const char *TV_DB_PATH = "/mnt/vendor/param/dtv.db";
 static const char *TV_DB_PATH = "/param/dtv.db";
 #endif
 
+static const char *TV_CONFIG_EDID14_FILE_PATH = "/vendor/etc/tvconfig/hdmi/port_14.bin";
+static const char *TV_CONFIG_EDID20_FILE_PATH = "/vendor/etc/tvconfig/hdmi/port_20.bin";
+
+
 #define LCD_ENABLE "/sys/class/lcd/enable"
 #define BL_LOCAL_DIMING_FUNC_ENABLE "/sys/class/aml_ldim/func_en"
 #define DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN "/sys/class/tsync/av_threshold_min"
@@ -343,6 +347,8 @@ public:
     int GetHdmiEdidVersion(tv_hdmi_port_id_t port);
     int SaveHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);
     int SetHdmiHDCPSwitcher(tv_hdmi_hdcpkey_enable_t enable);
+    void SetHdmiEdidForUboot(void);
+    tvin_port_t Tv_GetHdmiPortBySourceInput(tv_source_input_t source_input);
     int SetVideoAxis(int x, int y, int width, int heigth);
     int Tv_RrtUpdate(int freq, int modulation, int mode);
     int Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info);

@@ -23,7 +23,18 @@
 #define CFG_BLUE_SCREEN_COLOR                   "tvin.bluescreen.color"
 
 #define CGF_DEFAULT_INPUT_IDS                   "tv.source.input.ids.default"
-#define CGF_DEFAULT_HDMI_PORTS                  "tv.source.input.hdmi.ports"
+
+#define CFG_TVCHANNEL_ATV                       "ro.tv.tvinchannel.atv"
+#define CFG_TVCHANNEL_AV1                       "ro.tv.tvinchannel.av1"
+#define CFG_TVCHANNEL_AV2                       "ro.tv.tvinchannel.av2"
+#define CFG_TVCHANNEL_YPBPR1                    "ro.tv.tvinchannel.ypbpr1"
+#define CFG_TVCHANNEL_YPBPR2                    "ro.tv.tvinchannel.ypbpr2"
+#define CFG_TVCHANNEL_HDMI1                     "ro.tv.tvinchannel.hdmi1"
+#define CFG_TVCHANNEL_HDMI2                     "ro.tv.tvinchannel.hdmi2"
+#define CFG_TVCHANNEL_HDMI3                     "ro.tv.tvinchannel.hdmi3"
+#define CFG_TVCHANNEL_HDMI4                     "ro.tv.tvinchannel.hdmi4"
+#define CFG_TVCHANNEL_VGA                       "ro.tv.tvinchannel.vga"
+
 #define CGF_TV_SUPPORT_COUNTRY                  "tv.support.country.name"
 #define CFG_DTV_MODE                            "dtv.mode"
 #define CFG_SSM_HDMI_AV_DETECT                  "ssm.hdmi_av.hotplug.detect.en"
@@ -96,6 +107,12 @@
 #define UBOOTENV_CONSOLE                        "ubootenv.var.console"
 #define UBOOTENV_PROJECT_INFO                   "ubootenv.var.project_info"
 #define UBOOTENV_AMPINDEX                       "ubootenv.var.ampindex"
+
+//hdmi edid
+#define UBOOTENV_EDID14_PATH                    "ubootenv.var.edid_14_dir"
+#define UBOOTENV_EDID20_PATH                    "ubootenv.var.edid_20_dir"
+#define UBOOTENV_EDID_VERSION                   "ubootenv.var.edid_select"
+#define UBOOTENV_PORT_MAP                       "ubootenv.var.port_map"
 
 //for tv sysfs
 #define SYS_SPDIF_MODE_DEV_PATH                 "/sys/class/audiodsp/digital_raw"

@@ -73,7 +73,7 @@ public:
     Return<int32_t> getCurrentInputSrc() override;
     Return<int32_t> getHdmiAvHotplugStatus() override;
     Return<void> getSupportInputDevices(getSupportInputDevices_cb _hidl_cb) override;
-    Return<int32_t> getHdmiPorts() override;
+    Return<int32_t> getHdmiPorts(int32_t inputSrc) override;
 
     Return<void> getCurSignalInfo(getCurSignalInfo_cb _hidl_cb) override;
     Return<int32_t> setMiscCfg(const hidl_string& key, const hidl_string& val) override;

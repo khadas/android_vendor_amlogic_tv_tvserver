@@ -17,7 +17,6 @@
 
 #define SSM_CR_RGBOGO_LEN                           (256)
 #define SSM_CR_RGBOGO_CHKSUM_LEN                    (2)
-#define SSM_HDMI_PORT_MAX                           (4)
 #define SSM_HDMI_EDID_SIZE                          (256)
 
 #if ANDROID_PLATFORM_SDK_VERSION == 19

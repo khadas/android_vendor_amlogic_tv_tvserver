@@ -3265,7 +3265,9 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         break;
     }
     case GET_HDMI_PORTS: {
-        int value = config_get_int(CFG_SECTION_TV, CGF_DEFAULT_HDMI_PORTS, 0);
+        int source_input = p.readInt32();
+        tvin_port_t port = mpTv->Tv_GetHdmiPortBySourceInput((tv_source_input_t)source_input);
+        int value = (port & 0x0f) + 1;
         r->writeInt32(value);
         break;
     }

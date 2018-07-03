@@ -518,8 +518,9 @@ std::string DroidTvServiceIntf::getSupportInputDevices() {
     return std::string(valueStr);
 }
 
-int DroidTvServiceIntf::getHdmiPorts() {
-    return config_get_int(CFG_SECTION_TV, CGF_DEFAULT_HDMI_PORTS, 0);
+int DroidTvServiceIntf::getHdmiPorts(int32_t inputSrc) {
+    int value = mpTv->Tv_GetHdmiPortBySourceInput((tv_source_input_t)inputSrc);
+    return ((value & 0x0f) + 1);
 }
 
 void DroidTvServiceIntf::getCurSignalInfo(int &fmt, int &transFmt, int &status, int &frameRate) {
@@ -2116,10 +2117,12 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
             //r->writeCString(value);
             break;
 
-        case GET_HDMI_PORTS:
-            ret = config_get_int(CFG_SECTION_TV, CGF_DEFAULT_HDMI_PORTS, 0);
+        case GET_HDMI_PORTS: {
+            int source = p.readInt32();
+            int value = mpTv->Tv_GetHdmiPortBySourceInput((tv_source_input_t)source);
+            ret = (value & 0x0f) + 1;
             break;
-
+        }
         case TV_CLEAR_FRONTEND: {
             int para = p.readInt32();
             ret = mpTv->clearFrontEnd(para);

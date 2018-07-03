@@ -172,8 +172,8 @@ Return<void> DroidTvServer::getMiscCfg(const hidl_string& key, const hidl_string
     return Void();
 }
 
-Return<int32_t> DroidTvServer::getHdmiPorts() {
-    return mTvServiceIntf->getHdmiPorts();
+Return<int32_t> DroidTvServer::getHdmiPorts(int32_t inputSrc) {
+    return mTvServiceIntf->getHdmiPorts(inputSrc);
 }
 
 Return<int32_t> DroidTvServer::isDviSIgnal() {

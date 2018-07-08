@@ -356,6 +356,20 @@ Return<int32_t> DroidTvServer::getAudioStreamOutmode() {
 Return<int32_t> DroidTvServer::vdinUpdateForPQ(int32_t gameStatus, int32_t pcStatus, int32_t autoSwitchFlag) {
     return mTvServiceIntf->vdinUpdateForPQ(gameStatus, pcStatus, autoSwitchFlag);
 }
+Return<int32_t> DroidTvServer::DtvSetAudioAD(int32_t enable, int32_t audio_pid, int32_t audio_format) {
+
+    return mTvServiceIntf->DtvSetAudioAD(enable, audio_pid, audio_format);
+}
+
+Return<int32_t> DroidTvServer::DtvSwitchAudioTrack(int32_t prog_id, int32_t audio_track_id) {
+
+    return mTvServiceIntf->DtvSwitchAudioTrack(prog_id, audio_track_id);
+}
+
+Return<int32_t> DroidTvServer::DtvSwitchAudioTrack3(int32_t audio_pid, int32_t audio_format,int32_t audio_param) {
+
+    return mTvServiceIntf->DtvSwitchAudioTrack(audio_pid, audio_format,audio_param);
+}
 
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {

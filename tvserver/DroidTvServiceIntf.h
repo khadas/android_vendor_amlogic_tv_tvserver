@@ -104,6 +104,10 @@ public:
     int getAudioOutmode();
     int getAudioStreamOutmode();
     int vdinUpdateForPQ(int32_t gameStatus, int32_t pcStatus, int32_t autoSwitchFlag);
+    int DtvSetAudioAD(int32_t enable, int32_t audio_pid, int32_t audio_format);
+    int DtvSwitchAudioTrack(int32_t prog_id, int32_t audio_track_id);
+    int DtvSwitchAudioTrack(int32_t audio_pid, int32_t audio_format, int32_t audio_param);
+
     virtual status_t dump(int fd, const Vector<String16>& args);
 
     //wp<Client> mpScannerClient;

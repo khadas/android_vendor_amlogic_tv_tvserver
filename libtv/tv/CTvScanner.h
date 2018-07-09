@@ -280,6 +280,7 @@ public:
         char mHideGuide;
         char mVctType;
         char mVct[1024];
+	    int mProgramsInPat;
     };
 
     class IObserver {
@@ -416,6 +417,7 @@ private:
     #endif
         int sdt_version;
         SCAN_TsInfo_t *tsinfo;
+	int programs_in_pat;
     } SCAN_ServiceInfo_t;
 
     typedef std::list<SCAN_ServiceInfo_t*> service_list_t;
@@ -429,6 +431,8 @@ private:
     void updateServiceInfo(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t *service);
     void getLcnInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, lcn_list_t &llist);
     void addFixedATSCCaption(AM_SI_CaptionInfo_t *cap_info, int service, int cc, int text, int is_digital_cc);
+
+    int checkIsSkipProgram(SCAN_ServiceInfo_t *srv_info, int mode);
     void processDvbTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, service_list_t &slist);
     void processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist);
     void processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist);
@@ -437,6 +441,8 @@ private:
     void storeNewAnalog(AM_SCAN_Result_t *result, AM_SCAN_TS_t *newts);
     void storeNewAtsc(AM_SCAN_Result_t *result, AM_SCAN_TS_t *newts);
     void storeScan(AM_SCAN_Result_t *result, AM_SCAN_TS_t *curr_ts);
+
+
     int createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEParas &fp, ScanParas &sp);
     int freeAtvParas(AM_SCAN_ATVCreatePara_t &atv_para);
     int createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEParas &fp, ScanParas &sp);

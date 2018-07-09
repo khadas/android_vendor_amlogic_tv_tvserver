@@ -22,6 +22,7 @@
 #define dvb_fend_para(_p) ((struct dvb_frontend_parameters*)(&_p))
 #define IS_DVBT2_TS(_para) (_para.m_type == TV_FE_OFDM && _para.terrestrial.ofdm_mode == OFDM_DVBT2)
 #define IS_ISDBT_TS(_para) (_para.m_type == TV_FE_ISDBT)
+#define VALID_PID(_pid_) ((_pid_)>0 && (_pid_)<0x1fff)
 #endif
 
 CTvScanner *CTvScanner::mInstance;
@@ -132,15 +133,42 @@ int CTvScanner::Scan(CFrontEnd::FEParas &fp, ScanParas &sp) {
     /*get scramble prop value,default value 0 is ca des*/
     int mode = config_get_int(CFG_SECTION_TV, CFG_DTV_CHECK_SCRAMBLE_MODE, 0);
     if (mode == 1) {
-        para.dtv_para.mode |= TV_SCAN_DTVMODE_SCRAMB_TSHEAD;
+        para.dtv_para.mode |= AM_SCAN_DTVMODE_SCRAMB_TSHEAD;
     }
-    //para.dtv_para.mode |= TV_SCAN_DTVMODE_FTA;
-    //para.dtv_para.mode |= TV_SCAN_DTVMODE_NOVCT;
-    // if (TV_FE_ATSC == fp.getFEMode().getBase()) {
-    //     para.store_mode |= AM_SCAN_ATV_STOREMODE_NOPAL;
-    //     para.store_mode |= AM_SCAN_DTV_STOREMODE_NOSECAM;
-    //     LOGD("not srote pal and secam type programs");
-    // }
+    mode = config_get_int(CFG_SECTION_TV, CFG_DTV_SCAN_STOREMODE_FTA, 0);
+    if (mode == 1) {
+        para.dtv_para.mode |= AM_SCAN_DTVMODE_FTA;
+    }
+    mode = config_get_int(CFG_SECTION_TV, CFG_DTV_SCAN_STOREMODE_NOPAL, 0);
+    if (mode == 1) {
+        para.store_mode |= AM_SCAN_ATV_STOREMODE_NOPAL;
+    }
+
+    mode = config_get_int(CFG_SECTION_TV, CFG_DTV_SCAN_STOREMODE_NOVCT, 0);
+    if (mode == 1) {
+        para.dtv_para.mode |= AM_SCAN_DTVMODE_NOVCT;
+    }
+
+    mode = config_get_int(CFG_SECTION_TV, CFG_DTV_SCAN_STOREMODE_NOVCTHIDE, 0);
+    if (mode == 1) {
+        para.dtv_para.mode |= AM_SCAN_DTVMODE_NOVCTHIDE;
+    }
+
+    mode = config_get_int(CFG_SECTION_TV, CFG_DTV_CHECK_SCRAMBLE_AV, 0);
+    if (mode == 1) {
+        para.dtv_para.mode |= AM_SCAN_DTVMODE_CHECKDATA;
+    }
+
+    mode = config_get_int(CFG_SECTION_TV, CFG_DTV_CHECK_DATA_AUDIO, 0);
+    if (mode == 1) {
+        LOGW("CFG_DTV_CHECK_DATA_AUDIO");
+        para.dtv_para.mode |= AM_SCAN_DTVMODE_CHECK_AUDIODATA;
+    }
+
+    mode = config_get_int(CFG_SECTION_TV, CFG_DTV_SCAN_STOREMODE_VALIDPID, 0);
+    if (mode == 1) {
+        para.dtv_para.mode |= AM_SCAN_DTVMODE_INVALIDPID;
+    }
 
     if (AM_SCAN_Create(&para, &handle) != DVB_SUCCESS) {
         LOGD("SCAN CREATE fail");
@@ -286,6 +314,7 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
     mCurEv.reset();
     mCurEv.mFEParas = srv->tsinfo->fe;
     mCurEv.mFrequency = mCurEv.mFEParas.getFrequency();
+    mCurEv.mProgramsInPat = srv->programs_in_pat;
 
     strncpy(mCurEv.mVct, srv->tsinfo->vct, sizeof(mCurEv.mVct));
 
@@ -760,9 +789,9 @@ void CTvScanner::updateServiceInfo(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t 
             else if (srv_info->srv_type == 0x2)
                 srv_info->srv_type = AM_SCAN_SRV_DRADIO;
         } else {
-            if (srv_info->srv_type == 0x2)
+            if (srv_info->srv_type == 0x2 && VALID_PID(srv_info->vid))
                 srv_info->srv_type = AM_SCAN_SRV_DTV;
-            else if (srv_info->srv_type == 0x3)
+            else if (srv_info->srv_type == 0x3 || (!VALID_PID(srv_info->vid)))
                 srv_info->srv_type = AM_SCAN_SRV_DRADIO;
         }
 
@@ -771,7 +800,7 @@ void CTvScanner::updateServiceInfo(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t 
          * if both invalid, but service_type found in SDT/VCT, set to unknown service,
          * this mechanism is OPTIONAL
          */
-        if (srv_info->vid < 0x1fff) {
+        if (VALID_PID(srv_info->vid)) {
             srv_info->srv_type = AM_SCAN_SRV_DTV;
         } else if (srv_info->aud_info.audio_count > 0) {
             srv_info->srv_type = AM_SCAN_SRV_DRADIO;
@@ -1063,18 +1092,104 @@ void CTvScanner::processAnalogTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCA
     }
     slist.push_back(psrv_info);
 }
+int CTvScanner::checkIsSkipProgram(SCAN_ServiceInfo_t *srv_info, int mode)
+{
+    int pkt_num;
+    int i;
+    //default skip program;
+    int ret = 1;
+    /* Skip program for FTA mode */
+    if (srv_info->scrambled_flag && (mode & AM_SCAN_DTVMODE_FTA))
+    {
+        LOGD("Skip program '%s' vid[%d]for FTA mode", srv_info->name, srv_info->vid);
+        return ret;
+    }
+    /* Skip program for vct hide is set 1, we need hide this channel */
+    if (srv_info->hidden == 1 && (mode & AM_SCAN_DTVMODE_NOVCTHIDE))
+    {
+        LOGD("Skip program '%s' vid[%d]for vct hide mode", srv_info->name, srv_info->vid);
+        return ret;
+    }
 
+    /* Skip program for service_type mode */
+    if (srv_info->srv_type == AM_SCAN_SRV_DTV && (mode & AM_SCAN_DTVMODE_NOTV))
+    {
+        LOGD("Skip program '%s' for NO-TV mode", srv_info->name);
+        return ret;
+    }
+    if (srv_info->srv_type == AM_SCAN_SRV_DRADIO && (mode & AM_SCAN_DTVMODE_NORADIO))
+    {
+        LOGD("Skip program '%s' for NO-RADIO mode", srv_info->name);
+        return ret;
+    }
+    /*skip invalid video and audio pid programs*/
+    if (srv_info->srv_type == AM_SCAN_SRV_UNKNOWN &&
+        (mode & AM_SCAN_DTVMODE_INVALIDPID)) {
+        LOGD("Skip program '%s' for NO-valid pid mode", srv_info->name);
+        return ret;
+    }
+    if (mode & AM_SCAN_DTVMODE_CHECKDATA) {
+        /*check has ts package of video pid */
+        AM_Check_Has_Tspackage(srv_info->vid, &pkt_num);
+        /*if no video ts package, need check has ts package of audio pid */
+        if (!pkt_num) {
+            for (i = 0; i < srv_info->aud_info.audio_count; i++) {
+                AM_Check_Has_Tspackage(srv_info->aud_info.audios[i].pid, &pkt_num);
+            }
+        }
+        if (!pkt_num) {
+            LOGD("Skip program '%s' for NO-ts package", srv_info->name);
+            return ret;
+        }
+    }
+    /*only check has ts package of audio pid, remove it that nodata*/
+    if (mode & AM_SCAN_DTVMODE_CHECK_AUDIODATA) {
+        int pid,fmt,audio_type,audio_exten;
+        char lang[10] = {0};
+        for (i = 0; i < srv_info->aud_info.audio_count; i++) {
+            pkt_num = 0;
+            AM_Check_Has_Tspackage(srv_info->aud_info.audios[i].pid, &pkt_num);
+                if (pkt_num) {
+                if (i == 0) {
+                    LOGD("first index hasdata,needn't insert, pid[%d]=%d",i,srv_info->aud_info.audios[i].pid);
+                }else {
+                    pid = srv_info->aud_info.audios[0].pid;
+                    fmt = srv_info->aud_info.audios[0].fmt;
+                    memcpy(lang, srv_info->aud_info.audios[0].lang, 10);
+                    audio_type = srv_info->aud_info.audios[0].audio_type;
+                    audio_exten = srv_info->aud_info.audios[0].audio_exten;
+                    srv_info->aud_info.audios[0].pid = srv_info->aud_info.audios[i].pid;
+                    srv_info->aud_info.audios[0].fmt = srv_info->aud_info.audios[i].fmt;
+                    memcpy(srv_info->aud_info.audios[0].lang, srv_info->aud_info.audios[i].lang, 10);
+                    srv_info->aud_info.audios[0].audio_type = srv_info->aud_info.audios[i].audio_type;
+                    srv_info->aud_info.audios[0].audio_exten = srv_info->aud_info.audios[i].audio_exten;
+                    srv_info->aud_info.audios[i].pid = pid;
+                    srv_info->aud_info.audios[i].fmt = fmt;
+                    memcpy(srv_info->aud_info.audios[i].lang, lang, 10);
+                    srv_info->aud_info.audios[i].audio_type = audio_type;
+                    srv_info->aud_info.audios[i].audio_exten = audio_exten;
+                }
+                break;
+             }
+        }
+    }
+    ret = 0;
+    return ret;
+}
 void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist)
 {
     LOGD("processAtscTs");
     #define VALID_PID(_pid_) ((_pid_)>0 && (_pid_)<0x1fff)
     if(ts->digital.vcts
+        && ts->digital.pats
         && (ts->digital.vcts->i_extension != ts->digital.pats->i_ts_id)
         && (ts->digital.pats->i_ts_id == 0))
         ts->digital.use_vct_tsid = 1;
 
     dvbpsi_atsc_vct_t *vct;
     dvbpsi_atsc_vct_channel_t *vcinfo;
+    dvbpsi_pat_t *pat;
+    dvbpsi_pat_program_t *prog;
     dvbpsi_pmt_t *pmt;
     dvbpsi_pmt_es_t *es;
     int mode = result->start_para->dtv_para.mode;
@@ -1085,6 +1200,8 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
     int cc_fixed = getParamOption("cc.fixed");
     bool is_cc_fixed = (cc_fixed == -1)? false : (cc_fixed != 0);
     bool mNeedCheck_tsid = true;
+    int programs_in_pat = 0;
+    int vpid = 0;
     /*if do store the programs in VCT but NOT in PMT,we need set store_cvt_mode true*/
     bool store_vct_notin_pmt = false;/*!!!!for  CVTE, need set false*/
     if (!ts->digital.pats && !ts->digital.vcts)
@@ -1093,9 +1210,16 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
         return;
     }
 
+    AM_SI_LIST_BEGIN(ts->digital.pats, pat) {
+        AM_SI_LIST_BEGIN(pat->p_first_program, prog) {
+            programs_in_pat ++;
+        } AM_SI_LIST_END();
+    } AM_SI_LIST_END();
+
     AM_SI_LIST_BEGIN(ts->digital.pmts, pmt) {
         if (!(psrv_info = getServiceInfo()))
             return;
+        psrv_info->programs_in_pat = programs_in_pat;
         psrv_info->srv_id = pmt->i_program_number;
         psrv_info->src = src;
         psrv_info->pmt_pid = getPmtPid(ts->digital.pats, pmt->i_program_number);
@@ -1109,7 +1233,10 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
             }
         }
         AM_SI_LIST_BEGIN(pmt->p_first_es, es) {
-            AM_SI_ExtractAVFromES(es, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
+            vpid = 0;
+            AM_SI_ExtractAVFromES(es, &vpid, &psrv_info->vfmt, &psrv_info->aud_info);
+            if (!VALID_PID(psrv_info->vid))
+                psrv_info->vid = vpid;
             if (!is_cc_fixed)
                 AM_SI_ExtractATSCCaptionFromES(es, &psrv_info->cap_info);
             if (! psrv_info->scrambled_flag && !(mode & TV_SCAN_DTVMODE_SCRAMB_TSHEAD))
@@ -1144,6 +1271,7 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
                                 psrv_info->vfmt = vfmt;
                             }
                     }
+                    psrv_info->sdt_version = vct->i_version;//temp use mSdtVersion to store vctVersion.
                     extractSrvInfoFromVc(result, vcinfo, psrv_info);
                     program_found_in_vct = true;
                     goto VCT_END;
@@ -1164,6 +1292,9 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
 VCT_END:
         /*Store this service*/
         updateServiceInfo(result, psrv_info);
+        if (checkIsSkipProgram(psrv_info, mode)) {
+            continue;
+        }
         if (is_cc_fixed) {
             memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
             addFixedATSCCaption(&psrv_info->cap_info, -1, -1, -1, 1);
@@ -1184,6 +1315,11 @@ VCT_END:
         slist.push_back(psrv_info);
 
     } AM_SI_LIST_END()
+
+    if (mode & AM_SCAN_DTVMODE_NOVCT == AM_SCAN_DTVMODE_NOVCT) {
+        LOGD("NOVCT is enbale, so don't store channel that in VCT but not in PMT");
+        return;
+    }
 
     /* All programs in PMTs added, now trying the programs in VCT but NOT in PMT */
     if (store_vct_notin_pmt == true) {
@@ -1213,9 +1349,12 @@ VCT_END:
 
             if (vcinfo->i_channel_tsid == vct->i_extension) {
                 AM_SI_ExtractAVFromVC(vcinfo, &psrv_info->vid, &psrv_info->vfmt, &psrv_info->aud_info);
+                psrv_info->sdt_version = vct->i_version;//temp use mSdtVersion to store vctVersion.
                 extractSrvInfoFromVc(result, vcinfo, psrv_info);
                 updateServiceInfo(result, psrv_info);
-
+                if (checkIsSkipProgram(psrv_info, mode)) {
+                    continue;
+                }
                 if (is_cc_fixed) {
                     memset(&psrv_info->cap_info, 0, sizeof(psrv_info->cap_info));
                 addFixedATSCCaption(&psrv_info->cap_info, -1, -1, -1, 1);
@@ -1378,7 +1517,7 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
     atv_para.channel_id = -1;
     //atv_para.afc_range = 2000000;
 
-    if (!is_analog_auto) {// atsc scan with list-mode, not auto mode
+    if (mAtvIsAtsc && !is_analog_auto) {// atsc scan with list-mode, not auto mode
         int mode = scp.getAtvModifier(CFrontEnd::FEParas::FEP_MODE, -1);
         if (mode == -1)
             mode = fp.getFEMode().getMode();

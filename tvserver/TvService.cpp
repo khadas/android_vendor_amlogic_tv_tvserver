@@ -172,6 +172,7 @@ void TvService::onTvEvent(const CTvEv &ev)
                 p.writeInt32(pScannerEv->mHidden);
                 p.writeInt32(pScannerEv->mHideGuide);
                 p.writeString16(String16(pScannerEv->mVct));
+                p.writeInt32(pScannerEv->mProgramsInPat);
 
                 ScannerClient->notifyCallback(SCAN_EVENT_CALLBACK, p);
             }
@@ -3028,6 +3029,11 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     case SET_BLACKOUT_ENABLE: {
         int enable = p.readInt32();
         mpTv->setBlackoutEnable(enable);
+        break;
+    }
+    case CHANGE_BLACKOUT_ENABLE_STATUS: {
+        int enable = p.readInt32();
+        mpTv->changeBlackoutEnableStatus(enable);
         break;
     }
     case START_AUTO_BACKLIGHT: {

@@ -31,7 +31,15 @@
 
 #define CFG_ATV_FREQ_LIST                       "atv.get.min.max.freq"
 #define CFG_DTV_SCAN_SORT_MODE                  "dtv.scan.sort.mode"
+#define CFG_DTV_SCAN_STOREMODE_FTA              "dtv.scan.skip.scramble"
+#define CFG_DTV_SCAN_STOREMODE_NOPAL            "dtv.scan.skip.pal"
+#define CFG_DTV_SCAN_STOREMODE_NOVCT            "dtv.scan.skip.onlyvct"
+#define CFG_DTV_SCAN_STOREMODE_NOVCTHIDE        "dtv.scan.skip.vcthide"
 #define CFG_DTV_CHECK_SCRAMBLE_MODE             "dtv.check.scramble.mode"
+#define CFG_DTV_CHECK_SCRAMBLE_AV               "dtv.check.scramble.av"
+#define CFG_DTV_CHECK_DATA_AUDIO                "dtv.check.data.audio"
+#define CFG_DTV_SCAN_STOREMODE_VALIDPID         "dtv.scan.skip.invalidpid"
+
 
 #define CFG_TVIN_KERNELPET_DISABLE              "tvin.kernelpet_disable"
 #define CFG_TVIN_KERNELPET_TIMEROUT             "tvin.kernelpet.timeout"

@@ -1638,7 +1638,7 @@ const char *CTvScanner::getDtvScanListName(int mode)
     int list = feMode.getList();
     const char* pCountry = CTvRegion::getTvCountry();
 
-    LOGD(" pCountry = %s", pCountry);
+    LOGD(" pCountry = %s, base = %d", pCountry, base);
     switch (base) {
         case TV_FE_ANALOG:
             if (strcmp(pCountry, "IN") == 0) {
@@ -1647,9 +1647,13 @@ const char *CTvScanner::getDtvScanListName(int mode)
             else if (strcmp(pCountry, "ID") == 0) {
                 list_name = (char *)"ID,Default ATV";
             }
+            else if (strcmp(pCountry, "CN") == 0) {
+                list_name = (char *)"CN,Default ATV";
+            }
             else {
                 list_name = (char *)"IN,Default ATV";
             }
+
             break;
         case TV_FE_DTMB:
             list_name = (char *)"CN,Default DTMB ALL";

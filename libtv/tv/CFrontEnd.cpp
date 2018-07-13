@@ -297,7 +297,7 @@ int CFrontEnd::getVLPropLocked(int cmd, int *val)
     return 0;
 }
 
-int CFrontEnd::convertParas(char *paras, int mode, int freq1, int freq2, int para1, int para2, int para3)
+int CFrontEnd::convertParas(char *paras, int mode, int freq1, int freq2, int para1, int para2, int para3, int para4)
 {
     char p[128] = {0};
     sprintf(paras, "{\"mode\":%d,\"freq\":%d,\"freq2\":%d", mode, freq1, freq2);
@@ -314,10 +314,10 @@ int CFrontEnd::convertParas(char *paras, int mode, int freq1, int freq2, int par
             sprintf(p, ",\"mod\":%d}", para1);
             break;
         case TV_FE_ANALOG:
-            sprintf(p, ",\"vtd\":%d,\"atd\":%d,\"afc\":%d,\"vfmt\":%d}",
+            sprintf(p, ",\"vtd\":%d,\"atd\":%d,\"afc\":%d,\"vfmt\":%d,\"soundsys\":%d}",
                 stdAndColorToVideoEnum(para1),
                 stdAndColorToAudioEnum(para1),
-                para2, para3);
+                para2, para3, para4);
             break;
         case TV_FE_ISDBT:
             sprintf(p, ",\"bw\":%d,\"lyr\":%d}", para1, para2);
@@ -356,6 +356,7 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
             mCurPara1 = enumToStdAndColor(mFEParas.getVideoStd(), mFEParas.getAudioStd());
             mCurPara2 = mFEParas.getAfc();
             mCurPara3 = mFEParas.getVFmt();
+            mCurPara4 = mFEParas.getSoundsys();
             mVLCurMode = mFEParas.getFEMode().getBase();
             break;
         case TV_FE_ISDBT:
@@ -367,10 +368,10 @@ void CFrontEnd::saveCurrentParas(FEParas &paras)
     }
 }
 
-int CFrontEnd::setPara(int mode, int freq, int para1, int para2, int para3)
+int CFrontEnd::setPara(int mode, int freq, int para1, int para2, int para3, int para4)
 {
     char paras[128];
-    convertParas(paras, mode, freq, freq, para1, para2, para3);
+    convertParas(paras, mode, freq, freq, para1, para2, para3, para4);
     return setPara(paras);
 }
 
@@ -430,6 +431,7 @@ int CFrontEnd::setPara(const char *paras, bool force )
         dvbfepara.analog.para.u.analog.std = enumToStdAndColor(mFEParas.getVideoStd(), mFEParas.getAudioStd());
         dvbfepara.analog.para.u.analog.audmode = dvbfepara.analog.para.u.analog.std & 0x00FFFFFF;
         dvbfepara.analog.para.u.analog.afc_range = AFC_RANGE;
+        dvbfepara.analog.para.u.analog.soundsys = (mFEParas.getSoundsys() >= 0 ? mFEParas.getSoundsys() : 0xFF);
         if (mFEParas.getAfc() == 0) {
             dvbfepara.analog.para.u.analog.flag |= ANALOG_FLAG_ENABLE_AFC;
         } else {
@@ -1079,6 +1081,7 @@ const char* CFrontEnd::FEParas::FEP_VSTD = "vtd";
 const char* CFrontEnd::FEParas::FEP_ASTD = "atd";
 const char* CFrontEnd::FEParas::FEP_AFC = "afc";
 const char* CFrontEnd::FEParas::FEP_VFMT = "vfmt";
+const char* CFrontEnd::FEParas::FEP_SOUNDSYS = "soundsys";
 
 bool CFrontEnd::FEParas::operator == (const FEParas &fep) const
 {
@@ -1108,7 +1111,8 @@ bool CFrontEnd::FEParas::operator == (const FEParas &fep) const
                 return false;
             break;
         case TV_FE_ANALOG:
-            if (getVideoStd() != fep.getVideoStd() || getAudioStd() != fep.getAudioStd() || getAfc() != fep.getAfc() || getVFmt() != fep.getVFmt())
+            if (getVideoStd() != fep.getVideoStd() || getAudioStd() != fep.getAudioStd() || getAfc() != fep.getAfc()
+                 || getVFmt() != fep.getVFmt() || getSoundsys() != fep.getSoundsys())
                 return false;
             break;
         default:

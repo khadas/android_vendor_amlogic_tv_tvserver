@@ -2406,7 +2406,7 @@ int CTvScanner::ATVManualScan(int min_freq, int max_freq, int std, int store_Typ
     UNUSED(channel_num);
 
     char paras[128];
-    CFrontEnd::convertParas(paras, TV_FE_ANALOG, min_freq, max_freq, std, 0, 0);
+    CFrontEnd::convertParas(paras, TV_FE_ANALOG, min_freq, max_freq, std, 0, 0, 0);
 
     CFrontEnd::FEParas fe(paras);
 
@@ -2428,7 +2428,7 @@ int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type
     UNUSED(search_type);
 
     char paras[128];
-    CFrontEnd::convertParas(paras, TV_FE_ANALOG, min_freq, max_freq, std, 0, 0);
+    CFrontEnd::convertParas(paras, TV_FE_ANALOG, min_freq, max_freq, std, 0, 0, 0);
 
     CFrontEnd::FEParas fe(paras);
 
@@ -2453,7 +2453,7 @@ int CTvScanner::autoAtvScan(int min_freq, int max_freq, int std, int search_type
 int CTvScanner::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1, int para2)
 {
     char feparas[128];
-    CFrontEnd::convertParas(feparas, mode, beginFreq, endFreq, para1, para2, 0);
+    CFrontEnd::convertParas(feparas, mode, beginFreq, endFreq, para1, para2, 0, 0);
     return dtvScan(feparas, scan_mode, beginFreq, endFreq);
 }
 

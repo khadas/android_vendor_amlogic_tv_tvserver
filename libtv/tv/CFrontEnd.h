@@ -74,6 +74,7 @@ typedef struct frontend_para_set_s {
     atv_video_std_t videoStd;
     atv_audio_std_t audioStd;
     int vfmt;
+    int soundsys;
     int para1;
     int para2;
 } frontend_para_set_t;
@@ -118,7 +119,7 @@ public:
 #ifdef SUPPORT_ADTV
     int GetTSSource(AM_DMX_Source_t *src);
 #endif
-    int setPara(int mode, int freq, int para1, int para2, int para3 = 0);
+    int setPara(int mode, int freq, int para1, int para2, int para3 = 0, int para4 = 0);
     int setPara(const char *);
     int setPara(const char *paras, bool force );
     int setProp(int cmd, int val);
@@ -258,6 +259,8 @@ public:
         FEParas& setAfc(int a) { setInt(FEP_AFC, a); return *this; }
         int getVFmt() const { return getInt(FEP_VFMT, -1); }
         FEParas& setVFmt(int a) { setInt(FEP_VFMT, a); return *this; }
+        int getSoundsys() const { return getInt(FEP_SOUNDSYS, -1); }
+        FEParas& setSoundsys(int a) { setInt(FEP_SOUNDSYS, a); return *this; }
 
 #ifdef SUPPORT_ADTV
         FEParas& fromDVBParameters(const FEMode& mode, const struct dvb_frontend_parameters *dvb);
@@ -279,10 +282,11 @@ public:
         static const char* FEP_ASTD;
         static const char* FEP_AFC;
         static const char* FEP_VFMT;
+        static const char* FEP_SOUNDSYS;
     };
 
     /* freq: freq1==freq2 for single, else for range */
-    static int convertParas(char *paras, int mode, int freq1, int freq2, int para1, int para2, int para3);
+    static int convertParas(char *paras, int mode, int freq1, int freq2, int para1, int para2, int para3, int para4);
 
 private:
     static CFrontEnd *mInstance;
@@ -300,6 +304,7 @@ private:
     int mCurPara1;
     int mCurPara2;
     int mCurPara3;
+    int mCurPara4;
     bool mbFEOpened;
     bool mbVLFEOpened;
     FEParas mFEParas;

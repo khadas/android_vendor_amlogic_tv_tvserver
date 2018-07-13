@@ -1213,7 +1213,7 @@ int CTv::playDtmbProgram ( int progId )
     return 0;
 }
 
-int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int vfmt, int fineTune __unused, int audioCompetation)
+int CTv::playAtvProgram (int freq, int videoStd, int audioStd, int vfmt, int soundsys, int fineTune __unused, int audioCompetation)
 {
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_TV);
     mTvAction |= TV_ACTION_IN_VDIN;
@@ -1232,7 +1232,7 @@ int CTv::playAtvProgram (int  freq, int videoStd, int audioStd, int vfmt, int fi
 
     unsigned long stdAndColor = mFrontDev->enumToStdAndColor (videoStd, audioStd);
     //set TUNER
-    mFrontDev->setPara (TV_FE_ANALOG, freq, stdAndColor, 1, vfmt);
+    mFrontDev->setPara (TV_FE_ANALOG, freq, stdAndColor, 1, vfmt, soundsys);
 
     return 0;
 }

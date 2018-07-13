@@ -719,6 +719,7 @@ int CATVTvPlayer::start(const char *param) {
                             paramGetInt(mFEParam, NULL, "vtd", 1),
                             paramGetInt(mFEParam, NULL, "atd", 0),
                             paramGetInt(mFEParam, NULL, "vfmt", 0),
+                            paramGetInt(mFEParam, NULL, "soundsys", -1),
                             0,
                             paramGetInt(mAparam, NULL, "AudComp", 0));
     return ret;

@@ -276,8 +276,8 @@ Return<int32_t> DroidTvServer::tvSetFrontEnd(const hidl_string& feparas, int32_t
     return mTvServiceIntf->tvSetFrontEnd(feparas, force);
 }
 
-Return<int32_t> DroidTvServer::tvSetFrontendParms(int32_t feType, int32_t freq, int32_t vStd, int32_t aStd, int32_t vfmt, int32_t p1, int32_t p2) {
-    return mTvServiceIntf->tvSetFrontendParms(feType, freq, vStd, aStd, vfmt, p1, p2);
+Return<int32_t> DroidTvServer::tvSetFrontendParms(int32_t feType, int32_t freq, int32_t vStd, int32_t aStd, int32_t vfmt, int32_t soundsys, int32_t p1, int32_t p2) {
+    return mTvServiceIntf->tvSetFrontendParms(feType, freq, vStd, aStd, vfmt, soundsys, p1, p2);
 }
 
 Return<int32_t> DroidTvServer::sendPlayCmd(int32_t cmd, const hidl_string& id, const hidl_string& param) {

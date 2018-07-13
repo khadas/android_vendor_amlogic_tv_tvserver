@@ -3117,6 +3117,7 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         feParms.videoStd = (atv_video_std_t)p.readInt32();
         feParms.audioStd = (atv_audio_std_t)p.readInt32();
         feParms.vfmt = p.readInt32();
+        feParms.soundsys = p.readInt32();
         feParms.para1 = p.readInt32();
         feParms.para2 = p.readInt32();
         mpTv->resetFrontEndPara(feParms);
@@ -3130,9 +3131,10 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
             int videoStd = p.readInt32();
             int audioStd = p.readInt32();
             int vfmt = p.readInt32();
+            int soundsys = p.readInt32();
             int fineTune = p.readInt32();
             int audioCompetation = p.readInt32();
-            mpTv->playAtvProgram(freq, videoStd, audioStd, vfmt, fineTune, audioCompetation);
+            mpTv->playAtvProgram(freq, videoStd, audioStd, vfmt, soundsys, fineTune, audioCompetation);
         } else {
             int para1 = p.readInt32();
             int para2 = p.readInt32();

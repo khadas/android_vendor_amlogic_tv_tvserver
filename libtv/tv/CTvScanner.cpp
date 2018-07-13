@@ -1517,7 +1517,7 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
     atv_para.channel_id = -1;
     //atv_para.afc_range = 2000000;
 
-    if (mAtvIsAtsc && !is_analog_auto) {// atsc scan with list-mode, not auto mode
+    if (!is_analog_auto) {// atsc scan with list-mode, not auto mode
         int mode = scp.getAtvModifier(CFrontEnd::FEParas::FEP_MODE, -1);
         if (mode == -1)
             mode = fp.getFEMode().getMode();

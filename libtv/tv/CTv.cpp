@@ -1618,8 +1618,7 @@ int CTv::getATVMinMaxFreq ( int *scanMinFreq, int *scanMaxFreq )
 
 int CTv::IsDVISignal()
 {
-    return ( ( TVIN_SIG_FMT_NULL != m_cur_sig_info.fmt) &&
-        ( m_cur_sig_info.reserved & 0x1 ) );
+    return m_cur_sig_info.is_dvi;
 }
 
 int CTv::getHDMIFrameRate()
@@ -2242,7 +2241,7 @@ void CTv::onSigToUnSupport()
         ev.mTrans_fmt = m_cur_sig_info.trans_fmt;
         ev.mFmt = m_cur_sig_info.fmt;
         ev.mStatus = m_cur_sig_info.status;
-        ev.mReserved = m_cur_sig_info.reserved;
+        ev.mReserved = m_cur_sig_info.is_dvi;
         sendTvEvent ( ev );
     }
 }
@@ -2269,7 +2268,7 @@ void CTv::onSigToNoSig()
         ev.mTrans_fmt = m_cur_sig_info.trans_fmt;
         ev.mFmt = m_cur_sig_info.fmt;
         ev.mStatus = m_cur_sig_info.status;
-        ev.mReserved = m_cur_sig_info.reserved;
+        ev.mReserved = m_cur_sig_info.is_dvi;
         sendTvEvent ( ev );
     }
 }
@@ -2317,7 +2316,7 @@ void CTv::InitCurrenSignalInfo ( void )
     m_cur_sig_info.trans_fmt = TVIN_TFMT_2D;
     m_cur_sig_info.fmt = TVIN_SIG_FMT_NULL;
     m_cur_sig_info.status = TVIN_SIG_STATUS_NULL;
-    m_cur_sig_info.reserved = 0;
+    m_cur_sig_info.is_dvi = 0;
 }
 
 tvin_info_t CTv::GetCurrentSignalInfo ( void )
@@ -3141,8 +3140,8 @@ void CTv::onVdinSignalChange()
         m_cur_sig_info.status = TVIN_SIG_STATUS_NULL;
     }
 
-    LOGD("%s,trans_fmt is %d,fmt is %d, status is %d", __FUNCTION__, m_cur_sig_info.trans_fmt,
-        m_cur_sig_info.fmt, m_cur_sig_info.status);
+    LOGD("%s: trans_fmt is %d, sig_fmt is %d, status is %d, isDVI is %d\n", __FUNCTION__, m_cur_sig_info.trans_fmt,
+        m_cur_sig_info.fmt, m_cur_sig_info.status, m_cur_sig_info.is_dvi);
     if ( m_cur_sig_info.status == TVIN_SIG_STATUS_STABLE ) {
         onSigToStable();
         onSigStillStable();

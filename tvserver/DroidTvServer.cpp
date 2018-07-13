@@ -177,11 +177,11 @@ Return<int32_t> DroidTvServer::getHdmiPorts() {
 }
 
 Return<int32_t> DroidTvServer::isDviSIgnal() {
-    return mTvServiceIntf->getHdmiPorts();
+     return mTvServiceIntf->isDviSIgnal();
 }
 
 Return<int32_t> DroidTvServer::isVgaTimingInHdmi() {
-    return mTvServiceIntf->getHdmiPorts();
+    return mTvServiceIntf->isVgaTimingInHdmi();
 }
 
 Return<int32_t> DroidTvServer::setHdmiEdidVersion(int32_t port_id, int32_t ver) {

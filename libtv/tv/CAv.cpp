@@ -323,15 +323,15 @@ int CAv::DisableVideoWithBlackColor()
 //just enable video
 int CAv::EnableVideoNow(bool IsShowTestScreen)
 {
-    LOGD("EnableVideoNow");
+    LOGD("%s:IsShowTestScreen: %d\n", __FUNCTION__, IsShowTestScreen);
 
     if (mVideoLayerState == VIDEO_LAYER_ENABLE) {
         LOGW("video is enabled");
         return 0;
     }
     mVideoLayerState = VIDEO_LAYER_ENABLE;
-    if ( IsShowTestScreen ) {
-        LOGD("DisableVideoWithBlackColor");
+    if (IsShowTestScreen) {
+        LOGD("eableVideoWithBlackColor");
         SetVideoScreenColor ( 0, 16, 128, 128 );
     }
 
@@ -469,7 +469,6 @@ int CAv::WaittingVideoPlaying(int minFrameCount , int waitTime )
         }
     }
 
-    LOGW("EnableVideoWhenVideoPlaying time out");
     return -1;
 }
 
@@ -477,7 +476,7 @@ int CAv::EnableVideoWhenVideoPlaying(int minFrameCount, int waitTime)
 {
     int ret = WaittingVideoPlaying(minFrameCount, waitTime);
     if (ret == 0) { //ok to playing
-        EnableVideoNow( true );
+        EnableVideoNow(true);
     }
     return ret;
 }

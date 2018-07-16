@@ -243,6 +243,11 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
     } else if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_NO_SIG ) {
         LOGD("[source_switch_time]: %fs, fe unlock", getUptimeSeconds());
         if ((!(mTvAction & TV_ACTION_STOPING)) && m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //just playing
+            if (iSBlackPattern) {
+                mAv.DisableVideoWithBlackColor();
+            } else {
+                mAv.DisableVideoWithBlueColor();
+            }
             TvEvent::SignalInfoEvent ev;
             ev.mStatus = TVIN_SIG_STATUS_NOSIG;
             ev.mTrans_fmt = TVIN_TFMT_2D;
@@ -314,7 +319,7 @@ void CTv::onEvent(const CAv::AVEvent &ev)
             LOGD("tv stopping, no need CAv::AVEvent::EVENT_AV_STOP");
             break;
         }
-        if ( iSBlackPattern ) {
+        if (iSBlackPattern) {
             mAv.DisableVideoWithBlackColor();
         } else {
             mAv.DisableVideoWithBlueColor();
@@ -338,7 +343,7 @@ void CTv::onEvent(const CAv::AVEvent &ev)
     }
 
     case CAv::AVEvent::EVENT_AV_SCAMBLED: {
-        if ( iSBlackPattern ) {
+        if (iSBlackPattern) {
             mAv.DisableVideoWithBlackColor();
         } else {
             mAv.DisableVideoWithBlueColor();
@@ -578,11 +583,7 @@ int CTv::Scan(const char *feparas, const char *scanparas) {
 
     mAv.StopTS();
     mpTvin->Tvin_StopDecoder();
-    if ( iSBlackPattern ) {
-        mAv.DisableVideoWithBlackColor();
-    } else {
-        mAv.DisableVideoWithBlueColor();
-    }
+    mAv.DisableVideoWithBlackColor();
 
     CTvScanner::ScanParas sp(scanparas);
     CFrontEnd::FEParas fp(feparas);
@@ -613,12 +614,7 @@ int CTv::dtvScan(int mode, int scan_mode, int beginFreq, int endFreq, int para1,
         mode, scan_mode, beginFreq, endFreq, para1, para2, __FUNCTION__);
     //mTvEpg.leaveChannel();
     mAv.StopTS();
-
-    if ( iSBlackPattern ) {
-        mAv.DisableVideoWithBlackColor();
-    } else {
-        mAv.DisableVideoWithBlueColor();
-    }
+    mAv.DisableVideoWithBlackColor();
 
     if (scan_mode == TV_SCAN_DTVMODE_MANUAL) {
         CTvChannel::DeleteBetweenFreq(beginFreq, endFreq);
@@ -682,8 +678,8 @@ int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchTyp
 {
     int minScanFreq, maxScanFreq, vStd, aStd;
     AutoMutex _l( mLock );
-    if ( !mATVDisplaySnow )
-        mAv.DisableVideoWithBlueColor();
+    if (!mATVDisplaySnow)
+        mAv.DisableVideoWithBlackColor();
     mTvAction |= TV_ACTION_SCANNING;
     stopPlaying(false);
     mTvScanner->setObserver ( &mTvMsgQueue );
@@ -756,7 +752,7 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
 
     AutoMutex _l( mLock );
     if ( !mATVDisplaySnow )
-        mAv.DisableVideoWithBlueColor();
+        mAv.DisableVideoWithBlackColor();
     mTvAction |= TV_ACTION_SCANNING;
     mTvScanner->setObserver ( &mTvMsgQueue );
     unsigned long stdAndColor = mFrontDev->enumToStdAndColor(vStd, aStd);
@@ -819,20 +815,12 @@ int CTv::stopScan()
     }
 
     LOGD("%s, tv scanning , stop it\n", __FUNCTION__);
-    if ( ( SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
+    if ((SOURCE_TV == m_source_input) && mATVDisplaySnow) {
         mpTvin->Tvin_StopDecoder();
         mpTvin->SwitchSnow( false );
-        if ( iSBlackPattern ) {
-            mAv.DisableVideoWithBlackColor();
-        } else {
-            mAv.DisableVideoWithBlueColor();
-        }
+        mAv.DisableVideoWithBlackColor();
     } else {
-        if ( iSBlackPattern ) {
-            mAv.DisableVideoWithBlackColor();
-        } else {
-            mAv.DisableVideoWithBlueColor();
-        }
+        mAv.DisableVideoWithBlackColor();
     }
     //mTvEpg.leaveChannel();
     mTvScanner->stopScan();
@@ -1392,10 +1380,11 @@ int CTv::GetAudioVolumeCompensationVal(int progxxId __unused)
 
 int CTv::startPlayTv ( int source, int vid, int aid, int pcrid, int vfat, int afat )
 {
+    LOGD ("%s\n", __FUNCTION__);
     if ( source == SOURCE_DTV ) {
         tvWriteSysfs ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
         setDvbLogLevel();
-        LOGD ( "%s, startPlayTv", __FUNCTION__);
+        LOGD ( "%s, start Play DTV!\n", __FUNCTION__);
         return mAv.StartTS (vid, aid, pcrid, vfat, afat );
     }
     return -1;
@@ -1427,20 +1416,12 @@ int CTv::stopPlaying(bool isShowTestScreen, bool resetFE)
         if (resetFE)
             ClearAnalogFrontEnd();
     } else if (m_source_input ==  SOURCE_DTV) {
-        if (mBlackoutEnable == true) {
+        if (mBlackoutEnable) {
             mAv.EnableVideoBlackout();
         }
         mAv.StopTS ();
     }
-    if ( SOURCE_TV != m_source_input && mBlackoutEnable == true) {
-        if ( true == isShowTestScreen ) {
-            if ( iSBlackPattern ) {
-                mAv.DisableVideoWithBlackColor();
-            } else {
-                mAv.DisableVideoWithBlueColor();
-            }
-        }
-    }
+
     mTvAction &= ~TV_ACTION_PLAYING;
     return 0;
 }
@@ -1735,6 +1716,7 @@ TvRunStatus_t CTv::GetTvStatus()
 
 int CTv::OpenTv ( void )
 {
+    LOGD("%s: start at %fs\n", __FUNCTION__, getUptimeSeconds());
     const char * value;
     value = config_get_str ( CFG_SECTION_TV, CFG_TVIN_ATV_DISPLAY_SNOW, "null" );
     if (strcmp(value, "enable") == 0 ) {
@@ -1826,7 +1808,7 @@ int CTv::CloseTv ( void )
 
 int CTv::StartTvLock ()
 {
-    LOGD ( "[source_switch_time]: %fs,  StartTvLock status = %d", getUptimeSeconds(), mTvStatus);
+    LOGD("[source_switch_time]: %fs,  StartTvLock status = %d", getUptimeSeconds(), mTvStatus);
     if (mTvStatus == TV_START_ED)
         return 0;
 
@@ -1843,8 +1825,8 @@ int CTv::StartTvLock ()
 
     mAv.SetVideoWindow (0, 0, 0, 0);
     mTvStatus = TV_START_ED;
-    LOGD ( "[source_switch_time]: %fs, StartTvLock end", getUptimeSeconds());
     MnoNeedAutoSwitchToMonitorMode = false;
+    LOGD("[source_switch_time]: %fs, StartTvLock end", getUptimeSeconds());
     return 0;
 }
 
@@ -1866,7 +1848,7 @@ int CTv::DoResume(int type)
 
 int CTv::StopTvLock ( void )
 {
-    LOGD("%s, call Tv_Stop status = %d \n", __FUNCTION__, mTvStatus);
+    LOGD("%s: mTvStatus = %d，mBlackoutEnable = %d, iSBlackPattern  = %d\n", __FUNCTION__, mTvStatus,mBlackoutEnable, iSBlackPattern);
     AutoMutex _l( mLock );
     mTvAction |= TV_ACTION_STOPING;
     mAv.DisableVideoWithBlackColor();
@@ -1894,7 +1876,7 @@ int CTv::StopTvLock ( void )
     tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceType(source_type);
     int ret = tvSetCurrentSourceInfo(m_source_input, source_type, source_port, TVIN_SIG_FMT_NULL, INDEX_2D, TVIN_TFMT_2D);
     if (ret < 0) {
-        LOGE("%s Set CurrentSourceInfo error!\n");
+        LOGE("%s Set CurrentSourceInfo error!\n", __FUNCTION__);
     }
 
     mFrontDev->Close();
@@ -1902,7 +1884,6 @@ int CTv::StopTvLock ( void )
     mTvStatus = TV_STOP_ED;
     MnoNeedAutoSwitchToMonitorMode = false;
     if (mBlackoutEnable) {
-        mAv.DisableVideoWithBlackColor();
         mAv.EnableVideoBlackout();
     }
     mAv.ClearVideoBuffer();
@@ -1995,16 +1976,15 @@ int CTv::SetSourceSwitchInput(tv_source_input_t virtual_input, tv_source_input_t
 
 int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_input_t source_input)
 {
-    tvin_port_t cur_port;
-
     LOGD ( "[source_switch_time]: %fs, %s, virtual source input = %d source input = %d m_source_input = %d",
-        getUptimeSeconds(), __FUNCTION__, virtual_input, source_input, m_source_input );
+           getUptimeSeconds(), __FUNCTION__, virtual_input, source_input, m_source_input );
 
+    tvin_port_t cur_port;
     m_source_input_virtual = virtual_input;
 
     Tv_SetDDDRCMode(source_input);
     if (source_input == m_source_input ) {
-        LOGW ( "[ctv]%s,same source input, return", __FUNCTION__ );
+        LOGW("%s,same source input, return", __FUNCTION__ );
         return 0;
     }
     stopPlaying(false, !(source_input == SOURCE_DTV && m_source_input == SOURCE_TV));
@@ -2030,14 +2010,14 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
             break;
         }
         if (tmp_ret < 0)
-            LOGE ( "[ctv]%s, do not set hdmi port%d edid.ret=%d", __FUNCTION__, source_input - 4, tmp_ret );
+            LOGE ( "%s, do not set hdmi port%d edid.ret=%d", __FUNCTION__, source_input - 4, tmp_ret );
     }
     mTvAction |= TV_ACTION_SOURCE_SWITCHING;
 
     //if BlackoutEnable is false, no need to disable video and enable blackout
 
     if (mBlackoutEnable == true) {
-        mAv.DisableVideoWithBlackColor();
+        //mAv.DisableVideoWithBlackColor();
         //enable blackout, when play,disable it
         mAv.EnableVideoBlackout();
     }
@@ -2075,11 +2055,10 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         int ret = tvSetCurrentSourceInfo(m_source_input, source_type, source_port, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ,
                                          INDEX_2D, TVIN_TFMT_2D);
         if (ret < 0) {
-            LOGE("%s Set CurrentSourceInfo error!\n");
+            LOGE("%s Set CurrentSourceInfo error!\n", __FUNCTION__);
         }
 
         CVpp::getInstance()->LoadVppSettings(SOURCE_DTV, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, INDEX_2D, TVIN_TFMT_2D);
-
         Tv_SetDisplayMode(Tv_GetDisplayMode(SOURCE_DTV), SOURCE_DTV, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, 1);
     } else {
         mpTvin->setMpeg2Vdin(0);
@@ -2130,12 +2109,11 @@ void CTv::onSigToStable()
     int ret = tvSetCurrentSourceInfo(m_source_input, source_type, source_port, m_cur_sig_info.fmt,
                                      INDEX_2D, m_cur_sig_info.trans_fmt);
     if (ret < 0) {
-        LOGE("%s Set CurrentSourceInfo error!\n");
+        LOGE("%s Set CurrentSourceInfo error!\n", __FUNCTION__);
     }
 
     CVpp::getInstance()->LoadVppSettings(m_source_input, m_cur_sig_info.fmt, INDEX_2D,
                                          m_cur_sig_info.trans_fmt);
-
 
     if (mAutoSetDisplayFreq && !mPreviewEnabled) {
         int freq = 60;
@@ -2168,6 +2146,7 @@ void CTv::onSigToStable()
 
 void CTv::onSigStillStable()
 {
+    LOGD ( "%s, signal Still Stable!\n", __FUNCTION__);
     if ( !(mTvAction & TV_ACTION_SCANNING) ) {
         LOGD("still stable , to start decoder");
         if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow && mpTvin->getSnowStatus()) {
@@ -2185,24 +2164,18 @@ void CTv::onSigStillStable()
             }
         }
     }
-    if ( 1 ) {
-        LOGD("still stable , to unmute audio/video");
-        CMessage msg;
-        msg.mDelayMs = 0;
-        msg.mType = CTvMsgQueue::TV_MSG_ENABLE_VIDEO_LATER;
-        msg.mpPara[0] = 2;
-        mTvMsgQueue.sendMsg ( msg );
-    }
-    if ( 1 ) {
-        //tvin_info_t info = m_cur_sig_info;
-        TvEvent::SignalInfoEvent ev;
-        ev.mTrans_fmt = m_cur_sig_info.trans_fmt;
-        ev.mFmt = m_cur_sig_info.fmt;
-        ev.mStatus = m_cur_sig_info.status;
-        ev.mReserved = getHDMIFrameRate();
-        sendTvEvent ( ev );
-    }
+    CMessage msg;
+    msg.mDelayMs = 0;
+    msg.mType = CTvMsgQueue::TV_MSG_ENABLE_VIDEO_LATER;
+    msg.mpPara[0] = 2;
+    mTvMsgQueue.sendMsg ( msg );
 
+    TvEvent::SignalInfoEvent ev;
+    ev.mTrans_fmt = m_cur_sig_info.trans_fmt;
+    ev.mFmt = m_cur_sig_info.fmt;
+    ev.mStatus = m_cur_sig_info.status;
+    ev.mReserved = getHDMIFrameRate();
+    sendTvEvent ( ev );
 }
 
 bool CTv::isTvViewBlocked() {
@@ -2237,7 +2210,11 @@ void CTv::onVideoAvailableLater(int framecount)
 void CTv::onSigToUnstable()
 {
     LOGD ( "%s, signal to Unstable\n", __FUNCTION__);
-    if (SOURCE_TV != m_source_input) {
+    if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
+        mpTvin->SwitchSnow(true);
+        mpTvin->Tvin_StartDecoder (m_cur_sig_info);
+        mAv.EnableVideoNow(false);
+    } else {
         mAv.DisableVideoWithBlackColor();
         mpTvin->Tvin_StopDecoder();
     }
@@ -2247,11 +2224,11 @@ void CTv::onSigToUnSupport()
 {
     LOGD ( "%s, signal to UnSupport\n", __FUNCTION__);
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
-        mpTvin->SwitchSnow( true );
-        mpTvin->Tvin_StartDecoder ( m_cur_sig_info );
-        mAv.EnableVideoNow( false );
+        mpTvin->SwitchSnow(true);
+        mpTvin->Tvin_StartDecoder(m_cur_sig_info);
+        mAv.EnableVideoNow(false);
     } else {
-        if ( iSBlackPattern ) {
+        if (iSBlackPattern) {
             mAv.DisableVideoWithBlackColor();
         } else {
             mAv.DisableVideoWithBlueColor();
@@ -2274,11 +2251,11 @@ void CTv::onSigToNoSig()
 {
     LOGD ( "%s, signal to NoSignal\n", __FUNCTION__);
     if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
-        mpTvin->SwitchSnow( true );
-        mpTvin->Tvin_StartDecoder ( m_cur_sig_info );
-        mAv.EnableVideoNow( false );
+        mpTvin->SwitchSnow(true);
+        mpTvin->Tvin_StartDecoder(m_cur_sig_info);
+        mAv.EnableVideoNow(false);
     } else {
-        if ( iSBlackPattern ) {
+        if (iSBlackPattern) {
             mAv.DisableVideoWithBlackColor();
         } else {
             mAv.DisableVideoWithBlueColor();
@@ -3287,6 +3264,7 @@ CTvPlayer *CTv::getPlayer(const char *id, const char *param) {
 
 int CTv::startPlay(const char *id, const char *param)
 {
+    LOGD("%s\n", __FUNCTION__);
     int ret = -1;
     CTvPlayer *player = NULL;
     if (!(player = getPlayer(id, param))) {
@@ -3301,6 +3279,7 @@ int CTv::startPlay(const char *id, const char *param)
 
 int CTv::stopPlay(const char *id, const char *param)
 {
+    LOGD("%s\n", __FUNCTION__);
     CTvPlayer *player = NULL;
     if (!(player = PlayerManager::getInstance().getDev(id))) {
         LOGD("player(%s) not found", toReadable(id));
@@ -3353,7 +3332,7 @@ int CTv::setPlayParam(const char *id, const char *param)
 
 int CTv::doPlayCommand(int cmd, const char *id, const char *param)
 {
-    LOGD("doPlay(cmd:%d, id:%s, para:%s)", cmd, id, param);
+    LOGD("%s: cmd:%d, id:%s, para:%s\n", __FUNCTION__, cmd, id, param);
     AutoMutex _l(mLock);
     int ret = -10;
     setDvbLogLevel();

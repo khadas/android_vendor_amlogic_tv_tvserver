@@ -570,8 +570,12 @@ int DroidTvServiceIntf::setSourceInput(int32_t inputSrc, int32_t vInputSrc) {
     return mpTv->SetSourceSwitchInput((tv_source_input_t)vInputSrc, (tv_source_input_t)inputSrc);
 }
 
-int DroidTvServiceIntf::getSaveBlackoutEnable() {
-    return mpTv->getSaveBlackoutEnable();
+int DroidTvServiceIntf::setBlackoutEnable(int32_t status) {
+    return mpTv->setBlackoutEnable(status);
+}
+
+int DroidTvServiceIntf::getBlackoutEnable() {
+    return mpTv->getBlackoutEnable();
 }
 
 int DroidTvServiceIntf::getATVMinMaxFreq(int32_t scanMinFreq, int32_t scanMaxFreq) {
@@ -1850,11 +1854,6 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
             prog.deleteProgram(progid);
             break;
         }
-        case SET_BLACKOUT_ENABLE: {
-            int enable = p.readInt32();
-            mpTv->setBlackoutEnable(enable);
-            break;
-        }
         case START_AUTO_BACKLIGHT:
             mpTv->setAutoBackLightStatus(1);
             break;
@@ -1885,11 +1884,6 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
             ret = mpTv->setAutobacklightData(String8(p.readString16()));
             break;
 
-        case SSM_READ_BLACKOUT_ENABLE: {
-            int enable = mpTv->getSaveBlackoutEnable();
-            //r->writeInt32(enable);
-            break;
-        }
         case DTV_SWAP_PROGRAM: {
             CTvProgram prog;
             int firstProgId = p.readInt32();

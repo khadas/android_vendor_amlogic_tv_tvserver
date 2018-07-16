@@ -89,7 +89,8 @@ public:
     Return<int32_t> handleGPIO(const hidl_string& key, int32_t is_out, int32_t edge) override;
     Return<int32_t> setSourceInput(int32_t inputSrc) override;
     Return<int32_t> setSourceInputExt(int32_t inputSrc, int32_t vInputSrc) override;
-    Return<int32_t> getSaveBlackoutEnable() override;
+    Return<int32_t> setBlackoutEnable(int32_t satus) override;
+    Return<int32_t> getBlackoutEnable() override;
     Return<void> getATVMinMaxFreq(getATVMinMaxFreq_cb _hidl_cb) override;
     Return<int32_t> setAmAudioPreMute(int32_t mute) override;
     Return<int32_t> setDvbTextCoding(const hidl_string& coding) override;

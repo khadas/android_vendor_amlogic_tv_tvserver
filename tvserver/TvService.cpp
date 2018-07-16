@@ -3026,16 +3026,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         prog.deleteProgram(progid);
         break;
     }
-    case SET_BLACKOUT_ENABLE: {
-        int enable = p.readInt32();
-        mpTv->setBlackoutEnable(enable);
-        break;
-    }
-    case CHANGE_BLACKOUT_ENABLE_STATUS: {
-        int enable = p.readInt32();
-        mpTv->changeBlackoutEnableStatus(enable);
-        break;
-    }
     case START_AUTO_BACKLIGHT: {
         mpTv->setAutoBackLightStatus(1);
         break;
@@ -3069,11 +3059,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         break;
     }
 
-    case SSM_READ_BLACKOUT_ENABLE: {
-        int enable = mpTv->getSaveBlackoutEnable();
-        r->writeInt32(enable);
-        break;
-    }
     case DTV_SWAP_PROGRAM: {
         CTvProgram prog;
         int firstProgId = p.readInt32();

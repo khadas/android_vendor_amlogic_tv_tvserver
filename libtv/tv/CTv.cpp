@@ -1069,6 +1069,9 @@ int CTv::playDtvProgramUnlocked (const char *feparas, int mode, int freq, int pa
                           int vpid, int vfmt, int apid, int afmt, int pcr, int audioCompetation)
 {
     int ret = 0;
+    int FeMode = 0;
+
+    CFrontEnd::FEParas fp(feparas);
 
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
     if (mBlackoutEnable)
@@ -1077,11 +1080,13 @@ int CTv::playDtvProgramUnlocked (const char *feparas, int mode, int freq, int pa
         mAv.DisableVideoBlackout();
     //mAv.ClearVideoBuffer();
 
-    mFrontDev->Open(TV_FE_ATSC);
+    FeMode = fp.getFEMode().getBase();
+    LOGD("[%s] FeMode = %d", __FUNCTION__, FeMode);
+    mFrontDev->Open(FeMode);
     if (!(mTvAction & TV_ACTION_SCANNING)) {
         if (!feparas) {
             if ( SOURCE_ADTV == m_source_input_virtual ) {
-                mFrontDev->setPara (TV_FE_ATSC, freq, para1, para2);
+                mFrontDev->setPara (FeMode, freq, para1, para2);
             } else {
                 mFrontDev->setPara (mode, freq, para1, para2);
             }
@@ -1129,6 +1134,9 @@ int CTv::playDtvProgram(const char* feparas, int vpid, int vfmt, int apid,
 int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCompetation)
 {
     int ret = 0;
+    int FeMode = 0;
+
+    CFrontEnd::FEParas fp(feparas);
 
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
     if (mBlackoutEnable)
@@ -1137,9 +1145,10 @@ int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCom
         mAv.DisableVideoBlackout();
 
     mAv.ClearVideoBuffer();
-
+    FeMode = fp.getFEMode().getBase();
+    LOGD("[%s] FeMode = %d", __FUNCTION__, FeMode);
     if (feparas) {
-        mFrontDev->Open(TV_FE_ATSC);
+        mFrontDev->Open(FeMode);
         if (!(mTvAction & TV_ACTION_SCANNING)) {
             mFrontDev->setPara(feparas);
         }
@@ -1296,6 +1305,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         mAv.DisableVideoBlackout();
     }
 
+    LOGD("setFrontEnd  fp.getFEMode.getbase = %d", fp.getFEMode().getBase());
     if ( fp.getFEMode().getBase() == TV_FE_ANALOG ) {
         if (SOURCE_DTV == m_source_input) {
             //mAv.DisableVideoBlackout();
@@ -1333,8 +1343,8 @@ int CTv::setFrontEnd ( const char *paras, bool force )
                 }
             }
         }
-        mFrontDev->Open(TV_FE_ATSC);
-        mFrontDev->setPara ( paras, force );
+        mFrontDev->Open(fp.getFEMode().getBase());
+        mFrontDev->setPara (paras, force);
     }
 
     int mode, freq, para1, para2;
@@ -2034,7 +2044,7 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         mFrontDev->Open(TV_FE_ANALOG);
         mFrontDev->SetAnalogFrontEndTimerSwitch(1);
     } else if ( source_input == SOURCE_DTV ) {
-        mFrontDev->Open(TV_FE_ATSC);
+        mFrontDev->Open(TV_FE_AUTO);
         mFrontDev->SetAnalogFrontEndTimerSwitch(0);
     } else {
         mFrontDev->Close();

@@ -1288,6 +1288,14 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         }
     }
 
+    //refresh mBlackoutEnable as setmirror image takes effect on stop beroe switching to new program
+    mBlackoutEnable = ((getBlackoutEnable() == 1)?true:false);
+    if (mBlackoutEnable) {
+        mAv.EnableVideoBlackout();
+    } else {
+        mAv.DisableVideoBlackout();
+    }
+
     if ( fp.getFEMode().getBase() == TV_FE_ANALOG ) {
         if (SOURCE_DTV == m_source_input) {
             //mAv.DisableVideoBlackout();
@@ -1779,10 +1787,7 @@ int CTv::OpenTv ( void )
     m_last_source_input = SOURCE_INVALID;
     m_source_input = SOURCE_INVALID;
 
-    int8_t enable;
-    SSMReadBlackoutEnable(&enable);
-    mBlackoutEnable = ((enable==1)?true:false);
-
+    mBlackoutEnable = ((getBlackoutEnable() == 1)?true:false);
     mFrontDev->Open(FE_AUTO);
     mFrontDev->autoLoadFE();
     mAv.Open();
@@ -2429,7 +2434,7 @@ int CTv::setBlackoutEnable(int enable)
     return SSMSaveBlackoutEnable(enable);
 }
 
-int CTv::getSaveBlackoutEnable()
+int CTv::getBlackoutEnable()
 {
     int8_t enable;
     SSMReadBlackoutEnable(&enable);

@@ -230,7 +230,7 @@ public:
     int getFrontendBER();
     int getChannelInfoBydbID ( int dbID, channel_info_t &chan_info );
     int setBlackoutEnable(int enable);
-    int getSaveBlackoutEnable();
+    int getBlackoutEnable();
     int saveATVProgramID ( int dbID );
     int getATVProgramID ( void );
     int saveDTVProgramID ( int dbID );

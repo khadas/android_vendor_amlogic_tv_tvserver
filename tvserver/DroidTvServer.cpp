@@ -215,8 +215,12 @@ Return<int32_t> DroidTvServer::setSourceInputExt(int32_t inputSrc, int32_t vInpu
     return mTvServiceIntf->setSourceInput(inputSrc, vInputSrc);
 }
 
-Return<int32_t> DroidTvServer::getSaveBlackoutEnable() {
-    return mTvServiceIntf->getSaveBlackoutEnable();
+Return<int32_t> DroidTvServer::setBlackoutEnable(int32_t status) {
+    return mTvServiceIntf->setBlackoutEnable(status);
+}
+
+Return<int32_t> DroidTvServer::getBlackoutEnable() {
+    return mTvServiceIntf->getBlackoutEnable();
 }
 
 Return<void> DroidTvServer::getATVMinMaxFreq(getATVMinMaxFreq_cb _hidl_cb) {

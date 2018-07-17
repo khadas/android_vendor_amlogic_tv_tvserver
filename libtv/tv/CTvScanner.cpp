@@ -704,7 +704,7 @@ void CTvScanner::extractSrvInfoFromSdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *s
             break;
         }
         AM_SI_LIST_END()
-
+#if 0   //The upper layer don't have the logic of parse multi service names according to 0x80, Use only one for the time being.
         /* store multilingual service name */
         AM_SI_LIST_BEGIN(srv->p_first_descriptor, descr)
         if (descr->p_decoded && descr->i_tag == AM_SI_DESCR_MULTI_SERVICE_NAME) {
@@ -731,7 +731,7 @@ void CTvScanner::extractSrvInfoFromSdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *s
             }
         }
         AM_SI_LIST_END()
-
+#endif
         /* set the ending null byte */
         if (curr_name_len >= name_size)
             srv_info->name[name_size - 1] = 0;

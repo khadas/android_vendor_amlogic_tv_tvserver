@@ -161,43 +161,6 @@ int SSMSaveDBCEnable(unsigned char rw_val);
 int SSMReadDBCEnable(unsigned char *rw_val);
 int SSMSaveBackLightReverse(unsigned char rw_val);
 int SSMReadBackLightReverse(unsigned char *rw_val);
-//audio
-int SSMSaveAudioMasterVolume(int8_t rw_val);
-int SSMReadAudioMasterVolume(int8_t *rw_val);
-int SSMSaveAudioBalanceVal(int8_t rw_val);
-int SSMReadAudioBalanceVal(int8_t *rw_val);
-int SSMSaveAudioSupperBassVolume(int8_t rw_val);
-int SSMReadAudioSupperBassVolume(int8_t *rw_val);
-int SSMSaveAudioSupperBassSwitch(int8_t rw_val);
-int SSMReadAudioSupperBassSwitch(int8_t *rw_val);
-int SSMSaveAudioSRSSurroundSwitch(int8_t rw_val);
-int SSMReadAudioSRSSurroundSwitch(int8_t *rw_val);
-int SSMSaveAudioSRSDialogClaritySwitch(int8_t rw_val);
-int SSMReadAudioSRSDialogClaritySwitch(int8_t *rw_val);
-int SSMSaveAudioSRSTruBassSwitch(int8_t rw_val);
-int SSMReadAudioSRSTruBassSwitch(int8_t *rw_val);
-int SSMSaveAudioBassVolume(int8_t rw_val);
-int SSMReadAudioBassVolume(int8_t *rw_val);
-int SSMSaveAudioTrebleVolume(int8_t rw_val);
-int SSMReadAudioTrebleVolume(int8_t *rw_val);
-int SSMSaveAudioSoundModeVal(int8_t rw_val);
-int SSMReadAudioSoundModeVal(int8_t *rw_val);
-int SSMSaveAudioWallEffectSwitch(int8_t rw_val);
-int SSMReadAudioWallEffectSwitch(int8_t *rw_val);
-int SSMSaveAudioSPDIFSwitchVal(int8_t rw_val);
-int SSMReadAudioSPDIFSwitchVal(int8_t *rw_val);
-int SSMSaveAudioSPDIFModeVal(int8_t rw_val);
-int SSMReadAudioSPDIFModeVal(int8_t *rw_val);
-int SSMSaveAudioEQModeVal(int8_t rw_val);
-int SSMReadAudioEQModeVal(int8_t *rw_val);
-int SSMSaveAudioEQGain(int offset, int size, int8_t tmp_buf[]);
-int SSMReadAudioEQGain(int offset, int size, int8_t tmp_buf[]);
-int SSMSaveAudioDbxTvValue(int son_value, int vol_value, int sur_value);
-int SSMReadAudioDbxTvValue(int *son_value, int *vol_value, int *sur_value);
-int SSMSaveAudioAVOutMuteVal(int8_t rw_val);
-int SSMReadAudioAVOutMuteVal(int8_t *rw_val);
-int SSMSaveAudioSPIDFMuteVal(int8_t rw_val);
-int SSMReadAudioSPIDFMuteVal(int8_t *rw_val);
 //hdmi
 int SSMSaveBlackoutEnable(int8_t enable);
 int SSMReadBlackoutEnable(int8_t *enable);
@@ -217,8 +180,6 @@ int SSMSaveN311_VbyOne_Spread_Spectrum_Val(int rw_val);
 int SSMReadN311_VbyOne_Spread_Spectrum_Val(int *rw_val);
 int SSMSaveN311_Bluetooth_Vol(int rw_val);
 int SSMReadN311_Bluetooth_Vol(void) ;
-int SSMSave_DRC_ONOFF_Val(int rw_val);
-int SSMRead_DRC_ONOFF_Val(void);
 int SSMSave_PANEL_ID_Val(int rw_val);
 int SSMRead_PANEL_ID_Val(void);
 int SSMSaveHDMIEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t rw_val);
@@ -228,10 +189,6 @@ int SSMReadHDMIColorRangeMode(int *rw_val);
 int SSMSaveHDMIHdcpSwitcher(int rw_val);
 int SSMReadHDMIHdcpSwitcher(void);
 int SSMHDMIEdidRestoreDefault(tv_hdmi_edid_version_t edid_version);
-
-int SSMSaveAmAudioVal(int rw_val, int source);
-int SSMReadAmAudioVal(int *rw_val, int source);
-
 #ifdef __cplusplus
 }
 #endif

@@ -246,31 +246,21 @@ public:
     int getDTVProgramID ( void );
     int saveRadioProgramID ( int dbID );
     int getRadioProgramID ( void );
-
     int getATVMinMaxFreq ( int *scanMinFreq, int *scanMaxFreq );
-
     int doRecordingCommand(int cmd, const char *id, const char *param);
     int doPlayCommand(int cmd, const char *id, const char *param);
-
     int getAverageLuma();
     int setAutobacklightData(const char *value);
     int getAutoBacklightData(int *data);
     int getAutoBackLightStatus();
     int setAutoBackLightStatus(int status);
-
     virtual int Tv_SSMRestoreDefaultSetting();
-
     int handleGPIO(const char *port_name, bool is_out, int edge);
     int setLcdEnable(bool enable);
-
     int GetSourceConnectStatus(tv_source_input_t source_input);
     int IsDVISignal();
     int isVgaFmtInHdmi();
-
     int getHDMIFrameRate ( void );
-
-    int Tvin_SetPLLValues ();
-    int SetCVD2Values ();
     unsigned int Vpp_GetDisplayResolutionInfo(tvin_window_pos_t *win_pos);
     //SSM
     virtual int Tv_SSMFacRestoreDefaultSetting();
@@ -301,46 +291,11 @@ public:
     int Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);
     int Tv_HandeHDMIEDIDFilePathConfig();
     int Tv_SetDDDRCMode(tv_source_input_t source_input);
-
-    //PQ
-    virtual int Tv_SetBrightness ( int brightness, tv_source_input_t tv_source_input, int is_save );
-    virtual int Tv_GetBrightness ( tv_source_input_t tv_source_input );
-    virtual int Tv_SaveBrightness ( int brightness, tv_source_input_t tv_source_input );
-    virtual int Tv_SetContrast ( int contrast, tv_source_input_t tv_source_input,  int is_save );
-    virtual int Tv_GetContrast ( tv_source_input_t tv_source_input );
-    virtual int Tv_SaveContrast ( int contrast, tv_source_input_t tv_source_input );
-    virtual int Tv_SetSaturation ( int satuation, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, int is_save );
-    virtual int Tv_GetSaturation ( tv_source_input_t tv_source_input );
-    virtual int Tv_SaveSaturation ( int satuation, tv_source_input_t tv_source_input );
-    virtual int Tv_SetHue ( int hue, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, int is_save );
-    virtual int Tv_GetHue ( tv_source_input_t tv_source_input );
-    virtual int Tv_SaveHue ( int hue, tv_source_input_t tv_source_input );
-    virtual int Tv_SetPQMode ( vpp_picture_mode_t mode, tv_source_input_t tv_source_input, int is_save );
-    virtual vpp_picture_mode_t Tv_GetPQMode ( tv_source_input_t tv_source_input );
-    virtual int Tv_SavePQMode ( vpp_picture_mode_t mode, tv_source_input_t tv_source_input );
     virtual int Tv_SetVdinForPQ (int gameStatus, int pcStatus, int autoSwitchFlag);
-    virtual int Tv_SetSharpness ( int value, tv_source_input_t tv_source_input, int en, int is_save );
-    virtual int Tv_GetSharpness ( tv_source_input_t tv_source_input );
-    virtual int Tv_SaveSharpness ( int value, tv_source_input_t tv_source_input );
-    virtual int Tv_SetBacklight ( int value, tv_source_input_t tv_source_input, int is_save );
-    virtual int Tv_GetBacklight ( tv_source_input_t tv_source_input );
-    virtual int Tv_SaveBacklight ( int value, tv_source_input_t tv_source_input );
     int Tv_SetBacklight_Switch ( int value );
     int Tv_GetBacklight_Switch ( void );
-    int Tv_SetColorTemperature ( vpp_color_temperature_mode_t mode, tv_source_input_t tv_source_input, int is_save );
-    vpp_color_temperature_mode_t Tv_GetColorTemperature ( tv_source_input_t tv_source_input );
-    virtual int Tv_SaveColorTemperature ( vpp_color_temperature_mode_t mode, tv_source_input_t tv_source_input );
-    virtual int Tv_SetDisplayMode ( vpp_display_mode_t mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t fmt, int is_save );
-    virtual vpp_display_mode_t Tv_GetDisplayMode ( tv_source_input_t tv_source_input );
-    virtual int Tv_SaveDisplayMode ( vpp_display_mode_t mode, tv_source_input_t tv_source_input );
-    virtual int Tv_SetNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_t tv_source_input, int is_save );
-    virtual vpp_noise_reduction_mode_t Tv_GetNoiseReductionMode ( tv_source_input_t tv_source_input );
-    virtual int Tv_SaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode, tv_source_input_t tv_source_input );
-    int setEyeProtectionMode(int enable);
-    int getEyeProtectionMode();
     int SetHdmiColorRangeMode(tvin_color_range_t range_mode);
     int GetHdmiColorRangeMode();
-    int setGamma(vpp_gamma_curve_t gamma_curve, int is_save);
     virtual void updateSubtitle(int, int);
     int GetHdmiAvHotplugDetectOnoff();
     int SetHdmiEdidVersion(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);

@@ -610,6 +610,8 @@ int CTvin::AFE_DeviceIOCtl ( int request, ... )
 
         tmp_ret = ioctl ( mAfeDevFd, request, arg );
 
+        AFE_CloseModule();
+
         return tmp_ret;
     }
 

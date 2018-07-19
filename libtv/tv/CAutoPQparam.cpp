@@ -135,7 +135,7 @@ int CAutoPQparam::adjustPQparameters()
 
         if (curFmtType != preFmtType) {
             LOGD("adjustPQparameters: nodeVal = %d, sig_fmt = %d.", nodeVal, sig_fmt);
-            ret = CVpp::getInstance()->LoadVppSettings (mAutoPQSource, sig_fmt, _3d_type, trans_fmt);
+            ret = CVpp::getInstance()->LoadVppSettings (mAutoPQSource, sig_fmt, trans_fmt);
         }
 
         preFmtType = curFmtType;

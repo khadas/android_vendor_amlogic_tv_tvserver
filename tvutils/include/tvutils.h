@@ -39,75 +39,16 @@ int tvWriteSysfs(const char *path, const char *value);
 int tvWriteSysfs(const char *path, int value, int base=10);
 int tvWriteDisplayMode(const char *mode);
 //add for PQ
-int tvResetLastVppSettingsSourceType(void);
 int tvLoadPQSettings(source_input_param_t source_input_param);
-int tvLoadCpqLdimRegs(void);
 int tvSSMReadNTypes(int id, int data_len,  int *data_buf, int offset);
 int tvSSMWriteNTypes(int id, int data_len, int data_buf, int offset);
 int tvGetActualAddr(int id);
 int tvGetActualSize(int id);
-
 int tvSetPQMode ( vpp_picture_mode_t mode, int is_save, int is_autoswitch);
 vpp_picture_mode_t tvGetPQMode ( void );
 int tvSavePQMode ( vpp_picture_mode_t mode);
-int tvSetBrightness ( int brightness, int is_save );
-int tvGetBrightness ( void );
-int tvSaveBrightness ( int brightness);
-int tvSetContrast ( int contrast, int is_save );
-int tvGetContrast ( void );
-int tvSaveContrast ( int contrast );
-int tvSetSaturation ( int satuation, int is_save );
-int tvGetSaturation ( void );
-int tvSaveSaturation ( int satuation );
-int tvSetHue ( int hue, int is_save );
-int tvGetHue ( void );
-int tvSaveHue ( int hue );
-int tvSetSharpness ( int value, int en, int is_save );
-int tvGetSharpness ( void );
-int tvSaveSharpness ( int value );
-int tvSetColorTemperature ( vpp_color_temperature_mode_t mode, int is_save );
-int tvGetColorTemperature ( void );
-int tvSaveColorTemperature ( vpp_color_temperature_mode_t mode );
-int tvSetColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params);
-int tvGetColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, pq_color_param_t id);
-int tvSaveColorTemperatureParams(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params);
-int tvSetNoiseReductionMode ( vpp_noise_reduction_mode_t mode, int is_save );
-int tvGetNoiseReductionMode ( void );
-int tvSaveNoiseReductionMode ( vpp_noise_reduction_mode_t mode );
-int tvSetGamma(int gamma_curve, int is_save);
-int tvGetGamma(void);
-int tvSetEyeProtectionMode(tv_source_input_t source_input, int enable, int is_save);
-int tvGetEyeProtectionMode(tv_source_input_t source_input);
-int tvSetDisplayMode(vpp_display_mode_t disp_mode, tv_source_input_t source_input, int is_save);
-int tvGetDisplayMode(tv_source_input_t source_input);
-int tvSaveDisplayMode(vpp_display_mode_t disp_mode, tv_source_input_t source_input);
-int tvSetBacklight(tv_source_input_t source_input, int value, int is_save);
-int tvGetBacklight(tv_source_input_t source_input);
-int tvSaveBacklight(tv_source_input_t source_input, int value);
-int tvFactoryResetNonlinear(void);
-
-int tvFactoryResetPQMode(void);
-int tvFactoryResetColorTemp(void);
-int tvFactorySetPQParam(source_input_param_t source_input_param, int pq_mode, vpp_pq_param_t id, int value);
-int tvFactoryGetPQParam(source_input_param_t source_input_param, int pq_mode, vpp_pq_param_t id);
-int tvFactorySetColorTemperatureParam(int colortemperature_mode, pq_color_param_t id, int value);
-int tvFactoryGetColorTemperatureParam(int colortemperature_mode, pq_color_param_t id);
-int tvFactorySaveColorTemperatureParam(int colortemperature_mode, pq_color_param_t id, int value);
-int tvFactorySetOverscanParam(source_input_param_t source_input_param, tvin_cutwin_t cutwin_t);
-int tvFactoryGetOverscanParam(source_input_param_t source_input_param, int id);
-int tvFactorySetNolineParams(source_input_param_t source_input_param, int type, noline_params_t noline_params);
-int tvFactoryGetNolineParams(source_input_param_t source_input_param, int type, int id);
-int tvFactorySetGamma(int gamma_r, int gamma_g, int gamma_b);
-int tvFactorySetParamsDefault(void);
-int tvFactorySSMRestore(void);
-int tvSSMRecovery(void);
-int tvGetSSMStatus(void);
-int tvSetPLLValues(source_input_param_t source_input_param);
-int tvSetCVD2Values(source_input_param_t source_input_param);
-int tvSetPQConfig(Set_Flag_Cmd_t id, int value);
-int tvSetCurrentSourceInfo(tv_source_input_t tv_source_input, tv_source_input_type_t source_type,tvin_port_t source_port,
-                                    tvin_sig_fmt_t sig_fmt, is_3d_type_t is3d, tvin_trans_fmt_t trans_fmt);
-
+int tvSetCurrentSourceInfo(tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt);
+int tvSetCVD2Values();
 //PQ end
 
 extern int Tv_MiscRegs(const char *cmd);

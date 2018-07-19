@@ -30,72 +30,12 @@ void CTvFactory::init()
     }
 }
 
-int CTvFactory::setPQModeBrightness (int sourceType __unused, int pqMode, int brightness)
-{
-    return CVpp::getInstance()->FactorySetPQMode_Brightness(pqMode, pqMode, brightness);
-}
-
-int CTvFactory::getPQModeBrightness (int tv_source_input, int pqMode)
-{
-    return CVpp::getInstance()->FactoryGetPQMode_Brightness(tv_source_input, pqMode);
-}
-
-int CTvFactory::setPQModeContrast (int tv_source_input, int pqMode, int contrast)
-{
-    return CVpp::getInstance()->FactorySetPQMode_Contrast(tv_source_input, pqMode, contrast);
-}
-
-int CTvFactory::getPQModeContrast (int tv_source_input, int pqMode)
-{
-    return CVpp::getInstance()->FactoryGetPQMode_Contrast(tv_source_input, pqMode);
-}
-
-int CTvFactory::setPQModeSaturation ( int tv_source_input, int pqMode, int saturation )
-{
-    return CVpp::getInstance()->FactorySetPQMode_Saturation(tv_source_input, pqMode, saturation);
-}
-
-int CTvFactory::getPQModeSaturation ( int tv_source_input, int pqMode )
-{
-    return CVpp::getInstance()->FactoryGetPQMode_Saturation(tv_source_input, pqMode);
-}
-
-int CTvFactory::setPQModeHue ( int tv_source_input, int pqMode, int hue )
-{
-    return CVpp::getInstance()->FactorySetPQMode_Hue(tv_source_input, pqMode, hue);
-}
-
-int CTvFactory::getPQModeHue ( int tv_source_input, int pqMode )
-{
-    return CVpp::getInstance()->FactoryGetPQMode_Hue(tv_source_input, pqMode);
-}
-
-int CTvFactory::setPQModeSharpness ( int tv_source_input, int pqMode, int sharpness )
-{
-    return CVpp::getInstance()->FactorySetPQMode_Sharpness(tv_source_input, pqMode, sharpness);
-}
-
-int CTvFactory::getPQModeSharpness ( int tv_source_input, int pqMode )
-{
-    return CVpp::getInstance()->FactoryGetPQMode_Sharpness(tv_source_input, pqMode);
-}
-
-int CTvFactory::resetPQMode ()
-{
-    return CVpp::getInstance()->FactoryResetPQMode();
-}
-
-int CTvFactory::replacePQDb(const char *newFilePath)
-{
-    return 0;
-}
-
 int CTvFactory::setGamma(tcon_gamma_table_t *gamma_r, tcon_gamma_table_t *gamma_g, tcon_gamma_table_t *gamma_b)
 {
     if (mHdmiOutFbc) {
         return mFbcObj->fbcSetGammaPattern(COMM_DEV_SERIAL, gamma_r->data[0], gamma_g->data[0], gamma_b->data[0]);
     } else {
-        return CVpp::getInstance()->FactorySetGamma(gamma_r, gamma_g, gamma_b);
+        return 0;
     }
 }
 
@@ -111,7 +51,7 @@ int CTvFactory::getColorTemperatureParams ( vpp_color_temperature_mode_t Tempmod
         params->b_post_offset = formatOutputOffsetParams(params->b_post_offset);
         return ret;
     } else {
-        return CVpp::getInstance()->GetColorTemperatureParams(Tempmode, params);
+        return 0;
     }
 }
 
@@ -166,72 +106,6 @@ int CTvFactory::getRGBPattern()
 int CTvFactory::setScreenColor ( int vdinBlendingMask, int y, int u, int v )
 {
     return mAv.SetVideoScreenColor ( vdinBlendingMask, y, u, v );
-}
-
-int CTvFactory::resetColorTemp ()
-{
-    return CVpp::getInstance()->FactoryResetColorTemp();
-}
-
-int CTvFactory::setParamsDefault ()
-{
-    return CVpp::getInstance()->FactorySetParamsDefault();
-}
-
-int CTvFactory::setDDRSSC ( int step )
-{
-    return CVpp::getInstance()->FactorySetDDRSSC(step);
-}
-
-int CTvFactory::getDDRSSC ()
-{
-    return CVpp::getInstance()->FactoryGetDDRSSC();
-}
-
-int CTvFactory::setLVDSSSC ( int step )
-{
-    return CVpp::getInstance()->FactorySetLVDSSSC(step);
-}
-
-int CTvFactory::getLVDSSSC ()
-{
-    return CVpp::getInstance()->FactoryGetLVDSSSC();
-}
-
-int CTvFactory::setNolineParams ( int nolineParamstype, int tv_source_input, noline_params_t nolineParams )
-{
-    return CVpp::getInstance()->FactorySetNolineParams(nolineParamstype, tv_source_input, nolineParams);
-}
-
-noline_params_t CTvFactory::getNolineParams ( int nolineParamstype, int tv_source_input )
-{
-    tv_source_input_type_t sourceType;
-    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
-
-    return CVpp::getInstance()->FactoryGetNolineParams(nolineParamstype, sourceType);
-}
-
-int CTvFactory::setOverscan ( int tv_source_input, int fmt, int transFmt, tvin_cutwin_t cutwin )
-{
-    tv_source_input_type_t sourceType;
-    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
-    CVpp::getInstance()->FactorySetOverscan(sourceType, fmt, transFmt, cutwin);
-#if 0
-    char val_buf[256];
-    memset(val_buf, '\0', 256);
-    LOGD("%s,%d: %d,%d,%d,%d", __FUNCTION__, __LINE__, ( int ) cutwin.vs, ( int ) cutwin.hs, ( int ) cutwin.ve, ( int ) cutwin.he);
-    sprintf(val_buf, "%d,%d,%d,%d", ( int ) cutwin.vs, ( int ) cutwin.hs, ( int ) cutwin.ve, ( int ) cutwin.he );
-    config_set_str(CFG_SECTION_TV, "vpp.overscan.dtv", val_buf);
-    //}
-#endif
-    return CVpp::getInstance()->VPP_SetVideoCrop ( ( int ) cutwin.vs, ( int ) cutwin.hs, ( int ) cutwin.ve, ( int ) cutwin.he );
-}
-
-tvin_cutwin_t CTvFactory::getOverscan ( int tv_source_input, int fmt, int transFmt )
-{
-    tv_source_input_type_t sourceType;
-    sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
-    return CVpp::getInstance()->FactoryGetOverscan(sourceType, fmt, INDEX_2D, transFmt);
 }
 
 int CTvFactory::fbcSetBrightness ( int value )
@@ -640,7 +514,7 @@ int CTvFactory::whiteBalanceGainRedGet(int tv_source_input, int colortemp_mode)
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
         LOGD("--------- call none fbc method ---------");
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Rgain(sourceType, colortemp_mode);
+        ret = 0;//CVpp::getInstance()->FactoryGetColorTemp_Rgain(sourceType, colortemp_mode);
     } else { //use fbc store the white balance params
         LOGD("--------- call fbc method ---------");
         ret = getItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 0);
@@ -660,10 +534,10 @@ int CTvFactory::whiteBalanceGainRedSet(int tv_source_input, int colortemp_mode, 
         value = 2047;
     }
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Rgain(sourceType, colortemp_mode, value);
+        ret = 0;//CVpp::getInstance()->FactorySetColorTemp_Rgain(sourceType, colortemp_mode, value);
         if (ret != -1) {
             LOGD("save the red gain to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Rgain(sourceType, colortemp_mode, value);
+            ret = 0;//CVpp::getInstance()->FactorySaveColorTemp_Rgain(sourceType, colortemp_mode, value);
         }
     } else { //use fbc store the white balance params
         value = formatInputGainParams(value);
@@ -679,7 +553,7 @@ int CTvFactory::whiteBalanceGainGreenGet(int tv_source_input, int colortemp_mode
 
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Ggain(sourceType, colortemp_mode);
+        ret = 0;//CVpp::getInstance()->FactoryGetColorTemp_Ggain(sourceType, colortemp_mode);
     } else { //use fbc store the white balance params
         ret = getItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 1);
     }
@@ -697,10 +571,10 @@ int CTvFactory::whiteBalanceGainGreenSet(int tv_source_input, int colortemp_mode
         value = 2047;
     }
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Ggain(sourceType, colortemp_mode, value);
+        ret = 0;//CVpp::getInstance()->FactorySetColorTemp_Ggain(sourceType, colortemp_mode, value);
         if (ret != -1) {
             LOGD("save the green gain to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Ggain(sourceType, colortemp_mode, value);
+            ret = 0;//CVpp::getInstance()->FactorySaveColorTemp_Ggain(sourceType, colortemp_mode, value);
         }
     } else { //use fbc store the white balance params
         value = formatInputGainParams(value);
@@ -716,7 +590,7 @@ int CTvFactory::whiteBalanceGainBlueGet(int tv_source_input, int colortemp_mode)
 
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Bgain(sourceType, colortemp_mode);
+        ret = 0;//CVpp::getInstance()->FactoryGetColorTemp_Bgain(sourceType, colortemp_mode);
     } else { //use fbc store the white balance params
         ret = getItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 2);
     }
@@ -735,10 +609,10 @@ int CTvFactory::whiteBalanceGainBlueSet(int tv_source_input, int colortemp_mode,
         value = 2047;
     }
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Bgain(sourceType, colortemp_mode, value);
+        ret = 0;//CVpp::getInstance()->FactorySetColorTemp_Bgain(sourceType, colortemp_mode, value);
         if (ret != -1) {
             LOGD("save the blue gain to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Bgain(sourceType, colortemp_mode, value);
+            ret = 0;//CVpp::getInstance()->FactorySaveColorTemp_Bgain(sourceType, colortemp_mode, value);
         }
     } else { //use fbc store the white balance params
         value = formatInputGainParams(value);
@@ -754,7 +628,7 @@ int CTvFactory::whiteBalanceOffsetRedGet(int tv_source_input, int colortemp_mode
 
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Roffset(sourceType, colortemp_mode);
+        ret = 0;//CVpp::getInstance()->FactoryGetColorTemp_Roffset(sourceType, colortemp_mode);
     } else { //use fbc store the white balance params
         ret = getItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 3);
     }
@@ -772,10 +646,10 @@ int CTvFactory::whiteBalanceOffsetRedSet(int tv_source_input, int colortemp_mode
         value = 1023;
     }
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Roffset(sourceType, colortemp_mode, value);
+        ret = 0;//CVpp::getInstance()->FactorySetColorTemp_Roffset(sourceType, colortemp_mode, value);
         if (ret != -1) {
             LOGD("save the red offset to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Roffset(sourceType, colortemp_mode, value);
+            ret = 0;//CVpp::getInstance()->FactorySaveColorTemp_Roffset(sourceType, colortemp_mode, value);
         }
     } else { //use fbc store the white balance params
         value = formatInputOffsetParams(value);
@@ -791,7 +665,7 @@ int CTvFactory::whiteBalanceOffsetGreenGet(int tv_source_input, int colortemp_mo
 
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Goffset(sourceType, colortemp_mode);
+        ret = 0;//CVpp::getInstance()->FactoryGetColorTemp_Goffset(sourceType, colortemp_mode);
     } else { //use fbc store the white balance params
         ret = getItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 4);
     }
@@ -810,10 +684,10 @@ int CTvFactory::whiteBalanceOffsetGreenSet(int tv_source_input, int colortemp_mo
         value = 1023;
     }
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Goffset(sourceType, colortemp_mode, value);
+        ret = 0;//CVpp::getInstance()->FactorySetColorTemp_Goffset(sourceType, colortemp_mode, value);
         if (ret != -1) {
             LOGD("save the green offset to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Goffset(sourceType, colortemp_mode, value);
+            ret = 0;//CVpp::getInstance()->FactorySaveColorTemp_Goffset(sourceType, colortemp_mode, value);
         }
     } else { //use fbc store the white balance params
         value = formatInputOffsetParams(value);
@@ -829,7 +703,7 @@ int CTvFactory::whiteBalanceOffsetBlueGet(int tv_source_input, int colortemp_mod
 
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactoryGetColorTemp_Boffset(sourceType, colortemp_mode);
+        ret = 0;//CVpp::getInstance()->FactoryGetColorTemp_Boffset(sourceType, colortemp_mode);
     } else { //use fbc store the white balance params
         ret = getItemFromBatch((vpp_color_temperature_mode_t)colortemp_mode, 5);
     }
@@ -848,10 +722,10 @@ int CTvFactory::whiteBalanceOffsetBlueSet(int tv_source_input, int colortemp_mod
         value = 1023;
     }
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->FactorySetColorTemp_Boffset(sourceType, colortemp_mode, value);
+        ret = 0;//CVpp::getInstance()->FactorySetColorTemp_Boffset(sourceType, colortemp_mode, value);
         if (ret != -1) {
             LOGD("save the blue offset to flash");
-            ret = CVpp::getInstance()->FactorySaveColorTemp_Boffset(sourceType, colortemp_mode, value);
+            ret = 0;//CVpp::getInstance()->FactorySaveColorTemp_Boffset(sourceType, colortemp_mode, value);
         }
     } else { //use fbc store the white balance params
         value = formatInputOffsetParams(value);
@@ -864,7 +738,7 @@ int CTvFactory::whiteBalanceColorTempModeSet(int tv_source_input, int colortemp_
 {
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->SetColorTemperature((vpp_color_temperature_mode_t)colortemp_mode, (tv_source_input_t)tv_source_input, is_save);
+        ret = 0;
     } else { //use fbc store the white balance params
         ret = fbcColorTempModeSet(colortemp_mode);
     }
@@ -875,7 +749,7 @@ int CTvFactory::whiteBalanceColorTempModeGet(int tv_source_input )
 {
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->GetColorTemperature((tv_source_input_t)tv_source_input);
+        ret = 0;
     } else { //use fbc store the white balance params
         ret = fbcColorTempModeGet();
     }
@@ -889,13 +763,12 @@ int CTvFactory::whiteBalancePramSave(int tv_source_input, int tempmode, int r_ga
     sourceType = CTvin::Tvin_SourceInputToSourceInputType((tv_source_input_t)tv_source_input);
 
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        CVpp::getInstance()->SaveColorTemperature((vpp_color_temperature_mode_t) tempmode, (tv_source_input_t) tv_source_input);
-        CVpp::getInstance()->FactorySaveColorTemp_Rgain(sourceType, tempmode, r_gain);
-        CVpp::getInstance()->FactorySaveColorTemp_Ggain(sourceType, tempmode, g_gain);
-        CVpp::getInstance()->FactorySaveColorTemp_Bgain(sourceType, tempmode, b_gain);
-        CVpp::getInstance()->FactorySaveColorTemp_Roffset(sourceType, tempmode, r_offset);
-        CVpp::getInstance()->FactorySaveColorTemp_Goffset(sourceType, tempmode, g_offset);
-        CVpp::getInstance()->FactorySaveColorTemp_Boffset(sourceType, tempmode, b_offset);
+        //CVpp::getInstance()->FactorySaveColorTemp_Rgain(sourceType, tempmode, r_gain);
+        //CVpp::getInstance()->FactorySaveColorTemp_Ggain(sourceType, tempmode, g_gain);
+        //CVpp::getInstance()->FactorySaveColorTemp_Bgain(sourceType, tempmode, b_gain);
+        //CVpp::getInstance()->FactorySaveColorTemp_Roffset(sourceType, tempmode, r_offset);
+        //CVpp::getInstance()->FactorySaveColorTemp_Goffset(sourceType, tempmode, g_offset);
+        //CVpp::getInstance()->FactorySaveColorTemp_Boffset(sourceType, tempmode, b_offset);
     } else { //use fbc store the white balance params
         tcon_rgb_ogo_t params;
 
@@ -915,7 +788,7 @@ int CTvFactory::whiteBalanceGrayPatternClose()
     int useFbc = 0;
     int ret = -1;
     if (!mHdmiOutFbc) { // not use fbc store the white balance params
-        ret = CVpp::getInstance()->VPP_SetGrayPattern(0);
+        ret = 0;//CVpp::getInstance()->VPP_SetGrayPattern(0);
     } else { //use fbc store the white balance params
         ret = fbcGrayPatternClose();
     }
@@ -935,7 +808,7 @@ int CTvFactory::whiteBalanceGrayPatternSet(int value)
 {
     int ret = -1;
     if (!mHdmiOutFbc) {
-        ret = CVpp::getInstance()->VPP_SetGrayPattern(value);
+        ret = 0;//CVpp::getInstance()->VPP_SetGrayPattern(value);
     } else {
         ret = fbcGrayPatternSet(value);
     }
@@ -946,7 +819,7 @@ int CTvFactory:: whiteBalanceGrayPatternGet()
 {
     int ret = -1;
     if (!mHdmiOutFbc) {
-        ret = CVpp::getInstance()->VPP_GetGrayPattern();
+        ret = 0;//CVpp::getInstance()->VPP_GetGrayPattern();
     }
     return ret;
 }

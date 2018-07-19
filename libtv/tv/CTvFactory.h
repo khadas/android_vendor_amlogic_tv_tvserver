@@ -24,39 +24,13 @@ public:
     virtual ~CTvFactory() {};
 
     void init();
-    int setPQModeBrightness (int sourceType, int pqMode, int brightness);
-    int getPQModeBrightness (int tv_source_input, int pqMode);
-    int setPQModeContrast (int sourceType, int pqMode, int contrast);
-    int getPQModeContrast (int tv_source_input, int pqMode);
-    int setPQModeSaturation ( int tv_source_input, int pqMode, int saturation );
-    int getPQModeSaturation ( int tv_source_input, int pqMode );
-    int setPQModeHue ( int tv_source_input, int pqMode, int hue );
-    int getPQModeHue ( int tv_source_input, int pqMode );
-    int setPQModeSharpness ( int tv_source_input, int pqMode, int sharpness );
-    int getPQModeSharpness ( int tv_source_input, int pqMode );
-
-    int getColorTemperatureParams ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params );
     int setTestPattern ( int pattern );
     int getTestPattern ();
     int setScreenColor ( int vdinBlendingMask, int y, int u, int v );
-    int resetPQMode ();
-    int resetColorTemp ();
-    int setParamsDefault ();
-    int setDDRSSC ( int step );
-    int getDDRSSC ();
-    int setLVDSSSC ( int step );
-    int getLVDSSSC ();
-    int setNolineParams ( int nolineParamstype, int tv_source_input, noline_params_t nolineParams );
-    noline_params_t getNolineParams ( int nolineParamstype, int tv_source_input );
-    int setOverscan ( int tv_source_input, int fmt, int transFmt, tvin_cutwin_t cutwin );
-    tvin_cutwin_t getOverscan ( int tv_source_input, int fmt, int transFmt );
-    int replacePQDb(const char *newFilePath = NULL);
     int setGamma(tcon_gamma_table_t *gamma_r, tcon_gamma_table_t *gamma_g, tcon_gamma_table_t *gamma_b);
+    int getColorTemperatureParams ( vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params );
     int setRGBPattern(int r, int g, int b);
     int getRGBPattern();
-
-    //end PQ
-
     //TV TO FBC
     int fbcSetBrightness ( int value );
     int fbcGetBrightness ();

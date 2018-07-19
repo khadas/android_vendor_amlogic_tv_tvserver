@@ -39,7 +39,6 @@
 #include <tvconfig.h>
 #include <tvutils.h>
 #include <tvsetting/CTvSetting.h>
-#include <tv/CTvFactory.h>
 #include <version/version.h>
 #include "tvcmd.h"
 #include <tvdb/CTvRegion.h>

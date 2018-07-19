@@ -47,11 +47,9 @@ int CBootvideoStatusDetect::stopDetect()
 bool CBootvideoStatusDetect::isBootvideoStopped() {
     char prop_bootvideo_type[PROPERTY_VALUE_MAX];
     char prop_bootvideo[PROPERTY_VALUE_MAX];
-    char prop_bootanim[PROPERTY_VALUE_MAX];
 
     memset(prop_bootvideo_type, '\0', PROPERTY_VALUE_MAX);
     memset(prop_bootvideo, '\0', PROPERTY_VALUE_MAX);
-    memset(prop_bootanim, '\0', PROPERTY_VALUE_MAX);
 
     // 1: boot video;  other: boot animation
     property_get("service.bootvideo", prop_bootvideo_type, "null");

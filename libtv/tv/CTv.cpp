@@ -1807,6 +1807,8 @@ int CTv::OpenTv ( void )
     InitCurrenSignalInfo();
     if (!isBootvideoStopped()) {
         mBootvideoStatusDetectThread->startDetect();
+    } else {
+        onBootvideoStopped();
     }
 
     mTvStatus = TV_OPEN_ED;

@@ -56,15 +56,13 @@ bool CBootvideoStatusDetect::isBootvideoStopped() {
     // 1: boot video;  other: boot animation
     property_get("service.bootvideo", prop_bootvideo_type, "null");
     // stopped: bootvideo stopped;  running: bootvideo is running
-    property_get("init.svc.bootvideo", prop_bootvideo, "null");
-    // 1: boot animation exited;  0: boot animation is running
-    property_get("service.bootanim.exit", prop_bootanim, "null");
+    // now bootanim and boot service use the same service name
+    property_get("init.svc.bootanim", prop_bootvideo, "null");
 
-    if ((strcmp(prop_bootvideo_type, "1") == 0 && strcmp(prop_bootvideo, "stopped") == 0) ||
-            (strcmp(prop_bootvideo_type, "1") != 0 && strcmp(prop_bootanim, "1") == 0))
-        return true;
-    else
+    if ((strcmp(prop_bootvideo_type, "1") == 0 && strcmp(prop_bootvideo, "stopped") != 0))
         return false;
+    else
+        return true;
 }
 
 bool CBootvideoStatusDetect::threadLoop()

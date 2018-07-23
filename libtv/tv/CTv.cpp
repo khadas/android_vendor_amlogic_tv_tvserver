@@ -291,6 +291,7 @@ void CTv::onEvent(const CTvRecord::RecEvent &ev)
             TvEvent::RecorderEvent RecorderEvent;
             RecorderEvent.mStatus = TvEvent::RecorderEvent::EVENT_RECORD_START;
             RecorderEvent.mError = (int)ev.error;
+            RecorderEvent.mId = String8(ev.id.c_str());
             sendTvEvent(RecorderEvent);
             }break;
         case CTvRecord::RecEvent::EVENT_REC_STOP: {
@@ -1134,18 +1135,18 @@ int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCom
     int ret = 0;
     int FeMode = 0;
 
-    CFrontEnd::FEParas fp(feparas);
-
-    SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
     if (mBlackoutEnable)
         mAv.EnableVideoBlackout();
     else
         mAv.DisableVideoBlackout();
 
-    //mAv.ClearVideoBuffer();
-    FeMode = fp.getFEMode().getBase();
-    LOGD("[%s] FeMode = %d", __FUNCTION__, FeMode);
+    mAv.ClearVideoBuffer();
+
     if (feparas) {
+        SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
+        CFrontEnd::FEParas fp(feparas);
+        FeMode = fp.getFEMode().getBase();
+        LOGD("[%s] FeMode = %d", __FUNCTION__, FeMode);
         mFrontDev->Open(FeMode);
         if (!(mTvAction & TV_ACTION_SCANNING)) {
             mFrontDev->setPara(feparas);
@@ -1158,6 +1159,7 @@ int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCom
 
     return ret;
 }
+
 
 int CTv::playDtvTimeShift (const char *feparas, void *para, int audioCompetation)
 {

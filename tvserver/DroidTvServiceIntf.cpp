@@ -378,7 +378,7 @@ void DroidTvServiceIntf::onTvEvent(const CTvEv &ev)
     case CTvEv::TV_EVENT_RECORDER: {
         TvEvent::RecorderEvent *pEv = (TvEvent::RecorderEvent *)(&ev);
         TvHidlParcel hidlParcel;
-        hidlParcel.msgType = FRONTEND_EVENT_CALLBACK;
+        hidlParcel.msgType = RECORDER_EVENT_CALLBACK;
         hidlParcel.bodyInt.resize(2);
         hidlParcel.bodyString.resize(1);
         hidlParcel.bodyString[0]= pEv->mId;
@@ -766,6 +766,11 @@ int DroidTvServiceIntf::vdinUpdateForPQ(int32_t gameStatus, int32_t pcStatus, in
 
 int DroidTvServiceIntf::setWssStatus (int status) {
     return mpTv->Tv_SetWssStatus(status);
+}
+
+int DroidTvServiceIntf::sendRecordingCmd(int32_t cmd, const std::string& id, const std::string& param) {
+    LOGD("sendRecordingCmd in tvserver cmd = %d, id = %s", cmd, id.c_str());
+    return mpTv->doRecordingCommand(cmd, id.c_str(), param.c_str());
 }
 
 int DroidTvServiceIntf::processCmd(const Parcel &p) {

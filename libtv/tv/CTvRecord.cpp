@@ -212,6 +212,7 @@ int CTvRecord::start(const char *param)
         mRec = NULL;
         return ret;
     }
+
     AM_REC_SetUserData(mRec, this);
     AM_EVT_Subscribe((long)mRec, AM_REC_EVT_RECORD_START, rec_evt_cb, (void*)getId());
     AM_EVT_Subscribe((long)mRec, AM_REC_EVT_RECORD_END, rec_evt_cb, (void*)getId());
@@ -235,13 +236,16 @@ int CTvRecord::stop(const char *param)
 {
     LOGD("stop(%s:%s)", toReadable(mId), toReadable(param));
 #ifdef SUPPORT_ADTV
+    int ret = 0;
     if (!mRec)
         return -1;
 
-    AM_EVT_Subscribe((long)mRec, AM_REC_EVT_RECORD_START, rec_evt_cb, (void*)getId());
-    AM_EVT_Subscribe((long)mRec, AM_REC_EVT_RECORD_END, rec_evt_cb, (void*)getId());
+    ret = AM_REC_StopRecord(mRec);
 
-    return AM_REC_StopRecord(mRec);
+    AM_EVT_Unsubscribe((long)mRec, AM_REC_EVT_RECORD_START, rec_evt_cb, (void*)getId());
+    AM_EVT_Unsubscribe((long)mRec, AM_REC_EVT_RECORD_END, rec_evt_cb, (void*)getId());
+
+    return ret;
 #else
     return -1;
 #endif

@@ -383,6 +383,10 @@ Return<int32_t> DroidTvServer::setWssStatus(int32_t status) {
     return mTvServiceIntf->setWssStatus(status);
 }
 
+Return<int32_t> DroidTvServer::sendRecordingCmd(int32_t cmd, const hidl_string& id, const hidl_string& param) {
+    return mTvServiceIntf->sendRecordingCmd(cmd, id, param);
+}
+
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {
         LOGE("%s don't support type:%d", __FUNCTION__, (int)type);

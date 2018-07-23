@@ -110,6 +110,8 @@ public:
     int DtvSwitchAudioTrack(int32_t prog_id, int32_t audio_track_id);
     int DtvSwitchAudioTrack(int32_t audio_pid, int32_t audio_format, int32_t audio_param);
     int setWssStatus(int status);
+    int sendRecordingCmd(int32_t cmd, const std::string& id, const std::string& param);
+
     virtual status_t dump(int fd, const Vector<String16>& args);
 
     //wp<Client> mpScannerClient;

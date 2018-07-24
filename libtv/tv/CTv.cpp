@@ -1265,14 +1265,14 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 
         //set TUNER
         //usleep(400 * 1000);
-        mFrontDev->Open(TV_FE_ANALOG);
+        mFrontDev->Open(TV_FE_AUTO);
         mFrontDev->setPara ( TV_FE_ANALOG, tmpFreq, stdAndColor, 1, feParms.vfmt);
         //usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
             mFrontDev->fineTune ( tmpfineFreq / 1000 );
         }
     } else {
-        mFrontDev->Open(feParms.mode);
+        mFrontDev->Open(TV_FE_AUTO);
         mFrontDev->setPara ( feParms.mode, feParms.freq, feParms.para1, feParms.para2 );
     }
 #endif
@@ -1327,7 +1327,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
 
         //set TUNER
         //usleep(400 * 1000);
-        mFrontDev->Open(TV_FE_ANALOG);
+        mFrontDev->Open(TV_FE_AUTO);
         mFrontDev->setPara ( paras, force );
         //usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
@@ -1343,7 +1343,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
                 }
             }
         }
-        mFrontDev->Open(fp.getFEMode().getBase());
+        mFrontDev->Open(TV_FE_AUTO);
         mFrontDev->setPara (paras, force);
     }
 
@@ -1798,7 +1798,7 @@ int CTv::OpenTv ( void )
     m_source_input = SOURCE_INVALID;
 
     mBlackoutEnable = ((getBlackoutEnable() == 1)?true:false);
-    mFrontDev->Open(FE_AUTO);
+    mFrontDev->Open(TV_FE_AUTO);
     mFrontDev->autoLoadFE();
     mAv.Open();
     resetDmxAndAvSource();
@@ -2043,7 +2043,7 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
     }
     //set front dev mode
     if ( source_input == SOURCE_TV ) {
-        mFrontDev->Open(TV_FE_ANALOG);
+        mFrontDev->Open(TV_FE_AUTO);
         mFrontDev->SetAnalogFrontEndTimerSwitch(1);
     } else if ( source_input == SOURCE_DTV ) {
         mFrontDev->Open(TV_FE_AUTO);

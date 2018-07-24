@@ -92,24 +92,24 @@ int CFrontEnd::Open(int mode)
     int rc = 0;
     int devID = 0;
 
-    LOGD("FE Open [%d->%d]", mCurMode, mode);
+    LOGD("%s, mode %d", __FUNCTION__, mode);
 
-    if (mbFEOpened && (mCurMode == mode || mode == TV_FE_ATSC)) {
-        LOGD("FrontEnd already opened, return");
-        return 0;
+    if (mbFEOpened && (mCurMode == mode || mode == FE_AUTO)) {
+        LOGD("FrontEnd already opened: %d", mCurMode);
+        /* return 0; */
     }
 
-    LOGD("VLFE Open [%d->%d]", mVLCurMode, mode);
-
-    if (mbVLFEOpened && (mVLCurMode == mode || mode == TV_FE_ANALOG)) {
-        LOGD("VLFrontEnd already opened, return");
-        return 0;
+    if (mbVLFEOpened && (mVLCurMode == mode || mode == FE_AUTO)) {
+        LOGD("VLFrontEnd already opened: %d", mVLCurMode);
+        /* return 0; */
     }
 
     memset(&para, 0, sizeof(AM_FEND_OpenPara_t));
     para.mode = mode;
 
-    if (TV_FE_ANALOG == mode || mode == FE_AUTO) {
+    if ((mbVLFEOpened == false) && (TV_FE_ANALOG == mode || mode == FE_AUTO)) {
+        LOGD("VLFE Open [%d->%d]", mVLCurMode, mode);
+
         rc = AM_VLFEND_Open(mVLFrontDevID, &para);
         if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
             LOGD("%s,vlfrontend dev[%d] open failed! v4l2 error id is %d\n",
@@ -124,7 +124,9 @@ int CFrontEnd::Open(int mode)
     }
 
     para.mode = mode;
-    if (TV_FE_ANALOG != mode) {
+    if ((mbFEOpened == false) && (TV_FE_ANALOG != mode)) {
+        LOGD("FE Open [%d->%d]", mCurMode, mode);
+
         rc = AM_FEND_Open(mFrontDevID, &para);
         if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
             LOGD("%s,frontend dev[%d] open failed! dvb error id is %d\n",
@@ -198,15 +200,20 @@ int CFrontEnd::setMode(int mode)
 
     int rc = 0;
     int devID = 0;
-    if (mCurMode == mode) return 0;
-    if (mVLCurMode == mode) return 0;
+
+    if (mCurMode == mode && mVLCurMode == mode)
+        return 0;
+
     if (mode == TV_FE_ANALOG) {
         devID = mVLFrontDevID;
+        rc = AM_FEND_SetMode(devID, FE_ANALOG);
         rc = AM_VLFEND_SetMode(devID, mode);
     } else {
         devID = mFrontDevID;
+        rc = AM_VLFEND_SetMode(devID, 0);
         rc = AM_FEND_SetMode(devID, mode);
     }
+
     if (rc != 0) {
         LOGD("%s,front dev set mode failed! dvb error id is %d\n", __FUNCTION__, rc);
         return -1;

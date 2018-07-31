@@ -1144,7 +1144,7 @@ int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCom
     else
         mAv.DisableVideoBlackout();
 
-    mAv.ClearVideoBuffer();
+    //mAv.ClearVideoBuffer();
     FeMode = fp.getFEMode().getBase();
     LOGD("[%s] FeMode = %d", __FUNCTION__, FeMode);
     if (feparas) {

@@ -2552,6 +2552,7 @@ int CTv::Tv_SSMRestoreDefaultSetting()
     saveATVProgramID ( -1 );
     SSMSaveStandbyMode( 0 );
     SSMHDMIEdidRestoreDefault();
+    SSMSaveHDMIHdcpSwitcher(0);
     SSMSaveHDMIColorRangeMode(TVIN_COLOR_RANGE_AUTO);
     return 0;
 }

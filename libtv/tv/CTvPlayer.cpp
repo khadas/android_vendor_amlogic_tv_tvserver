@@ -73,8 +73,7 @@ int CDTVTvPlayer::setVideo(int pid, int format, const char *param) {
 }
 int CDTVTvPlayer::setAudio(int pid, int format, const char *param) {
     LOGD("setAudio(%d:%d:%s)", pid, format, toReadable(param));
-    //mApid = pid;
-    mApid = 0x1fff;//pid; wxl change to close audio for debug 20180416
+    mApid = pid;
     mAfmt = format;
     if (mAparam)
         free((void*)mAparam);

@@ -1287,12 +1287,17 @@ int CTv::setFrontEnd ( const char *paras, bool force )
 
     CFrontEnd::FEParas fp(paras);
 
-    if (!mATVDisplaySnow) {
-        if (iSBlackPattern) {
-            mAv.DisableVideoWithBlackColor();
-        } else {
-            mAv.DisableVideoWithBlueColor();
+    if (SOURCE_TV == m_source_input) {
+        if (!mATVDisplaySnow) {
+            if (iSBlackPattern) {
+                mAv.DisableVideoWithBlackColor();
+            } else {
+                mAv.DisableVideoWithBlueColor();
+            }
         }
+    } else if (SOURCE_DTV == m_source_input) {
+        mpTvin->SwitchSnow(false);
+        mAv.DisableVideoWithBlackColor();
     }
 
     //refresh mBlackoutEnable as setmirror image takes effect on stop beroe switching to new program
@@ -2219,11 +2224,7 @@ void CTv::onVideoAvailableLater(int framecount)
 void CTv::onSigToUnstable()
 {
     LOGD ( "%s, signal to Unstable\n", __FUNCTION__);
-    if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
-        mpTvin->SwitchSnow(true);
-        mpTvin->Tvin_StartDecoder (m_cur_sig_info);
-        mAv.EnableVideoNow(false);
-    } else {
+    if (SOURCE_TV != m_source_input) {
         mAv.DisableVideoWithBlackColor();
         mpTvin->Tvin_StopDecoder();
     }

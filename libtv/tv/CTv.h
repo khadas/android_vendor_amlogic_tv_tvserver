@@ -52,7 +52,12 @@ using namespace android;
 
 static const char *TV_CONFIG_FILE_PATH = "/vendor/etc/tvconfig/tvconfig.conf";
 static const char *TV_RRT_DEFINE_SYSTEM_PATH = "/vendor/etc/tvconfig/tv_rrt_define.xml";
+
+#if ANDROID_PLATFORM_SDK_VERSION >= 28
+static const char *TV_DB_PATH = "/mnt/vendor/param/dtv.db";
+#else
 static const char *TV_DB_PATH = "/param/dtv.db";
+#endif
 
 #define LCD_ENABLE "/sys/class/lcd/enable"
 #define BL_LOCAL_DIMING_FUNC_ENABLE "/sys/class/aml_ldim/func_en"

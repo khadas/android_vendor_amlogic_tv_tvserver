@@ -78,7 +78,12 @@
 #define CFG_FBC_USED                            "platform.havefbc"
 
 #define CFG_CAHNNEL_DB                          "tv.channel.db"
+
+#if ANDROID_PLATFORM_SDK_VERSION >= 28
+#define DEF_VALUE_CAHNNEL_DB                    "/mnt/vendor/param/dtv.db"
+#else
 #define DEF_VALUE_CAHNNEL_DB                    "/param/dtv.db"
+#endif
 
 //for tv property
 #define PROP_DEF_CAPTURE_NAME                   "snd.card.default.card.capture"

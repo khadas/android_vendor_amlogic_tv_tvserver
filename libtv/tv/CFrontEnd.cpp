@@ -257,6 +257,7 @@ int CFrontEnd::setPropLocked(int cmd, int val)
 
 int CFrontEnd::setVLPropLocked(int cmd, int val)
 {
+#ifdef SUPPORT_ADTV
     AutoMutex _l( mLock );
 
     struct dtv_properties props;
@@ -272,10 +273,14 @@ int CFrontEnd::setVLPropLocked(int cmd, int val)
     props.props = &prop;
 
     return AM_VLFEND_SetProp(mVLFrontDevID, &props);
+ #else
+    return -1;
+ #endif
 }
 
 int CFrontEnd::getVLPropLocked(int cmd, int *val)
 {
+#ifdef SUPPORT_ADTV
     AutoMutex _l( mLock );
 
     struct dtv_properties props;
@@ -295,6 +300,9 @@ int CFrontEnd::getVLPropLocked(int cmd, int *val)
     *val = prop.u.data;
 
     return 0;
+ #else
+    return -1;
+ #endif
 }
 
 int CFrontEnd::convertParas(char *paras, int mode, int freq1, int freq2, int para1, int para2, int para3, int para4)
@@ -943,6 +951,7 @@ int CFrontEnd::checkStatusOnce()
 int CFrontEnd::stdEnumToCvbsFmt (int vfmt)
 {
     tvin_sig_fmt_e cvbs_fmt = TVIN_SIG_FMT_NULL;
+#ifdef SUPPORT_ADTV
     if ((vfmt & 0xff000000) == V4L2_COLOR_STD_NTSC) {
         switch (vfmt & 0x00ffffff) {
         case V4L2_STD_NTSC_M:
@@ -988,7 +997,7 @@ int CFrontEnd::stdEnumToCvbsFmt (int vfmt)
     }
 
     LOGD("stdEnumToCvbsFmt vfmt:0x%x, cvbs_fmt:0x%x", vfmt, cvbs_fmt);
-
+#endif
     return cvbs_fmt;
 }
 

@@ -19,7 +19,11 @@
 #if !defined(_CDTVRRT_H)
 #define _CDTVRRT_H
 
+#if ANDROID_PLATFORM_SDK_VERSION >= 28
+#define TV_RRT_DEFINE_PARAM_PATH          "/mnt/vendor/param/tv_rrt_define.xml"
+#else
 #define TV_RRT_DEFINE_PARAM_PATH          "/param/tv_rrt_define.xml"
+#endif
 
 typedef struct rrt_info
 {

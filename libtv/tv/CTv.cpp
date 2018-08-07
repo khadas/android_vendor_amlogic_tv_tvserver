@@ -3476,3 +3476,18 @@ int CTv::GetAtvAudioInputmode()
      */
     return (mode >> 8 & 0xFFFF);
 }
+
+int CTv::GetAtvAutoScanMode()
+{
+    int mode = -1;
+    const char *config_value  = config_get_str(CFG_SECTION_ATV, CFG_ATV_AUTO_SCAN_MODE, "0");
+    mode = strtoul(config_value, NULL, 10);
+
+    LOGD("%s: %d", "atv.scan.auto.mode", mode);
+
+    /* @mode
+     * 0: use freq table list mode to scan.
+     * 1: use step mode to auto scan.
+     */
+    return mode;
+}

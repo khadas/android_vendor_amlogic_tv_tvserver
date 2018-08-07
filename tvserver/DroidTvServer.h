@@ -120,6 +120,7 @@ public:
     Return<int32_t> setAudioOutmode(int32_t mode) override;
     Return<int32_t> getAudioOutmode() override;
     Return<int32_t> getAudioStreamOutmode() override;
+    Return<int32_t> getAtvAutoScanMode() override;
     Return<int32_t> vdinUpdateForPQ(int32_t gameStatus, int32_t pcStatus, int32_t autoSwitchFlag) override;
     Return<int32_t> DtvSetAudioAD(int32_t enable, int32_t audio_pid, int32_t audio_format) override;
     Return<int32_t> DtvSwitchAudioTrack(int32_t prog_id, int32_t audio_track_id) override;

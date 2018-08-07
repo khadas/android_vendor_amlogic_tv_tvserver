@@ -1490,14 +1490,14 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
     if (atv_para.mode == TV_SCAN_ATVMODE_NONE)
         return 0;
 
-    int analog_auto = getParamOption("analog.auto");
-    bool is_analog_auto = (analog_auto == -1)? false : (analog_auto != 0);
+    //int analog_auto = getParamOption("analog.auto");
+    //bool is_analog_auto = (analog_auto == -1)? false : (analog_auto != 0);
+    bool is_analog_auto = (atv_para.mode == TV_SCAN_ATVMODE_AUTO || atv_para.mode == TV_SCAN_ATVMODE_MANUAL);
 
     int freq1, freq2;
     freq1 = scp.getAtvFrequency1();
     freq2 = scp.getAtvFrequency2();
     if ((atv_para.mode != TV_SCAN_ATVMODE_FREQ && (freq1 <= 0 || freq2 <= 0) && is_analog_auto)
-            || (atv_para.mode == TV_SCAN_ATVMODE_MANUAL && freq1 == freq2)
             || (atv_para.mode == TV_SCAN_ATVMODE_AUTO && freq1 > freq2)
             || (atv_para.mode == TV_SCAN_ATVMODE_FREQ && freq1 > freq2)) {
         LOGW(" freq error start:%d end=%d amode:%d",  freq1,  freq2, atv_para.mode);
@@ -1576,7 +1576,7 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
         atv_para.fe_paras[1].analog.para.u.analog.std = atv_para.default_std;
         atv_para.fe_paras[1].analog.para.u.analog.audmode = atv_para.default_std & 0x00FFFFFF;
         atv_para.fe_paras[2].m_type = TV_FE_ANALOG;
-        atv_para.fe_paras[2].analog.para.frequency = (atv_para.mode == TV_SCAN_ATVMODE_AUTO)? 0 : scp.getAtvFrequency1();
+        atv_para.fe_paras[2].analog.para.frequency = scp.getAtvFrequency1();
         atv_para.fe_paras[2].analog.para.u.analog.std = atv_para.default_std;
         atv_para.fe_paras[2].analog.para.u.analog.audmode = atv_para.default_std & 0x00FFFFFF;
     }

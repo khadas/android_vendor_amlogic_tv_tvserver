@@ -354,6 +354,8 @@ public:
     int GetAtvAudioOutmode();
     int GetAtvAudioInputmode();
 
+    int GetAtvAutoScanMode();
+
 private:
     int SendCmdToOffBoardFBCExternalDac(int, int);
     int KillMediaServerClient();

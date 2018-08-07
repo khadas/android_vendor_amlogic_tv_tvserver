@@ -357,6 +357,10 @@ Return<int32_t> DroidTvServer::getAudioStreamOutmode() {
     return mTvServiceIntf->getAudioStreamOutmode();
 }
 
+Return<int32_t> DroidTvServer::getAtvAutoScanMode() {
+    return mTvServiceIntf->getAtvAutoScanMode();
+}
+
 Return<int32_t> DroidTvServer::vdinUpdateForPQ(int32_t gameStatus, int32_t pcStatus, int32_t autoSwitchFlag) {
     return mTvServiceIntf->vdinUpdateForPQ(gameStatus, pcStatus, autoSwitchFlag);
 }

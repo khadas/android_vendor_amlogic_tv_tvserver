@@ -40,6 +40,7 @@
 #define CFG_DTV_CHECK_DATA_AUDIO                "dtv.check.data.audio"
 #define CFG_DTV_SCAN_STOREMODE_VALIDPID         "dtv.scan.skip.invalidpid"
 
+#define CFG_ATV_AUTO_SCAN_MODE                  "atv.auto.scan.mode"
 
 #define CFG_TVIN_KERNELPET_DISABLE              "tvin.kernelpet_disable"
 #define CFG_TVIN_KERNELPET_TIMEROUT             "tvin.kernelpet.timeout"

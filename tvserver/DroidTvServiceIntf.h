@@ -75,7 +75,7 @@ public:
     int setSourceInput(int32_t inputSrc, int32_t vInputSrc);
     int setBlackoutEnable(int32_t status);
     int getBlackoutEnable();
-    int getATVMinMaxFreq(int32_t scanMinFreq, int32_t scanMaxFreq);
+    int getATVMinMaxFreq(int32_t &scanMinFreq, int32_t &scanMaxFreq);
     int setAmAudioPreMute(int32_t mute);
     int setDvbTextCoding(const std::string& coding);
     int operateDeviceForScan(int32_t type);
@@ -104,6 +104,7 @@ public:
     int setAudioOutmode(int32_t mode);
     int getAudioOutmode();
     int getAudioStreamOutmode();
+    int getAtvAutoScanMode();
     int vdinUpdateForPQ(int32_t gameStatus, int32_t pcStatus, int32_t autoSwitchFlag);
     int DtvSetAudioAD(int32_t enable, int32_t audio_pid, int32_t audio_format);
     int DtvSwitchAudioTrack(int32_t prog_id, int32_t audio_track_id);

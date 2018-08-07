@@ -592,7 +592,7 @@ int DroidTvServiceIntf::getBlackoutEnable() {
     return mpTv->getBlackoutEnable();
 }
 
-int DroidTvServiceIntf::getATVMinMaxFreq(int32_t scanMinFreq, int32_t scanMaxFreq) {
+int DroidTvServiceIntf::getATVMinMaxFreq(int32_t &scanMinFreq, int32_t &scanMaxFreq) {
     return mpTv->getATVMinMaxFreq(&scanMinFreq, &scanMaxFreq);
 }
 
@@ -752,6 +752,11 @@ int DroidTvServiceIntf::getAudioOutmode() {
 
 int DroidTvServiceIntf::getAudioStreamOutmode() {
     int ret = mpTv->GetAtvAudioInputmode();
+    return ret;
+}
+
+int DroidTvServiceIntf::getAtvAutoScanMode() {
+    int ret = mpTv->GetAtvAutoScanMode();
     return ret;
 }
 

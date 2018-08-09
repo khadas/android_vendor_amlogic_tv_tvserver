@@ -74,7 +74,6 @@ LOCAL_SHARED_LIBRARIES := \
   libcutils \
   libnetutils \
   libsqlite \
-  libmedia \
   libtinyxml \
   liblog \
   libbinder
@@ -136,7 +135,7 @@ LOCAL_C_INCLUDES += \
   external/tinyxml \
   $(LIB_TV_BINDER)/include \
   $(LIB_SQLITE_PATH)/dist \
-  $(BOARD_AML_VENDOR_PATH)frameworks/services/systemcontrol/PQ/include
+  $(BOARD_AML_VENDOR_PATH)/frameworks/services/systemcontrol/PQ/include
 
 ifeq ($(wildcard hardware/amlogic/media),hardware/amlogic/media)
 $(info "have hardware/amlogic/media")
@@ -157,7 +156,10 @@ LOCAL_C_INCLUDES += \
   $(LOCAL_PATH)/tvdb \
   $(LOCAL_PATH)/tv \
   $(LOCAL_PATH)/gpio \
-  external/jsoncpp/include
+  external/jsoncpp/include \
+  frameworks/av/include \
+  hardware/libhardware_legacy/include
+
 
 LOCAL_LDLIBS  += -L$(SYSROOT)/usr/lib -llog
 

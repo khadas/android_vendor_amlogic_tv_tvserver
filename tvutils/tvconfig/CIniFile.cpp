@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 #include <include/CTvLog.h>
 
 #include "include/CIniFile.h"

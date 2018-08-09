@@ -15,6 +15,7 @@
 #include "include/CTvLog.h"
 
 #include <stdlib.h>
+#include <unistd.h>
 
 CFile::CFile()
 {

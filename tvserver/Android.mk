@@ -57,6 +57,8 @@ LOCAL_SHARED_LIBRARIES += \
 LOCAL_C_INCLUDES := \
   system/libhidl/transport/include/hidl \
   system/libhidl/libhidlmemory/include \
+  hardware/libhardware/include \
+  hardware/libhardware_legacy/include \
   $(LOCAL_PATH)/../libtv \
   $(LOCAL_PATH)/../libtv/tvdb \
   $(LOCAL_PATH)/../libtv/tv \

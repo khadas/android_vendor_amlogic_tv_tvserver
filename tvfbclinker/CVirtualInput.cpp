@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <CTvLog.h>
+#include <unistd.h>
 
 CVirtualInput::CVirtualInput()
 {

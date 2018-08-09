@@ -30,6 +30,7 @@ LOCAL_C_INCLUDES += \
   $(BOARD_AML_VENDOR_PATH)/frameworks/services \
   $(LIB_SQLITE_PATH)/dist \
   $(BOARD_AML_VENDOR_PATH)/tv/tvserver/libtv/include \
+  frameworks/native/libs/binder/include \
   external/jsoncpp/include
 
 LOCAL_SHARED_LIBRARIES += \

@@ -8,6 +8,7 @@
  */
 
 #define LOG_TAG "tvserver"
+#include <stdio.h>
 #include "include/CTvLog.h"
 #include <android/log.h>
 

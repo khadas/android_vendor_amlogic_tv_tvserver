@@ -176,7 +176,9 @@ public:
 
 private:
     static void av_evt_callback ( long dev_no, int event_type, void *param, void *user_data );
+#ifdef SUPPORT_ADTV
     static void av_audio_callback(int event_type, AudioParms* param, void *user_data);
+#endif
     int getVideoFrameCount();
     int mTvPlayDevId;
     IObserver *mpObserver;

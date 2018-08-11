@@ -32,6 +32,8 @@ CAv::CAv()
 CAv::~CAv()
 {
 }
+
+#ifdef SUPPORT_ADTV
 void CAv::av_audio_callback(int event_type, AudioParms* param, void *user_data)
 {
     LOGD ( "%s, av_audio_callback \n", __FUNCTION__ );
@@ -45,7 +47,7 @@ void CAv::av_audio_callback(int event_type, AudioParms* param, void *user_data)
         LOGD ( "%s, ERROR : mpObserver NULL == mpObserver\n", __FUNCTION__ );
         return ;
     }
-#ifdef SUPPORT_ADTV
+
     switch ( event_type ) {
         case AM_AV_EVT_AUDIO_CB:
             pAv->mCurAvEvent.type = AVEvent::EVENT_AUDIO_CB;
@@ -58,8 +60,8 @@ void CAv::av_audio_callback(int event_type, AudioParms* param, void *user_data)
             break;
      }
      return ;
-#endif
 }
+#endif
 int CAv::SetVideoWindow(int x, int y, int w, int h)
 {
 #ifdef SUPPORT_ADTV

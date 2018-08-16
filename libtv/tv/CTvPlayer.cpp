@@ -105,7 +105,7 @@ int CDTVTvPlayer::setParam(const char *param) {
 int CDTVTvPlayer::start(const char *param) {
     LOGD("start(%s:%s) current mode(%d)", toReadable(getId()), toReadable(param), mMode);
     int ret = -1;
-    if ( !isVideoInuse() ) {
+    if (!pTv->mpTvin->getSnowStatus() && !isVideoInuse() ) {
         return ret;
     }
 #ifdef SUPPORT_ADTV

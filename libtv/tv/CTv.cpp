@@ -593,8 +593,8 @@ int CTv::Scan(const char *feparas, const char *scanparas) {
     LOGD("fe[%s], scan[%s] %s", feparas, scanparas, __FUNCTION__);
 
     mAv.StopTS();
-    mpTvin->Tvin_StopDecoder();
     mAv.DisableVideoWithBlackColor();
+    mpTvin->Tvin_StopDecoder();
 
     CTvScanner::ScanParas sp(scanparas);
     CFrontEnd::FEParas fp(feparas);
@@ -1073,11 +1073,6 @@ int CTv::playDtvProgramUnlocked (const char *feparas, int mode, int freq, int pa
     CFrontEnd::FEParas fp(feparas);
 
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
-    if (mBlackoutEnable)
-        mAv.EnableVideoBlackout();
-    else
-        mAv.DisableVideoBlackout();
-    //mAv.ClearVideoBuffer();
 
     FeMode = fp.getFEMode().getBase();
     LOGD("[%s] FeMode = %d", __FUNCTION__, FeMode);
@@ -1134,14 +1129,6 @@ int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCom
 {
     int ret = 0;
     int FeMode = 0;
-
-    if (mBlackoutEnable)
-        mAv.EnableVideoBlackout();
-    else
-        mAv.DisableVideoBlackout();
-
-    mAv.ClearVideoBuffer();
-
     if (feparas) {
         SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_DTV);
         CFrontEnd::FEParas fp(feparas);
@@ -1215,15 +1202,11 @@ int CTv::playDtmbProgram ( int progId )
 
 int CTv::playAtvProgram (int freq, int videoStd, int audioStd, int vfmt, int soundsys, int fineTune __unused, int audioCompetation)
 {
+    LOGD("%s", __FUNCTION__);
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_TV);
     mTvAction |= TV_ACTION_IN_VDIN;
     mTvAction |= TV_ACTION_PLAYING;
-    if ( mBlackoutEnable ) {
-        mAv.EnableVideoBlackout();
-    } else {
-        mAv.DisableVideoBlackout();
-    }
-    //image selecting channel
+
     mpTvin->Tvin_StopDecoder();
     mFrontDev->Open(TV_FE_ANALOG);
     //set CVBS
@@ -1282,38 +1265,23 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 int CTv::setFrontEnd ( const char *paras, bool force )
 {
     AutoMutex _l( mLock );
-    LOGD("mTvAction = %#x, %s, paras = %s", mTvAction, __FUNCTION__, paras);
+    LOGD("%s: mTvAction = %#x, paras = %s", __FUNCTION__, mTvAction, paras);
     if (mTvAction & TV_ACTION_SCANNING) {
         return -1;
     }
 
     CFrontEnd::FEParas fp(paras);
 
-    if (SOURCE_TV == m_source_input) {
-        if (!mATVDisplaySnow) {
-            if (iSBlackPattern) {
-                mAv.DisableVideoWithBlackColor();
-            } else {
-                mAv.DisableVideoWithBlueColor();
-            }
-        }
-    } else if (SOURCE_DTV == m_source_input) {
-        mpTvin->SwitchSnow(false);
-        mAv.DisableVideoWithBlackColor();
-    }
-
-    //refresh mBlackoutEnable as setmirror image takes effect on stop beroe switching to new program
-    mBlackoutEnable = ((getBlackoutEnable() == 1)?true:false);
     if (mBlackoutEnable) {
         mAv.EnableVideoBlackout();
     } else {
         mAv.DisableVideoBlackout();
     }
 
-    LOGD("setFrontEnd  fp.getFEMode.getbase = %d", fp.getFEMode().getBase());
-    if ( fp.getFEMode().getBase() == TV_FE_ANALOG ) {
+    int FEMode_Base = fp.getFEMode().getBase();
+    LOGD("%s: fp.getFEMode.getbase = %d", __FUNCTION__, FEMode_Base);
+    if ( FEMode_Base == TV_FE_ANALOG ) {
         if (SOURCE_DTV == m_source_input) {
-            //mAv.DisableVideoBlackout();
             stopPlaying(false);
         }
         int tmpFreq = fp.getFrequency();
@@ -1341,7 +1309,6 @@ int CTv::setFrontEnd ( const char *paras, bool force )
     } else {
         if (SOURCE_ADTV == m_source_input_virtual) {
             if (SOURCE_TV == m_source_input) {
-                //mAv.DisableVideoBlackout();
                 mpTvin->Tvin_StopDecoder();
                 if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
                     mpTvin->SwitchSnow( false );
@@ -1354,7 +1321,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
 
     int mode, freq, para1, para2;
     mFrontDev->getPara(&mode, &freq, &para1, &para2);
-    mode = fp.getFEMode().getBase() == TV_FE_ANALOG;
+    mode = (FEMode_Base == TV_FE_ANALOG);
     Tv_RrtUpdate(freq, mode, 0);
     Tv_Easupdate();
     return 0;
@@ -1421,21 +1388,17 @@ int CTv::stopPlaying(bool isShowTestScreen) {
 
 int CTv::stopPlaying(bool isShowTestScreen, bool resetFE)
 {
+    LOGD("%s", __FUNCTION__);
     if (!(mTvAction & TV_ACTION_PLAYING)) {
         LOGD("%s, stopplay cur action = %x not playing , return", __FUNCTION__, mTvAction);
         return 0;
     }
 
     LOGD("%s, isShowTestScreen = %d, resetFE = %d", __FUNCTION__, isShowTestScreen, resetFE);
-
     if (m_source_input == SOURCE_TV) {
-        //first mute
         if (resetFE)
             ClearAnalogFrontEnd();
     } else if (m_source_input ==  SOURCE_DTV) {
-        if (mBlackoutEnable) {
-            mAv.EnableVideoBlackout();
-        }
         mAv.StopTS ();
     }
 
@@ -1862,7 +1825,7 @@ int CTv::DoResume(int type)
 
 int CTv::StopTvLock ( void )
 {
-    LOGD("%s: mTvStatus = %d，mBlackoutEnable = %d, iSBlackPattern  = %d\n", __FUNCTION__, mTvStatus,mBlackoutEnable, iSBlackPattern);
+    LOGD("%s: mTvStatus = %d，mBlackoutEnable = %d\n", __FUNCTION__, mTvStatus, mBlackoutEnable);
     AutoMutex _l( mLock );
     mTvAction |= TV_ACTION_STOPING;
     mAv.DisableVideoWithBlackColor();
@@ -2028,13 +1991,6 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
     }
     mTvAction |= TV_ACTION_SOURCE_SWITCHING;
 
-    //if BlackoutEnable is false, no need to disable video and enable blackout
-
-    if (mBlackoutEnable == true) {
-        //mAv.DisableVideoWithBlackColor();
-        //enable blackout, when play,disable it
-        mAv.EnableVideoBlackout();
-    }
     //set front dev mode
     if ( source_input == SOURCE_TV ) {
         mFrontDev->Open(TV_FE_AUTO);

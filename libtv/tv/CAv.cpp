@@ -36,7 +36,7 @@ CAv::~CAv()
 #ifdef SUPPORT_ADTV
 void CAv::av_audio_callback(int event_type, AudioParms* param, void *user_data)
 {
-    LOGD ( "%s, av_audio_callback \n", __FUNCTION__ );
+    LOGD ( "%s\n", __FUNCTION__ );
 
     CAv *pAv = ( CAv * ) user_data;
     if (NULL == pAv ) {
@@ -299,6 +299,8 @@ int CAv::AudioGetPreMute(unsigned int *mute)
 
 int CAv::EnableVideoBlackout()
 {
+    LOGD("%s: mVideoLayerState is %d\n", __FUNCTION__, mVideoLayerState);
+    mVideoLayerState = VIDEO_LAYER_NONE;
 #ifdef SUPPORT_ADTV
     return AM_AV_EnableVideoBlackout(mTvPlayDevId);
 #else
@@ -309,6 +311,8 @@ int CAv::EnableVideoBlackout()
 
 int CAv::DisableVideoBlackout()
 {
+    LOGD("%s: mVideoLayerState is %d\n", __FUNCTION__, mVideoLayerState);
+    mVideoLayerState = VIDEO_LAYER_NONE;
 #ifdef SUPPORT_ADTV
     return AM_AV_DisableVideoBlackout(mTvPlayDevId);
 #else
@@ -319,7 +323,7 @@ int CAv::DisableVideoBlackout()
 
 int CAv::DisableVideoWithBlueColor()
 {
-    LOGD("DisableVideoWithBlueColor");
+    LOGD("%s: mVideoLayerState is %d\n", __FUNCTION__, mVideoLayerState);
     if (mVideoLayerState == VIDEO_LAYER_DISABLE_BLUE) {
         LOGD("video is disable with blue, return");
         return 0;
@@ -336,7 +340,7 @@ int CAv::DisableVideoWithBlueColor()
 
 int CAv::DisableVideoWithBlackColor()
 {
-    LOGD("DisableVideoWithBlackColor");
+    LOGD("%s: mVideoLayerState is %d\n", __FUNCTION__, mVideoLayerState);
     if (mVideoLayerState == VIDEO_LAYER_DISABLE_BLACK) {
         LOGD("video is disable with black, return");
         return 0;
@@ -355,7 +359,7 @@ int CAv::DisableVideoWithBlackColor()
 //just enable video
 int CAv::EnableVideoNow(bool IsShowTestScreen)
 {
-    LOGD("%s:IsShowTestScreen: %d\n", __FUNCTION__, IsShowTestScreen);
+    LOGD("%s:IsShowTestScreen is %d, mVideoLayerState is %d\n", __FUNCTION__, IsShowTestScreen, mVideoLayerState);
 
     if (mVideoLayerState == VIDEO_LAYER_ENABLE) {
         LOGW("video is enabled");
@@ -363,7 +367,7 @@ int CAv::EnableVideoNow(bool IsShowTestScreen)
     }
     mVideoLayerState = VIDEO_LAYER_ENABLE;
     if (IsShowTestScreen) {
-        LOGD("eableVideoWithBlackColor");
+        LOGD("%s: eableVideoWithBlackColor", __FUNCTION__);
         SetVideoScreenColor ( 0, 16, 128, 128 );
     }
 
@@ -377,8 +381,7 @@ int CAv::EnableVideoNow(bool IsShowTestScreen)
 //call disable video 2
 int CAv::ClearVideoBuffer()
 {
-    LOGD("ClearVideoBuffer");
-
+    LOGD("%s", __FUNCTION__);
 #ifdef SUPPORT_ADTV
     return AM_AV_ClearVideoBuffer(mTvPlayDevId);
 #else
@@ -388,8 +391,7 @@ int CAv::ClearVideoBuffer()
 
 int CAv::startTimeShift(void *para)
 {
-    LOGD("startTimeShift");
-
+    LOGD("%s", __FUNCTION__);
 #ifdef SUPPORT_ADTV
     return AM_AV_StartTimeshift(mTvPlayDevId, (AM_AV_TimeshiftPara_t *)para);
 #else
@@ -399,7 +401,7 @@ int CAv::startTimeShift(void *para)
 
 int CAv::stopTimeShift()
 {
-    LOGD ("stopTimeShift");
+    LOGD("%s", __FUNCTION__);
 
 #ifdef SUPPORT_ADTV
     return AM_AV_StopTimeshift(mTvPlayDevId);
@@ -410,7 +412,7 @@ int CAv::stopTimeShift()
 
 int CAv::pauseTimeShift()
 {
-    LOGD ( "pauseTimeShift");
+    LOGD("%s", __FUNCTION__);
 
 #ifdef SUPPORT_ADTV
     return AM_AV_PauseTimeshift (mTvPlayDevId);
@@ -421,7 +423,7 @@ int CAv::pauseTimeShift()
 
 int CAv::resumeTimeShift()
 {
-    LOGD ( "resumeTimeShift");
+    LOGD("%s", __FUNCTION__);
 
 #ifdef SUPPORT_ADTV
     return AM_AV_ResumeTimeshift (mTvPlayDevId);
@@ -432,7 +434,7 @@ int CAv::resumeTimeShift()
 
 int CAv::seekTimeShift(int pos, bool start)
 {
-    LOGD ( "seekTimeShift [pos:%d start:%d]", pos, start);
+    LOGD ( "%s: [pos:%d start:%d]", __FUNCTION__, pos, start);
 
 #ifdef SUPPORT_ADTV
     return AM_AV_SeekTimeshift (mTvPlayDevId, pos, start);
@@ -443,7 +445,7 @@ int CAv::seekTimeShift(int pos, bool start)
 
 int CAv::setTimeShiftSpeed(int speed)
 {
-    LOGD ( "setTimeShiftSpeed [%d]", speed);
+    LOGD ( "%S: [%d]", __FUNCTION__, speed);
     int ret = 0;
 #ifdef SUPPORT_ADTV
     if (speed < 0)
@@ -456,7 +458,7 @@ int CAv::setTimeShiftSpeed(int speed)
 
 int CAv::switchTimeShiftAudio(int apid, int afmt)
 {
-    LOGD ( "switchTimeShiftAudio [pid:%d, fmt:%d]", apid, afmt);
+    LOGD ( "%S: [pid:%d, fmt:%d]", __FUNCTION__, apid, afmt);
 #ifdef SUPPORT_ADTV
     return AM_AV_SwitchTimeshiftAudio (mTvPlayDevId, apid, afmt);
 #else
@@ -466,7 +468,7 @@ int CAv::switchTimeShiftAudio(int apid, int afmt)
 
 int CAv::playTimeShift()
 {
-    LOGD ( "playTimeShift");
+    LOGD("%s", __FUNCTION__);
 
 #ifdef SUPPORT_ADTV
     return AM_AV_PlayTimeshift (mTvPlayDevId);
@@ -478,13 +480,13 @@ int CAv::playTimeShift()
 //auto enable,
 int CAv::EnableVideoAuto()
 {
-    LOGD("EnableVideoAuto");
+    LOGD("%s: mVideoLayerState is %d\n", __FUNCTION__, mVideoLayerState);
     if (mVideoLayerState == VIDEO_LAYER_ENABLE) {
         LOGW("video is enable");
         return 0;
     }
     mVideoLayerState = VIDEO_LAYER_ENABLE;
-    LOGD("DisableVideoWithBlackColor");
+    LOGD("%s: eableVideoWithBlackColor\n", __FUNCTION__);
     SetVideoScreenColor ( 0, 16, 128, 128 ); // Show black with vdin0, postblending disabled
     ClearVideoBuffer();//disable video 2
     return 0;
@@ -492,6 +494,7 @@ int CAv::EnableVideoAuto()
 
 int CAv::WaittingVideoPlaying(int minFrameCount , int waitTime )
 {
+    LOGD("%s", __FUNCTION__);
     static const int COUNT_FOR_TIME = 20;
     int times = waitTime / COUNT_FOR_TIME;
 
@@ -506,6 +509,7 @@ int CAv::WaittingVideoPlaying(int minFrameCount , int waitTime )
 
 int CAv::EnableVideoWhenVideoPlaying(int minFrameCount, int waitTime)
 {
+    LOGD("%s", __FUNCTION__);
     int ret = WaittingVideoPlaying(minFrameCount, waitTime);
     if (ret == 0) { //ok to playing
         EnableVideoNow(true);
@@ -515,6 +519,7 @@ int CAv::EnableVideoWhenVideoPlaying(int minFrameCount, int waitTime)
 
 bool CAv::videoIsPlaying(int minFrameCount)
 {
+    LOGD("%s", __FUNCTION__);
     int value[2] = {0};
     value[0] = getVideoFrameCount();
     usleep(20 * 1000);
@@ -697,7 +702,7 @@ void CAv::av_evt_callback ( long dev_no, int event_type, void *param, void *user
 
 int CAv::setLookupPtsForDtmb(int enable)
 {
-    LOGD ( "setLookupPtsForDtmb %d" , enable);
+    LOGD ( "%s: status %d", __FUNCTION__, enable);
 
     char value[64] = {0};
     sprintf(value, "%d", enable);

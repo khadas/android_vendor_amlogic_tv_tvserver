@@ -1863,7 +1863,7 @@ int CTvin::SwitchSnow(bool enable)
 {
     int ret = -1;
     //static bool last_status = false;
-
+    LOGD("%s: m_snow_status is %d, enable is %d\n", __FUNCTION__, m_snow_status, enable);
     if ( m_snow_status == enable ) {
         return 0;
     } else {

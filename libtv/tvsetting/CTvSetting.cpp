@@ -1876,6 +1876,17 @@ tv_hdmi_edid_version_t SSMReadHDMIEdidVersion(tv_hdmi_port_id_t port)
     return (tv_hdmi_edid_version_t)tmp_val;
 }
 
+int SSMHDMIEdidRestoreDefault(void)
+{
+    int i = 0;
+    int tmp_val = HDMI_EDID_VER_20;
+    for (i=1;i<=HDMI_PORT_4;i++) {
+        SSMSaveHDMIEdidVersion((tv_hdmi_port_id_t)i, (tv_hdmi_edid_version_t)tmp_val);
+    }
+
+    return 0;
+}
+
 int SSMSaveHDMIColorRangeMode(tvin_color_range_t rw_val)
 {
     return TVSSMWriteNTypes(CUSTOMER_DATA_POS_HDMI_COLOR_RANGE_START, 1, rw_val);
@@ -1908,23 +1919,6 @@ int SSMReadHDMIHdcpSwitcher(void)
         tmp_val = 0;
     }
     return tmp_val;
-}
-
-int SSMHDMIEdidRestoreDefault(void)
-{
-    if (config_get_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, NULL) != NULL)
-        config_set_str(CFG_SECTION_TV, CS_HDMI_EDID_USE_CFG, "");
-    if (config_get_str(CFG_SECTION_TV, CS_HDMI_PORT1_EDID_FILE_PATH_CFG, NULL) != NULL)
-        config_set_str(CFG_SECTION_TV, CS_HDMI_PORT1_EDID_FILE_PATH_CFG, "");
-    if (config_get_str(CFG_SECTION_TV, CS_HDMI_PORT2_EDID_FILE_PATH_CFG, NULL) != NULL)
-        config_set_str(CFG_SECTION_TV, CS_HDMI_PORT2_EDID_FILE_PATH_CFG, "");
-    if (config_get_str(CFG_SECTION_TV, CS_HDMI_PORT3_EDID_FILE_PATH_CFG, NULL) != NULL)
-        config_set_str(CFG_SECTION_TV, CS_HDMI_PORT3_EDID_FILE_PATH_CFG, "");
-    if (config_get_str(CFG_SECTION_TV, CS_HDMI_PORT4_EDID_FILE_PATH_CFG, NULL) != NULL)
-        config_set_str(CFG_SECTION_TV, CS_HDMI_PORT4_EDID_FILE_PATH_CFG, "");
-
-    int tmp_val = HDMI_EDID_VER_14;
-    return TVSSMWriteNTypes(CUSTOMER_DATA_POS_HDMI1_EDID_START, SSMGetCustomerDataLen(), tmp_val);
 }
 
 int SSMSaveAmAudioVal(int rw_val, int source)

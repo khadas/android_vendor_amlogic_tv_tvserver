@@ -2538,7 +2538,14 @@ int CTv::Tv_SSMRestoreDefaultSetting()
     saveDTVProgramID ( -1 );
     saveATVProgramID ( -1 );
     SSMSaveStandbyMode( 0 );
-    SSMHDMIEdidRestoreDefault();
+    //restore EDID
+    const char * value;
+    value = config_get_str ( CFG_SECTION_TV, CFG_SSM_HDMI_EDID_VERSION, "null" );
+    if (strcmp(value, "edid_20") == 0 ) {
+        SSMHDMIEdidRestoreDefault(HDMI_EDID_VER_20);
+    } else {
+        SSMHDMIEdidRestoreDefault(HDMI_EDID_VER_14);
+    }
     SSMSaveHDMIHdcpSwitcher(0);
     SSMSaveHDMIColorRangeMode(TVIN_COLOR_RANGE_AUTO);
     return 0;

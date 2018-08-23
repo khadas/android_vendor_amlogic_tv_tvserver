@@ -227,7 +227,7 @@ int SSMSaveHDMIColorRangeMode(tvin_color_range_t rw_val);
 int SSMReadHDMIColorRangeMode(int *rw_val);
 int SSMSaveHDMIHdcpSwitcher(int rw_val);
 int SSMReadHDMIHdcpSwitcher(void);
-int SSMHDMIEdidRestoreDefault(void);
+int SSMHDMIEdidRestoreDefault(tv_hdmi_edid_version_t edid_version);
 
 int SSMSaveAmAudioVal(int rw_val, int source);
 int SSMReadAmAudioVal(int *rw_val, int source);

@@ -1876,12 +1876,11 @@ tv_hdmi_edid_version_t SSMReadHDMIEdidVersion(tv_hdmi_port_id_t port)
     return (tv_hdmi_edid_version_t)tmp_val;
 }
 
-int SSMHDMIEdidRestoreDefault(void)
+int SSMHDMIEdidRestoreDefault(tv_hdmi_edid_version_t edid_version)
 {
     int i = 0;
-    int tmp_val = HDMI_EDID_VER_20;
     for (i=1;i<=HDMI_PORT_4;i++) {
-        SSMSaveHDMIEdidVersion((tv_hdmi_port_id_t)i, (tv_hdmi_edid_version_t)tmp_val);
+        SSMSaveHDMIEdidVersion((tv_hdmi_port_id_t)i, edid_version);
     }
 
     return 0;

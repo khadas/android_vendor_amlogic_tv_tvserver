@@ -39,6 +39,7 @@
 #define CFG_DTV_MODE                            "dtv.mode"
 #define CFG_SSM_HDMI_AV_DETECT                  "ssm.hdmi_av.hotplug.detect.en"
 #define CFG_SSM_HDMI_EDID_EN                    "ssm.handle.hdmi.edid.en"
+#define CFG_SSM_HDMI_EDID_VERSION               "ssm.handle.hdmi.edid.version"
 
 #define CFG_ATV_FREQ_LIST                       "atv.get.min.max.freq"
 #define CFG_DTV_SCAN_SORT_MODE                  "dtv.scan.sort.mode"

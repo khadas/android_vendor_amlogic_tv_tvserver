@@ -323,6 +323,7 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
         mCurEv.mServiceId = srv->srv_id;
         mCurEv.mONetId = srv->tsinfo->nid;
         mCurEv.mTsId = srv->tsinfo->tsid;
+        mCurEv.mPatTsId = srv->tsinfo->pat_ts_id;
         strncpy(mCurEv.mProgramName, srv->name, 1024);
         mCurEv.mprogramType = srv->srv_type;
         mCurEv.mVid = srv->vid;
@@ -538,6 +539,7 @@ void CTvScanner::processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
 
     ts_info->nid = -1;
     ts_info->tsid = -1;
+    ts_info->pat_ts_id = -1;
     ts_info->vct[0] = 0;
 
     if (ts->type == AM_SCAN_TS_ANALOG) {
@@ -554,12 +556,14 @@ void CTvScanner::processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
        dvbpsi_pat_t *pats = getValidPats(ts);
        if (pats != NULL && !ts->digital.use_vct_tsid) {
             ts_info->tsid = pats->i_ts_id;
+            ts_info->pat_ts_id = pats->i_ts_id;
             if (ts->digital.sdts)
                 ts_info->tsid = ts->digital.sdts->i_ts_id;
             else if (IS_DVBT2_TS(ts->digital.fend_para) && ts->digital.dvbt2_data_plp_num > 0 && ts->digital.dvbt2_data_plps[0].sdts)
                 ts_info->tsid = ts->digital.dvbt2_data_plps[0].sdts->i_ts_id;
         } else if (ts->digital.vcts != NULL) {
             ts_info->tsid = ts->digital.vcts->i_extension;
+            ts_info->pat_ts_id = ts_info->tsid;
         }
 
         /*nid*/
@@ -900,6 +904,9 @@ void CTvScanner::processDvbTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, servic
     dvbpsi_pat_t *valid_pat = NULL;
     uint8_t plp_id;
     SCAN_ServiceInfo_t *psrv_info;
+    dvbpsi_pat_program_t *prog;
+    int programs_in_pat = 0;
+    dvbpsi_pat_t *pat;
 
     valid_pat = getValidPats(ts);
     if (valid_pat == NULL) {
@@ -908,6 +915,12 @@ void CTvScanner::processDvbTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, servic
     }
 
     LOGD(" TS: src %d", src);
+
+    AM_SI_LIST_BEGIN(valid_pat, pat) {
+        AM_SI_LIST_BEGIN(pat->p_first_program, prog) {
+            programs_in_pat ++;
+        } AM_SI_LIST_END();
+    } AM_SI_LIST_END();
 
     if (ts->digital.pmts || (IS_DVBT2_TS(ts->digital.fend_para) && ts->digital.dvbt2_data_plp_num > 0)) {
         int loop_count, lc;
@@ -934,6 +947,7 @@ void CTvScanner::processDvbTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, servic
                 psrv_info->pmt_pid = getPmtPid(pat_list, pmt->i_program_number);
                 psrv_info->pcr_pid = pmt->i_pcr_pid;
                 psrv_info->plp_id  = plp_id;
+                psrv_info->programs_in_pat = programs_in_pat;
 
                 /* looking for CA descr */
                 if (! psrv_info->scrambled_flag) {

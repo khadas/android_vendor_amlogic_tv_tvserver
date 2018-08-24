@@ -104,7 +104,7 @@ void DroidTvServiceIntf::onTvEvent(const CTvEv &ev)
                 LOGD("scanner evt type:%d freq:%d vid:%d acnt:%d scnt:%d",
                      pScannerEv->mType, pScannerEv->mFrequency, pScannerEv->mVid, pScannerEv->mAcnt, pScannerEv->mScnt);
                 hidlParcel.msgType = SCAN_EVENT_CALLBACK;
-                hidlParcel.bodyInt.resize(MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+40);
+                hidlParcel.bodyInt.resize(MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+41);
                 hidlParcel.bodyString.resize(pScannerEv->mScnt+pScannerEv->mAcnt+3);
                 hidlParcel.bodyInt[0] = pScannerEv->mType;
                 hidlParcel.bodyInt[1] = pScannerEv->mPercent;
@@ -179,6 +179,7 @@ void DroidTvServiceIntf::onTvEvent(const CTvEv &ev)
                 hidlParcel.bodyInt[MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+38] = pScannerEv->mHideGuide;
                 hidlParcel.bodyString[pScannerEv->mScnt+pScannerEv->mAcnt+2] = pScannerEv->mVct;
                 hidlParcel.bodyInt[MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+39] = pScannerEv->mProgramsInPat;
+                hidlParcel.bodyInt[MAX_LCN*3+5*pScannerEv->mScnt+4*pScannerEv->mAcnt+40] = pScannerEv->mPatTsId;
 
                 mNotifyListener->onEvent(hidlParcel);
             //}

@@ -280,7 +280,8 @@ public:
         char mHideGuide;
         char mVctType;
         char mVct[1024];
-	    int mProgramsInPat;
+        int mProgramsInPat;
+        int mPatTsId;
     };
 
     class IObserver {
@@ -392,6 +393,7 @@ private:
     typedef struct {
         int nid;
         int tsid;
+        int pat_ts_id;
         CFrontEnd::FEParas fe;
         int dtvstd;
         char vct[1024];

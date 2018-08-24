@@ -173,6 +173,7 @@ void TvService::onTvEvent(const CTvEv &ev)
                 p.writeInt32(pScannerEv->mHideGuide);
                 p.writeString16(String16(pScannerEv->mVct));
                 p.writeInt32(pScannerEv->mProgramsInPat);
+                p.writeInt32(pScannerEv->mPatTsId);
 
                 ScannerClient->notifyCallback(SCAN_EVENT_CALLBACK, p);
             }

@@ -1301,6 +1301,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         //set TUNER
         //usleep(400 * 1000);
         mFrontDev->Open(TV_FE_AUTO);
+        mFrontDev->setMode(TV_FE_ANALOG);
         mFrontDev->setPara ( paras, force );
         //usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
@@ -1316,6 +1317,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
             }
         }
         mFrontDev->Open(TV_FE_AUTO);
+        mFrontDev->setMode(FEMode_Base);
         mFrontDev->setPara (paras, force);
     }
 

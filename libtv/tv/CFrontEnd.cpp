@@ -199,30 +199,29 @@ int CFrontEnd::setMode(int mode)
     AutoMutex _l( mLock );
 
     int rc = 0;
-    int devID = 0;
 
-    if (mCurMode == mode && mVLCurMode == mode)
+    if (mCurMode == mode && mVLCurMode == mode) {
+        LOGD("%s, set same mode %d, return.\n", __FUNCTION__, mode);
         return 0;
+    }
 
+    LOGD("%s, set mode %d.\n", __FUNCTION__, mode);
     if (mode == TV_FE_ANALOG) {
-        devID = mVLFrontDevID;
-        rc = AM_FEND_SetMode(devID, FE_ANALOG);
-        rc = AM_VLFEND_SetMode(devID, mode);
+        rc = AM_FEND_SetMode(mFrontDevID, FE_ANALOG);
+        rc = AM_VLFEND_SetMode(mVLFrontDevID, mode);
+        mCurMode = FE_ANALOG;
+        mVLCurMode = FE_ANALOG;
     } else {
-        devID = mFrontDevID;
-        rc = AM_VLFEND_SetMode(devID, 0);
-        rc = AM_FEND_SetMode(devID, mode);
+        rc = AM_VLFEND_SetMode(mVLFrontDevID, FE_AUTO);
+        rc = AM_FEND_SetMode(mFrontDevID, mode);
+        mCurMode = mode;
+        mVLCurMode = FE_AUTO;
     }
 
     if (rc != 0) {
         LOGD("%s,front dev set mode failed! dvb error id is %d\n", __FUNCTION__, rc);
         return -1;
     }
-
-    if (devID == mFrontDevID)
-        mCurMode = mode;
-    else
-        mVLCurMode = mode;
 #endif
 
     return 0;
@@ -463,14 +462,18 @@ int CFrontEnd::setPara(const char *paras, bool force )
         atv_para.u.analog.std = dvbfepara.analog.para.u.analog.std;
         atv_para.u.analog.flag = dvbfepara.analog.para.u.analog.flag;
         atv_para.u.analog.afc_range = dvbfepara.analog.para.u.analog.afc_range;
-        AM_FEND_SetMode(mFrontDevID, FE_ANALOG);
-        ret = AM_VLFEND_SetMode(mVLFrontDevID, dvbfepara.m_type);
+        //AM_FEND_SetMode(mFrontDevID, FE_ANALOG);
+        //ret = AM_VLFEND_SetMode(mVLFrontDevID, dvbfepara.m_type);
         ret = AM_VLFEND_SetPara(mVLFrontDevID, &atv_para);
+        mCurMode = FE_ANALOG;
+        mVLCurMode = dvbfepara.m_type;
     }
     else
     {
-        AM_VLFEND_SetMode(mVLFrontDevID, 0);
+        //AM_VLFEND_SetMode(mVLFrontDevID, 0);
         ret = AM_FENDCTRL_SetPara(mFrontDevID, &dvbfepara);
+        mCurMode = dvbfepara.m_type;
+        mVLCurMode = FE_AUTO;
     }
 
     if (ret != 0) {

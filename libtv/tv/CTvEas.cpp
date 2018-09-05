@@ -193,6 +193,7 @@ void CTvEas::EasEvtCallback(long dev_no, int event_type, void *param, void *user
 
     switch (event_type) {
     case AM_EPG_EVT_NEW_CEA: {
+        LOGD("%s: EAS callback!\n", __FUNCTION__);
         dvbpsi_atsc_cea_t *tmp = (dvbpsi_atsc_cea_t *)param;
 
         int SectionCount = 0;
@@ -280,13 +281,12 @@ void CTvEas::EasEvtCallback(long dev_no, int event_type, void *param, void *user
                     TempDesc2 = TempDesc2->p_next;
                 }
             }
-
             pEas->mpObserver->onEvent(pEas->mCurEasEv);
-            //tmp2 = tmp2->p_next;
         }
         break;
     }
     default:
+        LOGD("%s: other callback!\n", __FUNCTION__);
         break;
     }
 #endif

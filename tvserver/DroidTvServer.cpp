@@ -387,6 +387,24 @@ Return<int32_t> DroidTvServer::sendRecordingCmd(int32_t cmd, const hidl_string& 
     return mTvServiceIntf->sendRecordingCmd(cmd, id, param);
 }
 
+Return<void> DroidTvServer::searchRrtInfo(int32_t rating_region_id, int32_t dimension_id, int32_t value_id, searchRrtInfo_cb _hidl_cb) {
+    RRTSearchInfo info;
+    rrt_select_info_t tempInfo = mTvServiceIntf->searchRrtInfo(rating_region_id, dimension_id, value_id);
+    info.RatingRegionName = tempInfo.rating_region_name;
+    info.DimensionsName = tempInfo.dimensions_name;
+    info.RatingValueText = tempInfo.rating_value_text;
+    _hidl_cb(info);
+    return Void();
+}
+
+Return<int32_t> DroidTvServer::updateRRT(int32_t freq, int32_t moudle, int32_t mode) {
+    return mTvServiceIntf->updateRRT(freq, moudle, mode);
+}
+
+Return<int32_t> DroidTvServer::updateEAS(int32_t freq, int32_t moudle, int32_t mode) {
+    return mTvServiceIntf->updateEAS(freq, moudle, mode);
+}
+
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {
         LOGE("%s don't support type:%d", __FUNCTION__, (int)type);

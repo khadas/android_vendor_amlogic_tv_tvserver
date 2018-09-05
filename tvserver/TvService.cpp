@@ -2935,44 +2935,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
     case GET_SAVE_AMAUDIO_VOLUME: {
         break;
     }
-    case DTV_UPDATE_RRT: {
-        int freq = p.readInt32();
-        int modulation = p.readInt32();
-        int mode = p.readInt32();
-        int ret = mpTv->Tv_RrtUpdate(freq, modulation, mode);
-        r->writeInt32(ret);
-        break;
-    }
-    case DTV_SEARCH_RRT: {
-        int rating_region_id = p.readInt32();
-        int dimension_id = p.readInt32();
-        int value_id = p.readInt32();
-        rrt_select_info_t rrt_info;
-        int ret = mpTv->Tv_RrtSearch(rating_region_id, dimension_id, value_id, &rrt_info);
-        r->writeInt32(rrt_info.dimensions_name_count);
-        int count = rrt_info.dimensions_name_count;
-        if (count != 0) {
-            r->writeString16(String16(rrt_info.dimensions_name));
-        }
-        r->writeInt32(rrt_info.rating_region_name_count);
-        count = rrt_info.rating_region_name_count;
-        if (count != 0) {
-            r->writeString16(String16(rrt_info.rating_region_name));
-        }
-        r->writeInt32(rrt_info.rating_value_text_count);
-        count = rrt_info.rating_value_text_count;
-        if (count != 0) {
-            r->writeString16(String16(rrt_info.rating_value_text));
-        }
-        r->writeInt32(ret);
-        break;
-    }
-
-    case DTV_UPDATE_EAS: {
-        int ret = mpTv->Tv_Easupdate();
-        r->writeInt32(ret);
-        break;
-    }
     // EXTAR END
 
     //NEWPLAY/RECORDING

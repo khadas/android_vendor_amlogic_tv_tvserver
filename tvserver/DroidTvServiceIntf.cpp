@@ -462,9 +462,7 @@ void DroidTvServiceIntf::onTvEvent(const CTvEv &ev)
                 hidlParcel.bodyInt[index++] = pEasEvent->descriptor[j].p_data[k];
             }
         }
-        LOGD("TV event EAS count = %d", index);
         mNotifyListener->onEvent(hidlParcel);
-
         break;
     }
     case CTvEv::TV_EVENT_AUDIO_CB: {
@@ -477,7 +475,6 @@ void DroidTvServiceIntf::onTvEvent(const CTvEv &ev)
         hidlParcel.bodyInt[1] = pEv->param1;
         hidlParcel.bodyInt[2] = pEv->param2;
         mNotifyListener->onEvent(hidlParcel);
-
         break;
     }
 
@@ -772,6 +769,18 @@ int DroidTvServiceIntf::setWssStatus (int status) {
 int DroidTvServiceIntf::sendRecordingCmd(int32_t cmd, const std::string& id, const std::string& param) {
     LOGD("sendRecordingCmd in tvserver cmd = %d, id = %s", cmd, id.c_str());
     return mpTv->doRecordingCommand(cmd, id.c_str(), param.c_str());
+}
+
+rrt_select_info_t DroidTvServiceIntf::searchRrtInfo(int rating_region_id, int dimension_id, int value_id) {
+    return mpTv->Tv_RrtSearch(rating_region_id, dimension_id, value_id);
+}
+
+int DroidTvServiceIntf::updateRRT(int freq, int moudle, int mode) {
+    return mpTv->Tv_RrtUpdate(freq, moudle, mode);
+}
+
+int DroidTvServiceIntf::updateEAS(int freq, int moudle, int mode) {
+    return mpTv->Tv_Easupdate();
 }
 
 int DroidTvServiceIntf::processCmd(const Parcel &p) {
@@ -2178,40 +2187,6 @@ int DroidTvServiceIntf::processCmd(const Parcel &p) {
         case GET_SAVE_AMAUDIO_VOLUME: {
             break;
         }
-        case DTV_UPDATE_RRT: {
-            int freq = p.readInt32();
-            int modulation = p.readInt32();
-            int mode = p.readInt32();
-            ret = mpTv->Tv_RrtUpdate(freq, modulation, mode);
-            break;
-        }
-        case DTV_SEARCH_RRT: {
-            int rating_region_id = p.readInt32();
-            int dimension_id = p.readInt32();
-            int value_id = p.readInt32();
-            rrt_select_info_t rrt_info;
-            ret = mpTv->Tv_RrtSearch(rating_region_id, dimension_id, value_id, &rrt_info);
-            //r->writeInt32(rrt_info.dimensions_name_count);
-            int count = rrt_info.dimensions_name_count;
-            if (count != 0) {
-                //r->writeString16(String16(rrt_info.dimensions_name));
-            }
-            //r->writeInt32(rrt_info.rating_region_name_count);
-            count = rrt_info.rating_region_name_count;
-            if (count != 0) {
-                //r->writeString16(String16(rrt_info.rating_region_name));
-            }
-            //r->writeInt32(rrt_info.rating_value_text_count);
-            count = rrt_info.rating_value_text_count;
-            if (count != 0) {
-                //r->writeString16(String16(rrt_info.rating_value_text));
-            }
-            break;
-        }
-
-        case DTV_UPDATE_EAS:
-            ret = mpTv->Tv_Easupdate();
-            break;
         // EXTAR END
 
         //NEWPLAY/RECORDING

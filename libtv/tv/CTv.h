@@ -306,7 +306,7 @@ public:
     tvin_port_t Tv_GetHdmiPortBySourceInput(tv_source_input_t source_input);
     int SetVideoAxis(int x, int y, int width, int heigth);
     int Tv_RrtUpdate(int freq, int modulation, int mode);
-    int Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info);
+    rrt_select_info_t Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id);
     int Tv_Easupdate();
     int Tv_SetWssStatus (int status);
     void dump(String8 &result);

@@ -220,6 +220,7 @@ void CTv::onEvent ( const CTvScanner::ScannerEvent &ev )
 
 void CTv::onEvent ( const CTvEas::EasEvent &ev )
 {
+    LOGD("EAS event!\n");
     sendTvEvent(ev);
 }
 
@@ -308,6 +309,7 @@ void CTv::onEvent(const CTvRecord::RecEvent &ev)
 
 void CTv::onEvent (const CTvRrt::RrtEvent &ev)
 {
+    LOGD("RRT event!\n");
     sendTvEvent ( ev );
 }
 
@@ -548,7 +550,6 @@ void CTv::CTvMsgQueue::onEvent ( const CTvEas::EasEvent &ev )
     CMessage msg;
     msg.mDelayMs = 0;
     msg.mType = CTvMsgQueue::TV_MSG_EAS_EVENT;
-    LOGD("event size = %d\n",sizeof(ev));
     memcpy(msg.mpPara, (void*)&ev, sizeof(ev));
     this->sendMsg ( msg );
 }
@@ -3181,20 +3182,18 @@ int CTv::Tv_RrtUpdate(int freq, int modulation, int mode)
     return ret;
 }
 
-int CTv::Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *rrt_select_info)
+rrt_select_info_t CTv::Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id)
 {
-    int ret = 0;
 #ifdef SUPPORT_ADTV
     rrt_select_info_t tmp;
     memset(&tmp, 0, sizeof(rrt_select_info_t));
-    ret = mTvRrt->GetRRTRating(rating_region_id, dimension_id, value_id, &tmp);
+    int ret = mTvRrt->GetRRTRating(rating_region_id, dimension_id, value_id, &tmp);
     if (ret < 0) {
         LOGD("Tv_RrtSearch error!\n");
     }
 
-    *rrt_select_info = tmp;
 #endif
-    return ret;
+    return tmp;
 }
 
 void CTv::setDvbLogLevel() {

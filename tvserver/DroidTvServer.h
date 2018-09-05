@@ -42,6 +42,7 @@ using ::vendor::amlogic::hardware::tvserver::V1_0::ITvServerCallback;
 using ::vendor::amlogic::hardware::tvserver::V1_0::ConnectType;
 using ::vendor::amlogic::hardware::tvserver::V1_0::SignalInfo;
 using ::vendor::amlogic::hardware::tvserver::V1_0::FormatInfo;
+using ::vendor::amlogic::hardware::tvserver::V1_0::RRTSearchInfo;
 using ::vendor::amlogic::hardware::tvserver::V1_0::TvHidlParcel;
 using ::vendor::amlogic::hardware::tvserver::V1_0::Result;
 using ::android::hardware::hidl_vec;
@@ -127,7 +128,9 @@ public:
     Return<int32_t> DtvSwitchAudioTrack3(int32_t audio_pid, int32_t audio_format,int32_t audio_param) override;
     Return<int32_t> setWssStatus(int32_t status) override;
     Return<int32_t> sendRecordingCmd(int32_t cmd, const hidl_string& id, const hidl_string& param) override;
-
+    Return<void> searchRrtInfo(int32_t rating_region_id, int32_t dimension_id, int32_t value_id, searchRrtInfo_cb _hidl_cb) override;
+    Return<int32_t> updateRRT(int32_t freq, int32_t moudle, int32_t mode) override;
+    Return<int32_t> updateEAS(int32_t freq, int32_t moudle, int32_t mode) override;
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;
 
     virtual void onEvent(const TvHidlParcel &hidlParcel);

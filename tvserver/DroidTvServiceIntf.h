@@ -34,6 +34,7 @@ using namespace android;
 
 using ::vendor::amlogic::hardware::tvserver::V1_0::TvHidlParcel;
 using ::vendor::amlogic::hardware::tvserver::V1_0::FreqList;
+using ::vendor::amlogic::hardware::tvserver::V1_0::RRTSearchInfo;
 
 class TvServiceNotify : virtual public RefBase {
 public:
@@ -111,7 +112,9 @@ public:
     int DtvSwitchAudioTrack(int32_t audio_pid, int32_t audio_format, int32_t audio_param);
     int setWssStatus(int status);
     int sendRecordingCmd(int32_t cmd, const std::string& id, const std::string& param);
-
+    rrt_select_info_t searchRrtInfo(int rating_region_id, int dimension_id, int value_id);
+    int updateRRT(int freq, int moudle, int mode);
+    int updateEAS(int freq, int moudle, int mode);
     virtual status_t dump(int fd, const Vector<String16>& args);
 
     //wp<Client> mpScannerClient;

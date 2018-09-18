@@ -103,6 +103,7 @@ public:
     Return<int32_t> pauseScan() override;
     Return<int32_t> resumeScan() override;
     Return<int32_t> dtvStopScan() override;
+    Return<int32_t> dtvGetSignalStrength() override;
     Return<int32_t> tvSetFrontEnd(const hidl_string& feparas, int32_t force) override;
     Return<int32_t> tvSetFrontendParms(int32_t feType, int32_t freq, int32_t vStd, int32_t aStd, int32_t vfmt, int32_t soundsys, int32_t p1, int32_t p2) override;
     Return<int32_t> sendPlayCmd(int32_t cmd, const hidl_string& id, const hidl_string& param) override;

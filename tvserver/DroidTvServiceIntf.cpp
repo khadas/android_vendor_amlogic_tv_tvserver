@@ -636,6 +636,10 @@ int DroidTvServiceIntf::dtvStopScan() {
     return mpTv->stopScanLock();
 }
 
+int DroidTvServiceIntf::dtvGetSignalStrength() {
+    return mpTv->getFrontendSignalStrength();
+}
+
 int DroidTvServiceIntf::tvSetFrontEnd(const std::string& feparas, int32_t force) {
     return mpTv->setFrontEnd(feparas.c_str(), (force != 0));
 }

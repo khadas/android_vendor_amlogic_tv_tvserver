@@ -1345,7 +1345,9 @@ int CTv::resetDmxAndAvSource()
     mTvDmx1.SetSource(curdmxSource);
     mTvDmx2.Open(para);
     mTvDmx2.SetSource(curdmxSource);
-    int ts_source = ( int ) curdmxSource;
+    AM_AV_TSSource_t ts_source = AM_AV_TS_SRC_DMX0;
+//	int  ts_source = curdmxSource;
+    LOGD ( "%s, AM_FEND_GetTSSource %d", __FUNCTION__, ts_source);
     mAv.SetTSSource (ts_source );
 #endif
     return 0;

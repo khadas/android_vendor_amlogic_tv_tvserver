@@ -138,7 +138,7 @@ public :
         static const int FORMAT_FLAC      = 8;
         /**COOK*/
         static const int FORMAT_COOK      = 9;
-        /**PCM 8Î»*/
+        /**PCM 8¦Ë*/
         static const int FORMAT_PCM_U8    = 10;
         /**ADPCM*/
         static const int FORMAT_ADPCM     = 11;

@@ -272,10 +272,6 @@ Return<int32_t> DroidTvServer::dtvStopScan() {
     return mTvServiceIntf->dtvStopScan();
 }
 
-Return<int32_t> DroidTvServer::dtvGetSignalStrength() {
-    return mTvServiceIntf->dtvGetSignalStrength();
-}
-
 Return<int32_t> DroidTvServer::tvSetFrontEnd(const hidl_string& feparas, int32_t force) {
     return mTvServiceIntf->tvSetFrontEnd(feparas, force);
 }

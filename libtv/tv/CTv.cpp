@@ -1345,9 +1345,7 @@ int CTv::resetDmxAndAvSource()
     mTvDmx1.SetSource(curdmxSource);
     mTvDmx2.Open(para);
     mTvDmx2.SetSource(curdmxSource);
-    AM_AV_TSSource_t ts_source = AM_AV_TS_SRC_DMX0;
-//	int  ts_source = curdmxSource;
-    LOGD ( "%s, AM_FEND_GetTSSource %d", __FUNCTION__, ts_source);
+    int ts_source = ( int ) curdmxSource;
     mAv.SetTSSource (ts_source );
 #endif
     return 0;
@@ -1829,7 +1827,7 @@ int CTv::DoResume(int type)
 
 int CTv::StopTvLock ( void )
 {
-    LOGD("%s: mTvStatus = %dï¼ŒmBlackoutEnable = %d\n", __FUNCTION__, mTvStatus, mBlackoutEnable);
+    LOGD("%s: mTvStatus = %d£¬mBlackoutEnable = %d\n", __FUNCTION__, mTvStatus, mBlackoutEnable);
     AutoMutex _l( mLock );
     mTvAction |= TV_ACTION_STOPING;
     mAv.DisableVideoWithBlackColor();
@@ -3188,8 +3186,8 @@ rrt_select_info_t CTv::Tv_RrtSearch(int rating_region_id, int dimension_id, int 
 {
     rrt_select_info_t tmp;
     memset(&tmp, 0, sizeof(rrt_select_info_t));
-
 #ifdef SUPPORT_ADTV
+
     int ret = mTvRrt->GetRRTRating(rating_region_id, dimension_id, value_id, &tmp);
     if (ret < 0) {
         LOGD("Tv_RrtSearch error!\n");

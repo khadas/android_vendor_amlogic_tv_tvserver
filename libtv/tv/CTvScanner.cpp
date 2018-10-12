@@ -260,7 +260,7 @@ int CTvScanner::getScanStatus(int *status)
 }
 
 
-int CTvScanner::getParamOption(char *para) {
+int CTvScanner::getParamOption(const char *para) {
     int forcePara = -1;
     char paraForce[64];
     snprintf(paraForce, sizeof(paraForce), "dtv.scan.%s", para);

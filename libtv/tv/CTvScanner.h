@@ -458,7 +458,7 @@ private:
     void notifyService(SCAN_ServiceInfo_t *service);
     void notifyLcn(ScannerLcnInfo *lcn);
     int insertLcnList(lcn_list_t &llist, ScannerLcnInfo *lcn, int idx);
-    int getParamOption(char *para);
+    int getParamOption(const char *para);
     int getScanDtvStandard(ScanParas &scp);
     bool needVbiAssist();
     bool checkVbiDataReady(int freq);

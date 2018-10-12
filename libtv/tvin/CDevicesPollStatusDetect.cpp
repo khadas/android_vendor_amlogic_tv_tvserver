@@ -74,8 +74,8 @@ int CDevicesPollStatusDetect::startDetect()
     return 0;
 }
 
-char* CDevicesPollStatusDetect::inputToName(tv_source_input_t srcInput) {
-    char* inputName[] = {
+const char* CDevicesPollStatusDetect::inputToName(tv_source_input_t srcInput) {
+    const char* inputName[] = {
         /*"INVALID",*/
         "TV",
         "AV1",

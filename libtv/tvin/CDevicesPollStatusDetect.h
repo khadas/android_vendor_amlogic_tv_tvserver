@@ -71,7 +71,7 @@ public:
     };
 private:
     bool threadLoop();
-    char* inputToName(tv_source_input_t srcInput);
+    const char* inputToName(tv_source_input_t srcInput);
 
     int mVdinDetectFd;
     ISourceConnectObserver *mpObserver;

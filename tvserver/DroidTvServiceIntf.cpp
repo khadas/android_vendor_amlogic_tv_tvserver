@@ -640,6 +640,10 @@ int DroidTvServiceIntf::tvSetFrontEnd(const std::string& feparas, int32_t force)
     return mpTv->setFrontEnd(feparas.c_str(), (force != 0));
 }
 
+int DroidTvServiceIntf::dtvGetSignalStrength() {
+    return mpTv->getFrontendSignalStrength();
+}
+
 int DroidTvServiceIntf::tvSetFrontendParms(int32_t feType, int32_t freq, int32_t vStd, int32_t aStd, int32_t vfmt, int32_t soundsys, int32_t p1, int32_t p2) {
     frontend_para_set_t feParms;
 #ifdef SUPPORT_ADTV

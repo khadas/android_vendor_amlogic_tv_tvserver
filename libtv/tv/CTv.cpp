@@ -721,7 +721,7 @@ int CTv::atvAutoScan(int videoStd __unused, int audioStd __unused, int searchTyp
     }
     minScanFreq = mFrontDev->formatATVFreq ( minScanFreq );
     maxScanFreq = mFrontDev->formatATVFreq ( maxScanFreq );
-    LOGD("%s, atv auto scan vstd=%d, astd=%d stdandcolor=%lld", __FUNCTION__, vStd, aStd, stdAndColor);
+    LOGD("%s, atv auto scan vstd=%d, astd=%d stdandcolor=0x%x", __FUNCTION__, vStd, aStd, stdAndColor);
 
     mTvScanner->autoAtvScan ( minScanFreq, maxScanFreq, stdAndColor, searchType, procMode);
     return 0;
@@ -773,7 +773,7 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
 
     int fmt = CFrontEnd::stdEnumToCvbsFmt (0);
     mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) TVIN_SIG_FMT_NULL );
-    LOGD("%s, atv manual scan vstd=%d, astd=%d stdandcolor=%lld", __FUNCTION__, vStd, aStd, stdAndColor);
+    LOGD("%s, atv manual scan vstd=%d, astd=%d stdandcolor=0x%x", __FUNCTION__, vStd, aStd, stdAndColor);
 
     return mTvScanner->ATVManualScan ( minScanFreq, maxScanFreq, stdAndColor, store_Type, channel_num);
 }
@@ -1216,7 +1216,7 @@ int CTv::playAtvProgram (int freq, int videoStd, int audioStd, int vfmt, int sou
 
     unsigned long stdAndColor = mFrontDev->enumToStdAndColor (videoStd, audioStd);
     //set TUNER
-    mFrontDev->setPara (TV_FE_ANALOG, freq, stdAndColor, 1, vfmt, soundsys);
+    mFrontDev->setPara (TV_FE_ANALOG, freq, stdAndColor, -1, vfmt, soundsys);
 
     return 0;
 }
@@ -1238,7 +1238,7 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
         //get tunerStd from videoStd and audioStd
         unsigned long stdAndColor = mFrontDev->enumToStdAndColor (feParms.videoStd, feParms.audioStd);
 
-        LOGD("%s, resetFrontEndPara- vstd=%d astd=%d stdandcolor=%lld", __FUNCTION__, feParms.videoStd, feParms.audioStd, stdAndColor);
+        LOGD("%s, resetFrontEndPara- vstd=%d astd=%d stdandcolor=0x%x", __FUNCTION__, feParms.videoStd, feParms.audioStd, stdAndColor);
 
         //set frontend parameters to tuner dev
         mpTvin->Tvin_StopDecoder();
@@ -1250,7 +1250,7 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
         //set TUNER
         //usleep(400 * 1000);
         mFrontDev->Open(TV_FE_AUTO);
-        mFrontDev->setPara ( TV_FE_ANALOG, tmpFreq, stdAndColor, 1, feParms.vfmt);
+        mFrontDev->setPara ( TV_FE_ANALOG, tmpFreq, stdAndColor, -1, feParms.vfmt);
         //usleep(400 * 1000);
         if ( tmpfineFreq != 0 ) {
             mFrontDev->fineTune ( tmpfineFreq / 1000 );
@@ -1291,7 +1291,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         //get tunerStd from videoStd and audioStd
         unsigned long stdAndColor = mFrontDev->enumToStdAndColor (fp.getVideoStd(), fp.getAudioStd());
 
-        LOGD("%s: vstd=%d astd=%d stdandcolor=%lld", __FUNCTION__, fp.getVideoStd(), fp.getAudioStd(), stdAndColor);
+        LOGD("%s: vstd=%d astd=%d stdandcolor=0x%x", __FUNCTION__, fp.getVideoStd(), fp.getAudioStd(), stdAndColor);
         //set frontend parameters to tuner dev
         mpTvin->Tvin_StopDecoder();
 

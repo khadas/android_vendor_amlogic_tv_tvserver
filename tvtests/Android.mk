@@ -28,5 +28,5 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_MODULE:= tvtest
 
-include $(BUILD_EXECUTABLE)
+#include $(BUILD_EXECUTABLE)
 

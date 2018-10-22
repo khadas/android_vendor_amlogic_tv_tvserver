@@ -154,9 +154,6 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     SetHdmiEdidForUboot();
     mSetHdmiEdid = false;
 
-    mBootvideoStatusDetectThread = new CBootvideoStatusDetect();
-    mBootvideoStatusDetectThread->setObserver(this);
-
     mDevicesPollStatusDetectThread.setObserver ( this );
     mFrontDev->setObserver ( &mTvMsgQueue );
     mTvEas = CTvEas::GetInstance();
@@ -1766,12 +1763,8 @@ int CTv::OpenTv ( void )
     //mDevicesPollStatusDetectThread.startDetect();
     //ClearAnalogFrontEnd();
     InitCurrenSignalInfo();
-    if (!isBootvideoStopped()) {
-        mBootvideoStatusDetectThread->startDetect();
-    } else {
-        onBootvideoStopped();
-    }
 
+    m_first_enter_tvinput = true;
     mTvStatus = TV_OPEN_ED;
     return 0;
 }
@@ -1956,6 +1949,15 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
 {
     LOGD ( "[source_switch_time]: %fs, %s, virtual source input = %d source input = %d m_source_input = %d",
            getUptimeSeconds(), __FUNCTION__, virtual_input, source_input, m_source_input );
+    if ( m_first_enter_tvinput ) {
+        if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_TVIN) > 0) {
+            mpTvin->VDIN_AddVideoPath(TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
+        }
+        if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_DEFAULT) > 0) {
+            mpTvin->VDIN_AddVideoPath(TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
+        }
+        m_first_enter_tvinput = false;
+    }
 
     tvin_port_t cur_port;
     m_source_input_virtual = virtual_input;
@@ -2233,7 +2235,6 @@ void CTv::onBootvideoRunning() {
 
 void CTv::onBootvideoStopped() {
     LOGD("%s,boot video has stopped", __FUNCTION__);
-    mBootvideoStatusDetectThread->stopDetect();
     if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_TVIN) > 0) {
         mpTvin->VDIN_AddVideoPath(TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
     }
@@ -2737,11 +2738,6 @@ void CTv::updateSubtitle(int pic_width, int pic_height)
     ev.pic_width = pic_width;
     ev.pic_height = pic_height;
     sendTvEvent(ev);
-}
-
-bool CTv::isBootvideoStopped() {
-    return mBootvideoStatusDetectThread == NULL
-            || mBootvideoStatusDetectThread->isBootvideoStopped();
 }
 
 int CTv::SendCmdToOffBoardFBCExternalDac(int cmd, int para)

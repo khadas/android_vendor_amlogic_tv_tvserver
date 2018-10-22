@@ -269,7 +269,6 @@ public:
 
     CTvFactory mFactoryMode;
     CDevicesPollStatusDetect mDevicesPollStatusDetectThread;
-    CBootvideoStatusDetect *mBootvideoStatusDetectThread;
     CHDMIRxManager mHDMIRxManager;
 
     CTvSubtitle mSubtitle;
@@ -321,8 +320,6 @@ private:
     int SendCmdToOffBoardFBCExternalDac(int, int);
     int KillMediaServerClient();
     bool insertedFbcDevice();
-
-    bool isBootvideoStopped();
 
     int autoSwitchToMonitorMode();
 
@@ -463,6 +460,7 @@ protected:
     volatile tv_source_input_t m_source_input;
     volatile tv_source_input_t m_last_source_input;
     volatile tv_source_input_t m_source_input_virtual;
+    volatile bool m_first_enter_tvinput;
 
     /* for tvin window mode and pos*/
     tvin_window_pos_t m_win_pos;

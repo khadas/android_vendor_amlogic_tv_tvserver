@@ -2015,10 +2015,14 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         resetDmxAndAvSource();
 
         //we should stop audio first for audio mute.
-        //
         mpTvin->Tvin_StopDecoder();
         mpTvin->VDIN_ClosePort();
-        mpTvin->Tvin_WaitPathInactive ( TV_PATH_TYPE_DEFAULT );
+        //mpTvin->Tvin_WaitPathInactive ( TV_PATH_TYPE_DEFAULT );
+        if (mpTvin->Tvin_CheckVideoPathComplete(TV_PATH_TYPE_DEFAULT) != 0) {
+            if (mpTvin->Tvin_RemovePath (TV_PATH_TYPE_DEFAULT) > 0) {
+                mpTvin->VDIN_AddVideoPath(TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO);
+            }
+        }
 
         //double confirm we set the main volume lut buffer to mpeg
         mpTvin->setMpeg2Vdin(1);

@@ -2035,6 +2035,53 @@ int CTvin::Tvin_CheckPathActive ( tv_path_type_t path_type)
     return is_active;
 }
 
+int CTvin::Tvin_CheckVideoPathComplete(tv_path_type_t path_type)
+{
+    int ret = -1;
+    FILE *fp = NULL;
+    char path[100] = {0};
+    char decoder_str[20] = "default {";
+    char tvin_str[20] = "tvpath {";
+    char *str_find = NULL;
+    char di_str[16] = "deinterlace";
+    char ppmgr_str[16] = "ppmgr";
+    char amvideo_str[16] = "amvideo";
+
+    fp = fopen(SYS_VFM_MAP_PATH, "r");
+    if (fp != NULL) {
+        LOGE ("%s, can not open %s!\n", __FUNCTION__, SYS_VFM_MAP_PATH);
+        return ret;
+    }
+
+    while (fgets(path, sizeof(path)-1, fp)) {
+        if (path_type == TV_PATH_TYPE_DEFAULT) {
+            str_find = strstr(path, decoder_str);
+        } else if (path_type == TV_PATH_TYPE_TVIN) {
+            str_find = strstr(path, tvin_str);
+        } else {
+            break;
+        }
+
+        if (str_find != NULL) {
+            if ((strstr(str_find, di_str)) ||
+                 (strstr(str_find, ppmgr_str)) ||
+                 (strstr(str_find, amvideo_str))) {
+                LOGD("%s: VideoPath is complete!\n", __FUNCTION__);
+                ret = 0;
+            } else {
+                LOGE("%s: VideoPath is not complete!\n", __FUNCTION__);
+                ret = -1;
+            }
+            break;
+        }
+    }
+
+    fclose(fp);
+    fp = NULL;
+
+    return ret;
+}
+
 int CTvin::Tv_init_afe ( void )
 {
     //AFE_OpenModule();

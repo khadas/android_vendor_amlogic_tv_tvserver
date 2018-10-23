@@ -588,6 +588,7 @@ public:
     int Tv_uninit_afe ( void );
     int Tvin_RemovePath ( tv_path_type_t pathtype );
     int Tvin_CheckPathActive ( tv_path_type_t path_type );
+    int Tvin_CheckVideoPathComplete ( tv_path_type_t path_type );
     int setMpeg2Vdin(int enable);
     //pre apis
     int AFE_DeviceIOCtl ( int request, ... );

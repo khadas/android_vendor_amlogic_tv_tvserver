@@ -34,7 +34,7 @@ CDTVTvPlayer::CDTVTvPlayer(CTv *tv) : CTvPlayer(tv) {
     mParam = NULL;
     mSourceChanged = true;
     mOffset = -1;
-    mDisableTimeShifting = propertyGetBool("vendor.tv.dtv.tf.disable", false);
+    mDisableTimeShifting = propertyGetBool("tv.dtv.tf.disable", false);
 }
 CDTVTvPlayer::~CDTVTvPlayer() {
     if (mFEParam)
@@ -96,7 +96,7 @@ int CDTVTvPlayer::setParam(const char *param) {
     mParam = param? strdup(param) : NULL;
     mMode = paramGetInt(mParam, NULL, "mode", PLAY_MODE_LIVE);
     mSourceChanged = true;
-    //DO NOT use this param, use prop:vendor.tv.dtv.tf.disable instead
+    //DO NOT use this param, use prop:tv.dtv.tf.disable instead
     //mDisableTimeShifting = paramGetInt(mParam, NULL, "disableTimeShifting", 0) ? true : false;
     return 0;
 }
@@ -112,8 +112,8 @@ int CDTVTvPlayer::start(const char *param) {
     switch (mMode) {
         case PLAY_MODE_LIVE: {//start play live and rec in the backgroud
             if (!mDisableTimeShifting) {
-                mDisableTimeShifting = propertyGetBool("vendor.tv.dtv.tf.disable", false);
-                LOGD("prop vendor.tv.dtv.tf.disable:%s", mDisableTimeShifting? "true":"false");
+                mDisableTimeShifting = propertyGetBool("tv.dtv.tf.disable", false);
+                LOGD("prop tv.dtv.tf.disable:%s", mDisableTimeShifting? "true":"false");
             }
 
             if (bStartInTimeShift)

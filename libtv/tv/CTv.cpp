@@ -1280,7 +1280,9 @@ int CTv::setFrontEnd ( const char *paras, bool force )
     LOGD("%s: fp.getFEMode.getbase = %d", __FUNCTION__, FEMode_Base);
     if ( FEMode_Base == TV_FE_ANALOG ) {
         if (SOURCE_DTV == m_source_input) {
+            /* DTV --> ATV */
             stopPlaying(false);
+            mTvAction |= TV_ACTION_IN_VDIN;
         }
         int tmpFreq = fp.getFrequency();
         int tmpfineFreq = fp.getFrequency2();
@@ -1308,6 +1310,8 @@ int CTv::setFrontEnd ( const char *paras, bool force )
     } else {
         if (SOURCE_ADTV == m_source_input_virtual) {
             if (SOURCE_TV == m_source_input) {
+                /* ATV --> DTV */
+                mTvAction &= ~TV_ACTION_IN_VDIN;
                 mpTvin->Tvin_StopDecoder();
                 if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
                     mpTvin->SwitchSnow( false );
@@ -1820,7 +1824,7 @@ int CTv::DoResume(int type)
 
 int CTv::StopTvLock ( void )
 {
-    LOGD("%s: mTvStatus = %d£¬mBlackoutEnable = %d\n", __FUNCTION__, mTvStatus, mBlackoutEnable);
+    LOGD("%s: mTvStatus = %d, mBlackoutEnable = %d\n", __FUNCTION__, mTvStatus, mBlackoutEnable);
     AutoMutex _l( mLock );
     mTvAction |= TV_ACTION_STOPING;
     mAv.DisableVideoWithBlackColor();

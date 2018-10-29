@@ -80,7 +80,7 @@ enum
 {
 	TV_SCAN_MODE_ATV_DTV,	/**< First search all ATV, then search all DTV*/
 	TV_SCAN_MODE_DTV_ATV,	/**< First search all DTV, then search all ATV*/
-	TV_SCAN_MODE_ADTV,		/**< A/DTV Use the same frequency table£¬search the A/DTV one by one In a frequency*/
+	TV_SCAN_MODE_ADTV,		/**< A/DTV Use the same frequency table, search the A/DTV one by one In a frequency*/
 };
 //end
 

@@ -1855,6 +1855,7 @@ int CTv::StopTvLock ( void )
         LOGE("%s Set CurrentSourceInfo error!\n", __FUNCTION__);
     }
 
+    mpTvin->VDIN_SetDisplayVFreq(60, mHdmiOutFbc);
     mFrontDev->Close();
     mTvAction &= ~TV_ACTION_STOPING;
     mTvStatus = TV_STOP_ED;
@@ -2086,16 +2087,45 @@ void CTv::onSigToStable()
     }
 
     CVpp::getInstance()->LoadVppSettings(m_source_input, m_cur_sig_info.fmt, m_cur_sig_info.trans_fmt);
-
     if (mAutoSetDisplayFreq && !mPreviewEnabled) {
         int freq = 60;
         if (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_HDMI ) {
             int fps = getHDMIFrameRate();
-            LOGD("onSigToStable HDMI fps = %d", fps);
-            if ((30 == fps) || (60 == fps)) {
-                freq = 60;
+            LOGD("%s: HDMI source frame rate is %d\n", __FUNCTION__, fps);
+            const char *value;
+            bool PreviewWindowFlag = false;
+            value = config_get_str ( CFG_SECTION_TV, CFG_TVIN_DISPLAY_PREVIEW_WINDOW, "null" );
+            if ( strcmp ( value, "enable" ) == 0 ) {
+                PreviewWindowFlag = true;
+            }
+
+            int HdmiTxStatus = access(FRAME_RATE_SUPPORT_LIST_PATH, 0);
+            if ((HdmiTxStatus == 0) && (PreviewWindowFlag)) {
+                LOGD("%s: Support hdmi TX mode!\n", __FUNCTION__);
+                std::string str = std::to_string(fps);
+                std::vector<std::string> supportFrameRates;
+                ret = mpTvin->VDIN_GetFrameRateSupportList(&supportFrameRates);
+                if (ret == 0) {
+                    std::vector<std::string>::iterator result = find(supportFrameRates.begin( ), supportFrameRates.end( ), str);
+                    if (result != supportFrameRates.end()) {
+                        LOGD("Output device support %d frame rate!\n", fps);
+                        freq = fps;
+                    } else {
+                        LOGD("Output device don't support %d frame rate!\n", fps);
+                        if ((30 == fps) || (60 == fps)) {
+                            freq = 60;
+                        } else {
+                            freq = 50;
+                        }
+                    }
+                }
             } else {
-                freq = 50;
+                LOGD("%s: Don't support hdmi TX mode!\n", __FUNCTION__);
+                if ((30 == fps) || (60 == fps)) {
+                    freq = 60;
+                } else {
+                    freq = 50;
+                }
             }
             autoSwitchToMonitorMode();
         } else if ( CTvin::Tvin_is50HzFrameRateFmt ( m_cur_sig_info.fmt ) ) {
@@ -2103,7 +2133,6 @@ void CTv::onSigToStable()
         }
 
         mpTvin->VDIN_SetDisplayVFreq ( freq, mHdmiOutFbc );
-        LOGD ( "%s, SetDisplayVFreq %dHZ.", __FUNCTION__, freq);
     }
     //showbo mark  hdmi auto 3d, tran fmt  is 3d, so switch to 3d
 

@@ -61,6 +61,7 @@
 #define CFG_TVIN_USERPET_RESET                  "tvin.userpet.reset"
 
 #define CFG_TVIN_DISPLAY_FREQ_AUTO              "tvin.autoset.displayfreq"
+#define CFG_TVIN_DISPLAY_PREVIEW_WINDOW         "tvin.display.previewwindow"
 #define CFG_TVIN_DB_REG                         "tvin.db.reg.en"
 #define CFG_TVIN_THERMAL_THRESHOLD_ENABLE       "tvin.thermal.threshold.enable"
 #define CFG_TVIN_THERMAL_THRESHOLD_VALUE        "tvin.thermal.threshold.value"

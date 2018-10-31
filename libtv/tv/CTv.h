@@ -75,7 +75,6 @@ static const char *TV_CONFIG_EDID20_FILE_PATH = "/vendor/etc/tvconfig/hdmi/port_
 #define DTV_DVBT_MODE        "dvbt"
 #define DTV_ISDBT_MODE       "isdbt"
 
-
 typedef enum tv_window_mode_e {
     NORMAL_WONDOW,
     PREVIEW_WONDOW,

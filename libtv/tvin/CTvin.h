@@ -14,6 +14,8 @@
 #include <utils/Thread.h>
 #include <utils/Mutex.h>
 #include "PQType.h"
+#include <vector>
+
 #ifdef SUPPORT_ADTV
 #include "../tv/CFrontEnd.h"
 #endif
@@ -576,6 +578,7 @@ typedef enum tv_source_connect_detect_status_e {
 
 #define CC_REQUEST_LIST_SIZE            (32)
 #define CC_SOURCE_DEV_REFRESH_CNT       (E_LA_MAX)
+#define FRAME_RATE_SUPPORT_LIST_PATH    "/sys/class/amhdmitx/amhdmitx0/disp_cap"//RX support display mode
 
 class CTvin {
 public:
@@ -644,6 +647,7 @@ public:
     int VDIN_UpdateForPQMode(pq_status_update_e gameStatus, pq_status_update_e pcStatus);
     int VDIN_GetVdinDeviceFd(void);
     int VDIN_SetWssStatus(int status);
+    int VDIN_GetFrameRateSupportList(std::vector<std::string> *supportFrameRates);
 
     int AFE_OpenModule ( void );
     void AFE_CloseModule ( void );    int AFE_SetCVBSStd ( tvin_sig_fmt_t cvbs_fmt );

@@ -292,42 +292,34 @@ int CTvin::VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam )
 
 void CTvin::VDIN_GetDisplayVFreq (int need_freq, int *iSswitch, char * display_mode)
 {
-	int lastFreq = 50;
-	char buf[32] = {0};
-	char *p = NULL;
+    int lastFreq = 50;
+    char buf[32] = {0};
 
-	if ( 0 > tvReadSysfs(SYS_DISPLAY_MODE_PATH, buf) ) {
-		LOGW("Read /sys/class/display/mode failed!\n");
-		return;
-	}
+    if ( 0 > tvReadSysfs(SYS_DISPLAY_MODE_PATH, buf) ) {
+        LOGW("Read /sys/class/display/mode failed!\n");
+        return;
+    }
 
-	LOGD( "%s, current display mode: %s\n", __FUNCTION__, buf);
-	if (((p = strstr(buf, "480")) != NULL) && (50 == need_freq)) {
-		*iSswitch = 0;
-		LOGD("%s, can not support 480i&480p 50hz\n", __FUNCTION__);
-		return;
-	} else if (((p = strstr(buf, "576")) != NULL) && (60 == need_freq)) {
-		*iSswitch = 0;
-		LOGD("%s, can not support 576i&576p 60hz\n", __FUNCTION__);
-		return;
-	} else if ((p = strstr(buf, "50hz")) != NULL) {
-		lastFreq = 50;
-	} else if ((p = strstr(buf, "60hz")) != NULL) {
-		lastFreq = 60;
-	} else {
-		LOGW("%s, can not find 50hz or 60hz in %s\n", __FUNCTION__, buf);
-	}
+    LOGD( "%s: current display mode: %s\n", __FUNCTION__, buf);
 
-	if ((need_freq != lastFreq) && (NULL != p)) {
-		if (50 == need_freq)
-			strncpy( p, "50hz", 4);
-		else if (60 == need_freq)
-			strncpy( p, "60hz", 4);
-
-		strcpy(display_mode, buf);
-		LOGD( "%s, need set display mode: %s\n", __FUNCTION__, buf);
-		*iSswitch = 1;
-	}
+    if ((strstr(buf, "480") != NULL) && (50 == need_freq)) {
+        *iSswitch = 0;
+        LOGD("%s, can not support 480i&480p 50hz\n", __FUNCTION__);
+        return;
+    } else if ((strstr(buf, "576") != NULL) && (60 == need_freq)) {
+        *iSswitch = 0;
+        LOGD("%s, can not support 576i&576p 60hz\n", __FUNCTION__);
+        return;
+    } else {
+        std::string TempStr = std::string(buf);
+        std::string TimingStr = TempStr.substr(0, TempStr.length()-4);
+        std::string FreqStr = TempStr.substr(TempStr.length()-4, 2);
+        lastFreq = atoi(FreqStr.c_str());
+        if (need_freq != lastFreq) {
+            sprintf(display_mode, "%s%dhz", TimingStr.c_str(), need_freq);
+            *iSswitch = 1;
+        }
+    }
 }
 
 int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
@@ -337,10 +329,10 @@ int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
 
     VDIN_GetDisplayVFreq(freq, &iSswitch, display_mode);
     if (0 == iSswitch) {
-        LOGW ( "%s, same freq = %d.", __FUNCTION__, freq);
+        LOGW ( "%s: same freq = %d, no need set!\n", __FUNCTION__, freq);
         return 0;
     } else {
-        LOGD ( "%s, set display mode to %s", __FUNCTION__, display_mode);
+        LOGD ( "%s: set display mode to %s\n", __FUNCTION__, display_mode);
     }
 
     if ( isFbc ) {
@@ -579,6 +571,35 @@ int CTvin::VDIN_SetWssStatus ( int status )
     }
 
     return ret;
+}
+
+int CTvin::VDIN_GetFrameRateSupportList(std::vector<std::string> *supportFrameRates)
+{
+    int ret = -1;
+    char buf[SYS_STR_LEN] = {0};
+
+    ret = tvReadSysfs(FRAME_RATE_SUPPORT_LIST_PATH, buf);
+    if (ret < 0) {
+        LOGE("%s failed!\n", __FUNCTION__);
+        return -1;
+    } else {
+        char *ptr = strtok(buf, "\n");
+        while (ptr != NULL) {
+            int len = strlen(ptr);
+            if (ptr[len - 1] == '*') {
+                ptr[len - 1] = '\0';
+            }
+            char *ptr1 = strtok(buf, "hz");
+            while (ptr1 != NULL) {
+                std::string str = std::string(ptr1);
+                std::string str1 = str.substr(str.length()-2, 2);
+                (*supportFrameRates).push_back(str1);
+                ptr1 = strtok(NULL, "hz");
+            }
+            ptr = strtok(NULL, "\n");
+        }
+        return 0;
+    }
 }
 
 // AFE

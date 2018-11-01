@@ -292,33 +292,42 @@ int CTvin::VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam )
 
 void CTvin::VDIN_GetDisplayVFreq (int need_freq, int *iSswitch, char * display_mode)
 {
-    int lastFreq = 50;
-    char buf[32] = {0};
-    char *p = NULL;
+	int lastFreq = 50;
+	char buf[32] = {0};
+	char *p = NULL;
 
-    if ( 0 > tvReadSysfs(SYS_DISPLAY_MODE_PATH, buf) ) {
-        LOGW("Read /sys/class/display/mode failed!\n");
-        return;
-    }
+	if ( 0 > tvReadSysfs(SYS_DISPLAY_MODE_PATH, buf) ) {
+		LOGW("Read /sys/class/display/mode failed!\n");
+		return;
+	}
 
-    LOGD( "%s, display mode: %s\n", __FUNCTION__, buf);
-    if ((p = strstr(buf, "50hz")) != NULL) {
-        lastFreq = 50;
-    } else if ((p = strstr(buf, "60hz")) != NULL) {
-        lastFreq = 60;
-    } else {
-        LOGW("%s, can not find 50hz or 60hz in %s\n", __FUNCTION__, buf);
-    }
+	LOGD( "%s, current display mode: %s\n", __FUNCTION__, buf);
+	if (((p = strstr(buf, "480")) != NULL) && (50 == need_freq)) {
+		*iSswitch = 0;
+		LOGD("%s, can not support 480i&480p 50hz\n", __FUNCTION__);
+		return;
+	} else if (((p = strstr(buf, "576")) != NULL) && (60 == need_freq)) {
+		*iSswitch = 0;
+		LOGD("%s, can not support 576i&576p 60hz\n", __FUNCTION__);
+		return;
+	} else if ((p = strstr(buf, "50hz")) != NULL) {
+		lastFreq = 50;
+	} else if ((p = strstr(buf, "60hz")) != NULL) {
+		lastFreq = 60;
+	} else {
+		LOGW("%s, can not find 50hz or 60hz in %s\n", __FUNCTION__, buf);
+	}
 
-    if ((need_freq != lastFreq) && (NULL != p)) {
-        if (50 == need_freq)
-            strncpy( p, "50hz", 4);
-        else if (60 == need_freq)
-            strncpy( p, "60hz", 4);
+	if ((need_freq != lastFreq) && (NULL != p)) {
+		if (50 == need_freq)
+			strncpy( p, "50hz", 4);
+		else if (60 == need_freq)
+			strncpy( p, "60hz", 4);
 
-        strcpy(display_mode, buf);
-        *iSswitch = 1;
-    }
+		strcpy(display_mode, buf);
+		LOGD( "%s, need set display mode: %s\n", __FUNCTION__, buf);
+		*iSswitch = 1;
+	}
 }
 
 int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)

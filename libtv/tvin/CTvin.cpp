@@ -2048,7 +2048,7 @@ int CTvin::Tvin_CheckVideoPathComplete(tv_path_type_t path_type)
     char amvideo_str[16] = "amvideo";
 
     fp = fopen(SYS_VFM_MAP_PATH, "r");
-    if (fp != NULL) {
+    if (!fp) {
         LOGE ("%s, can not open %s!\n", __FUNCTION__, SYS_VFM_MAP_PATH);
         return ret;
     }

@@ -2063,8 +2063,8 @@ int CTvin::Tvin_CheckVideoPathComplete(tv_path_type_t path_type)
         }
 
         if (str_find != NULL) {
-            if ((strstr(str_find, di_str)) ||
-                 (strstr(str_find, ppmgr_str)) ||
+            if ((strstr(str_find, di_str)) &&
+                 (strstr(str_find, ppmgr_str)) &&
                  (strstr(str_find, amvideo_str))) {
                 LOGD("%s: VideoPath is complete!\n", __FUNCTION__);
                 ret = 0;

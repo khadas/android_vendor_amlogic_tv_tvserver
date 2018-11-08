@@ -1316,6 +1316,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
                 if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
                     mpTvin->SwitchSnow( false );
                 }
+                mpTvin->VDIN_ClosePort();
             }
         }
         mFrontDev->Open(TV_FE_AUTO);

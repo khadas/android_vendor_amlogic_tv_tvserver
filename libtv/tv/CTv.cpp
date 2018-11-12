@@ -1828,6 +1828,10 @@ int CTv::StopTvLock ( void )
     LOGD("%s: mTvStatus = %d, mBlackoutEnable = %d\n", __FUNCTION__, mTvStatus, mBlackoutEnable);
     AutoMutex _l( mLock );
     mTvAction |= TV_ACTION_STOPING;
+
+    /* release ATV/DTV early */
+    mFrontDev->setMode(TV_FE_AUTO);
+
     mAv.DisableVideoWithBlackColor();
     tryReleasePlayer(false, m_source_input);
     stopPlaying(false);

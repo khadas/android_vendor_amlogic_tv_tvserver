@@ -409,6 +409,10 @@ Return<int32_t> DroidTvServer::updateEAS(int32_t freq, int32_t moudle, int32_t m
     return mTvServiceIntf->updateEAS(freq, moudle, mode);
 }
 
+Return<int32_t> DroidTvServer::setDeviceIdForCec(int32_t DeviceId) {
+    return mTvServiceIntf->setDeviceIdForCec(DeviceId);
+}
+
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {
         LOGE("%s don't support type:%d", __FUNCTION__, (int)type);

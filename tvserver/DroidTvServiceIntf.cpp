@@ -200,6 +200,18 @@ void DroidTvServiceIntf::onTvEvent(const CTvEv &ev)
         break;
     }
 
+    case CTvEv::TV_EVENT_SOURCE_SWITCH: {
+        TvEvent::SourceSwitchEvent *pEv = (TvEvent::SourceSwitchEvent *)(&ev);
+        TvHidlParcel hidlParcel;
+        hidlParcel.msgType = SOURCE_SWITCH_CALLBACK;
+        hidlParcel.bodyInt.resize(2);
+        hidlParcel.bodyInt[0] = pEv->DestSourceInput;
+        hidlParcel.bodyInt[1] = pEv->DestSourcePortNum;
+        LOGD("source switch: destSource = %d, portID = %d\n", pEv->DestSourceInput, pEv->DestSourcePortNum);
+        mNotifyListener->onEvent(hidlParcel);
+        break;
+    }
+
     case CTvEv::TV_EVENT_HDMI_IN_CAP: {
         /*
         TvHidlParcel hidlParcel;
@@ -785,6 +797,10 @@ int DroidTvServiceIntf::updateRRT(int freq, int moudle, int mode) {
 
 int DroidTvServiceIntf::updateEAS(int freq, int moudle, int mode) {
     return mpTv->Tv_Easupdate();
+}
+
+int DroidTvServiceIntf::setDeviceIdForCec(int DeviceId) {
+    return mpTv->Tv_SetDeviceIdForCec(DeviceId);
 }
 
 int DroidTvServiceIntf::processCmd(const Parcel &p) {

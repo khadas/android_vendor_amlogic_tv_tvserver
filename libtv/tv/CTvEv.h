@@ -117,6 +117,18 @@ namespace  TvEvent {
         int connectionState;
     };
 
+    class SourceSwitchEvent: public CTvEv {
+    public:
+        SourceSwitchEvent() : CTvEv ( CTvEv::TV_EVENT_SOURCE_SWITCH )
+        {
+            DestSourceInput = 0;
+            DestSourcePortNum = 0;
+        }
+        ~SourceSwitchEvent() {}
+        int DestSourceInput;
+        int DestSourcePortNum;
+    };
+
     class HDMIRxCECEvent: public CTvEv {
     public:
         HDMIRxCECEvent() : CTvEv ( CTvEv::TV_EVENT_HDMIRX_CEC )

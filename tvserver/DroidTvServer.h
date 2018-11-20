@@ -132,6 +132,7 @@ public:
     Return<void> searchRrtInfo(int32_t rating_region_id, int32_t dimension_id, int32_t value_id, searchRrtInfo_cb _hidl_cb) override;
     Return<int32_t> updateRRT(int32_t freq, int32_t moudle, int32_t mode) override;
     Return<int32_t> updateEAS(int32_t freq, int32_t moudle, int32_t mode) override;
+    Return<int32_t> setDeviceIdForCec(int32_t DeviceId) override;
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;
 
     virtual void onEvent(const TvHidlParcel &hidlParcel);

@@ -116,6 +116,7 @@ public:
     rrt_select_info_t searchRrtInfo(int rating_region_id, int dimension_id, int value_id);
     int updateRRT(int freq, int moudle, int mode);
     int updateEAS(int freq, int moudle, int mode);
+    int setDeviceIdForCec(int DeviceId);
     virtual status_t dump(int fd, const Vector<String16>& args);
 
     //wp<Client> mpScannerClient;

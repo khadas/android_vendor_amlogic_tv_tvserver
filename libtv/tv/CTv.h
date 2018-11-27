@@ -133,7 +133,6 @@ public:
     static const int TV_ACTION_PLAYING = 0x0008;
     static const int TV_ACTION_RECORDING = 0x0010;
     static const int TV_ACTION_SOURCE_SWITCHING = 0x0020;
-    static const int TV_ACTION_PLAYING_TF = 0x0040;
 
     static const int OPEN_DEV_FOR_SCAN_ATV = 1;
     static const int OPEN_DEV_FOR_SCAN_DTV = 2;

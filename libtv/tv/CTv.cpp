@@ -992,11 +992,7 @@ int CTv::switchAudioTrack (int aPid, int aFmt, int aParam __unused)
             break;
         }
 
-        if (mTvAction & TV_ACTION_PLAYING_TF) {
-            iOutRet = mAv.switchTimeShiftAudio (( unsigned short ) aPid, aFmt );
-        } else {
-            iOutRet = mAv.SwitchTSAudio (( unsigned short ) aPid, aFmt );
-        }
+        iOutRet = mAv.SwitchTSAudio (( unsigned short ) aPid, aFmt );
         LOGD ("%s, iOutRet = %d AM_AV_SwitchTSAudio\n", __FUNCTION__,  iOutRet );
     } while ( false );
 
@@ -1038,11 +1034,8 @@ int CTv::switchAudioTrack ( int progId, int idx )
         if ( aPid < 0 || aFmt < 0 ) {
             break;
         }
-        if (mTvAction & TV_ACTION_PLAYING_TF) {
-            iOutRet = mAv.switchTimeShiftAudio (( unsigned short ) aPid, aFmt );
-        } else {
-            iOutRet = mAv.SwitchTSAudio (( unsigned short ) aPid, aFmt );
-        }
+
+        iOutRet = mAv.SwitchTSAudio (( unsigned short ) aPid, aFmt );
         LOGD ( "%s, iOutRet = %d AM_AV_SwitchTSAudio\n", __FUNCTION__,  iOutRet );
     } while ( false );
 
@@ -1146,7 +1139,6 @@ int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCom
     }
 
     mTvAction |= TV_ACTION_PLAYING;
-    mTvAction |= TV_ACTION_PLAYING_TF;
     tvWriteSysfs ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
     ret = mAv.startTimeShift(para);
 
@@ -1415,7 +1407,6 @@ int CTv::stopPlaying(bool isShowTestScreen, bool resetFE)
         mAv.StopTS ();
     }
 
-    mTvAction &= ~TV_ACTION_PLAYING_TF;
     mTvAction &= ~TV_ACTION_PLAYING;
     return 0;
 }

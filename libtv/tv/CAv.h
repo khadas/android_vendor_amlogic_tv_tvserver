@@ -186,14 +186,5 @@ private:
     int mVideoLayerState;
 
     int mFdAmVideo;
-
-#define REPLAY_SWITCH_AUDIO_TRACK
-#ifdef REPLAY_SWITCH_AUDIO_TRACK
-    unsigned short s_vpid;
-    unsigned short s_pcrid;
-    int s_vfmt;
-
-    AM_AV_TimeshiftPara_t timeshift_bak;
-#endif
 };
 #endif

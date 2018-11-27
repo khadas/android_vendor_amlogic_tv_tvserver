@@ -186,14 +186,8 @@ int CAv::GetAudioStatus( int fmt[2], int sample_rate[2], int resolution[2], int 
 
 int CAv::SwitchTSAudio(int apid, int afmt)
 {
-   LOGD ( "%s: [pid:%d, fmt:%d]", __FUNCTION__,apid, afmt);
 #ifdef SUPPORT_ADTV
-#ifdef REPLAY_SWITCH_AUDIO_TRACK
-    AM_AV_StopTS (mTvPlayDevId);
-    return AM_AV_StartTSWithPCR ( mTvPlayDevId, s_vpid, apid, s_pcrid, ( AM_AV_VFormat_t ) s_vfmt, ( AM_AV_AFormat_t ) afmt );
-#else
     return AM_AV_SwitchTSAudio (mTvPlayDevId, ( unsigned short ) apid, ( AM_AV_AFormat_t ) afmt );
-#endif
 #else
     return -1;
 #endif
@@ -210,8 +204,6 @@ int CAv::ResetAudioDecoder()
 
 int CAv::SetADAudio(unsigned int enable, int apid, int afmt)
 {
-    LOGD ( "%s: enable :%d [pid:%d, fmt:%d]", __FUNCTION__,enable, apid, afmt);
-
 #ifdef SUPPORT_ADTV
     return AM_AV_SetAudioAd(mTvPlayDevId, enable, apid, ( AM_AV_AFormat_t ) afmt);
 #else
@@ -231,11 +223,6 @@ int CAv::SetTSSource(int ts_source)
 int CAv::StartTS(unsigned short vpid, unsigned short apid, unsigned short pcrid, int vfmt, int afmt)
 {
 #ifdef SUPPORT_ADTV
-#ifdef REPLAY_SWITCH_AUDIO_TRACK
-    s_vpid = vpid;
-    s_vfmt = vfmt;
-    s_pcrid = pcrid;
-#endif
     return AM_AV_StartTSWithPCR ( mTvPlayDevId, vpid, apid, pcrid, ( AM_AV_VFormat_t ) vfmt, ( AM_AV_AFormat_t ) afmt );
 #else
     return -1;
@@ -406,10 +393,6 @@ int CAv::startTimeShift(void *para)
 {
     LOGD("%s", __FUNCTION__);
 #ifdef SUPPORT_ADTV
-
-#ifdef REPLAY_SWITCH_AUDIO_TRACK
-   memcpy(&timeshift_bak,(AM_AV_TimeshiftPara_t *)para,sizeof(AM_AV_TimeshiftPara_t));
-#endif
     return AM_AV_StartTimeshift(mTvPlayDevId, (AM_AV_TimeshiftPara_t *)para);
 #else
     return -1;
@@ -475,18 +458,9 @@ int CAv::setTimeShiftSpeed(int speed)
 
 int CAv::switchTimeShiftAudio(int apid, int afmt)
 {
-    LOGD ( "%s: [pid:%d, fmt:%d]", __FUNCTION__, apid, afmt);
+    LOGD ( "%S: [pid:%d, fmt:%d]", __FUNCTION__, apid, afmt);
 #ifdef SUPPORT_ADTV
-#ifdef  REPLAY_SWITCH_AUDIO_TRACK
-    AM_AV_StopTimeshift(mTvPlayDevId);
-    if (timeshift_bak.media_info.aud_cnt > 0) {
-        timeshift_bak.media_info.audios[0].pid = apid;
-        timeshift_bak.media_info.audios[0].fmt = afmt;
-    }
-    return AM_AV_StartTimeshift(mTvPlayDevId, (AM_AV_TimeshiftPara_t *)&timeshift_bak);
-#else
     return AM_AV_SwitchTimeshiftAudio (mTvPlayDevId, apid, afmt);
-#endif
 #else
     return -1;
 #endif

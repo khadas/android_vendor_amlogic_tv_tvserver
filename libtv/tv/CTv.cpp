@@ -1809,7 +1809,6 @@ int CTv::StartTvLock ()
     mpTvin->TvinApi_SetCompPhaseEnable ( 1 );
     mpTvin->VDIN_EnableRDMA ( 1 );
 
-    mAv.SetVideoWindow (0, 0, 0, 0);
     mTvStatus = TV_START_ED;
     MnoNeedAutoSwitchToMonitorMode = false;
     LOGD("[source_switch_time]: %fs, StartTvLock end", getUptimeSeconds());

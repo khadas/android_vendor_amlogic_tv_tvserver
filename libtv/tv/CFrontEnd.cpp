@@ -62,6 +62,8 @@ CFrontEnd::CFrontEnd()
     mCurFreq = -1;
     mCurPara1 = -1;
     mCurPara2 = -1;
+    mCurPara3 = -1;
+    mCurPara4 = -1;
     mbFEOpened = false;
     mbVLFEOpened = false;
     mDemuxDevID = -1;
@@ -107,41 +109,61 @@ int CFrontEnd::Open(int mode)
     memset(&para, 0, sizeof(AM_FEND_OpenPara_t));
     para.mode = mode;
 
-    if ((mbVLFEOpened == false) && (TV_FE_ANALOG == mode || mode == FE_AUTO)) {
-        LOGD("VLFE Open [%d->%d]", mVLCurMode, mode);
+    if (mbVLFEOpened == false) {
+        if (TV_FE_ANALOG == mode || mode == FE_AUTO) {
+            LOGD("VLFE Open [%d->%d]", mVLCurMode, mode);
 
-        rc = AM_VLFEND_Open(mVLFrontDevID, &para);
-        if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
-            LOGD("%s,vlfrontend dev[%d] open failed! v4l2 error id is %d\n",
-                    __FUNCTION__, mVLFrontDevID, rc);
-            /*return -1;*/
-        } else {
-            AM_EVT_Subscribe(mVLFrontDevID, AM_VLFEND_EVT_STATUS_CHANGED, v4l2_fend_callback, (void *)this);
-            LOGD("%s,vlfrontend dev[%d] open success!\n", __FUNCTION__, mVLFrontDevID);
-            mbVLFEOpened = true;
+            rc = AM_VLFEND_Open(mVLFrontDevID, &para);
+            if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
+                LOGD("%s,vlfrontend dev[%d] open failed! v4l2 error id is %d\n",
+                        __FUNCTION__, mVLFrontDevID, rc);
+                /*return -1;*/
+            } else {
+                AM_EVT_Subscribe(mVLFrontDevID, AM_VLFEND_EVT_STATUS_CHANGED, v4l2_fend_callback, (void *)this);
+                LOGD("%s,vlfrontend dev[%d] open success!\n", __FUNCTION__, mVLFrontDevID);
+                mbVLFEOpened = true;
+                mVLCurMode = mode;
+            }
+        }
+    } else {
+        /* when open with different mode, need set mode. */
+        if (mVLCurMode != mode && TV_FE_ANALOG == mode) {
+            LOGD("VLFE Open [%d->%d]", mVLCurMode, mode);
+            rc = AM_VLFEND_SetMode(mVLFrontDevID, FE_ANALOG);
             mVLCurMode = mode;
         }
     }
 
     para.mode = mode;
-    if ((mbFEOpened == false) && (TV_FE_ANALOG != mode)) {
-        LOGD("FE Open [%d->%d]", mCurMode, mode);
+    if (mbFEOpened == false) {
+        if (TV_FE_ANALOG != mode) {
+            LOGD("FE Open [%d->%d]", mCurMode, mode);
 
-        rc = AM_FEND_Open(mFrontDevID, &para);
-        if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
-            LOGD("%s,frontend dev[%d] open failed! dvb error id is %d\n",
-                    __FUNCTION__, mFrontDevID, rc);
-            return -1;
+            rc = AM_FEND_Open(mFrontDevID, &para);
+            if ((rc != AM_FEND_ERR_BUSY) && (rc != 0)) {
+                LOGD("%s,frontend dev[%d] open failed! dvb error id is %d\n",
+                        __FUNCTION__, mFrontDevID, rc);
+                return -1;
+            }
+            AM_EVT_Subscribe(mFrontDevID, AM_FEND_EVT_STATUS_CHANGED, dmd_fend_callback, (void *)this);
+            LOGD("%s,frontend dev[%d] open success!\n", __FUNCTION__, mFrontDevID);
+            mbFEOpened = true;
+            mCurMode = mode;
         }
-        AM_EVT_Subscribe(mFrontDevID, AM_FEND_EVT_STATUS_CHANGED, dmd_fend_callback, (void *)this);
-        LOGD("%s,frontend dev[%d] open success!\n", __FUNCTION__, mFrontDevID);
-        mbFEOpened = true;
-        mCurMode = mode;
+    } else {
+        /* when open with different mode, need set mode. */
+        if (mCurMode != mode && TV_FE_ANALOG != mode) {
+            LOGD("FE Open [%d->%d]", mCurMode, mode);
+            rc = AM_FEND_SetMode(mFrontDevID, mode);
+            mCurMode = mode;
+        }
     }
 
     mCurFreq = -1;
     mCurPara1 = -1;
     mCurPara2 = -1;
+    mCurPara3 = -1;
+    mCurPara4 = -1;
 #endif
     return 0;
 }
@@ -169,6 +191,8 @@ int CFrontEnd::Close()
     mCurFreq = -1;
     mCurPara1 = -1;
     mCurPara2 = -1;
+    mCurPara3 = -1;
+    mCurPara4 = -1;
     mFEParas.setFrequency(-1);
 
     if (mbFEOpened) {

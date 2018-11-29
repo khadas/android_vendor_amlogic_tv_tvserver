@@ -294,8 +294,6 @@ int CTvRecord::getWritePosition()
 int CTvRecord::setupDefault(const char *param)
 {
 #ifdef SUPPORT_ADTV
-    int i = 0;
-    char buff[32] = {0};
     setDev(CTvRecord::REC_DEV_TYPE_FE, paramGetInt(param, NULL, "fe", 0));
     setDev(CTvRecord::REC_DEV_TYPE_DVR, paramGetInt(param, NULL, "dvr", 0));
     setDev(CTvRecord::REC_DEV_TYPE_FIFO, paramGetInt(param, NULL, "fifo", 0));
@@ -308,13 +306,7 @@ int CTvRecord::setupDefault(const char *param)
     info.aud_cnt = 1;
     info.audios[0].pid = paramGetInt(param, "a", "pid", -1);
     info.audios[0].fmt = paramGetInt(param, "a", "fmt", -1);
-    info.sub_cnt = paramGetInt(param, NULL, "subcnt", 0);
-    for (i=0; i<info.sub_cnt; i++)
-    {
-        sprintf(buff, "pid%d", i);
-        info.subtitles[i].pid = paramGetInt(param, NULL, buff, 0);
-        //LOGE("Get subpid%d %x count %d", i, info.subtitles[i].pid,info.sub_cnt);
-    }
+    info.sub_cnt = 0;
     info.ttx_cnt = 0;
     memset(info.program_name, 0, sizeof(info.program_name));
     setMediaInfo(&info);

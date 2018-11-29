@@ -375,23 +375,11 @@ int CDTVTvPlayer::startLiveTryTimeShift(const char *param)
         tryCloseTFile();
 
         char buf[256];
-        char pid_string[256] = {0};
-        char target_pid[16] = {0};
-        int sub_cnt;
-        int i;
-        sub_cnt = strtoul(paramGetString(mParam, NULL, "subcnt", "0").c_str(), NULL, 10);
-        for (i=0; i<sub_cnt; i++)
-        {
-            sprintf(target_pid, "pid%d", i);
-            sprintf(pid_string, "%s,\"%s\":%s", pid_string, target_pid, paramGetString(mParam, "subpid", target_pid,"0").c_str());
-        }
         sprintf(buf,
-            "{\"timeshift\":1,\"dvr\":1,\"path\":\"%s\",\"prefix\":\"TimeShifting\",\"v\":{\"pid\":%d,\"fmt\":%d},\"a\":{\"pid\":%d,\"fmt\":%d},\"max\":%s,\"subcnt\":%s%s}",
+            "{\"timeshift\":1,\"dvr\":1,\"path\":\"%s\",\"prefix\":\"TimeShifting\",\"v\":{\"pid\":%d,\"fmt\":%d},\"a\":{\"pid\":%d,\"fmt\":%d},\"max\":%s}",
             paramGetString(mParam, NULL, "path", "/storage").c_str(),
             mVpid, mVfmt, mApid, mAfmt,
-            paramGetString(mParam, NULL, "max", "{\"time\":15}").c_str(),
-            paramGetString(mParam, NULL, "subcnt", "0").c_str(),
-            pid_string);
+            paramGetString(mParam, NULL, "max", "{\"time\":15}").c_str());
         ret = pTv->startRecording("timeshifting", buf, this);
         if (ret != 0) {
             LOGD("start timeshifting rec fail");

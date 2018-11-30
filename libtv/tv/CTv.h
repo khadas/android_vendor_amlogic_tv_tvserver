@@ -316,6 +316,7 @@ public:
     int GetAtvAudioInputmode();
 
     int GetAtvAutoScanMode();
+    int SetSnowShowEnable(bool enable);
 
 private:
     int SendCmdToOffBoardFBCExternalDac(int, int);

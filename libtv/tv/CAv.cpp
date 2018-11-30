@@ -610,7 +610,7 @@ int CAv::SetVideoLayerDisable ( int value )
 
 int CAv::setVideoScreenMode ( int value )
 {
-    LOGD("setVideoScreenMode, value = %d" , value);
+    LOGD("%s: value = %d", __FUNCTION__, value);
 
     char val[64] = {0};
     sprintf(val, "%d", value);

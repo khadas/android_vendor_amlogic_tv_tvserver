@@ -258,7 +258,7 @@ int GetPlatformProjectInfoSrc()
 {
     const char *config_value;
 
-    config_value = config_get_str(CFG_SECTION_TV, "platform.projectinfo.src", "null");
+    config_value = config_get_str(CFG_SECTION_TV, CFG_PROJECT_INFO, "null");
     if (strcmp(config_value, "null") == 0 || strcmp(config_value, "prop") == 0) {
         return 0;
     } else if (strcmp(config_value, "emmckey") == 0) {

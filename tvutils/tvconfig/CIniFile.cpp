@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
@@ -124,10 +125,9 @@ int CIniFile::SaveToFile(const char *filename)
     } else {
         filepath = filename;
     }
-    //LOGD("Save to file name = %s", file);
 
     if ((pFile = fopen (filepath, "wb")) == NULL) {
-        LOGD("Save to file open error = %s", filepath);
+        LOGD("%s: open %s error(%s)", __FUNCTION__, filepath, strerror(errno));
         return -1;
     }
 

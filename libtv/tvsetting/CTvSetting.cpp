@@ -752,7 +752,7 @@ static int SSMGetPreCopyingEnableCfg()
 {
     const char *prop_value;
 
-    prop_value = config_get_str(CFG_SECTION_TV, "ssm.precopying.en", "null");
+    prop_value = config_get_str(CFG_SECTION_TV, CFG_SSM_PRECOPY_ENABLE, "null");
     if (strcmp(prop_value, "null") == 0 || strcmp(prop_value, "0") == 0
             || strcmp(prop_value, "disable") == 0) {
         return 0;
@@ -769,7 +769,7 @@ static int SSMGetPreCopyingDevicePathCfg(char dev_path[])
         return -1;
     }
 
-    prop_value = config_get_str(CFG_SECTION_TV, "ssm.precopying.devpath", "null");
+    prop_value = config_get_str(CFG_SECTION_TV, CFG_SSM_PRECOPY_FILE_PATH, "null");
     if (strcmp(prop_value, "null") == 0) {
         return 1;
     }

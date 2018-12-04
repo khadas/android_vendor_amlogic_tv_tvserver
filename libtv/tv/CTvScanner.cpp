@@ -1929,7 +1929,7 @@ AM_Bool_t CTvScanner::checkAtvCvbsLockHelper(void *data)
 int CTvScanner::getScanDtvStandard(ScanParas &scp) {
 #ifdef SUPPORT_ADTV
     int forceDtvStd = scp.getDtvStandard();
-    const char *dtvStd = config_get_str ( CFG_SECTION_TV, "dtv.scan.std.force", "null");
+    const char *dtvStd = config_get_str ( CFG_SECTION_TV, CFG_DTV_SCAN_STD_FORCE, "null");
     if (!strcmp(dtvStd, "atsc"))
         forceDtvStd = TV_SCAN_DTV_STD_ATSC;
     else if (!strcmp(dtvStd, "dvb"))

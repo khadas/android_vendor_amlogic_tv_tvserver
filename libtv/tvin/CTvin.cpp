@@ -85,10 +85,10 @@ CTvin::~CTvin()
 int CTvin::OpenTvin()
 {
     const char *config_value;
-    config_value = config_get_str ( CFG_SECTION_TV, "tvin.manual.set.tvpath", "null" );
+    config_value = config_get_str ( CFG_SECTION_TV, CFG_TVIN_TVPATH_SET_MANUAL, "null" );
     strcpy ( config_tv_path, config_value );
     memset ( config_default_path, 0x0, 64 );
-    config_value = config_get_str ( CFG_SECTION_TV, "tvin.manual.set.defaultpath", "null" );
+    config_value = config_get_str ( CFG_SECTION_TV, CFG_TVIN_TVPATH_SET_DEFAULT, "null" );
     strcpy ( config_default_path, config_value );
     return 0;
 }
@@ -1717,7 +1717,7 @@ tv_audio_in_source_type_t CTvin::Tvin_GetAudioInSourceType ( tv_source_input_t s
     tv_audio_in_source_type_t ret = TV_AUDIO_IN_SOURCE_TYPE_LINEIN;
     switch (source_input) {
         case SOURCE_TV:
-            config_value = config_get_str(CFG_SECTION_TV, "tvin.aud.insource.atv", "TV_AUDIO_IN_SOURCE_TYPE_LINEIN");
+            config_value = config_get_str(CFG_SECTION_TV, CFG_TVIN_AUDIO_INSOURCE_ATV, "TV_AUDIO_IN_SOURCE_TYPE_LINEIN");
             if (strcasecmp(config_value, "TV_AUDIO_IN_SOURCE_TYPE_ATV") == 0) {
                 ret = TV_AUDIO_IN_SOURCE_TYPE_ATV;
             }

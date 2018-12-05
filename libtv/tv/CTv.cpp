@@ -2738,11 +2738,21 @@ int CTv::Tv_SetDDDRCMode(tv_source_input_t source_input)
 
 int CTv::Tv_SetVdinForPQ (int gameStatus, int pcStatus, int autoSwitchFlag)
 {
+    LOGD("%s: game mode: %d, pc mode: %d, autoSwitchFlag: %d\n", __FUNCTION__, gameStatus, pcStatus, autoSwitchFlag);
+
     int ret = -1;
     if (autoSwitchFlag) {
         MnoNeedAutoSwitchToMonitorMode = false;
     } else {
         MnoNeedAutoSwitchToMonitorMode = true;
+    }
+
+    if (pcStatus == MODE_ON) {
+        CVpp::getInstance()->enableMonitorMode(true);
+    } else if (pcStatus == MODE_OFF){
+        CVpp::getInstance()->enableMonitorMode(false);
+    } else {
+        LOGD("%s: not about pc mode!\n", __FUNCTION__);
     }
 
     return mpTvin->VDIN_UpdateForPQMode((pq_status_update_e)gameStatus, (pq_status_update_e)pcStatus);

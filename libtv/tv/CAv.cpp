@@ -462,7 +462,7 @@ int CAv::seekTimeShift(int pos, bool start)
 
 int CAv::setTimeShiftSpeed(int speed)
 {
-    LOGD ( "%S: [%d]", __FUNCTION__, speed);
+    LOGD ( "%s: [%d]", __FUNCTION__, speed);
     int ret = 0;
 #ifdef SUPPORT_ADTV
     if (speed < 0)

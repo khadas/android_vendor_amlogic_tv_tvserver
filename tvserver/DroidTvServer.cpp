@@ -53,6 +53,7 @@ DroidTvServer::~DroidTvServer() {
 }
 
 void DroidTvServer::onEvent(const TvHidlParcel &hidlParcel) {
+    AutoMutex _l(mLock);
     int clientSize = mClients.size();
 
     LOGI("onEvent event:%d, client size:%d", hidlParcel.msgType, clientSize);
@@ -413,6 +414,7 @@ Return<int32_t> DroidTvServer::setDeviceIdForCec(int32_t DeviceId) {
 }
 
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
+    AutoMutex _l(mLock);
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {
         LOGE("%s don't support type:%d", __FUNCTION__, (int)type);
         return Void();
@@ -463,6 +465,7 @@ const char* DroidTvServer::getConnectTypeStr(ConnectType type) {
 
 void DroidTvServer::handleServiceDeath(uint32_t cookie) {
     LOGI("tvserver daemon client:%d died", cookie);
+    AutoMutex _l(mLock);
     mClients[cookie]->unlinkToDeath(mDeathRecipient);
     mClients[cookie].clear();
     LOGI("%s, client size:%d", __FUNCTION__,(int)mClients.size());

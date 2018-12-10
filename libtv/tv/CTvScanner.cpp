@@ -609,19 +609,22 @@ dvbpsi_pat_t *CTvScanner::getValidPats(AM_SCAN_TS_t *ts)
 {
     dvbpsi_pat_t *valid_pat = NULL;
     if (!IS_DVBT2_TS(ts->digital.fend_para)) {
-        valid_pat = ts->digital.pats;
-    } else if (IS_ISDBT_TS(ts->digital.fend_para)) {
-        /* process for isdbt one-seg inserted PAT, which ts_id is 0xffff */
-        valid_pat = ts->digital.pats;
-        while (valid_pat != NULL && valid_pat->i_ts_id == 0xffff) {
-            valid_pat = valid_pat->p_next;
-        }
-
-        if (valid_pat == NULL && ts->digital.pats != NULL) {
+        if (IS_ISDBT_TS(ts->digital.fend_para)) {
+            /* process for isdbt one-seg inserted PAT, which ts_id is 0xffff */
             valid_pat = ts->digital.pats;
 
-            if (ts->digital.sdts != NULL)
-                valid_pat->i_ts_id = ts->digital.sdts->i_ts_id;
+            while (valid_pat != NULL && valid_pat->i_ts_id == 0xffff) {
+                valid_pat = valid_pat->p_next;
+            }
+
+            if (valid_pat == NULL && ts->digital.pats != NULL) {
+                valid_pat = ts->digital.pats;
+
+                if (ts->digital.sdts != NULL)
+                    valid_pat->i_ts_id = ts->digital.sdts->i_ts_id;
+            }
+        } else {
+            valid_pat = ts->digital.pats;
         }
     } else {
         for (int plp = 0; plp < ts->digital.dvbt2_data_plp_num; plp++) {

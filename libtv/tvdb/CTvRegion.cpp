@@ -58,6 +58,8 @@ int CTvRegion::getChannelListByName(char *name, Vector<sp<CTvChannel> > &vcp)
     int symbolRate;
     int ofdmMode;
     int channelNum = 0;
+    //add dtmb extral channel frequency
+    String8 physicalNumDisplayName;
 
     if (c.moveToFirst()) {
         do {
@@ -77,7 +79,13 @@ int CTvRegion::getChannelListByName(char *name, Vector<sp<CTvChannel> > &vcp)
             ofdmMode = c.getInt(col);
             col = c.getColumnIndex("logical_channel_num");
             channelNum = c.getInt(col);
-            vcp.add(new CTvChannel(id, mode, frequency, bandwidth, modulation, symbolRate, ofdmMode, channelNum));
+            col = c.getColumnIndex("display");
+            physicalNumDisplayName = c.getString(col);//add dtmb extral channel displayname
+            CTvChannel *tempCTvChannel = new CTvChannel(id, mode, frequency, bandwidth, modulation, symbolRate, ofdmMode, channelNum);
+            if (tempCTvChannel) {
+              tempCTvChannel->setPhysicalNumDisplayName(physicalNumDisplayName);
+            }
+            vcp.add(tempCTvChannel);
             size++;
         } while (c.moveToNext());
     }

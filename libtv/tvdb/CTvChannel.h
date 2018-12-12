@@ -250,6 +250,16 @@ public:
     {
         this->modulation = modulation;
     }
+
+    void setPhysicalNumDisplayName(String8 name)
+    {
+        this->physicalNumDisplayName = name;
+    }
+
+    String8 getPhysicalNumDisplayName()
+    {
+        return this->physicalNumDisplayName;
+    }
     //
 private:
     friend class LightRefBase<CTvChannel>;
@@ -276,6 +286,8 @@ private:
     //public TVSatelliteParams tv_satparams;
     int sat_polarisation;
 
+    //add dtmb extral channel frequency
+    String8 physicalNumDisplayName;
 };
 
 #endif  //_CTVCHANNEL_H

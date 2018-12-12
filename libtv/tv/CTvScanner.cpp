@@ -1826,7 +1826,7 @@ const char *CTvScanner::getDtvScanListName(int mode)
 
             break;
         case TV_FE_DTMB:
-            list_name = (char *)"CN,Default DTMB ALL";
+            list_name = (char *)"CN,Default DTMB EXTRA ALL";
             break;
         case TV_FE_QAM:
             list_name = (char *)"CN,DVB-C allband";
@@ -1879,7 +1879,8 @@ const char *CTvScanner::getDtvScanListName(int mode)
             list_name = (char *)"BR,Default ISDBT";
             break;
         default:
-            list_name = (char *)"CN,Default DTMB ALL";
+            //list_name = (char *)"CN,Default DTMB ALL";
+            list_name = (char *)"CN,Default DTMB EXTRA ALL";
             LOGD("unknown scan mode %d, using default[%s]", mode, list_name);
             break;
     }

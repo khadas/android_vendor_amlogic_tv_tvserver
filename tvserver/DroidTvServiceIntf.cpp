@@ -714,6 +714,7 @@ void DroidTvServiceIntf::dtvGetScanFreqListMode(int mode, std::vector<FreqList> 
         freqlisttmp[i].ID = out[i]->getID();
         freqlisttmp[i].freq = out[i]->getFrequency();
         freqlisttmp[i].channelNum = out[i]->getLogicalChannelNum();
+        freqlisttmp[i].physicalNumDisplayName = out[i]->getPhysicalNumDisplayName();
         //r->writeInt32(out[i]->getID());
         //r->writeInt32(out[i]->getFrequency());
         //r->writeInt32(out[i]->getLogicalChannelNum());

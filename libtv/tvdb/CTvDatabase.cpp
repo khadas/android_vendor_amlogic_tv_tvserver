@@ -196,8 +196,8 @@ int CTvDatabase::importXmlToDB(const char *xmlPath)
 
         for (TiXmlElement *channel_entry = channel_list_element->FirstChildElement("channel_entry") ; channel_entry != NULL; channel_entry = channel_entry->NextSiblingElement("channel_entry")) {
             int freq, symb, channelNum;
-            String8 cmd = String8("insert into region_table(name,fe_type,frequency,symbol_rate,modulation,bandwidth,ofdm_mode,logical_channel_num)");
-            cmd += String8("values('") + channel_name + String8("',") + String8::format("%d", StringToIndex(feTypes, channel_fe_type)) + String8(",");
+            String8 cmd = String8("insert into region_table(name,fe_type,frequency,symbol_rate,modulation,bandwidth,ofdm_mode,logical_channel_num,display)");
+            cmd += String8("values(\'") + channel_name + String8("\',") + String8::format("%d", StringToIndex(feTypes, channel_fe_type)) + String8(",");
             channel_entry->Attribute("frequency", &freq);
             cmd += String8::format("%d", freq) + String8(",");
             channel_entry->Attribute("symbol_rate", &symb);
@@ -207,7 +207,14 @@ int CTvDatabase::importXmlToDB(const char *xmlPath)
             cmd += String8::format("%d", StringToIndex(bandwidths, channel_entry->Attribute("bandwidth"))) + String8(",");
             cmd += String8::format("%d", StringToIndex(ofdmModes, channel_entry->Attribute("ofdm_mode"))) + String8(",");
             channel_entry->Attribute("id", &channelNum);
-            cmd += String8::format("%d", channelNum) + String8(")");
+            cmd += String8::format("%d", channelNum) + String8(",");
+            const char *physical_channel_display = channel_entry->Attribute("display");
+            if (physical_channel_display) {
+                cmd += String8("\'") + physical_channel_display + String8("\')");
+            } else {
+                cmd += String8::format("\'%d\'", channelNum) + String8(")");
+            }
+            //LOGD("exeSql string = %s\n", cmd.string());
             exeSql(cmd.string());
         }
     }

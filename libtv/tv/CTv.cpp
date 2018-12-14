@@ -1761,8 +1761,6 @@ int CTv::OpenTv ( void )
     m_source_input = SOURCE_INVALID;
 
     mBlackoutEnable = ((getBlackoutEnable() == 1)?true:false);
-    mFrontDev->Open(TV_FE_AUTO);
-    mFrontDev->autoLoadFE();
     mAv.Open();
     resetDmxAndAvSource();
     //mDevicesPollStatusDetectThread.startDetect();

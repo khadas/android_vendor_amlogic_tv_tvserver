@@ -324,10 +324,7 @@ int CAv::DisableVideoBlackout()
 int CAv::DisableVideoWithBlueColor()
 {
     LOGD("%s: mVideoLayerState is %d\n", __FUNCTION__, mVideoLayerState);
-    if (mVideoLayerState == VIDEO_LAYER_DISABLE_BLUE) {
-        LOGD("video is disable with blue, return");
-        return 0;
-    }
+
     mVideoLayerState = VIDEO_LAYER_DISABLE_BLUE;
     SetVideoScreenColor ( 0, 41, 240, 110 ); // Show blue with vdin0, postblending disabled
 #ifdef SUPPORT_ADTV
@@ -341,10 +338,6 @@ int CAv::DisableVideoWithBlueColor()
 int CAv::DisableVideoWithBlackColor()
 {
     LOGD("%s: mVideoLayerState is %d\n", __FUNCTION__, mVideoLayerState);
-    if (mVideoLayerState == VIDEO_LAYER_DISABLE_BLACK) {
-        LOGD("video is disable with black, return");
-        return 0;
-    }
 
     mVideoLayerState = VIDEO_LAYER_DISABLE_BLACK;
     SetVideoScreenColor ( 0, 16, 128, 128 ); // Show black with vdin0, postblending disabled

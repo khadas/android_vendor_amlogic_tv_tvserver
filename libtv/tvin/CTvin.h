@@ -112,7 +112,18 @@ typedef struct tvin_parm_s {
     unsigned int                reserved;
 } tvin_parm_t;
 
+typedef enum tvin_cn_type_e {
+    GRAPHICS,
+    PHOTO,
+    CINEMA,
+    GAME,
+} tvin_cn_type_t;
 
+typedef struct tvin_latency_s {
+    bool allm_mode;
+    bool it_content;
+    tvin_cn_type_e cn_type;
+} tvin_latency_t;
 
 // ***************************************************************************
 // *** AFE module definition/enum/struct *************************************
@@ -427,6 +438,7 @@ typedef struct tvafe_pin_mux_s {
 #define TVIN_IOC_SET_COLOR_RANGE	_IOW(TVIN_IOC_MAGIC, 0X4a, enum tvin_color_range_e)
 #define TVIN_IOC_GAME_MODE          _IOW(TVIN_IOC_MAGIC, 0x4b, unsigned int)
 #define TVIN_IOC_SET_AUTO_RATIO_EN  _IOW(TVIN_IOC_MAGIC, 0x4c, unsigned int)
+#define TVIN_IOC_GET_LATENCY_MODE   _IOR(TVIN_IOC_MAGIC, 0X4d, struct tvin_latency_s)
 
 //TVAFE
 #define TVIN_IOC_S_AFE_ADC_CAL      _IOW(TVIN_IOC_MAGIC, 0x11, struct tvafe_adc_cal_s)
@@ -677,7 +689,7 @@ public:
     static int CvbsFtmToColorStdEnum(tvin_sig_fmt_t fmt);
     int VDIN_GetPortConnect ( int port );
     int VDIN_OpenHDMIPinMuxOn ( bool flag );
-    int GetITContent();
+    int VDIN_GetAllmInfo(tvin_latency_s *AllmInfo);
     /*******************************************extend funs*********************/
     static tv_source_input_type_t Tvin_SourcePortToSourceInputType ( tvin_port_t source_port );
     static tv_source_input_type_t Tvin_SourceInputToSourceInputType ( tv_source_input_t source_input );

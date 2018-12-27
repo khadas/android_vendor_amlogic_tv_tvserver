@@ -2173,12 +2173,17 @@ int CTvin::CvbsFtmToColorStdEnum(tvin_sig_fmt_t fmt)
     return v4l2_std;
 }
 
-int CTvin::GetITContent()
+int CTvin::VDIN_GetAllmInfo(tvin_latency_s *AllmInfo)
 {
-    char buf[32] = {0};
+    int ret = -1;
+    if (AllmInfo == NULL) {
+        LOGE("%s: param is NULL;\n", __FUNCTION__);
+    } else {
+        ret = VDIN_DeviceIOCtl(TVIN_IOC_GET_LATENCY_MODE, AllmInfo);
+        if (ret < 0) {
+            LOGE("%s: ioctl failed!\n", __FUNCTION__);
+        }
+    }
 
-    tvReadSysfs("/sys/module/tvin_hdmirx/parameters/it_content", buf);
-    int value = atoi(buf);
-    return value;
+    return ret;
 }
-

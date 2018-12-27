@@ -3011,32 +3011,31 @@ int CTv::KillMediaServerClient()
 
 int CTv::autoSwitchToMonitorMode()
 {
-    LOGD("%s, CurSigInfo.cfmt is %d , CurSigInfo.fmt is %x \n", __FUNCTION__, m_cur_sig_info.cfmt, m_cur_sig_info.fmt);
     int ret = -1;
-    if (!MnoNeedAutoSwitchToMonitorMode) {
-        if ((m_cur_sig_info.cfmt == YUV444)
-            || (m_cur_sig_info.cfmt == RGB444)
-            || (1 == IsDVISignal())//iS DVI
-            || (1 == mpTvin->GetITContent())
-            || (m_cur_sig_info.fmt == TVIN_SIG_FMT_HDMI_1440X240P_60HZ)
-            || (m_cur_sig_info.fmt == TVIN_SIG_FMT_HDMI_2880X240P_60HZ)
-            || (m_cur_sig_info.fmt == TVIN_SIG_FMT_HDMI_1440X288P_50HZ)
-            || (m_cur_sig_info.fmt == TVIN_SIG_FMT_HDMI_2880X288P_50HZ)
-            || ((m_cur_sig_info.fmt >= TVIN_SIG_FMT_HDMI_800X600_00HZ)
-                && (m_cur_sig_info.fmt <= TVIN_SIG_FMT_HDMI_1680X1050_00HZ))){
-            LOGD("switch to monitor mode!\n");
+    tvin_latency_t allmInfo;
+    memset(&allmInfo, 0x0, sizeof(tvin_latency_t));
+    mpTvin->VDIN_GetAllmInfo(&allmInfo);
+    LOGD("%s: allm_mode is %d, it_content is %d, cn_type is %d!\n", __FUNCTION__, allmInfo.allm_mode,
+                               allmInfo.it_content, allmInfo.cn_type);
+
+    if (allmInfo.allm_mode) {
+        LOGD("%s autoswitch to game mode!\n", __FUNCTION__);
+        ret = CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_GAME, m_source_input, m_cur_sig_info.fmt,
+                                            m_cur_sig_info.trans_fmt, INDEX_2D, 1, 1);
+    } else if (allmInfo.it_content){
+        if (allmInfo.cn_type == GAME) {//GAME
+            LOGD("%s autoswitch to game mode!\n", __FUNCTION__);
+            ret = CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_GAME, m_source_input, m_cur_sig_info.fmt,
+                                                m_cur_sig_info.trans_fmt, INDEX_2D, 1, 1);
+        } else {//Graphics/photo/cinema
+            LOGD("%s autoswitch to monitor mode!\n", __FUNCTION__);
             ret = CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_MONITOR, m_source_input, m_cur_sig_info.fmt,
-                                           m_cur_sig_info.trans_fmt, INDEX_2D, 1, 1);
-        } else if (CVpp::getInstance()->GetPQMode(m_source_input) == VPP_PICTURE_MODE_MONITOR) {
-            LOGD("switch to standard mode!\n");
-            ret = CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_STANDARD, m_source_input, m_cur_sig_info.fmt,
-                                           m_cur_sig_info.trans_fmt, INDEX_2D, 1, 1);
-        } else {
-            LOGD("%s, Signal don't match autoswitch condition!\n", __FUNCTION__);
+                                                m_cur_sig_info.trans_fmt, INDEX_2D, 1, 1);
         }
-    }else {
-        LOGD("%s, PQ mode set by user!\n", __FUNCTION__);
+    } else {
+        LOGD("%d, Signal don't match autoswitch condition!\n", __LINE__);
     }
+
     return ret;
 }
 
@@ -3406,4 +3405,3 @@ int CTv::SetSnowShowEnable(bool enable)
 
     return mpTvin->SwitchSnow(enable);
 }
-

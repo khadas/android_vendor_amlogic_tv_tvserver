@@ -119,6 +119,16 @@ public:
     static const char *getDtvScanListName(int mode);
     static CTvScanner *getInstance();
 
+    void SetCurrentLanguage(std::string lang)
+    {
+        mCurrentSystemLang = lang;
+    }
+
+    std::string GetCurrentLanguage()
+    {
+        return mCurrentSystemLang;
+    }
+
     struct ScannerLcnInfo {
 
         public:
@@ -516,6 +526,7 @@ private:
     CFrontEnd::FEParas mFEParas;
     ScanParas mScanParas;
 
+    std::string mCurrentSystemLang;
     int mFEType;
 
     static ScannerEvent mCurEv;

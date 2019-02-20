@@ -137,7 +137,7 @@ public:
     static int printVideoStdStr(int videoStd, char strBuffer[], int buff_size);
     static int printAudioStdStr(int audioStd, char strBuffer[], int buff_size);
     static unsigned long enumToStdAndColor(int videoStd, int audioStd);
-    static int stdEnumToCvbsFmt (int vfmt);
+    static int stdEnumToCvbsFmt (int vfmt, unsigned long std);
 
     static CFrontEnd *getInstance();
 
@@ -153,6 +153,9 @@ public:
         static const int EVENT_FE_HAS_SIG = 0x01;
         static const int EVENT_FE_NO_SIG = 0x02;
         static const int EVENT_FE_INIT = 0x03;
+        static const int EVENT_VLFE_HAS_SIG = 0x04;
+        static const int EVENT_VLFE_NO_SIG = 0x05;
+        static const int EVENT_VLFE_INIT = 0x06;
 
         FEEvent(): CTvEv(CTvEv::TV_EVENT_SIGLE_DETECT)
         {

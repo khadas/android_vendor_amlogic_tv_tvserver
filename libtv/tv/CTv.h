@@ -66,6 +66,8 @@ static const char *TV_CONFIG_EDID20_FILE_PATH = "/vendor/etc/tvconfig/hdmi/port_
 #define LCD_ENABLE "/sys/class/lcd/enable"
 #define BL_LOCAL_DIMING_FUNC_ENABLE "/sys/class/aml_ldim/func_en"
 #define DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN "/sys/class/tsync/av_threshold_min"
+#define IWATT_SHELL_PATH    "/system/bin/get_iwatt_regs.sh"
+
 #define AV_THRESHOLD_MIN_MS "540000" //6S = 6*90000
 
 #define DTV_DTMB_MODE        "dtmb"
@@ -237,7 +239,7 @@ public:
     int getFrontendSNR();
     int getFrontendBER();
     int getChannelInfoBydbID ( int dbID, channel_info_t &chan_info );
-    int setBlackoutEnable(int enable);
+    int setBlackoutEnable(int enable, int isSave);
     int getBlackoutEnable();
     int saveATVProgramID ( int dbID );
     int getATVProgramID ( void );
@@ -256,9 +258,11 @@ public:
     virtual int Tv_SSMRestoreDefaultSetting();
     int handleGPIO(const char *port_name, bool is_out, int edge);
     int setLcdEnable(bool enable);
+    int Tv_GetIwattRegs();
     int GetSourceConnectStatus(tv_source_input_t source_input);
     int IsDVISignal();
     int isVgaFmtInHdmi();
+    int GetTvAction();
     int getHDMIFrameRate ( void );
     unsigned int Vpp_GetDisplayResolutionInfo(tvin_window_pos_t *win_pos);
     //SSM
@@ -272,6 +276,16 @@ public:
 
     CTvSubtitle mSubtitle;
     CTv2d4GHeadSetDetect mHeadSet;
+
+    void SetCurrentLanguage(std::string lang)
+    {
+        mCurrentSystemLang = lang;
+    }
+
+    std::string GetCurrentLanguage()
+    {
+        return mCurrentSystemLang;
+    }
 
     int SendHDMIRxCECCustomMessage(unsigned char data_buf[]);
     int SendHDMIRxCECCustomMessageAndWaitReply(unsigned char data_buf[], unsigned char reply_buf[], int WaitCmd, int timeout);
@@ -304,7 +318,7 @@ public:
     tvin_port_t Tv_GetHdmiPortBySourceInput(tv_source_input_t source_input);
     int SetVideoAxis(int x, int y, int width, int heigth);
     int Tv_RrtUpdate(int freq, int modulation, int mode);
-    rrt_select_info_t Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id);
+    rrt_select_info_t Tv_RrtSearch(int rating_region_id, int dimension_id, int value_id, int program_id);
     int Tv_Easupdate();
     int Tv_SetWssStatus (int status);
     int Tv_SetDeviceIdForCec (int deviceId);
@@ -347,6 +361,7 @@ private:
     bool mATVDisplaySnow;
     bool iSBlackPattern;
     bool MnoNeedAutoSwitchToMonitorMode;
+    std::string mCurrentSystemLang;
 
 protected:
     class CTvMsgQueue: public CMsgQueueThread, public CAv::IObserver
@@ -462,6 +477,7 @@ protected:
     volatile tv_source_input_t m_last_source_input;
     volatile tv_source_input_t m_source_input_virtual;
     volatile bool m_first_enter_tvinput;
+    volatile int mLastScreenMode;
 
     /* for tvin window mode and pos*/
     tvin_window_pos_t m_win_pos;

@@ -166,6 +166,7 @@ public:
     int ClearVideoBuffer();
     bool videoIsPlaying(int minFrameCount = 8);
     int setVideoScreenMode ( int value );
+    int getVideoScreenMode();
     int setVideoAxis ( int h, int v, int width, int height );
     video_display_resolution_t getVideoDisplayResolution();
     int setRGBScreen(int r, int g, int b);

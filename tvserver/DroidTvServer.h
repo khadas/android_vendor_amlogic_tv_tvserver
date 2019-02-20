@@ -51,6 +51,7 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hidl::memory::V1_0::IMemory;
 using ::android::sp;
+using ::android::hardware::hidl_array;
 
 using namespace android;
 
@@ -90,7 +91,7 @@ public:
     Return<int32_t> handleGPIO(const hidl_string& key, int32_t is_out, int32_t edge) override;
     Return<int32_t> setSourceInput(int32_t inputSrc) override;
     Return<int32_t> setSourceInputExt(int32_t inputSrc, int32_t vInputSrc) override;
-    Return<int32_t> setBlackoutEnable(int32_t satus) override;
+    Return<int32_t> setBlackoutEnable(int32_t satus, int32_t is_save) override;
     Return<int32_t> getBlackoutEnable() override;
     Return<void> getATVMinMaxFreq(getATVMinMaxFreq_cb _hidl_cb) override;
     Return<int32_t> setAmAudioPreMute(int32_t mute) override;
@@ -117,8 +118,19 @@ public:
     Return<void> startAutoBacklight() override;
     Return<void> stopAutoBacklight() override;
     Return<int32_t> FactoryCleanAllTableForProgram() override;
-	Return<void> getTvSupportCountries(getTvSupportCountries_cb _hidl_cb) override;
+    Return<void> getTvSupportCountries(getTvSupportCountries_cb _hidl_cb) override;
+    Return<void> getTvDefaultCountry(getTvDefaultCountry_cb _hidl_cb) override;
+    Return<void> getTvCountryName(const hidl_string& country_code, getTvCountryName_cb _hidl_cb) override;
+    Return<void> getTvSearchMode(const hidl_string& country_code, getTvSearchMode_cb _hidl_cb) override;
+    Return<bool> getTvDtvSupport(const hidl_string& country_code) override;
+    Return<void> getTvDtvSystem(const hidl_string& country_code, getTvDtvSystem_cb _hidl_cb) override;
+    Return<bool> getTvAtvSupport(const hidl_string& country_code) override;
+    Return<void> getTvAtvColorSystem(const hidl_string& country_code, getTvAtvColorSystem_cb _hidl_cb) override;
+    Return<void> getTvAtvSoundSystem(const hidl_string& country_code, getTvAtvSoundSystem_cb _hidl_cb) override;
+    Return<void> getTvAtvMinMaxFreq(const hidl_string& country_code, getTvAtvMinMaxFreq_cb _hidl_cb) override;
+    Return<bool> getTvAtvStepScan(const hidl_string& country_code) override;
     Return<void> setTvCountry(const hidl_string& country) override;
+    Return<void> setCurrentLanguage(const hidl_string& lang) override;
     Return<int32_t> setAudioOutmode(int32_t mode) override;
     Return<int32_t> getAudioOutmode() override;
     Return<int32_t> getAudioStreamOutmode() override;
@@ -129,10 +141,17 @@ public:
     Return<int32_t> DtvSwitchAudioTrack3(int32_t audio_pid, int32_t audio_format,int32_t audio_param) override;
     Return<int32_t> setWssStatus(int32_t status) override;
     Return<int32_t> sendRecordingCmd(int32_t cmd, const hidl_string& id, const hidl_string& param) override;
-    Return<void> searchRrtInfo(int32_t rating_region_id, int32_t dimension_id, int32_t value_id, searchRrtInfo_cb _hidl_cb) override;
+    Return<void> searchRrtInfo(int32_t rating_region_id, int32_t dimension_id, int32_t value_id, int32_t program_id, searchRrtInfo_cb _hidl_cb) override;
     Return<int32_t> updateRRT(int32_t freq, int32_t moudle, int32_t mode) override;
     Return<int32_t> updateEAS(int32_t freq, int32_t moudle, int32_t mode) override;
     Return<int32_t> setDeviceIdForCec(int32_t DeviceId) override;
+    Return<int32_t> getTvRunStatus(void) override;
+    Return<int32_t> getTvAction(void) override;
+    Return<int32_t> setLcdEnable(int32_t enable) override;
+    Return<void> readMacAddress(readMacAddress_cb _hidl_cb) override;
+    Return<int32_t> saveMacAddress(const hidl_array<int32_t, 6>& data_buf) override;
+    Return<int32_t> getIwattRegs() override;
+
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;
 
     virtual void onEvent(const TvHidlParcel &hidlParcel);

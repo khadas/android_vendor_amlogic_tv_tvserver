@@ -271,22 +271,24 @@ int CTvRrt::StopRrtUpdate(void)
            ret:search results
  * @Return: 0 success, -1 fail
  */
-int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *ret)
+int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, int program_id, rrt_select_info_t *ret)
 {
     int r = -1;
 
-    LOGD("rating_region_id = %d, dimension_id = %d, value_id = %d\n",rating_region_id, dimension_id, value_id);
+    LOGD("program_id=%d, rating_region_id = %d, dimension_id = %d, value_id = %d\n", program_id, rating_region_id, dimension_id, value_id);
 
     //check rrt_define_file exist
     struct stat tmp_st;
     if (stat(TV_RRT_DEFINE_PARAM_PATH, &tmp_st) != 0) {
-        LOGD("file don't exist!\n");
+        LOGD("program_id=%d, file don't exist!\n", program_id);
+        ret->status = -1;
         return -1;
     }
 
     TiXmlDocument *pRRTFile = new TiXmlDocument(TV_RRT_DEFINE_PARAM_PATH);
     if (!pRRTFile->LoadFile()) {
-        LOGD("load %s error!\n", TV_RRT_DEFINE_PARAM_PATH);
+        LOGD("program_id=%d,load %s error!\n", program_id, TV_RRT_DEFINE_PARAM_PATH);
+        ret->status = -1;
         return -1;
     }
 
@@ -294,14 +296,15 @@ int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, r
     TiXmlElement* pTmpElement = pRRTFile->RootElement()->FirstChildElement();
     if (pTmpElement != NULL) {
         do {
+            LOGD("program_id=%d,exist rating_region_id=%d, dimension_id=%d\n", program_id, pTmpElement->FirstAttribute()->Next()->IntValue(), pTmpElement->LastAttribute()->IntValue());
             if ((pTmpElement->FirstAttribute()->Next()->IntValue() ==rating_region_id) &&
                 (pTmpElement->LastAttribute()->IntValue() == dimension_id )) {
-                LOGD("%s\n",pTmpElement->FirstAttribute()->Next()->Next()->Value());
+                LOGD("program_id=%d,%s\n",program_id, pTmpElement->FirstAttribute()->Next()->Next()->Value());
                 int RationSize = strlen(pTmpElement->FirstAttribute()->Next()->Next()->Value());
                 ret->rating_region_name_count = RationSize;
                 const char *rating_region_name = pTmpElement->FirstAttribute()->Next()->Next()->Value();
                 memcpy(ret->rating_region_name, rating_region_name, RationSize+1);
-                LOGD("%s\n",pTmpElement->FirstAttribute()->Value());
+                LOGD("program_id=%d,%s\n",program_id, pTmpElement->FirstAttribute()->Value());
                 int DimensionSize = strlen(pTmpElement->FirstAttribute()->Value());
                 ret->dimensions_name_count = DimensionSize;
                 memcpy(ret->dimensions_name, pTmpElement->FirstAttribute()->Value(), DimensionSize+1);
@@ -311,7 +314,7 @@ int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, r
                     if (pElement->LastAttribute()->IntValue() == value_id ) {
                         int ValueSize = strlen(pElement->FirstAttribute()->Value());
                         ret->rating_value_text_count = ValueSize;
-                        LOGD("%s\n",pElement->FirstAttribute()->Value());
+                        LOGD("program_id=%d,%s\n",program_id, pElement->FirstAttribute()->Value());
                         memcpy(ret->rating_value_text, pElement->FirstAttribute()->Value(), ValueSize+1);
                         r = 0;
                         goto end;
@@ -319,9 +322,11 @@ int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, r
                 }
             }
         } while(pTmpElement = pTmpElement->NextSiblingElement());
-        LOGD("Don't find value !\n");
+        LOGD("program_id=%d,Don't find value!\n", program_id);
+        ret->status = -1;
     } else {
-        LOGD("XML file is NULL!\n");
+        LOGD("program_id=%d,XML file is NULL!\n", program_id);
+        ret->status = -1;
     }
 
 end:

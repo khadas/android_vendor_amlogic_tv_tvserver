@@ -24,6 +24,8 @@ using namespace android;
 
 #define SYS_VFM_MAP_PATH            "/sys/class/vfm/map"
 #define SYS_DISPLAY_MODE_PATH       "/sys/class/display/mode"
+#define SYS_PANEL_FRAME_RATE        "/sys/class/lcd/frame_rate"
+
 #define DEPTH_LEVEL_2DTO3D 33
 static const int DepthTable_2DTO3D[DEPTH_LEVEL_2DTO3D] = {
     -64, // -16
@@ -623,7 +625,7 @@ public:
     int VDIN_GetSignalInfo ( struct tvin_info_s *SignalInfo );
     int VDIN_SetVdinParam ( const struct tvin_parm_s *vdinParam );
     int VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam );
-    void VDIN_GetDisplayVFreq (int need_freq, int *iSswitch, char * display_mode);
+    int VDIN_GetDisplayVFreq (int need_freq, int *iSswitch, char * display_mode);
     int VDIN_SetDisplayVFreq ( int freq, bool isFbc);
 
     int VDIN_Get_avg_luma(void);

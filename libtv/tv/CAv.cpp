@@ -577,12 +577,18 @@ int CAv::SetVideoLayerDisable ( int value )
 
 int CAv::setVideoScreenMode ( int value )
 {
-    LOGD("%s: value = %d", __FUNCTION__, value);
-
     char val[64] = {0};
     sprintf(val, "%d", value);
     tvWriteSysfs(VIDEO_SCREEN_MODE, val);
     return 0;
+}
+
+int CAv::getVideoScreenMode()
+{
+    char buf[32] = {0};
+
+    tvReadSysfs(VIDEO_SCREEN_MODE, buf);
+    return atoi(buf);
 }
 
 /**

@@ -37,6 +37,7 @@
 #include <stdint.h>
 #include <CTvLog.h>
 #include <tvconfig.h>
+#include <tvscanconfig.h>
 #include <tvutils.h>
 #include <tvsetting/CTvSetting.h>
 #include <version/version.h>
@@ -58,6 +59,7 @@ extern "C" {
 #include "DroidTvServiceIntf.h"
 
 using namespace android;
+using namespace std;
 
 DroidTvServiceIntf::DroidTvServiceIntf()
 {
@@ -594,8 +596,8 @@ int DroidTvServiceIntf::setSourceInput(int32_t inputSrc, int32_t vInputSrc) {
     return mpTv->SetSourceSwitchInput((tv_source_input_t)vInputSrc, (tv_source_input_t)inputSrc);
 }
 
-int DroidTvServiceIntf::setBlackoutEnable(int32_t status) {
-    return mpTv->setBlackoutEnable(status);
+int DroidTvServiceIntf::setBlackoutEnable(int32_t status, int32_t is_save) {
+    return mpTv->setBlackoutEnable(status, is_save);
 }
 
 int DroidTvServiceIntf::getBlackoutEnable() {
@@ -745,14 +747,127 @@ int DroidTvServiceIntf::FactoryCleanAllTableForProgram() {
 }
 
 std::string DroidTvServiceIntf::getTvSupportCountries() {
-    const char *CountryStr = config_get_str(CFG_SECTION_TV, CGF_TV_SUPPORT_COUNTRY, "null");
-    LOGD("get TV support country = %s", CountryStr);
-    return std::string(CountryStr);
+    string strValue;
+    const char *str = get_tv_support_country_list();
+    if (str == NULL) {
+        LOGE("get tv support country list fail");
+        return strValue;
+    }
+    strValue = str;
+    LOGD("get tv support country: %s", str);
+    return strValue;
+}
+
+std::string DroidTvServiceIntf::getTvDefaultCountry() {
+    string strValue;
+    const char *str = get_tv_current_country();
+    if (str == NULL) {
+        LOGE("get tv default country fail!");
+        return strValue;
+    }
+    strValue = str;
+    LOGD("get tv default country: %s", str);
+    return strValue;
+}
+
+std::string DroidTvServiceIntf::getTvCountryName(const std::string& country_code) {
+    string strValue;
+    const char *str = get_tv_country_name(country_code.c_str());
+    if (str == NULL) {
+        LOGE("get tv country name fail!");
+        return strValue;
+    }
+    strValue = str;
+    LOGD("get tv country name: %s", str);
+    return strValue;
+}
+
+std::string DroidTvServiceIntf::getTvSearchMode(const std::string& country_code) {
+    string strValue;
+    const char *str = get_tv_search_mode(country_code.c_str());
+    if (str == NULL) {
+        LOGE("get tv search mode fail!");
+        return strValue;
+    }
+    strValue = str;
+    LOGD("get tv search mode: %s", str);
+    return strValue;
+}
+
+bool DroidTvServiceIntf::getTvDtvSupport(const std::string& country_code) {
+    bool ret = get_tv_dtv_support(country_code.c_str());
+    LOGD("get tv dtv support: %d", ret);
+    return ret;
+}
+
+std::string DroidTvServiceIntf::getTvDtvSystem(const std::string& country_code) {
+    string strValue;
+    const char *str = get_tv_dtv_system(country_code.c_str());
+    if (str == NULL) {
+        LOGE("get tv dtv system fail!");
+        return strValue;
+    }
+    strValue = str;
+    LOGD("get tv dtv system: %s", str);
+    return strValue;
+}
+
+bool DroidTvServiceIntf::getTvAtvSupport(const std::string& country_code) {
+    bool ret = get_tv_atv_support(country_code.c_str());
+    LOGD("get tv atv support: %d", ret);
+    return ret;
+}
+
+std::string DroidTvServiceIntf::getTvAtvColorSystem(const std::string& country_code) {
+    string strValue;
+    const char *str = get_tv_atv_color_system(country_code.c_str());
+    if (str == NULL) {
+        LOGE("get tv atv color system fail!");
+        return strValue;
+    }
+    strValue = str;
+    LOGD("get tv atv color system: %s", str);
+    return strValue;
+}
+
+std::string DroidTvServiceIntf::getTvAtvSoundSystem(const std::string& country_code) {
+    string strValue;
+    const char *str = get_tv_atv_sound_system(country_code.c_str());
+    if (str == NULL) {
+        LOGE("get tv atv sound system fail!");
+        return strValue;
+    }
+    strValue = str;
+    LOGD("get tv atv sound system: %s", str);
+    return strValue;
+}
+
+std::string DroidTvServiceIntf::getTvAtvMinMaxFreq(const std::string& country_code) {
+    string strValue;
+    const char *str = get_tv_atv_min_max_freq(country_code.c_str());
+    if (str == NULL) {
+        LOGE("get tv atv min max freq fail!");
+        return strValue;
+    }
+    strValue = str;
+    LOGD("get tv atv min max freq: %s", str);
+    return strValue;
+}
+
+bool DroidTvServiceIntf::getTvAtvStepScan(const std::string& country_code) {
+    bool ret = get_tv_atv_step_scan(country_code.c_str());
+    LOGD("get tv atv step scan: %d", ret);
+    return ret;
 }
 
 void DroidTvServiceIntf::setTvCountry(const std::string& country) {
     CTvRegion::setTvCountry(country.c_str());
-    LOGD("set Tv country = %s", country.c_str());
+    LOGD("set tv country = %s", country.c_str());
+}
+
+void DroidTvServiceIntf::setCurrentLanguage(const std::string& lang) {
+    mpTv->SetCurrentLanguage(lang);
+    LOGD("set tv current lang = %s", lang.c_str());
 }
 
 int DroidTvServiceIntf::setAudioOutmode(int32_t mode) {
@@ -788,8 +903,8 @@ int DroidTvServiceIntf::sendRecordingCmd(int32_t cmd, const std::string& id, con
     return mpTv->doRecordingCommand(cmd, id.c_str(), param.c_str());
 }
 
-rrt_select_info_t DroidTvServiceIntf::searchRrtInfo(int rating_region_id, int dimension_id, int value_id) {
-    return mpTv->Tv_RrtSearch(rating_region_id, dimension_id, value_id);
+rrt_select_info_t DroidTvServiceIntf::searchRrtInfo(int rating_region_id, int dimension_id, int value_id, int program_id) {
+    return mpTv->Tv_RrtSearch(rating_region_id, dimension_id, value_id, program_id);
 }
 
 int DroidTvServiceIntf::updateRRT(int freq, int moudle, int mode) {
@@ -802,6 +917,46 @@ int DroidTvServiceIntf::updateEAS(int freq, int moudle, int mode) {
 
 int DroidTvServiceIntf::setDeviceIdForCec(int DeviceId) {
     return mpTv->Tv_SetDeviceIdForCec(DeviceId);
+}
+
+int DroidTvServiceIntf::getTvRunStatus(void) {
+    return mpTv->GetTvStatus();
+}
+
+int DroidTvServiceIntf::getTvAction(void) {
+    return mpTv->GetTvAction();
+}
+
+int DroidTvServiceIntf::setLcdEnable(int enable) {
+    return mpTv->setLcdEnable(enable);
+}
+
+int DroidTvServiceIntf::readMacAddress(unsigned char *dataBuf) {
+    unsigned char tempBuf[CC_MAC_LEN] = {0};
+    int ret = KeyData_ReadMacAddress(tempBuf);
+    if (ret != 0) {
+        for (int i = 0; i < CC_MAC_LEN; i++) {
+            dataBuf[i] = tempBuf[i];
+        }
+        ret = 0;
+    } else {
+        ret = -1;
+    }
+
+    return ret;
+}
+
+int DroidTvServiceIntf::saveMacAddress(unsigned char *dataBuf) {
+    unsigned char tempBuf[CC_MAC_LEN] = {0};
+    for (int i = 0; i < CC_MAC_LEN; i++) {
+        tempBuf[i] = dataBuf[i];
+    }
+
+    return KeyData_SaveMacAddress(tempBuf);
+}
+
+int DroidTvServiceIntf::getIwattRegs() {
+    return mpTv->Tv_GetIwattRegs();
 }
 
 int DroidTvServiceIntf::processCmd(const Parcel &p) {

@@ -354,7 +354,7 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
                 mCurEv.mSid[i] = srv->cap_info.captions[i].service_number
                     + (srv->cap_info.captions[i].type ? (AM_CC_CAPTION_SERVICE1-1) : (AM_CC_CAPTION_CC1));
                 mCurEv.mSstype[i] = srv->cap_info.captions[i].type ? TYPE_DTV_CC : TYPE_ATV_CC;
-                mCurEv.mSid1[i] = srv->cap_info.captions[i].pid_or_line21;
+                mCurEv.mSid1[i] = srv->cap_info.captions[i].private_data;
                 mCurEv.mSid2[i] = srv->cap_info.captions[i].flags;
                 strncpy(mCurEv.mSlang[i], srv->cap_info.captions[i].lang, 10);
             }
@@ -554,16 +554,17 @@ void CTvScanner::processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
     } else {
         /*tsid*/
        dvbpsi_pat_t *pats = getValidPats(ts);
+       if (pats != NULL) {
+           ts_info->pat_ts_id = pats->i_ts_id;
+       }
        if (pats != NULL && !ts->digital.use_vct_tsid) {
             ts_info->tsid = pats->i_ts_id;
-            ts_info->pat_ts_id = pats->i_ts_id;
             if (ts->digital.sdts)
                 ts_info->tsid = ts->digital.sdts->i_ts_id;
             else if (IS_DVBT2_TS(ts->digital.fend_para) && ts->digital.dvbt2_data_plp_num > 0 && ts->digital.dvbt2_data_plps[0].sdts)
                 ts_info->tsid = ts->digital.dvbt2_data_plps[0].sdts->i_ts_id;
         } else if (ts->digital.vcts != NULL) {
             ts_info->tsid = ts->digital.vcts->i_extension;
-            ts_info->pat_ts_id = ts_info->tsid;
         }
 
         /*nid*/
@@ -725,31 +726,50 @@ void CTvScanner::extractSrvInfoFromSdt(AM_SCAN_Result_t *result, dvbpsi_sdt_t *s
             break;
         }
         AM_SI_LIST_END()
-#if 0   //The upper layer don't have the logic of parse multi service names according to 0x80, Use only one for the time being.
+#if 1   //The upper layer don't have the logic of parse multi service names according to 0x80, Use only one for the time being.
         /* store multilingual service name */
         AM_SI_LIST_BEGIN(srv->p_first_descriptor, descr)
-        if (descr->p_decoded && descr->i_tag == AM_SI_DESCR_MULTI_SERVICE_NAME) {
+        bool isChinaStream = (strcmp("CN", CTvRegion::getTvCountry()) == 0);
+        if (isChinaStream && descr->p_decoded && descr->i_tag == AM_SI_DESCR_MULTI_SERVICE_NAME) {
             int i;
             dvbpsi_multi_service_name_dr_t *pmsnd = (dvbpsi_multi_service_name_dr_t *)descr->p_decoded;
 
             for (i = 0; i < pmsnd->i_name_count; i++) {
+                /*judge 3bytes language code is current system language or not*/
+                const char *iso_639_code = (const char *)(pmsnd->p_service_name[i].i_iso_639_code);
+                if (!(strncmp(mCurrentSystemLang.c_str(), iso_639_code, 3) == 0)) {
+                    LOGD("not found multi matched current lang [%s] parsed [%3s]", mCurrentSystemLang.c_str(), iso_639_code);
+                    continue;
+                } else {
+                    LOGD("found multi matched current lang [%s] parsed [%3s]", mCurrentSystemLang.c_str(), iso_639_code);
+                }
+                //clear other info if matched one found
+                memset(name, 0, sizeof(name));
+                memset(srv_info->name, 0, sizeof(srv_info->name));
+                curr_name_len = 0,
+                tmp_len = 0;
                 name[0] = 0;
                 AM_SI_ConvertDVBTextCode((char *)pmsnd->p_service_name[i].i_service_name,
                                          pmsnd->p_service_name[i].i_service_name_length,
                                          name, AM_DB_MAX_SRV_NAME_LEN);
                 name[AM_DB_MAX_SRV_NAME_LEN] = 0;
-                LOGD("found name [%s]", name);
+                LOGD("found multi matched name [%s]", name);
 
                 if (curr_name_len > 0) {
                     /*extra split mark*/
                     COPY_NAME(&split, 1);
                 }
+
                 /*3bytes language code*/
                 COPY_NAME(pmsnd->p_service_name[i].i_iso_639_code, 3);
                 /*following by name text*/
                 tmp_len = strlen(name);
                 COPY_NAME(name, tmp_len);
+                LOGD("found multi match lang text [%s]", name);
+                break;
             }
+        }else {
+            LOGD("no multi service name matched");
         }
         AM_SI_LIST_END()
 #endif
@@ -1660,6 +1680,20 @@ int CTvScanner::createDtvParas(AM_SCAN_DTVCreatePara_t &dtv_para, CFrontEnd::FEP
 
     if (scp.getDtvMode() == TV_SCAN_DTVMODE_ALLBAND) {
         CTvRegion::getChannelListByName((char *)list_name, vcp);
+    } else if (scp.getDtvMode() == TV_SCAN_DTVMODE_AUTO) {
+        Vector<sp<CTvChannel>> vcptemp;
+        CTvRegion::getChannelListByName((char *)list_name, vcptemp);
+        //add two channel at most
+        if (vcptemp.size() >= 2) {
+            vcptemp[0]->setFrequency(scp.getDtvFrequency1());
+            vcptemp[0]->setSymbolRate(fp.getSymbolrate());
+            vcp.add(vcptemp[0]);
+            if (scp.getDtvFrequency1() != scp.getDtvFrequency2()) {
+                vcptemp[1]->setFrequency(scp.getDtvFrequency2());
+                vcptemp[1]->setSymbolRate(fp.getSymbolrate());
+                vcp.add(vcptemp[1]);
+            }
+        }
     } else {
         CTvRegion::getChannelListByNameAndFreqRange((char *)list_name, scp.getDtvFrequency1(), scp.getDtvFrequency2(), vcp);
     }

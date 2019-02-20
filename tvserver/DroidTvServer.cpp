@@ -215,8 +215,8 @@ Return<int32_t> DroidTvServer::setSourceInputExt(int32_t inputSrc, int32_t vInpu
     return mTvServiceIntf->setSourceInput(inputSrc, vInputSrc);
 }
 
-Return<int32_t> DroidTvServer::setBlackoutEnable(int32_t status) {
-    return mTvServiceIntf->setBlackoutEnable(status);
+Return<int32_t> DroidTvServer::setBlackoutEnable(int32_t status, int32_t is_save) {
+    return mTvServiceIntf->setBlackoutEnable(status, is_save);
 }
 
 Return<int32_t> DroidTvServer::getBlackoutEnable() {
@@ -344,8 +344,67 @@ Return<void> DroidTvServer::getTvSupportCountries(getTvSupportCountries_cb _hidl
     return Void();
 }
 
+Return<void> DroidTvServer::getTvDefaultCountry(getTvDefaultCountry_cb _hidl_cb) {
+    std::string Country = mTvServiceIntf->getTvDefaultCountry();
+    _hidl_cb(Country);
+    return Void();
+}
+
+Return<void> DroidTvServer::getTvCountryName(const hidl_string& country_code, getTvCountryName_cb _hidl_cb) {
+    std::string str = mTvServiceIntf->getTvCountryName(country_code);
+    _hidl_cb(str);
+    return Void();
+}
+
+Return<void> DroidTvServer::getTvSearchMode(const hidl_string& country_code, getTvSearchMode_cb _hidl_cb) {
+    std::string str = mTvServiceIntf->getTvSearchMode(country_code);
+    _hidl_cb(str);
+    return Void();
+}
+
+Return<bool> DroidTvServer::getTvDtvSupport(const hidl_string& country_code) {
+    return mTvServiceIntf->getTvDtvSupport(country_code);
+}
+
+Return<void> DroidTvServer::getTvDtvSystem(const hidl_string& country_code, getTvDtvSystem_cb _hidl_cb) {
+    std::string str = mTvServiceIntf->getTvDtvSystem(country_code);
+    _hidl_cb(str);
+    return Void();
+}
+
+Return<bool> DroidTvServer::getTvAtvSupport(const hidl_string& country_code) {
+    return mTvServiceIntf->getTvAtvSupport(country_code);
+}
+
+Return<void> DroidTvServer::getTvAtvColorSystem(const hidl_string& country_code, getTvAtvColorSystem_cb _hidl_cb) {
+    std::string str = mTvServiceIntf->getTvAtvColorSystem(country_code);
+    _hidl_cb(str);
+    return Void();
+}
+
+Return<void> DroidTvServer::getTvAtvSoundSystem(const hidl_string& country_code, getTvAtvSoundSystem_cb _hidl_cb) {
+    std::string str = mTvServiceIntf->getTvAtvSoundSystem(country_code);
+    _hidl_cb(str);
+    return Void();
+}
+
+Return<void> DroidTvServer::getTvAtvMinMaxFreq(const hidl_string& country_code, getTvAtvMinMaxFreq_cb _hidl_cb) {
+    std::string str = mTvServiceIntf->getTvAtvMinMaxFreq(country_code);
+    _hidl_cb(str);
+    return Void();
+}
+
+Return<bool> DroidTvServer::getTvAtvStepScan(const hidl_string& country_code) {
+    return mTvServiceIntf->getTvAtvStepScan(country_code);
+}
+
 Return<void> DroidTvServer::setTvCountry(const hidl_string& country) {
     mTvServiceIntf->setTvCountry(country);
+    return Void();
+}
+
+Return<void> DroidTvServer::setCurrentLanguage(const hidl_string& lang) {
+    mTvServiceIntf->setCurrentLanguage(lang);
     return Void();
 }
 
@@ -391,12 +450,13 @@ Return<int32_t> DroidTvServer::sendRecordingCmd(int32_t cmd, const hidl_string& 
     return mTvServiceIntf->sendRecordingCmd(cmd, id, param);
 }
 
-Return<void> DroidTvServer::searchRrtInfo(int32_t rating_region_id, int32_t dimension_id, int32_t value_id, searchRrtInfo_cb _hidl_cb) {
+Return<void> DroidTvServer::searchRrtInfo(int32_t rating_region_id, int32_t dimension_id, int32_t value_id, int32_t program_id, searchRrtInfo_cb _hidl_cb) {
     RRTSearchInfo info;
-    rrt_select_info_t tempInfo = mTvServiceIntf->searchRrtInfo(rating_region_id, dimension_id, value_id);
+    rrt_select_info_t tempInfo = mTvServiceIntf->searchRrtInfo(rating_region_id, dimension_id, value_id, program_id);
     info.RatingRegionName = tempInfo.rating_region_name;
     info.DimensionsName = tempInfo.dimensions_name;
     info.RatingValueText = tempInfo.rating_value_text;
+    info.status = tempInfo.status;
     _hidl_cb(info);
     return Void();
 }
@@ -411,6 +471,47 @@ Return<int32_t> DroidTvServer::updateEAS(int32_t freq, int32_t moudle, int32_t m
 
 Return<int32_t> DroidTvServer::setDeviceIdForCec(int32_t DeviceId) {
     return mTvServiceIntf->setDeviceIdForCec(DeviceId);
+}
+
+Return<int32_t> DroidTvServer::getTvRunStatus(void) {
+    return mTvServiceIntf->getTvRunStatus();
+}
+
+Return<int32_t> DroidTvServer::getTvAction(void) {
+    return mTvServiceIntf->getTvAction();
+}
+
+
+Return<int32_t> DroidTvServer::setLcdEnable(int32_t enable) {
+    return mTvServiceIntf->setLcdEnable(enable);
+}
+
+Return<void> DroidTvServer::readMacAddress(readMacAddress_cb _hidl_cb)  {
+    unsigned char value[6] = {0};
+    int ret = mTvServiceIntf->readMacAddress(value);
+    if (ret >= 0) {
+        int i;
+        hidl_array<int32_t, 6> result;
+        for (i=0;i<6;i++) {
+            result[i] = value[i];
+        }
+        _hidl_cb(Result::OK, result);
+    }
+
+    return Void();
+}
+
+Return<int32_t> DroidTvServer::saveMacAddress(const hidl_array<int32_t, 6>& data_buf) {
+    unsigned char tempBuf[6] = {0};
+    int i = 0;
+    for (i=0;i<6;i++) {
+        tempBuf[i] = data_buf[i];
+    }
+    return mTvServiceIntf->saveMacAddress(tempBuf);
+}
+
+Return<int32_t> DroidTvServer::getIwattRegs() {
+    return mTvServiceIntf->getIwattRegs();
 }
 
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
@@ -468,6 +569,7 @@ void DroidTvServer::handleServiceDeath(uint32_t cookie) {
     AutoMutex _l(mLock);
     mClients[cookie]->unlinkToDeath(mDeathRecipient);
     mClients[cookie].clear();
+    mClients[cookie] = nullptr;
     LOGI("%s, client size:%d", __FUNCTION__,(int)mClients.size());
 }
 

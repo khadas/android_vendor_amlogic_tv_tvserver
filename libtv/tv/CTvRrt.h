@@ -38,6 +38,7 @@ typedef struct rrt_info
 
 typedef struct rrt_select_info_s
 {
+    int  status;
     int  rating_region_name_count;
     char rating_region_name[2048];
     int  dimensions_name_count;
@@ -97,7 +98,7 @@ public:
     ~CTvRrt();
     int StartRrtUpdate(rrt_search_mode_t mode);
     int StopRrtUpdate(void);
-    int GetRRTRating(int rating_region_id, int dimension_id, int value_id, rrt_select_info_t *ret);
+    int GetRRTRating(int rating_region_id, int dimension_id, int value_id, int program_id, rrt_select_info_t *ret);
 
     int mRrtScanStatus;
     int mScanResult;

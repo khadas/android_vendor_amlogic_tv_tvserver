@@ -119,7 +119,7 @@ int CDTVTvPlayer::start(const char *param) {
     }
 #ifdef SUPPORT_ADTV
     // need show first frame when av not sync, then it looks switching channel more fast
-    tvWriteSysfs("/sys/class/video/show_first_frame_nosync", "1");
+    // tvWriteSysfs("/sys/class/video/show_first_frame_nosync", "1");
     switch (mMode) {
         case PLAY_MODE_LIVE: {//start play live and rec in the backgroud
             if (!mDisableTimeShifting) {

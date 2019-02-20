@@ -41,27 +41,18 @@ using ::vendor::amlogic::hardware::tvserver::V1_0::ITvServer;
 
 int main(int argc __unused, char** argv __unused)
 {
-    bool treble = property_get_bool("persist.tvserver.treble", true);
-    if (treble) {
-        android::ProcessState::initWithDriver("/dev/vndbinder");
-    }
+    android::ProcessState::initWithDriver("/dev/vndbinder");
 
-    LOGI("tvserver daemon starting in %s mode", treble?"treble":"normal");
     configureRpcThreadpool(4, false);
     sp<ProcessState> proc(ProcessState::self());
 
-    if (treble) {
-        sp<ITvServer> hidltvserver = new DroidTvServer();
-        if (hidltvserver == nullptr) {
-            LOGE("Cannot create ITvServer service");
-        } else if (hidltvserver->registerAsService() != OK) {
-            LOGE("Cannot register ITvServer service.");
-        } else {
-            LOGI("Treble ITvServer service created.");
-        }
-    }
-    else {
-        //TvService::instantiate();
+    sp<ITvServer> hidltvserver = new DroidTvServer();
+    if (hidltvserver == nullptr) {
+        LOGE("Cannot create ITvServer service");
+    } else if (hidltvserver->registerAsService() != OK) {
+        LOGE("Cannot register ITvServer service.");
+    } else {
+        LOGI("Treble ITvServer service created.");
     }
 
     /*

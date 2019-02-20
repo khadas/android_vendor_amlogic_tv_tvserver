@@ -592,11 +592,11 @@ void CFrontEnd::v4l2_fend_callback(long dev_no __unused, int event_type __unused
 
     LOGD("vlfend callback: status[0x%x]\n", evt->status);
     if (evt->status &  TV_FE_HAS_LOCK) {
-        pFront->mCurSigEv.mCurSigStaus = FEEvent::EVENT_FE_HAS_SIG;
+        pFront->mCurSigEv.mCurSigStaus = FEEvent::EVENT_VLFE_HAS_SIG;
         pFront->mCurSigEv.mCurFreq = evt->parameters.frequency;
         pFront->mpObserver->onEvent(pFront->mCurSigEv);
     } else if (evt->status & TV_FE_TIMEDOUT) {
-        pFront->mCurSigEv.mCurSigStaus = FEEvent::EVENT_FE_NO_SIG;
+        pFront->mCurSigEv.mCurSigStaus = FEEvent::EVENT_VLFE_NO_SIG;
         pFront->mCurSigEv.mCurFreq = evt->parameters.frequency;
         pFront->mpObserver->onEvent(pFront->mCurSigEv);
     }
@@ -621,6 +621,8 @@ int CFrontEnd::stdAndColorToAudioEnum(int data)
         std = CC_ATV_AUDIO_STD_M;
     } else if ((data & V4L2_STD_SECAM_L) == V4L2_STD_SECAM_L) {
         std = CC_ATV_AUDIO_STD_L;
+    } else if (!data) {
+        std = CC_ATV_AUDIO_STD_AUTO;
     }
 #endif
     return  std ;
@@ -635,6 +637,8 @@ int CFrontEnd::stdAndColorToVideoEnum(int std)
         video_standard = CC_ATV_VIDEO_STD_NTSC;
     } else if ((std & V4L2_COLOR_STD_SECAM) == V4L2_COLOR_STD_SECAM) {
         video_standard = CC_ATV_VIDEO_STD_SECAM;
+    } else if (!std) {
+        video_standard = CC_ATV_VIDEO_STD_AUTO;
     }
     return video_standard;
 }
@@ -975,7 +979,7 @@ int CFrontEnd::checkStatusOnce()
     return 0;
 }
 
-int CFrontEnd::stdEnumToCvbsFmt (int vfmt)
+int CFrontEnd::stdEnumToCvbsFmt (int vfmt, unsigned long std)
 {
     tvin_sig_fmt_e cvbs_fmt = TVIN_SIG_FMT_NULL;
 #ifdef SUPPORT_ADTV
@@ -996,7 +1000,11 @@ int CFrontEnd::stdEnumToCvbsFmt (int vfmt)
         case V4L2_STD_PAL_DK:
         case V4L2_STD_PAL_BG:
         case V4L2_STD_PAL_I:
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_I;
+            if (std & V4L2_STD_PAL_M) {
+                cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_M;
+            } else {
+                cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_I;
+            }
             break;
         case V4L2_STD_PAL_M:
             cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_M;
@@ -1023,7 +1031,7 @@ int CFrontEnd::stdEnumToCvbsFmt (int vfmt)
         }
     }
 
-    LOGD("stdEnumToCvbsFmt vfmt:0x%x, cvbs_fmt:0x%x", vfmt, cvbs_fmt);
+    LOGD("stdEnumToCvbsFmt vfmt:0x%x, cvbs_fmt:0x%x, std: 0x%x", vfmt, cvbs_fmt, std);
 #endif
     return cvbs_fmt;
 }

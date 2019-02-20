@@ -74,7 +74,7 @@ public:
     int handleGPIO(const std::string& key, int is_out, int edge);
     int setSourceInput(int32_t inputSrc);
     int setSourceInput(int32_t inputSrc, int32_t vInputSrc);
-    int setBlackoutEnable(int32_t status);
+    int setBlackoutEnable(int32_t status, int32_t is_save);
     int getBlackoutEnable();
     int getATVMinMaxFreq(int32_t &scanMinFreq, int32_t &scanMaxFreq);
     int setAmAudioPreMute(int32_t mute);
@@ -102,7 +102,18 @@ public:
     void stopAutoBacklight();
     int FactoryCleanAllTableForProgram();
     std::string getTvSupportCountries();
+    std::string getTvDefaultCountry();
+    std::string getTvCountryName(const std::string& country_code);
+    std::string getTvSearchMode(const std::string& country_code);
+    bool getTvDtvSupport(const std::string& country_code);
+    std::string getTvDtvSystem(const std::string& country_code);
+    bool getTvAtvSupport(const std::string& country_code);
+    std::string getTvAtvColorSystem(const std::string& country_code);
+    std::string getTvAtvSoundSystem(const std::string& country_code);
+    std::string getTvAtvMinMaxFreq(const std::string& country_code);
+    bool getTvAtvStepScan(const std::string& country_code);
     void setTvCountry(const std::string& country);
+    void setCurrentLanguage(const std::string& lang);
     int setAudioOutmode(int32_t mode);
     int getAudioOutmode();
     int getAudioStreamOutmode();
@@ -113,10 +124,17 @@ public:
     int DtvSwitchAudioTrack(int32_t audio_pid, int32_t audio_format, int32_t audio_param);
     int setWssStatus(int status);
     int sendRecordingCmd(int32_t cmd, const std::string& id, const std::string& param);
-    rrt_select_info_t searchRrtInfo(int rating_region_id, int dimension_id, int value_id);
+    rrt_select_info_t searchRrtInfo(int rating_region_id, int dimension_id, int value_id, int program_id);
     int updateRRT(int freq, int moudle, int mode);
     int updateEAS(int freq, int moudle, int mode);
     int setDeviceIdForCec(int DeviceId);
+    int getTvRunStatus(void);
+    int getTvAction(void);
+    int setLcdEnable(int enable);
+    int readMacAddress(unsigned char *dataBuf);
+    int saveMacAddress(unsigned char *dataBuf);
+    int getIwattRegs();
+
     virtual status_t dump(int fd, const Vector<String16>& args);
 
     //wp<Client> mpScannerClient;

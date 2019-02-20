@@ -205,7 +205,7 @@ public:
     void getFrontendID();
     void getTSSourceID();
     void isDVBCMode();
-    void setFrequency();
+    void setFrequency(int freq);
     int getFrequency()
     {
         return frequency;
@@ -239,7 +239,7 @@ public:
     {
         return logicalChannelNum;
     };
-    void setSymbolRate();
+    void setSymbolRate(int symbol);
     void setPolarisation();
     void setATVAudio();
     void setATVVideoFormat();

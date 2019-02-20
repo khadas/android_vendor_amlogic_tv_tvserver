@@ -39,7 +39,6 @@ CIniFile::~CIniFile()
 int CIniFile::LoadFromFile(const char *filename)
 {
     char   lineStr[MAX_INI_FILE_LINE_LEN];
-    char   *pStr;
     LINE *pCurLINE = NULL;
     SECTION *pCurSection = NULL;
 
@@ -52,6 +51,7 @@ int CIniFile::LoadFromFile(const char *filename)
     LOGD("LoadFromFile name = %s", filename);
     strcpy(mpFileName, filename);
     if ((m_pIniFile = fopen (mpFileName, "r")) == NULL) {
+        LOGE("open %s fail: %s", mpFileName, strerror(errno));
         return -1;
     }
 
@@ -310,6 +310,7 @@ SECTION *CIniFile::getSection(const char *section)
         if (strncmp((psec->pLine->Text) + 1, section, strlen(section)) == 0)
             return psec;
     }
+    LOGE("not find section: %s", section);
     return NULL;
 }
 

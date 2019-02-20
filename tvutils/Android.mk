@@ -23,7 +23,8 @@ LOCAL_SRC_FILES := \
   tvutils.cpp \
   zepoll.cpp \
   tvconfig/CIniFile.cpp \
-  tvconfig/tvconfig.cpp
+  tvconfig/tvconfig.cpp \
+  tvconfig/tvscanconfig.cpp
 
 LOCAL_C_INCLUDES += \
   $(BOARD_AML_VENDOR_PATH)/frameworks/services/systemcontrol/PQ/include \

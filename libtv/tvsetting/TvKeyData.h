@@ -74,7 +74,7 @@
 
 #define CS_AUDIO_NOLINEPOINTS_FILE_PATH_CFG     "ssm.audio.nolinepoints.file.path"
 #define CS_AUDIO_NOLINEPOINTS_FILE_OFFSET_CFG   "ssm.audio.nolinepoints.file.offset"
-int ReadKeyData(const char *key_name, unsigned char data_buf[]);
+int ReadKeyData(const char *key_name, unsigned char data_buf[], int rd_size);
 int WriteKeyData(const char *key_name, int wr_size, char data_buf[]);
 
 int KeyData_SaveProjectID(int rw_val);

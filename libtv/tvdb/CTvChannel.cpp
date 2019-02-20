@@ -377,12 +377,14 @@ void CTvChannel::isDVBCMode()
 {
 }
 
-void CTvChannel::setFrequency()
+void CTvChannel::setFrequency(int freq)
 {
+    frequency = freq;
 }
 
-void CTvChannel::setSymbolRate()
+void CTvChannel::setSymbolRate(int symbol)
 {
+    symbolRate = symbol;
 }
 
 void CTvChannel::setPolarisation()

@@ -147,21 +147,17 @@ static int read_partiton_raw(const char *partition, char *data, const int size)
         return -1;
     }
 
-    if (read(fd, data, size) != size) {
-        LOGE("%s, read %s size:%d failed!\n", __FUNCTION__, partition, size);
-        close(fd);
-        return -1;
-    }
+    len = read(fd, data, size);
 
     //LOGD("%s, read partition:%s, data:%s\n", __FUNCTION__, partition, (char *)data);
 
     close(fd);
-    return 0;
+    return len;
 }
 
-int ReadKeyData(const char *key_name, unsigned char data_buf[])
+int ReadKeyData(const char *key_name, unsigned char data_buf[], int rd_size)
 {
-    int rc = 0;
+    int ret = 0;
 
     if (write_partiton_raw(CS_KEY_DATA_ATTACH_DEV_PATH, "1", strlen("1"))) {
         LOGE("%s, attach failed!\n", __FUNCTION__);
@@ -173,13 +169,13 @@ int ReadKeyData(const char *key_name, unsigned char data_buf[])
         return -__LINE__;
     }
 
-    rc = read_partiton_raw(CS_KEY_DATA_READ_DEV_PATH, (char*)data_buf, CC_HDCP_KEY_CONTENT_SIZE);
-    if ( rc ) {
+    ret = read_partiton_raw(CS_KEY_DATA_READ_DEV_PATH, (char*)data_buf, rd_size);
+    if (ret != rd_size) {
         LOGE("%s, Fail in read (%s) in len %d\n", __FUNCTION__, key_name, CC_HDCP_KEY_CONTENT_SIZE);
         return -__LINE__;
+    } else {
+        return ret;
     }
-
-    return CC_HDCP_KEY_CONTENT_SIZE;
 }
 
 int WriteKeyData(const char *key_name, int wr_size, char data_buf[])
@@ -224,33 +220,33 @@ int KeyData_ReadMacAddress(unsigned char data_buf[])
     int i = 0, rd_size = 0;
     int data_i_buf[CC_MAC_LEN] = { 0, 0, 0, 0, 0, 0 };
     unsigned char rd_buf[128] = { 0 };
-    unsigned char tmp_buf[128] = { 0 };
 
     memset((void *)rd_buf, 0 , 128);
-    rd_size = ReadKeyData(CS_MAC_KEY_NAME, rd_buf);
+    rd_size = ReadKeyData(CS_MAC_KEY_NAME, rd_buf, 17);
     LOGD("%s, rd_size = %d\n", __FUNCTION__, rd_size);
-
+    if (rd_size == 17) {
+        char *tmp_buf = NULL;
+        tmp_buf = (char *)malloc(sizeof(char) * (sizeof(rd_buf)+1));
 #if ANDROID_PLATFORM_SDK_VERSION == 19
-    memcpy((void *)tmp_buf, (void *)rd_buf, 128);
+    memcpy((void *)tmp_buf, (const void *)rd_buf, 128);
     rd_size = TransStringToHex(rd_size, (char *)rd_buf, tmp_buf);
 #endif
 
 #if ANDROID_PLATFORM_SDK_VERSION >= 21
-    memcpy((void *)tmp_buf, (void *)rd_buf, 128);
+    memcpy((void *)tmp_buf, (const void *)rd_buf, 128);
 #endif
-
-    if (rd_size == 17) {
-        sscanf((char *) tmp_buf, "%02x:%02x:%02x:%02x:%02x:%02x",
+        sscanf(tmp_buf, "%02x:%02x:%02x:%02x:%02x:%02x",
                &data_i_buf[0], &data_i_buf[1], &data_i_buf[2], &data_i_buf[3],
                &data_i_buf[4], &data_i_buf[5]);
         for (i = 0; i < CC_MAC_LEN; i++) {
             data_buf[i] = data_i_buf[i] & 0xFF;
+            //LOGD("data_buf[%d] = 0x%x\n", i, data_buf[i]);
         }
-
+        free(tmp_buf);
         return KeyData_GetMacAddressDataLen();
+    }else {
+        return 0;
     }
-
-    return 0;
 }
 
 int KeyData_SaveMacAddress(unsigned char data_buf[])
@@ -306,7 +302,7 @@ int KeyData_ReadBarCode(unsigned char data_buf[])
     unsigned char rd_buf[CC_MAX_KEY_DATA_SIZE] = { 0 };
 
     tmp_len = KeyData_GetBarCodeDataLen();
-    rd_size = ReadKeyData(CS_BARCODE_KEY_NAME, rd_buf);
+    rd_size = ReadKeyData(CS_BARCODE_KEY_NAME, rd_buf, tmp_len);
     LOGD("%s, rd_size = %d\n", __FUNCTION__, rd_size);
 
 #if ANDROID_PLATFORM_SDK_VERSION == 19
@@ -365,7 +361,7 @@ int SSMReadHDCPKey(unsigned char hdcp_key_buf[])
 
     tmp_ret = GetHDCPKeyFromFile(0, CC_HDCP_KEY_TOTAL_SIZE, hdcp_key_buf);
     if (tmp_ret < 0) {
-        rd_size = ReadKeyData(CS_RX_HDCP14_KEY_NAME, rd_buf);
+        rd_size = ReadKeyData(CS_RX_HDCP14_KEY_NAME, rd_buf, CC_HDCP_KEY_CONTENT_SIZE);
         LOGD("%s, rd_size = %d\n", __FUNCTION__, rd_size);
 
         //memcpy((void *)tmp_buf, (void *)rd_buf, CC_MAX_KEY_DATA_SIZE);
@@ -501,7 +497,7 @@ int KeyData_ReadProjectID()
     int rd_size = 0, tmp_val = 0;
     unsigned char tmp_buf[64] = { 0 };
 
-    rd_size = ReadKeyData(CS_PROJECT_ID_KEY_NAME, tmp_buf);
+    rd_size = ReadKeyData(CS_PROJECT_ID_KEY_NAME, tmp_buf, 4);
     LOGD("%s, rd_size = %d\n", __FUNCTION__, rd_size);
     if (rd_size == 4) {
         tmp_val = 0;
@@ -773,7 +769,7 @@ int CreateMacAddressStartWorkThread()
     unsigned int macAddrLow = 0, macAddrHigh = 0;
     pthread_attr_t attr;
     struct sched_param param;
-    unsigned char ssm_addr_buf[16] = { 0, 0, 0, 0, 0, 0 };
+    unsigned char ssm_addr_buf[6] = { 0, 0, 0, 0, 0, 0 };
 
     if (KeyData_ReadMacAddress(ssm_addr_buf) < 0) {
         return -1;

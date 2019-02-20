@@ -290,36 +290,46 @@ int CTvin::VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam )
     return rt;
 }
 
-void CTvin::VDIN_GetDisplayVFreq (int need_freq, int *iSswitch, char * display_mode)
+int CTvin::VDIN_GetDisplayVFreq (int need_freq, int *iSswitch, char * display_mode)
 {
-    int lastFreq = 50;
+    int lastFreq = 50, ret = -1;
     char buf[32] = {0};
-
-    if ( 0 > tvReadSysfs(SYS_DISPLAY_MODE_PATH, buf) ) {
+    ret = tvReadSysfs(SYS_DISPLAY_MODE_PATH, buf);
+    if ((ret < 0) || (strlen(buf) == 0)) {
         LOGW("Read /sys/class/display/mode failed!\n");
-        return;
+        *iSswitch = 0;
+        return ret;
     }
 
+    ret = 0;
     LOGD( "%s: current display mode: %s\n", __FUNCTION__, buf);
-
-    if ((strstr(buf, "480") != NULL) && (50 == need_freq)) {
+    if (strstr(buf, "480cvbs") || strstr(buf, "576cvbs")) {//hdmi plug out
         *iSswitch = 0;
-        LOGD("%s, can not support 480i&480p 50hz\n", __FUNCTION__);
-        return;
-    } else if ((strstr(buf, "576") != NULL) && (60 == need_freq)) {
-        *iSswitch = 0;
-        LOGD("%s, can not support 576i&576p 60hz\n", __FUNCTION__);
-        return;
+        LOGD("%s, plug out, no set!\n", __FUNCTION__);
     } else {
-        std::string TempStr = std::string(buf);
-        std::string TimingStr = TempStr.substr(0, TempStr.length()-4);
-        std::string FreqStr = TempStr.substr(TempStr.length()-4, 2);
-        lastFreq = atoi(FreqStr.c_str());
-        if (need_freq != lastFreq) {
-            sprintf(display_mode, "%s%dhz", TimingStr.c_str(), need_freq);
-            *iSswitch = 1;
+        if ((strstr(buf, "480") != NULL) && (50 == need_freq)) {
+            *iSswitch = 0;
+            LOGD("%s, can not support 480i&480p 50hz\n", __FUNCTION__);
+        } else if ((strstr(buf, "576") != NULL) && (60 == need_freq)) {
+            *iSswitch = 0;
+            LOGD("%s, can not support 576i&576p 60hz\n", __FUNCTION__);
+        } else {
+            std::string TempStr = std::string(buf);
+            std::string TimingStr = TempStr.substr(0, TempStr.length()-4);
+            std::string FreqStr = TempStr.substr(TempStr.length()-4,2);
+            lastFreq = atoi(FreqStr.c_str());
+            if (need_freq != lastFreq) {
+                sprintf(buf, "%s%dhz", TimingStr.c_str(), need_freq);
+                strcpy(display_mode, buf);
+                *iSswitch = 1;
+            } else {
+                *iSswitch = 0;
+                LOGD("%s: same fps!\n", __FUNCTION__);
+            }
         }
     }
+
+    return ret;
 }
 
 int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
@@ -327,21 +337,26 @@ int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
     int iSswitch = 0;
     char display_mode[32] = {0};
 
-    VDIN_GetDisplayVFreq(freq, &iSswitch, display_mode);
-    if (0 == iSswitch) {
-        LOGW ( "%s: same freq = %d, no need set!\n", __FUNCTION__, freq);
-        return 0;
+    int ret = VDIN_GetDisplayVFreq(freq, &iSswitch, display_mode);
+    if (ret < 0) {
+        LOGE("%s: VDIN_GetDisplayVFreq failed!\n", __FUNCTION__);
+        return -1;
     } else {
-        LOGD ( "%s: set display mode to %s\n", __FUNCTION__, display_mode);
-    }
+        if (0 == iSswitch) {
+            LOGW("%s: same freq = %d, no need set!\n", __FUNCTION__, freq);
+            return 0;
+        } else {
+            LOGD("%s: set display mode to %s\n", __FUNCTION__, display_mode);
+        }
 
-    if ( isFbc ) {
-        GetSingletonFBC()->cfbc_Set_VMute (COMM_DEV_SERIAL, 2);
-        usleep ( 300000 );
-    }
+        if ( isFbc ) {
+            GetSingletonFBC()->cfbc_Set_VMute (COMM_DEV_SERIAL, 2);
+            usleep ( 300000 );
+        }
 
-    tvWriteDisplayMode(display_mode);
-    return 0;
+        tvWriteDisplayMode(display_mode);
+        return 0;
+    }
 }
 
 int CTvin::VDIN_Get_avg_luma(void)

@@ -46,8 +46,6 @@ LOCAL_SHARED_LIBRARIES += \
   libbase \
   libhidlbase \
   libhidltransport \
-  libhidlmemory \
-  android.hidl.allocator@1.0 \
   libutils \
   libbinder \
   libcutils \

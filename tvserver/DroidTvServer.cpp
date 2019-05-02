@@ -26,9 +26,6 @@
 #include <string>
 #include <binder/Parcel.h>
 #include <cutils/properties.h>
-#include <android/hidl/allocator/1.0/IAllocator.h>
-#include <android/hidl/memory/1.0/IMemory.h>
-#include <hidlmemory/mapping.h>
 
 #include "CTvLog.h"
 #include "DroidTvServer.h"
@@ -39,9 +36,6 @@ namespace hardware {
 namespace tvserver {
 namespace V1_0 {
 namespace implementation {
-
-using ::android::hidl::allocator::V1_0::IAllocator;
-using ::android::hidl::memory::V1_0::IMemory;
 
 DroidTvServer::DroidTvServer() : mDeathRecipient(new DeathRecipient(this)) {
     mTvServiceIntf = new DroidTvServiceIntf();

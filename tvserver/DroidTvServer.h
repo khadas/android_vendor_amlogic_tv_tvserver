@@ -49,7 +49,6 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_string;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hidl::memory::V1_0::IMemory;
 using ::android::sp;
 using ::android::hardware::hidl_array;
 

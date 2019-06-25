@@ -604,7 +604,7 @@ public:
     int Tv_init_afe ( void );
     int Tv_uninit_afe ( void );
     int Tvin_RemovePath ( tv_path_type_t pathtype );
-    int Tvin_CheckPathActive ( tv_path_type_t path_type );
+    int Tvin_CheckPathActive ();
     int Tvin_CheckVideoPathComplete ( tv_path_type_t path_type );
     int setMpeg2Vdin(int enable);
     //pre apis
@@ -620,7 +620,7 @@ public:
     int SwitchPort (tvin_port_t source_port );
     int SwitchSnow(bool enable);
     bool getSnowStatus(void);
-    int Tvin_WaitPathInactive ( tv_path_type_t pathtype );
+    int Tvin_WaitPathInactive ();
     int VDIN_AddPath ( const char *videopath );
     int VDIN_RmDefPath ( void );
     int VDIN_RmTvPath ( void );

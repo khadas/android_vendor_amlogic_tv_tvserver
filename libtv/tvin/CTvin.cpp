@@ -1987,7 +1987,7 @@ int CTvin::Tvin_WaitPathInactive ()
     int ret = -1;
     int i = 0, dly = 20;
 
-    for ( i = 0; i<50; i++ ) {
+    for ( i = 0; i<150; i++ ) {
         ret = Tvin_CheckPathActive ();
         if ( ret == TV_PATH_STATUS_INACTIVE ) {
             LOGD ( "%s, check path is inactive, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
@@ -1997,7 +1997,7 @@ int CTvin::Tvin_WaitPathInactive ()
         }
     }
 
-    if ( i == 50 ) {
+    if ( i == 150 ) {
         LOGE ( "%s, check path active faild, %d ms gone.\n", "TV", ( dly * i ) );
         return -1;
     }

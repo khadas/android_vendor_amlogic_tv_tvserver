@@ -59,7 +59,7 @@ CTvin *CTvin::getInstance()
     return mInstance;
 }
 
-CTvin::CTvin() : mAfeDevFd(-1), mVdin0DevFd(-1)
+CTvin::CTvin() : mAfeDevFd(-1), mVdin0DevFd(-1), mSourcePort(TVIN_PORT_NULL)
 {
     m_snow_status = false;
 
@@ -2083,7 +2083,7 @@ int CTvin::SwitchPort (tvin_port_t source_port )
     }
 
     VDIN_ClosePort();
-    if (Tvin_WaitPathInactive () == -1) {
+    if (Tvin_WaitPathInactive (source_port) == -1) {
         return -1;
     }
 
@@ -2122,13 +2122,14 @@ int CTvin::uninit_vdin ( void )
     return 0;
 }
 
-int CTvin::Tvin_WaitPathInactive ()
+int CTvin::Tvin_WaitPathInactive (tvin_port_t source_port)
 {
     int ret = -1;
     int i = 0, dly = 20;
+    mSourcePort = source_port;
 
     for ( i = 0; i<150; i++ ) {
-        ret = Tvin_CheckPathActive ();
+        ret = Tvin_CheckPathActive (mSourcePort);
         if ( ret == TV_PATH_STATUS_INACTIVE ) {
             LOGD ( "%s, check path is inactive, %d ms gone.\n", CFG_SECTION_TV, ( dly * i ) );
             break;
@@ -2149,7 +2150,7 @@ int CTvin::Tvin_RemovePath ( tv_path_type_t pathtype )
     int ret = -1;
     int i = 0, dly = 10;
 
-    if (Tvin_WaitPathInactive() == -1)
+    if (Tvin_WaitPathInactive(mSourcePort) == -1)
         return ret;
     if ( pathtype == TV_PATH_TYPE_DEFAULT ) {
         for ( i = 0; i < 50; i++ ) {
@@ -2181,15 +2182,16 @@ int CTvin::Tvin_RemovePath ( tv_path_type_t pathtype )
     return ret;
 }
 
-int CTvin::Tvin_CheckPathActive ()
+int CTvin::Tvin_CheckPathActive (tvin_port_t source_port)
 {
     FILE *f = NULL;
     char path[100] = {0};
 
     char *str_find = NULL;
     char active_str[4] = "(1)";
+    char amlvideo2_str[] = "default_amlvideo2";
     int is_active = TV_PATH_STATUS_INACTIVE;
-
+    bool flag = false;
     f = fopen ( SYS_VFM_MAP_PATH, "r" );
     if ( !f ) {
         LOGE ( "%s, can not open %s!\n", CFG_SECTION_TV, SYS_VFM_MAP_PATH );
@@ -2197,10 +2199,16 @@ int CTvin::Tvin_CheckPathActive ()
     }
 
     while ( fgets ( path, sizeof(path)-1, f ) ) {
+        char *tmp = strstr ( path, amlvideo2_str);
         str_find = strstr ( path, active_str );
         if (str_find) {
-            is_active = TV_PATH_STATUS_ACTIVE;
-            break;
+            if (!(tmp && (source_port == TVIN_PORT_CVBS3
+                    || source_port == TVIN_PORT_HDMI0
+                    || source_port == TVIN_PORT_HDMI1
+                    || source_port == TVIN_PORT_HDMI2))) {
+                is_active = TV_PATH_STATUS_ACTIVE;
+                break;
+            }
         }
     }
 

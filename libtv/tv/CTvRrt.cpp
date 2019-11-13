@@ -321,7 +321,7 @@ int CTvRrt::GetRRTRating(int rating_region_id, int dimension_id, int value_id, i
                     }
                 }
             }
-        } while(pTmpElement = pTmpElement->NextSiblingElement());
+        } while(pTmpElement == pTmpElement->NextSiblingElement());
         LOGD("program_id=%d,Don't find value!\n", program_id);
         ret->status = -1;
     } else {
@@ -534,12 +534,12 @@ void CTvRrt::RrtTableCallback(void * handle, int event_type, void *param, void *
           user_data:
  * @Return:
  */
-void CTvRrt::RrtDataUpdate(void * dev_no, int event_type, void *param, void *user_data)
+void CTvRrt::RrtDataUpdate(void * dev_no __unused, int event_type, void *param, void *user_data __unused)
 {
 #ifdef SUPPORT_ADTV
     switch (event_type) {
     case AM_EPG_TAB_RRT: {
-        INT8U i, j;
+        INT8U j;
         rrt_info_t rrt_info;
         memset(&rrt_info, 0, sizeof(rrt_info_t));
 

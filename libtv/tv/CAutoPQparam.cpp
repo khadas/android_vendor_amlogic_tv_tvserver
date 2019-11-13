@@ -86,12 +86,8 @@ int CAutoPQparam::adjustPQparameters()
     int fd = -1;
     int nodeVal = 0, ret = 0, read_ret = 0;
     int new_frame_count = 0;
-    float frame_rate = 0;
-    float frame_rate_ave = 0;
     char s[21];
-    char str[10];
     tvin_sig_fmt_e sig_fmt;
-    is_3d_type_t _3d_type = INDEX_2D;
     tvin_trans_fmt trans_fmt = TVIN_TFMT_2D;
 
     fd = open("/sys/module/amvideo/parameters/new_frame_count", O_RDONLY);

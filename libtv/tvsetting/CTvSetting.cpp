@@ -454,7 +454,7 @@ int SSMSaveNonStandardValue(unsigned short rw_val)
 
 int SSMReadNonStandardValue(void)
 {
-    int i = 0, value = 0;
+    int value = 0;
 
     if (TVSSMReadNTypes(SSM_RW_NON_STANDARD_START, 2, &value) < 0) {
         LOGE("%s, read NonStandard_value error.", CFG_SECTION_TV);

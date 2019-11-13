@@ -133,7 +133,7 @@ int CTvProgram::CreateFromCursor(CTvDatabase::Cursor &c)
 {
     int i = 0;
     int col;
-    int num, type;
+    int num;
     int major, minor;
     char tmp_buf[256];
     //LOGD("CTvProgram::CreateFromCursor");
@@ -223,7 +223,7 @@ int CTvProgram::CreateFromCursor(CTvDatabase::Cursor &c)
     String8 strPids;
     String8 strFmts;
     String8 strLangs;
-    int count = 0;
+    //int count = 0;
     col = c.getColumnIndex("aud_pids");
     strPids = c.getString(col);
 
@@ -807,7 +807,7 @@ int CTvProgram::selectByChanID(int type, int skip, Vector < sp < CTvProgram > > 
     cmd += String8(" order by db_id");
 
     CTvDatabase::Cursor c;
-    int ret = CTvDatabase::GetTvDb()->select(cmd, c);
+    CTvDatabase::GetTvDb()->select(cmd, c);
 
     if (c.moveToFirst()) {
         do {
@@ -856,7 +856,7 @@ int CTvProgram::getCurrentAudio(String8 defaultLang)
     CTvDatabase::Cursor c;
     String8 cmd;
     cmd = String8("select current_aud from srv_table where db_id = ") + String8::format("%d", this->id);
-    int ret = CTvDatabase::GetTvDb()->select(cmd, c);
+    CTvDatabase::GetTvDb()->select(cmd, c);
     LOGD("getCurrentAudio a size = %d", mvAudios.size());
     int id = 0;
     if (c.moveToFirst()) {
@@ -905,7 +905,7 @@ int CTvProgram::getSubtitleIndex(int progId)
 {
     CTvDatabase::Cursor c;
     String8 cmd = String8("select current_sub from srv_table where db_id = ") + String8::format("%d", progId);
-    int ret = CTvDatabase::GetTvDb()->select(cmd, c);
+    CTvDatabase::GetTvDb()->select(cmd, c);
     if (c.moveToFirst()) {
         return c.getInt(0);
     } else {

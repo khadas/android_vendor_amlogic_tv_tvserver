@@ -114,8 +114,6 @@ public:
     Return<void> dtvGetScanFreqListMode(int32_t mode, dtvGetScanFreqListMode_cb _hidl_cb) override;
     Return<int32_t> atvdtvGetScanStatus() override;
     Return<int32_t> SSMInitDevice() override;
-    Return<void> startAutoBacklight() override;
-    Return<void> stopAutoBacklight() override;
     Return<int32_t> FactoryCleanAllTableForProgram() override;
     Return<void> getTvSupportCountries(getTvSupportCountries_cb _hidl_cb) override;
     Return<void> getTvDefaultCountry(getTvDefaultCountry_cb _hidl_cb) override;
@@ -150,6 +148,9 @@ public:
     Return<void> readMacAddress(readMacAddress_cb _hidl_cb) override;
     Return<int32_t> saveMacAddress(const hidl_array<int32_t, 6>& data_buf) override;
     Return<int32_t> getIwattRegs() override;
+    Return<int32_t> setSameSourceEnable(int32_t isEnable) override;
+    Return<int32_t> setPreviewWindow(int32_t x1, int32_t y1, int32_t x2, int32_t y2) override;
+    Return<int32_t> setPreviewWindowMode(int32_t enable) override;
 
     Return<void> setCallback(const sp<ITvServerCallback>& callback, ConnectType type) override;
 

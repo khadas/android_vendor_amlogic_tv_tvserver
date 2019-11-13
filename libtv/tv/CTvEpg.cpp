@@ -75,7 +75,6 @@ void CTvEpg::epg_create(int fend_id, int dmx_id, int src, char *textLangs)
 #ifdef SUPPORT_ADTV
     AM_EPG_CreatePara_t para;
     AM_ErrorCode_t ret;
-    AM_FEND_OpenPara_t fend_para;
     AM_DMX_OpenPara_t dmx_para;
 
     LOGD("Opening demux%d ...", dmx_id);

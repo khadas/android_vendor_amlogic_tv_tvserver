@@ -98,8 +98,6 @@ public:
     void dtvGetScanFreqListMode(int mode, std::vector<FreqList> &freqlist);
     int atvdtvGetScanStatus();
     int SSMInitDevice();
-    void startAutoBacklight();
-    void stopAutoBacklight();
     int FactoryCleanAllTableForProgram();
     std::string getTvSupportCountries();
     std::string getTvDefaultCountry();
@@ -134,6 +132,9 @@ public:
     int readMacAddress(unsigned char *dataBuf);
     int saveMacAddress(unsigned char *dataBuf);
     int getIwattRegs();
+    int setSameSourceEnable(bool isEnable);
+    int setPreviewWindow(int x1, int y1, int x2, int y2);
+    int setPreviewWindowMode(bool enable);
 
     virtual status_t dump(int fd, const Vector<String16>& args);
 

@@ -10,7 +10,6 @@
 #ifndef _C_VPP_H
 #define _C_VPP_H
 #include "../tvin/CTvin.h"
-#include "fbcutils/CFbcCommunication.h"
 #include <tvutils.h>
 
 #define VPP_PANEL_BACKLIGHT_DEV_PATH   "/sys/class/aml_bl/power"
@@ -51,7 +50,7 @@ class CVpp {
 public:
     CVpp();
     ~CVpp();
-    int Vpp_Init(bool hdmiOutFbc);
+    int Vpp_Init();
     int LoadVppSettings ( tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt );
     int SetPQMode ( vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save, int is_autoswitch);
     vpp_picture_mode_t GetPQMode ( tv_source_input_t tv_source_input );
@@ -68,14 +67,6 @@ public:
     int TV_SSMRecovery();
     static CVpp *getInstance();
 private:
-    //
-    int VPP_SetCMRegisterMap ( struct cm_regmap_s *pRegMap );
-    int VPP_FBCColorTempBatchGet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t *);
-    int VPP_FBCColorTempBatchSet(vpp_color_temperature_mode_t, tcon_rgb_ogo_t);
-    int VPP_FBCSetColorTemperature(vpp_color_temperature_mode_t);
-
     static CVpp *mInstance;
-    bool mHdmiOutFbc;
-    CFbcCommunication *fbcIns;
 };
 #endif

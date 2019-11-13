@@ -49,7 +49,7 @@ int CIniFile::LoadFromFile(const char *filename)
     }
 
     LOGD("LoadFromFile name = %s", filename);
-    strcpy(mpFileName, filename);
+    strncpy(mpFileName, filename, sizeof(mpFileName)-1);
     if ((m_pIniFile = fopen (mpFileName, "r")) == NULL) {
         LOGE("open %s fail: %s", mpFileName, strerror(errno));
         return -1;

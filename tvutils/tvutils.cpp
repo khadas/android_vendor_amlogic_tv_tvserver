@@ -42,7 +42,7 @@
 #include <string>
 using namespace android;
 
-static pthread_mutex_t file_attr_control_flag_mutex = PTHREAD_MUTEX_INITIALIZER;
+//static pthread_mutex_t file_attr_control_flag_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static pthread_t UserPet_ThreadId = 0;
 static unsigned char is_turnon_user_pet_thread = false;
@@ -285,9 +285,13 @@ int tvSavePQMode ( vpp_picture_mode_t mode )
 
 int tvSetCurrentSourceInfo(tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt)
 {
+    int s32Ret;
+    LOGD("tvSetCurrentSourceInfo , Start LoadPQ SwitchSourceTime = %f", getUptimeSeconds());
     const sp<SystemControlClient> &sws = getSystemControlService();
     if (sws != nullptr) {
-        return sws->setCurrentSourceInfo((int)tv_source_input, (int)sig_fmt, (int)trans_fmt);
+        s32Ret = sws->setCurrentSourceInfo((int)tv_source_input, (int)sig_fmt, (int)trans_fmt);
+        LOGD("tvSetCurrentSourceInfo , End LoadPQ SwitchSourceTime = %f", getUptimeSeconds());
+        return s32Ret;
     }
     return -1;
 }
@@ -300,6 +304,18 @@ int tvSetCVD2Values()
     }
     return -1;
 }
+
+int tvSetCurrentHdrInfo(unsigned int hdr_info)
+{
+    int s32Ret;
+    const sp<SystemControlClient> &sws = getSystemControlService();
+    if (sws != nullptr) {
+        s32Ret = sws->setCurrentHdrInfo((int)hdr_info);
+        return s32Ret;
+    }
+    return -1;
+}
+
 //PQ end
 
 int Tv_MiscRegs(const char *cmd)
@@ -309,13 +325,15 @@ int Tv_MiscRegs(const char *cmd)
 
     if (fp != NULL && cmd != NULL) {
         fprintf(fp, "%s", cmd);
+        fclose(fp);
+        return 0;
     } else {
         LOGE("Open /sys/class/register/reg ERROR(%s)!!\n", strerror(errno));
-        fclose(fp);
+        if (fp != NULL) {
+            fclose(fp);
+        }
         return -1;
     }
-    fclose(fp);
-    return 0;
 }
 
 int TvMisc_SetLVDSSSC(int val)
@@ -326,11 +344,11 @@ int TvMisc_SetLVDSSSC(int val)
     if (fp != NULL) {
         fprintf(fp, "%d", val);
         fclose(fp);
+        return 0;
     } else {
         LOGE("open /sys/class/lcd/ss ERROR(%s)!!\n", strerror(errno));
         return -1;
     }
-    return 0;
 }
 
 int TvMisc_SetUserCounterTimeOut(int timeout)
@@ -341,11 +359,11 @@ int TvMisc_SetUserCounterTimeOut(int timeout)
     if (fp != NULL) {
         fprintf(fp, "%d", timeout);
         fclose(fp);
+        return 0;
     } else {
         LOGE("=OSD CPP=> open /sys/devices/platform/aml_wdt/user_pet_timeout ERROR(%s)!!\n", strerror(errno));
         return -1;
     }
-    return 0;
 }
 
 int TvMisc_SetUserCounter(int count)
@@ -356,14 +374,11 @@ int TvMisc_SetUserCounter(int count)
     if (fp != NULL) {
         fprintf(fp, "%d", count);
         fclose(fp);
+        return 0;
     } else {
         LOGE("=OSD CPP=> open /sys/devices/platform/aml_wdt/user_pet ERROR(%s)!!\n", strerror(errno));
         return -1;
     }
-
-    fclose(fp);
-
-    return 0;
 }
 
 int TvMisc_SetUserPetResetEnable(int enable)
@@ -375,14 +390,11 @@ int TvMisc_SetUserPetResetEnable(int enable)
     if (fp != NULL) {
         fprintf(fp, "%d", enable);
         fclose(fp);
+        return 0;
     } else {
         LOGE("=OSD CPP=> open /sys/devices/platform/aml_wdt/user_pet_reset_enable ERROR(%s)!!\n", strerror(errno));
         return -1;
     }
-
-    fclose(fp);
-
-    return 0;
 }
 
 int TvMisc_SetSystemPetResetEnable(int enable)
@@ -394,14 +406,11 @@ int TvMisc_SetSystemPetResetEnable(int enable)
     if (fp != NULL) {
         fprintf(fp, "%d", enable);
         fclose(fp);
+        return 0;
     } else {
         LOGE("=OSD CPP=> open /sys/devices/platform/aml_wdt/reset_enable ERROR(%s)!!\n", strerror(errno));
         return -1;
     }
-
-    fclose(fp);
-
-    return 0;
 }
 
 int TvMisc_SetSystemPetEnable(int enable)
@@ -413,14 +422,11 @@ int TvMisc_SetSystemPetEnable(int enable)
     if (fp != NULL) {
         fprintf(fp, "%d", enable);
         fclose(fp);
+        return 0;
     } else {
         LOGE("=OSD CPP=> open /sys/devices/platform/aml_wdt/ping_enable ERROR(%s)!!\n", strerror(errno));
         return -1;
     }
-
-    fclose(fp);
-
-    return 0;
 }
 
 int SetAudioOutmode(int mode){
@@ -459,14 +465,11 @@ int TvMisc_SetSystemPetCounterTimeOut(int timeout)
     if (fp != NULL) {
         fprintf(fp, "%d", timeout);
         fclose(fp);
+        return 0;
     } else {
         LOGE("=OSD CPP=> open /sys/devices/platform/aml_wdt/wdt_timeout ERROR(%s)!!\n", strerror(errno));
         return -1;
     }
-
-    fclose(fp);
-
-    return 0;
 }
 
 //0-turn off
@@ -624,7 +627,7 @@ int GetPlatformHaveDDFlag()
 
 int GetFileAttrIntValue(const char *fp, int flag)
 {
-    int fd = -1, ret = -1;
+    int fd = -1;
     int temp = -1;
     char temp_str[32];
 

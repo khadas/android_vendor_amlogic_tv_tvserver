@@ -11,22 +11,22 @@ include $(CLEAR_VARS)
 LIB_TV_BINDER_PATH := $(LOCAL_PATH)/../../frameworks/libtvbinder
 
 LOCAL_SRC_FILES:= \
-    android_tvtest.cpp
+    main.cpp
 
 LOCAL_SHARED_LIBRARIES := \
-	libcutils \
-	libutils \
-	libbinder \
-	libtvbinder \
-	libnativehelper \
-	libandroid_runtime \
-	liblog
+    vendor.amlogic.hardware.tvserver@1.0 \
+    libcutils \
+    libutils \
+    libbinder \
+    libtvbinder \
+    liblog
 
 LOCAL_C_INCLUDES += \
-    bionic/libc/include \
     $(LIB_TV_BINDER_PATH)/include
 
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE:= tvtest
+LOCAL_VENDOR_MODULE := true
 
-#include $(BUILD_EXECUTABLE)
+include $(BUILD_EXECUTABLE)
 

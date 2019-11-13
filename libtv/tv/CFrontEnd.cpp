@@ -92,7 +92,6 @@ int CFrontEnd::Open(int mode)
 
     AM_FEND_OpenPara_t para;
     int rc = 0;
-    int devID = 0;
 
     LOGD("%s, mode %d", __FUNCTION__, mode);
 
@@ -418,7 +417,7 @@ int CFrontEnd::setPara(const char *paras, bool force )
     int ret = 0;
     FEParas feparas(paras);
 
-    LOGD("[source_switch_time]: %fs, fe setpara [%s]", getUptimeSeconds(), paras);
+    LOGD("fe setpara [%s]", paras);
     if (mFEParas == feparas && !force) {
         LOGD("fe setpara  is same return");
         return 0;
@@ -621,6 +620,8 @@ int CFrontEnd::stdAndColorToAudioEnum(int data)
         std = CC_ATV_AUDIO_STD_M;
     } else if ((data & V4L2_STD_SECAM_L) == V4L2_STD_SECAM_L) {
         std = CC_ATV_AUDIO_STD_L;
+    } else if ((data & V4L2_STD_SECAM_LC) == V4L2_STD_SECAM_LC) {
+        std = CC_ATV_AUDIO_STD_LC;
     } else if (!data) {
         std = CC_ATV_AUDIO_STD_AUTO;
     }
@@ -691,6 +692,8 @@ unsigned long CFrontEnd::enumToStdAndColor(int videoStd, int audioStd)
             tmpTunerStd |= V4L2_STD_NTSC_M;
         } else if (audioStd == CC_ATV_AUDIO_STD_L) {
             tmpTunerStd |= V4L2_STD_SECAM_L;
+        } else if (audioStd == CC_ATV_AUDIO_STD_LC) {
+            tmpTunerStd |= V4L2_STD_SECAM_LC;
         }
     }
 #endif
@@ -746,7 +749,7 @@ int CFrontEnd::getStrength()
 
 int CFrontEnd::formatATVFreq(int tmp_freq)
 {
-    const int ATV_1MHZ = 1000000;
+    //const int ATV_1MHZ = 1000000;
     const int ATV_50KHZ = 50 * 1000;
     const int ATV_25KHZ = 25 * 1000;
     int mastar = (tmp_freq / ATV_50KHZ) * ATV_50KHZ;
@@ -986,10 +989,16 @@ int CFrontEnd::stdEnumToCvbsFmt (int vfmt, unsigned long std)
     if ((vfmt & 0xff000000) == V4L2_COLOR_STD_NTSC) {
         switch (vfmt & 0x00ffffff) {
         case V4L2_STD_NTSC_M:
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_M;
-            break;
         case V4L2_STD_NTSC_443:
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_443;
+        case V4L2_STD_PAL_I:
+            if ((std & V4L2_STD_PAL_M) || (std & V4L2_STD_NTSC_M)) {
+                cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_M;
+            } else if ((std & V4L2_STD_PAL_DK) || (std & V4L2_STD_PAL_BG)
+                    || (std & V4L2_STD_PAL_I)) {
+                cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_443;
+            } else {
+                cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_M;
+            }
             break;
         default:
             cvbs_fmt = TVIN_SIG_FMT_CVBS_NTSC_M;
@@ -1000,20 +1009,27 @@ int CFrontEnd::stdEnumToCvbsFmt (int vfmt, unsigned long std)
         case V4L2_STD_PAL_DK:
         case V4L2_STD_PAL_BG:
         case V4L2_STD_PAL_I:
-            if (std & V4L2_STD_PAL_M) {
+        case V4L2_STD_PAL_M:
+        case V4L2_STD_NTSC_M:
+            if ((std & V4L2_STD_PAL_M) || (std & V4L2_STD_NTSC_M)) {
                 cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_M;
             } else {
                 cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_I;
             }
             break;
-        case V4L2_STD_PAL_M:
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_M;
-            break;
         case V4L2_STD_PAL_60:
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_60;
+            if ((std & V4L2_STD_PAL_M) || (std & V4L2_STD_NTSC_M)) {
+                cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_60;
+            } else {
+                cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_I;
+            }
             break;
         case V4L2_STD_PAL_Nc:
-            cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_CN;
+            if ((std & V4L2_STD_PAL_M) || (std & V4L2_STD_NTSC_M)) {
+                cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_CN;
+            } else {
+                cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_I;
+            }
             break;
         default:
             cvbs_fmt = TVIN_SIG_FMT_CVBS_PAL_I;

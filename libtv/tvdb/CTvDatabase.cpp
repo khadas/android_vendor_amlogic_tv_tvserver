@@ -123,7 +123,7 @@ int CTvDatabase::getChannelParaList(char *path, Vector<sp<ChannelPara> > &vcp)
 {
 #ifdef SUPPORT_ADTV
     TiXmlDocument myDocument(path);
-    bool ret = myDocument.LoadFile();
+    myDocument.LoadFile();
     TiXmlElement *RootElement = myDocument.RootElement();
     //dvbc
     TiXmlElement *channel_list_element = RootElement->FirstChildElement("channel_list");
@@ -183,7 +183,7 @@ int CTvDatabase::importXmlToDB(const char *xmlPath)
     exeSql("delete from region_table");
 
     TiXmlDocument myDocument(xmlPath);
-    bool ret = myDocument.LoadFile();
+    myDocument.LoadFile();
 
     TiXmlElement *RootElement = myDocument.RootElement();
     beginTransaction();//-----------------------------------------------

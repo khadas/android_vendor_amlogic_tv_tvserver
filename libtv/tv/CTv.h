@@ -34,7 +34,6 @@
 #include "CAutoPQparam.h"
 #include "CBootvideoStatusDetect.h"
 #include "tvin/CDevicesPollStatusDetect.h"
-#include "fbcutils/fbcutils.h"
 #include "CTvGpio.h"
 #ifdef SUPPORT_ADTV
 #include <am_epg.h>
@@ -63,8 +62,7 @@ static const char *TV_CONFIG_EDID14_FILE_PATH = "/vendor/etc/tvconfig/hdmi/port_
 static const char *TV_CONFIG_EDID20_FILE_PATH = "/vendor/etc/tvconfig/hdmi/port_20.bin";
 
 
-#define LCD_ENABLE "/sys/class/lcd/enable"
-#define BL_LOCAL_DIMING_FUNC_ENABLE "/sys/class/aml_ldim/func_en"
+#define LCD_ENABLE "/sys/class/lcd/power"
 #define DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN "/sys/class/tsync/av_threshold_min"
 #define IWATT_SHELL_PATH    "/system/bin/get_iwatt_regs.sh"
 
@@ -76,6 +74,8 @@ static const char *TV_CONFIG_EDID20_FILE_PATH = "/vendor/etc/tvconfig/hdmi/port_
 #define DTV_ATSC_MODE        "atsc"
 #define DTV_DVBT_MODE        "dvbt"
 #define DTV_ISDBT_MODE       "isdbt"
+
+#define NEW_FRAME_TIME_OUT_COUNT  100
 
 typedef enum tv_window_mode_e {
     NORMAL_WONDOW,
@@ -121,7 +121,6 @@ class CDTVTvPlayer;
 class CATVTvPlayer;
 
 class CTv : public CDevicesPollStatusDetect::ISourceConnectObserver,
-            public IUpgradeFBCObserver,
             public CTvSubtitle::IObserver,
             public CBootvideoStatusDetect::IBootvideoStatusObserver,
             public CTv2d4GHeadSetDetect::IHeadSetObserver,
@@ -253,8 +252,6 @@ public:
     int getAverageLuma();
     int setAutobacklightData(const char *value);
     int getAutoBacklightData(int *data);
-    int getAutoBackLightStatus();
-    int setAutoBackLightStatus(int status);
     virtual int Tv_SSMRestoreDefaultSetting();
     int handleGPIO(const char *port_name, bool is_out, int edge);
     int setLcdEnable(bool enable);
@@ -296,16 +293,10 @@ public:
 
     int GetHdmiHdcpKeyKsvInfo(int data_buf[]);
     virtual bool hdmiOutWithFbc();
-    int StartUpgradeFBC(char *file_name, int mode, int upgrade_blk_size);
-
-    int Tv_GetProjectInfo(project_info_t *ptrInfo);
-    int Tv_GetPlatformType();
     int Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version);
     int Tv_HandeHDMIEDIDFilePathConfig();
     int Tv_SetDDDRCMode(tv_source_input_t source_input);
     virtual int Tv_SetVdinForPQ (int gameStatus, int pcStatus, int autoSwitchFlag);
-    int Tv_SetBacklight_Switch ( int value );
-    int Tv_GetBacklight_Switch ( void );
     int SetHdmiColorRangeMode(tvin_color_range_t range_mode);
     int GetHdmiColorRangeMode();
     virtual void updateSubtitle(int, int);
@@ -330,11 +321,11 @@ public:
 
     int GetAtvAutoScanMode();
     int SetSnowShowEnable(bool enable);
+    int TV_SetSameSourceEnable(bool enable);
 
 private:
     int SendCmdToOffBoardFBCExternalDac(int, int);
     int KillMediaServerClient();
-    bool insertedFbcDevice();
 
     int autoSwitchToMonitorMode();
 
@@ -360,6 +351,7 @@ private:
     //end audio
     bool mATVDisplaySnow;
     bool iSBlackPattern;
+    bool mAutoSwitchMonitorCfg;
     bool MnoNeedAutoSwitchToMonitorMode;
     std::string mCurrentSystemLang;
 
@@ -409,6 +401,8 @@ protected:
     bool isTvViewBlocked();
     void onEnableVideoLater(int framecount);
     void onVideoAvailableLater(int framecount);
+    //add available frame judge
+    void isVideoFrameAvailable(unsigned int u32NewFrameCount = 1);
     int resetDmxAndAvSource();
     int stopScan();
     int stopPlaying(bool isShowTestScreen);
@@ -447,11 +441,11 @@ protected:
 
     virtual void onSourceConnect(int source_type, int connect_status);
     virtual void onVdinSignalChange();
-    virtual void onUpgradeStatus(int status, int progress);
     virtual void onThermalDetect(int state);
 
     virtual void onBootvideoRunning();
     virtual void onBootvideoStopped();
+
 
     CTvEpg mTvEpg;
     CTvRrt *mTvRrt;
@@ -483,8 +477,6 @@ protected:
     tvin_window_pos_t m_win_pos;
     tv_window_mode_t m_win_mode;
     bool mBlackoutEnable;// true: enable false: disable
-    bool mHdmiOutFbc;
-    CFbcCommunication *fbcIns;
 
     //friend class CTvMsgQueue;
     int mCurAnalyzeTsChannelID;
@@ -501,6 +493,7 @@ protected:
     CTvGpio *pGpio;
 
     bool mPreviewEnabled;
+    bool mbSameSourceEnableStatus;
 
 public:
     friend CTvPlayer;

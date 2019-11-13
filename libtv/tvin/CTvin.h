@@ -25,6 +25,7 @@ using namespace android;
 #define SYS_VFM_MAP_PATH            "/sys/class/vfm/map"
 #define SYS_DISPLAY_MODE_PATH       "/sys/class/display/mode"
 #define SYS_PANEL_FRAME_RATE        "/sys/class/lcd/frame_rate"
+#define FRAME_RATE_SUPPORT_LIST_PATH    "/sys/class/amhdmitx/amhdmitx0/disp_cap"//RX support display mode
 
 #define DEPTH_LEVEL_2DTO3D 33
 static const int DepthTable_2DTO3D[DEPTH_LEVEL_2DTO3D] = {
@@ -124,6 +125,11 @@ typedef struct tvin_latency_s {
     bool it_content;
     tvin_cn_type_e cn_type;
 } tvin_latency_t;
+
+typedef enum best_displaymode_condition_e {
+    BEST_DISPLAYMODE_CONDITION_RESOLUTION = 0,
+    BEST_DISPLAYMODE_CONDITION_FRAMERATE,
+} best_displaymode_condition_t;
 
 // ***************************************************************************
 // *** AFE module definition/enum/struct *************************************
@@ -460,6 +466,7 @@ typedef struct tvafe_pin_mux_s {
 #define TVIN_IOC_S_AFE_ADC_DIFF     _IOW(TVIN_IOC_MAGIC, 0x21, struct tvafe_adc_cal_clamp_s)
 #define TVIN_IOC_S_AFE_SONWON       _IO(TVIN_IOC_MAGIC, 0x22)
 #define TVIN_IOC_S_AFE_SONWOFF      _IO(TVIN_IOC_MAGIC, 0x23)
+#define TVIN_IOC_S_AFE_SONWCFG      _IOW(TVIN_IOC_MAGIC, 0x27, unsigned int)
 
 
 // ***************************************************************************
@@ -592,8 +599,6 @@ typedef enum tv_source_connect_detect_status_e {
 
 #define CC_REQUEST_LIST_SIZE            (32)
 #define CC_SOURCE_DEV_REFRESH_CNT       (E_LA_MAX)
-#define FRAME_RATE_SUPPORT_LIST_PATH    "/sys/class/amhdmitx/amhdmitx0/disp_cap"//RX support display mode
-
 class CTvin {
 public:
     CTvin();
@@ -638,8 +643,7 @@ public:
     int VDIN_SetVdinParam ( const struct tvin_parm_s *vdinParam );
     int VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam );
     int VDIN_GetDisplayVFreq (int need_freq, int *iSswitch, char * display_mode);
-    int VDIN_SetDisplayVFreq ( int freq, bool isFbc);
-
+    int VDIN_SetDisplayVFreq ( int freq);
     int VDIN_Get_avg_luma(void);
     int VDIN_SetMVCViewMode ( int mode );
     int VDIN_GetMVCViewMode ( void );
@@ -661,6 +665,11 @@ public:
     int VDIN_UpdateForPQMode(pq_status_update_e gameStatus, pq_status_update_e pcStatus);
     int VDIN_GetVdinDeviceFd(void);
     int VDIN_SetWssStatus(int status);
+    int VDIN_GetDisplayModeSupportList(std::vector<std::string> *SupportDisplayModes);
+    int VDIN_GetBestDisplayMode(best_displaymode_condition_t condition,
+                                         std::string ConditionParam,
+                                         std::vector<std::string> SupportDisplayModes,
+                                         char *BestDisplayMode);
     int VDIN_GetFrameRateSupportList(std::vector<std::string> *supportFrameRates);
 
     int AFE_OpenModule ( void );
@@ -677,6 +686,7 @@ public:
     int AFE_GetAdcCompCal ( struct tvafe_adc_comp_cal_s *adccalvalue );
     int AFE_SetAdcCompCal ( struct tvafe_adc_comp_cal_s *adccalvalue );
     int AFE_GetYPbPrWSSinfo ( struct tvafe_comp_wss_s *wssinfo );
+    int AFE_EnableSnowByConfig ( bool enable );
     unsigned int data_limit ( float data );
     void matrix_convert_yuv709_to_rgb ( unsigned int y, unsigned int u, unsigned int v, unsigned int *r, unsigned int *g, unsigned int *b );
     void re_order ( unsigned int *a, unsigned int *b );
@@ -690,6 +700,7 @@ public:
     int VDIN_GetPortConnect ( int port );
     int VDIN_OpenHDMIPinMuxOn ( bool flag );
     int VDIN_GetAllmInfo(tvin_latency_s *AllmInfo);
+    int VDIN_SetGameMode(pq_status_update_e mode);
     /*******************************************extend funs*********************/
     static tv_source_input_type_t Tvin_SourcePortToSourceInputType ( tvin_port_t source_port );
     static tv_source_input_type_t Tvin_SourceInputToSourceInputType ( tv_source_input_t source_input );
@@ -721,6 +732,7 @@ private:
     static int mSourceInputToPortMap[SOURCE_MAX];
     char gVideoPath[256];
     bool mDecoderStarted;
+    bool mbResolutionPriority;
 
     char config_tv_path[64];
     char config_default_path[64];

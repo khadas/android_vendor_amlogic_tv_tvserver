@@ -47,7 +47,6 @@
 #include <tvscanconfig.h>
 #include <CFile.h>
 #include <serial_operate.h>
-#include <CFbcHelper.h>
 
 #include "CTvDatabase.h"
 #include "../version/version.h"
@@ -74,38 +73,11 @@ extern "C" {
 
 using namespace android;
 
-bool CTv::insertedFbcDevice()
-{
-    bool ret = false;
-
-    if (hdmiOutWithFbc()) {
-        CFbcCommunication *fbc = GetSingletonFBC();
-        char panel_model[64] = {0};
-
-        if (fbc == NULL) {
-            LOGD ("%s, there is no fbc!!!", __func__);
-        }
-        else {
-            fbc->cfbc_Get_FBC_Get_PANel_INFO(COMM_DEV_SERIAL, panel_model);
-
-            if (0 == panel_model[0]) {
-                LOGD ("%s, device is not fbc", __func__);
-            }
-            else {
-                LOGD ("%s, get panel info from fbc is %s", __func__, panel_model);
-                ret = true;
-            }
-        }
-    }
-
-    return ret;
-}
-
 CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
 {
-    //copy file to param
+    /*copy file to param
     char buf[PROPERTY_VALUE_MAX] = {0};
-    int len = property_get("tv.tvconfig.force_copy", buf, "true");
+    int len = property_get("tv.tvconfig.force_copy", buf, "true");*/
 
     if (isFileExist(TV_RRT_DEFINE_SYSTEM_PATH)) {
         if (!isFileExist(TV_RRT_DEFINE_PARAM_PATH)) {
@@ -127,7 +99,6 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     AM_EVT_Init();
 #endif
     mpObserver = NULL;
-    fbcIns = NULL;
     mAutoSetDisplayFreq = false;
     mPreviewEnabled = false;
     mTvMsgQueue.startMsgQueue();
@@ -151,8 +122,6 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     mFactoryMode.init();
     mDtvScanRunningStatus = DTV_SCAN_RUNNING_NORMAL;
 
-    mHdmiOutFbc = insertedFbcDevice();
-
     SetHdmiEdidForUboot();
     mSetHdmiEdid = false;
 
@@ -160,11 +129,6 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     mFrontDev->setObserver ( &mTvMsgQueue );
     mTvEas = CTvEas::GetInstance();
     mTvEas->setObserver(&mTvMsgQueue);
-    if (mHdmiOutFbc) {
-        fbcIns = GetSingletonFBC();
-        setUpgradeFbcObserver(this);
-        fbcIns->cfbc_Set_DNLP(COMM_DEV_SERIAL, 0);//disable dnlp for fbc project.
-    }
     mSubtitle.setObserver(this);
     mHeadSet.setObserver(this);
     mAv.setObserver(&mTvMsgQueue);
@@ -173,6 +137,7 @@ CTv::CTv():mTvDmx(0), mTvDmx1(1), mTvDmx2(2), mTvMsgQueue(this)
     mTvStatus = TV_INIT_ED;
     pGpio = new CTvGpio();
     print_version_info();
+    mbSameSourceEnableStatus = false;
 }
 
 CTv::~CTv()
@@ -184,12 +149,6 @@ CTv::~CTv()
     mAv.Close();
     mTvStatus = TV_INIT_ED;
     mFrontDev->Close();
-
-    if (fbcIns != NULL) {
-        fbcIns->fbcRelease();
-        delete fbcIns;
-        fbcIns = NULL;
-    }
 
     if (pGpio != NULL) {
         delete pGpio;
@@ -226,13 +185,12 @@ void CTv::onEvent ( const CTvEas::EasEvent &ev )
 
 void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
 {
-    const char *config_value = NULL;
-    LOGD ( "[source_switch_time]: %fs, %s, FE event type = %d tvaction=%x", getUptimeSeconds(), __FUNCTION__, ev.mCurSigStaus, mTvAction);
+    LOGD ( "%s, FE event type = %d tvaction=%x", __FUNCTION__, ev.mCurSigStaus, mTvAction);
     if (mTvAction & TV_ACTION_SCANNING) return;
 
 
     if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_HAS_SIG ) {
-        LOGD("[source_switch_time]: %fs, fe lock", getUptimeSeconds());
+        LOGD("onEvent fe lock");
         if (/*m_source_input == SOURCE_TV || */m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //atv and other tvin source    not to use it, and if not playing, not use have sig
             TvEvent::SignalInfoEvent ev;
             ev.mStatus = TVIN_SIG_STATUS_STABLE;
@@ -242,7 +200,7 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
             sendTvEvent ( ev );
         }
     } else if ( ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_FE_NO_SIG ) {
-        LOGD("[source_switch_time]: %fs, fe unlock", getUptimeSeconds());
+        LOGD("onEvent fe unlock");
         if ((!(mTvAction & TV_ACTION_STOPING)) && m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //just playing
             if (iSBlackPattern) {
                 mAv.DisableVideoWithBlackColor();
@@ -257,9 +215,9 @@ void CTv::onEvent ( const CFrontEnd::FEEvent &ev )
             sendTvEvent ( ev );
         }
     } else if (ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_VLFE_HAS_SIG) {
-        LOGD("[source_switch_time]: %fs, vlfe lock", getUptimeSeconds());
+        LOGD("onEvent vlfe lock");
     } else if (ev.mCurSigStaus == CFrontEnd::FEEvent::EVENT_VLFE_NO_SIG) {
-        LOGD("[source_switch_time]: %fs, vlfe unlock", getUptimeSeconds());
+        LOGD("onEvent vlfe unlock");
     }
 }
 
@@ -319,7 +277,7 @@ void CTv::onEvent (const CTvRrt::RrtEvent &ev)
 
 void CTv::onEvent(const CAv::AVEvent &ev)
 {
-    LOGD ( "[source_switch_time]: %fs, AVEvent = %d", getUptimeSeconds(), ev.type);
+    LOGD ( "onEvent AVEvent = %d", ev.type);
     switch ( ev.type ) {
     case CAv::AVEvent::EVENT_AV_STOP: {
         if ( mTvAction & TV_ACTION_STOPING ) {
@@ -362,19 +320,16 @@ void CTv::onEvent(const CAv::AVEvent &ev)
         break;
     }
     case CAv::AVEvent::EVENT_AV_VIDEO_AVAILABLE: {
-        LOGD("[source_switch_time]: %fs, EVENT_AV_VIDEO_AVAILABLE, video available", getUptimeSeconds());
+        LOGD("EVENT_AV_VIDEO_AVAILABLE, video available");
         if (m_source_input == SOURCE_DTV && (mTvAction & TV_ACTION_PLAYING)) { //atv and other tvin source    not to use it, and if not playing, not use have sig
             if ( m_win_mode == PREVIEW_WONDOW ) {
                 mAv.setVideoScreenMode ( CAv::VIDEO_WIDEOPTION_FULL_STRETCH );
             }
             if (mAutoSetDisplayFreq && !mPreviewEnabled) {
-                mpTvin->VDIN_SetDisplayVFreq(50, mHdmiOutFbc);
+                mpTvin->VDIN_SetDisplayVFreq(50);
             }
-
-            mAv.EnableVideoNow(true);
-            LOGD("[source_switch_time]: %fs, EVENT_AV_VIDEO_AVAILABLE, video available ok", getUptimeSeconds());
         }
-
+        isVideoFrameAvailable();
         TvEvent::AVPlaybackEvent AvPlayBackEvt;
         AvPlayBackEvt.mMsgType = TvEvent::AVPlaybackEvent::EVENT_AV_VIDEO_AVAILABLE;
         AvPlayBackEvt.mProgramId = (int)ev.param;
@@ -464,8 +419,8 @@ void CTv::CTvMsgQueue::handleMessage ( CMessage &msg )
     }
 
     case TV_MSG_ENABLE_VIDEO_LATER: {
-        int fc = msg.mpPara[0];
-        mpTv->onEnableVideoLater(fc);
+        //int fc = msg.mpPara[0];
+        mpTv->isVideoFrameAvailable();
         break;
     }
 
@@ -566,9 +521,9 @@ int CTv::setTvObserver ( TvIObserver *ob )
 
 void CTv::sendTvEvent ( const CTvEv &ev )
 {
-    if (ev.getEvType() == CTvEv::TV_EVENT_SIGLE_DETECT) {
+    /*if (ev.getEvType() == CTvEv::TV_EVENT_SIGLE_DETECT) {
         TvEvent::SignalInfoEvent *pEv = (TvEvent::SignalInfoEvent *)(&ev);
-    }
+    }*/
 
     LOGD ( "%s, tvaction=%x", __FUNCTION__, mTvAction);
     if ((mTvAction & TV_ACTION_SCANNING) && (ev.getEvType() == CTvEv::TV_EVENT_SIGLE_DETECT)) {
@@ -592,10 +547,9 @@ int CTv::clearFrontEnd(int para)
 
 int CTv::Scan(const char *feparas, const char *scanparas) {
     AutoMutex _l(mLock);
-    m_source_input = SOURCE_INVALID;
     mTvAction = mTvAction | TV_ACTION_SCANNING;
-    LOGD("mTvAction = %#x, %s", mTvAction, __FUNCTION__);
-    LOGD("fe[%s], scan[%s] %s", feparas, scanparas, __FUNCTION__);
+    LOGD("%s: mTvAction = 0x%x\n", __FUNCTION__, mTvAction);
+    LOGD("%s: fe[%s], scan[%s]!\n", __FUNCTION__, feparas, scanparas);
 
     mAv.StopTS();
     mAv.DisableVideoWithBlackColor();
@@ -604,12 +558,25 @@ int CTv::Scan(const char *feparas, const char *scanparas) {
     CTvScanner::ScanParas sp(scanparas);
     CFrontEnd::FEParas fp(feparas);
 
-    if (sp.getAtvMode() & TV_SCAN_ATVMODE_AUTO) {
+    int AtvMode = sp.getAtvMode();
+    int DtvMode = sp.getDtvMode();
+    LOGD("%s: AtvMode = %d, DtvMode = %d\n", __FUNCTION__, AtvMode, DtvMode);
+    if (AtvMode != TV_SCAN_ATVMODE_NONE) {
+        m_source_input = SOURCE_TV;
+    } else {
+        m_source_input = SOURCE_INVALID;
+    }
+
+    if (AtvMode & TV_SCAN_ATVMODE_AUTO) {
+        LOGD("%s: clean all ATV channal!\n", __FUNCTION__);
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_ATV );
     }
-    if (sp.getDtvMode() & TV_SCAN_DTVMODE_MANUAL) {
+
+    if (DtvMode & TV_SCAN_DTVMODE_MANUAL) {
+        LOGD("%s: clean appointed DTV channal!\n", __FUNCTION__);
         CTvChannel::DeleteBetweenFreq(sp.getDtvFrequency1(), sp.getDtvFrequency2());
     } else {
+        LOGD("%s: clean All DTV channal!\n", __FUNCTION__);
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_DTV );
         CTvProgram::CleanAllProgramBySrvType ( CTvProgram::TYPE_RADIO );
         CTvEvent::CleanAllEvent();
@@ -718,7 +685,7 @@ int CTv::atvAutoScan(int videoStd, int audioStd, int searchType, int procMode)
     mpTvin->VDIN_OpenPort ( source_port );
     unsigned long stdAndColor = mFrontDev->enumToStdAndColor(vStd, aStd);
 
-    int fmt = CFrontEnd::stdEnumToCvbsFmt (0, 0);
+    //int fmt = CFrontEnd::stdEnumToCvbsFmt (0, 0);
     mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) TVIN_SIG_FMT_NULL );
 
     if (searchType == 0) {
@@ -778,7 +745,7 @@ int CTv::atvMunualScan ( int startFreq, int endFreq, int videoStd, int audioStd,
     tvin_port_t source_port = mpTvin->Tvin_GetSourcePortBySourceInput(SOURCE_TV);
     mpTvin->VDIN_OpenPort ( source_port );
 
-    int fmt = CFrontEnd::stdEnumToCvbsFmt (0, 0);
+    //int fmt = CFrontEnd::stdEnumToCvbsFmt (0, 0);
     mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) TVIN_SIG_FMT_NULL );
     LOGD("%s, atv manual scan vstd=%d, astd=%d stdandcolor=0x%x", __FUNCTION__, vStd, aStd, stdAndColor);
     mTvScanner->SetCurrentLanguage(GetCurrentLanguage());
@@ -836,15 +803,16 @@ int CTv::stopScan()
 
     LOGD("%s, tv scanning , stop it\n", __FUNCTION__);
     if ((SOURCE_TV == m_source_input) && mATVDisplaySnow) {
-        mpTvin->Tvin_StopDecoder();
         SetSnowShowEnable( false );
         mAv.DisableVideoWithBlackColor();
     } else {
         mAv.DisableVideoWithBlackColor();
     }
+    mpTvin->Tvin_StopDecoder();
     //mTvEpg.leaveChannel();
     mTvScanner->stopScan();
     mFrontDev->Close();
+    m_source_input = SOURCE_INVALID;
     mTvAction &= ~TV_ACTION_SCANNING;
     return 0;
 }
@@ -1074,10 +1042,11 @@ int CTv::setAudioAD (int enable, int aPid, int aFmt)
 }
 
 int CTv::playDtvProgramUnlocked (const char *feparas, int mode, int freq, int para1, int para2,
-                          int vpid, int vfmt, int apid, int afmt, int pcr, int audioCompetation)
+                          int vpid, int vfmt, int apid, int afmt, int pcr, int audioCompetation __unused)
 {
     int ret = 0;
     int FeMode = 0;
+    LOGD("[%s] Start SwitchSourceTime = %fs", __FUNCTION__, getUptimeSeconds());
 
     CFrontEnd::FEParas fp(feparas);
 
@@ -1104,7 +1073,7 @@ int CTv::playDtvProgramUnlocked (const char *feparas, int mode, int freq, int pa
     msg.mDelayMs = 2000;
     msg.mType = CTvMsgQueue::TV_MSG_CHECK_FE_DELAY;
     mTvMsgQueue.sendMsg ( msg );
-
+    LOGD("[%s] End SwitchSourceTime = %fs", __FUNCTION__, getUptimeSeconds());
     return 0;
 }
 
@@ -1134,7 +1103,7 @@ int CTv::playDtvProgram(const char* feparas, int vpid, int vfmt, int apid,
 }
 
 
-int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCompetation)
+int CTv::playDtvTimeShiftUnlocked (const char *feparas, void *para, int audioCompetation __unused)
 {
     int ret = 0;
     int FeMode = 0;
@@ -1171,7 +1140,7 @@ int CTv::playDtmbProgram ( int progId )
     int aindex;
     CTvProgram::Audio *pA;
     CTvProgram::Video *pV;
-    int ret = CTvProgram::selectByID ( progId, prog );
+    CTvProgram::selectByID ( progId, prog );
     saveDTVProgramID ( progId );
     prog.getChannel ( channel );
     int chanVolCompValue = 0;
@@ -1209,9 +1178,9 @@ int CTv::playDtmbProgram ( int progId )
     return 0;
 }
 
-int CTv::playAtvProgram (int freq, int videoStd, int audioStd, int vfmt, int soundsys, int fineTune __unused, int audioCompetation)
+int CTv::playAtvProgram (int freq, int videoStd, int audioStd, int vfmt, int soundsys, int fineTune __unused, int audioCompetation __unused)
 {
-    LOGD("%s", __FUNCTION__);
+    LOGD("%s Start SwitchSourceTime = %fs",__FUNCTION__,getUptimeSeconds());
     SetSourceSwitchInputLocked(m_source_input_virtual, SOURCE_TV);
     mTvAction |= TV_ACTION_IN_VDIN;
     mTvAction |= TV_ACTION_PLAYING;
@@ -1226,7 +1195,7 @@ int CTv::playAtvProgram (int freq, int videoStd, int audioStd, int vfmt, int sou
 
     //set TUNER
     mFrontDev->setPara (TV_FE_ANALOG, freq, stdAndColor, -1, vfmt, soundsys);
-
+    LOGD("%s End SwitchSourceTime = %fs",__FUNCTION__,getUptimeSeconds());
     return 0;
 }
 
@@ -1239,10 +1208,10 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
     }
 
     if ( feParms.mode == TV_FE_ANALOG ) {
-        int progID = -1;
+        //int progID = -1;
         int tmpFreq = feParms.freq;
         int tmpfineFreq = feParms.para2;
-        int mode = feParms.mode;
+        //int mode = feParms.mode;
 
         //get tunerStd from videoStd and audioStd
         unsigned long stdAndColor = mFrontDev->enumToStdAndColor (feParms.videoStd, feParms.audioStd);
@@ -1275,8 +1244,8 @@ int CTv::resetFrontEndPara ( frontend_para_set_t feParms )
 int CTv::setFrontEnd ( const char *paras, bool force )
 {
     AutoMutex _l( mLock );
-    LOGD("%s: mTvAction = %#x, paras = %s, m_source_input = %d.",
-            __FUNCTION__, mTvAction, paras, m_source_input);
+    LOGD("%s: mTvAction = %#x, paras = %s, m_source_input = %d. SwitchSourceTime = %fs",
+            __FUNCTION__, mTvAction, paras, m_source_input,getUptimeSeconds());
 
     if (mTvAction & TV_ACTION_SCANNING) {
         return -1;
@@ -1298,7 +1267,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
             /* DTV --> ATV */
             stopPlaying(false);
         }
-        int tmpFreq = fp.getFrequency();
+        //int tmpFreq = fp.getFrequency();
         int tmpfineFreq = fp.getFrequency2();
 
         //get tunerStd from videoStd and audioStd
@@ -1306,8 +1275,10 @@ int CTv::setFrontEnd ( const char *paras, bool force )
 
         LOGD("%s: vstd=%d astd=%d stdandcolor=0x%x", __FUNCTION__, fp.getVideoStd(), fp.getAudioStd(), stdAndColor);
         //set frontend parameters to tuner dev
+        if ((SOURCE_TV == m_source_input) && mATVDisplaySnow && mpTvin->getSnowStatus()) {
+            SetSnowShowEnable( false );
+        }
         mpTvin->Tvin_StopDecoder();
-
         //set CVBS
         int fmt = CFrontEnd::stdEnumToCvbsFmt (fp.getVFmt(), stdAndColor);
         mpTvin->AFE_SetCVBSStd ( ( tvin_sig_fmt_t ) fmt );
@@ -1323,10 +1294,10 @@ int CTv::setFrontEnd ( const char *paras, bool force )
         }
     } else {
         mTvAction &= ~TV_ACTION_IN_VDIN;
-        mpTvin->Tvin_StopDecoder();
         if ((SOURCE_TV == m_source_input) && mATVDisplaySnow && mpTvin->getSnowStatus()) {
             SetSnowShowEnable( false );
         }
+        mpTvin->Tvin_StopDecoder();
         mpTvin->VDIN_ClosePort();
 
         mFrontDev->Open(TV_FE_AUTO);
@@ -1339,6 +1310,7 @@ int CTv::setFrontEnd ( const char *paras, bool force )
     mode = (FEMode_Base == TV_FE_ANALOG);
     Tv_RrtUpdate(freq, mode, 0);
     Tv_Easupdate();
+    LOGD("%s setFrontEnd End SwitchSourceTime = %fs",__FUNCTION__,getUptimeSeconds());
     return 0;
 }
 
@@ -1383,7 +1355,7 @@ int CTv::startPlayTv ( int source, int vid, int aid, int pcrid, int vfat, int af
     if ( source == SOURCE_DTV ) {
         tvWriteSysfs ( DEVICE_CLASS_TSYNC_AV_THRESHOLD_MIN, AV_THRESHOLD_MIN_MS );
         setDvbLogLevel();
-        LOGD ( "%s, start Play DTV!\n", __FUNCTION__);
+        LOGD ( "%s, start Play DTV SwitchSourceTime Time = %fs!\n", __FUNCTION__,getUptimeSeconds());
         return mAv.StartTS (vid, aid, pcrid, vfat, afat );
     }
     return -1;
@@ -1722,6 +1694,7 @@ int CTv::OpenTv ( void )
     } else {
         mATVDisplaySnow = false;
     }
+    mpTvin->AFE_EnableSnowByConfig(mATVDisplaySnow);
 
     value = config_get_str ( CFG_SECTION_TV, CFG_BLUE_SCREEN_COLOR, "null" );
     if ( strcmp ( value, "black" ) == 0 ) {
@@ -1730,30 +1703,27 @@ int CTv::OpenTv ( void )
         iSBlackPattern = false;
     }
 
-    value = config_get_str ( CFG_SECTION_TV, CFG_FBC_PANEL_INFO, "null" );
+    value = config_get_str ( CFG_SECTION_TV, CGF_TV_AUTOSWITCH_MONITOR_EN, "disable" );
+    if (strcmp(value, "enable") == 0 ) {
+        mAutoSwitchMonitorCfg = true;
+    } else {
+        mAutoSwitchMonitorCfg = false;
+    }
+
+    /*value = config_get_str ( CFG_SECTION_TV, CFG_FBC_PANEL_INFO, "null" );
     LOGD("open tv, get fbc panel info:%s\n", value);
     if (strcmp(value, "edid") == 0 ) {
         rebootSystemByEdidInfo();
     } else if (strcmp(value, "uart") == 0 ) {
         rebootSystemByUartPanelInfo(fbcIns);
-    }
+    }*/
 
     //tv ssm check
     SSMHandlePreCopying();
 
-    /*SSM_status_t SSM_status = (SSM_status_t)(CVpp::getInstance()->VPP_GetSSMStatus());
-    LOGD ("Ctv-SSM status= %d\n", SSM_status);
-
-    if ( SSMDeviceMarkCheck() < 0 || SSM_status == SSM_HEADER_INVALID) {
-        LOGD ("Restore SSMData file");
-        Tv_SSMRestoreDefaultSetting();
-    }else if (SSM_status == SSM_HEADER_STRUCT_CHANGE) {
-        CVpp::getInstance()->TV_SSMRecovery();
-    }*/
-
     mpTvin->OpenTvin();
 
-    CVpp::getInstance()->Vpp_Init(mHdmiOutFbc);
+    CVpp::getInstance()->Vpp_Init();
 
     SSMSetHDCPKey();
     system ( "/vendor/bin/dec" );
@@ -1796,7 +1766,7 @@ int CTv::CloseTv ( void )
 
 int CTv::StartTvLock ()
 {
-    LOGD("[source_switch_time]: %fs,  StartTvLock status = %d", getUptimeSeconds(), mTvStatus);
+    LOGD("StartTvLock status = %d", mTvStatus);
     if (mTvStatus == TV_START_ED)
         return 0;
 
@@ -1814,16 +1784,14 @@ int CTv::StartTvLock ()
     }
 
     setDvbLogLevel();
-    //mAv.ClearVideoBuffer();
-    mAv.SetVideoLayerDisable(0);
-    //Tv_SetDisplayMode ( Tv_GetDisplayMode ( m_source_input ), m_source_input, m_cur_sig_info.fmt, 1);
+    mAv.SetVideoLayerStatus(ENABLE_AND_CLEAR_VIDEO_LAYER);
     TvMisc_EnableWDT ( gTvinConfig.kernelpet_disable, gTvinConfig.userpet, gTvinConfig.kernelpet_timeout, gTvinConfig.userpet_timeout, gTvinConfig.userpet_reset );
     mpTvin->TvinApi_SetCompPhaseEnable ( 1 );
     mpTvin->VDIN_EnableRDMA ( 1 );
 
     mTvStatus = TV_START_ED;
     MnoNeedAutoSwitchToMonitorMode = false;
-    LOGD("[source_switch_time]: %fs, StartTvLock end", getUptimeSeconds());
+    LOGD("StartTvLock end");
     return 0;
 }
 
@@ -1833,70 +1801,68 @@ int CTv::startTvDetect()
     return 0;
 }
 
-int CTv::DoSuspend(int type)
+int CTv::DoSuspend(int type __unused)
 {
     return 0;
 }
 
-int CTv::DoResume(int type)
+int CTv::DoResume(int type __unused)
 {
     return 0;
 }
 
 int CTv::StopTvLock ( void )
 {
-    LOGD("%s: mTvStatus = %d, mBlackoutEnable = %d\n", __FUNCTION__, mTvStatus, mBlackoutEnable);
-    AutoMutex _l( mLock );
-    mTvAction |= TV_ACTION_STOPING;
-    mTvAction &= ~TV_ACTION_IN_VDIN;
+    LOGD("%s: mTvStatus = %d, mBlackoutEnable = %d, SameSourceEnableStatus = %d\n", __FUNCTION__, mTvStatus, mBlackoutEnable, mbSameSourceEnableStatus);
+    if (mbSameSourceEnableStatus) {
+        mbSameSourceEnableStatus = false;
+        return 0;
+    } else {
+        LOGD("%s StopTvLock Start SwitchSourceTime Time = %fs\n", __FUNCTION__,getUptimeSeconds());
+        AutoMutex _l( mLock );
+        mTvAction |= TV_ACTION_STOPING;
+        mTvAction &= ~TV_ACTION_IN_VDIN;
 
-    /* release ATV/DTV early */
-    mFrontDev->setMode(TV_FE_AUTO);
+        /* release ATV/DTV early */
+        mFrontDev->setMode(TV_FE_AUTO);
 
-    mAv.DisableVideoWithBlackColor();
-    tryReleasePlayer(false, m_source_input);
-    stopPlaying(false);
-    mpTvin->Tvin_StopDecoder();
-    if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
-        SetSnowShowEnable( false );
+        mAv.DisableVideoWithBlackColor();
+        tryReleasePlayer(false, m_source_input);
+        stopPlaying(false);
+        if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow ) {
+            SetSnowShowEnable( false );
+        }
+
+        //stop scan  if scanning
+        stopScan();
+
+        mpTvin->Tvin_StopDecoder();
+        mpTvin->VDIN_ClosePort();
+
+        mFrontDev->SetAnalogFrontEndTimerSwitch(0);
+
+        setAudioChannel(TV_AOUT_OUTPUT_STEREO);
+        mpTvin->setMpeg2Vdin(0);
+        mAv.setLookupPtsForDtmb(0);
+        m_last_source_input = SOURCE_INVALID;
+        m_source_input = SOURCE_INVALID;
+        m_source_input_virtual = SOURCE_INVALID;
+        int ret = tvSetCurrentSourceInfo(SOURCE_MPEG, TVIN_SIG_FMT_NULL, TVIN_TFMT_2D);
+        if (ret < 0) {
+            LOGE("%s Set CurrentSourceInfo error!\n", __FUNCTION__);
+        }
+
+        mFrontDev->Close();
+        mTvAction &= ~TV_ACTION_STOPING;
+        mTvStatus = TV_STOP_ED;
+        MnoNeedAutoSwitchToMonitorMode = false;
+        if (mBlackoutEnable) {
+            mAv.EnableVideoBlackout();
+        }
+        mAv.ClearVideoBuffer();
+        LOGD("%s StopTvLock End SwitchSourceTime Time = %fs\n", __FUNCTION__,getUptimeSeconds());
+        return 0;
     }
-    mpTvin->VDIN_ClosePort();
-
-    //stop scan  if scanning
-    stopScan();
-    mFrontDev->SetAnalogFrontEndTimerSwitch(0);
-
-    setAudioChannel(TV_AOUT_OUTPUT_STEREO);
-    mpTvin->setMpeg2Vdin(0);
-    mAv.setLookupPtsForDtmb(0);
-    m_last_source_input = SOURCE_INVALID;
-    m_source_input = SOURCE_INVALID;
-    m_source_input_virtual = SOURCE_INVALID;
-
-    CVpp::getInstance()->LoadVppSettings(SOURCE_MPEG, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, TVIN_TFMT_2D);
-
-    int ret = tvSetCurrentSourceInfo(m_source_input, TVIN_SIG_FMT_NULL, TVIN_TFMT_2D);
-    if (ret < 0) {
-        LOGE("%s Set CurrentSourceInfo error!\n", __FUNCTION__);
-    }
-
-    if (mAutoSetDisplayFreq && !mPreviewEnabled) {
-        mpTvin->VDIN_SetDisplayVFreq(60, mHdmiOutFbc);
-    }
-    mFrontDev->Close();
-    mTvAction &= ~TV_ACTION_STOPING;
-    mTvStatus = TV_STOP_ED;
-    MnoNeedAutoSwitchToMonitorMode = false;
-    if (mBlackoutEnable) {
-        mAv.EnableVideoBlackout();
-    }
-    mAv.ClearVideoBuffer();
-    //send source switch event for cec
-    TvEvent::SourceSwitchEvent ev;
-    ev.DestSourceInput = -1;
-    ev.DestSourcePortNum = 0;
-    sendTvEvent(ev);
-    return 0;
 }
 
 int CTv::Tv_MiscSetBySource ( tv_source_input_t source_input )
@@ -1966,7 +1932,7 @@ int CTv::SetSourceSwitchInput(tv_source_input_t source_input)
 {
    AutoMutex _l( mLock );
 
-    LOGD ( "%s, source input = %d", __FUNCTION__, source_input );
+    LOGD ( "%s, source input = %d SwitchSourceTime = %fs", __FUNCTION__, source_input,getUptimeSeconds());
 
     tryReleasePlayer(true, source_input);
 
@@ -1985,13 +1951,18 @@ int CTv::SetSourceSwitchInput(tv_source_input_t virtual_input, tv_source_input_t
 
 int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_input_t source_input)
 {
-    LOGD ( "[source_switch_time]: %fs, %s, virtual source input = %d source input = %d m_source_input = %d",
+    LOGD ( "SwitchSourceTime Time = %fs, %s, virtual source input = %d source input = %d m_source_input = %d",
            getUptimeSeconds(), __FUNCTION__, virtual_input, source_input, m_source_input );
 
     tvin_port_t cur_port;
     m_source_input_virtual = virtual_input;
 
     Tv_SetDDDRCMode(source_input);
+    if (source_input != SOURCE_DTV) {
+        tvWriteSysfs(VIDEO_SYNC_ENABLE, "0");
+        // set sync mode to vmaster. 0: vmaster; 1:amaster
+        tvWriteSysfs(VIDEO_SYNC_MODE, "0");
+    }
     if (source_input == m_source_input ) {
         LOGW("%s,same source input, return", __FUNCTION__ );
         return 0;
@@ -2056,12 +2027,10 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
         //double confirm we set the main volume lut buffer to mpeg
         mpTvin->setMpeg2Vdin(1);
         mAv.setLookupPtsForDtmb(1);
-        int ret = tvSetCurrentSourceInfo(m_source_input, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, TVIN_TFMT_2D);
+        int ret = tvSetCurrentSourceInfo(m_source_input, TVIN_SIG_FMT_NULL, TVIN_TFMT_2D);
         if (ret < 0) {
             LOGE("%s Set CurrentSourceInfo error!\n", __FUNCTION__);
         }
-
-        CVpp::getInstance()->LoadVppSettings(m_source_input, TVIN_SIG_FMT_HDMI_1920X1080P_60HZ, TVIN_TFMT_2D);
     } else {
         mpTvin->setMpeg2Vdin(0);
         mAv.setLookupPtsForDtmb(0);
@@ -2097,73 +2066,43 @@ int CTv::SetSourceSwitchInputLocked(tv_source_input_t virtual_input, tv_source_i
     }
 
     mTvAction &= ~ TV_ACTION_SOURCE_SWITCHING;
+    LOGD ( "%s, SwitchInputLocked End SwitchSourceTime Time = %fs", __FUNCTION__,getUptimeSeconds());
     return 0;
 }
 
 void CTv::onSigToStable()
 {
-    LOGD ( "[source_switch_time]: %fs, onSigToStable start", getUptimeSeconds());
+    LOGD ( "SwitchSourceTime Time = %fs, onSigToStable start", getUptimeSeconds());
+
+    tv_source_input_type_t source_type = CTvin::Tvin_SourceInputToSourceInputType(m_source_input);
+    if (source_type == SOURCE_TYPE_HDMI) {
+        tvSetCurrentHdrInfo(m_cur_sig_info.hdr_info);
+    }
 
     int ret = tvSetCurrentSourceInfo(m_source_input, m_cur_sig_info.fmt, m_cur_sig_info.trans_fmt);
     if (ret < 0) {
         LOGE("%s Set CurrentSourceInfo error!\n", __FUNCTION__);
     }
 
-    CVpp::getInstance()->LoadVppSettings(m_source_input, m_cur_sig_info.fmt, m_cur_sig_info.trans_fmt);
+    if ((source_type == SOURCE_TYPE_HDMI) && mAutoSwitchMonitorCfg) {//autoswitch for hdmi source
+            autoSwitchToMonitorMode();
+    }
+
     if (mAutoSetDisplayFreq && !mPreviewEnabled) {
         int freq = 60;
-        if (CTvin::Tvin_SourceInputToSourceInputType(m_source_input) == SOURCE_TYPE_HDMI ) {
+        if (source_type == SOURCE_TYPE_HDMI ) {//HDMI source
             int fps = getHDMIFrameRate();
             LOGD("%s: HDMI source frame rate is %d\n", __FUNCTION__, fps);
-            const char *value;
-            bool PreviewWindowFlag = false;
-            value = config_get_str ( CFG_SECTION_TV, CFG_TVIN_DISPLAY_PREVIEW_WINDOW, "null" );
-            if ( strcmp ( value, "enable" ) == 0 ) {
-                PreviewWindowFlag = true;
-            }
-
-            int HdmiTxStatus = access(FRAME_RATE_SUPPORT_LIST_PATH, 0);
-            if ((HdmiTxStatus == 0) && (PreviewWindowFlag)) {
-                LOGD("%s: Support hdmi TX mode!\n", __FUNCTION__);
-                std::string str = std::to_string(fps);
-                std::vector<std::string> supportFrameRates;
-                ret = mpTvin->VDIN_GetFrameRateSupportList(&supportFrameRates);
-                if (ret == 0) {
-                    std::vector<std::string>::iterator result = find(supportFrameRates.begin( ), supportFrameRates.end( ), str);
-                    if (result != supportFrameRates.end()) {
-                        LOGD("Output device support %d frame rate!\n", fps);
-                        freq = fps;
-                    } else {
-                        LOGD("Output device don't support %d frame rate!\n", fps);
-                        if ((30 == fps) || (60 == fps) || (24 == fps)) {
-                            freq = 60;
-                        } else {
-                            freq = 50;
-                        }
-                    }
-                }
+            freq = fps;
+        }else {//ATV or AV source
+            if (CTvin::Tvin_is50HzFrameRateFmt(m_cur_sig_info.fmt)) {
+                freq = 50;
             } else {
-                LOGD("%s: Don't support hdmi TX mode!\n", __FUNCTION__);
-                if ((30 == fps) || (60 == fps) || (24 == fps)) {
-                    freq = 60;
-                } else {
-                    freq = 50;
-                }
+                freq = 60;
             }
-            autoSwitchToMonitorMode();
-
-            char display_mode[32] = {0};
-            tvReadSysfs(SYS_DISPLAY_MODE_PATH, display_mode);
-            if (strstr(display_mode, "panel") != NULL) {//Panel
-                LOGD("%s, Now is panel mode!\n", __FUNCTION__);
-                tvWriteSysfs(SYS_PANEL_FRAME_RATE, fps, 10);
-            } else {
-                mpTvin->VDIN_SetDisplayVFreq(freq, mHdmiOutFbc);
-            }
-        } else if ( CTvin::Tvin_is50HzFrameRateFmt ( m_cur_sig_info.fmt ) ) {
-            mpTvin->VDIN_SetDisplayVFreq(50, mHdmiOutFbc);
         }
 
+        mpTvin->VDIN_SetDisplayVFreq(freq);
     }
     //showbo mark  hdmi auto 3d, tran fmt  is 3d, so switch to 3d
 
@@ -2171,25 +2110,29 @@ void CTv::onSigToStable()
         mAv.setVideoAxis(m_win_pos.x1, m_win_pos.y1, m_win_pos.x2, m_win_pos.y2);
         mAv.setVideoScreenMode ( CAv::VIDEO_WIDEOPTION_FULL_STRETCH );
     }
-    LOGD ( "[source_switch_time]: %fs, onSigToStable end", getUptimeSeconds());
+    LOGD ( "onSigToStable end");
 }
 
 void CTv::onSigStillStable()
 {
     LOGD ( "%s, signal Still Stable!\n", __FUNCTION__);
 
-    if ( (SOURCE_TV == m_source_input) && mATVDisplaySnow && mpTvin->getSnowStatus()) {
-        mpTvin->Tvin_StopDecoder();
+    if ((SOURCE_TV == m_source_input) && mATVDisplaySnow && mpTvin->getSnowStatus()) {
         SetSnowShowEnable( false );
+        mpTvin->Tvin_StopDecoder();
     }
+    LOGD ( "%s, startDecoder SwitchSourceTime Time = %fs\n", __FUNCTION__,getUptimeSeconds());
     int startdec_status = mpTvin->Tvin_StartDecoder ( m_cur_sig_info );
-    if ( startdec_status == 0 ) { //showboz  codes from  start decode fun
+    LOGD ( "%s, startDecoder End SwitchSourceTime = %fs\n", __FUNCTION__,getUptimeSeconds());
+    //showboz  codes from  start decode fun
+    if ((startdec_status == 0) &&
+        ((SOURCE_TV == m_source_input) || (SOURCE_AV1 == m_source_input) || (SOURCE_AV2 == m_source_input))) {
         const char *value = config_get_str ( CFG_SECTION_TV, CFG_TVIN_DB_REG, "null" );
-        if ( strcmp ( value, "enable" ) == 0 ) {
-            usleep ( 20 * 1000 );
+        if (strcmp(value, "enable") == 0) {
             CVpp::getInstance()->VPP_SetCVD2Values();
         }
     }
+    mAv.SetVideoLayerStatus(ENABLE_VIDEO_LAYER);
     CMessage msg;
     msg.mDelayMs = 0;
     msg.mType = CTvMsgQueue::TV_MSG_ENABLE_VIDEO_LATER;
@@ -2211,12 +2154,27 @@ bool CTv::isTvViewBlocked() {
     LOGD("%s, persist.sys.tvview.blocked = %s", __FUNCTION__, prop_value);
     return (strcmp(prop_value, "true") == 0) ? true : false;
 }
-
+void CTv::isVideoFrameAvailable(unsigned int u32NewFrameCount)
+{
+    unsigned int u32TimeOutCount = 0;
+    while(1) {
+        if ((unsigned int)mAv.getVideoFrameCount() >= u32NewFrameCount) {
+            LOGD("%s video available SwitchSourceTime = %f", __FUNCTION__,getUptimeSeconds());
+            break;
+        } else {
+            if (u32TimeOutCount >= NEW_FRAME_TIME_OUT_COUNT) {
+            LOGD("%s Not available frame consume time = %f", __FUNCTION__,getUptimeSeconds());
+            break;
+            }
+        }
+        LOGD("%s new frame count = %d",__FUNCTION__,mAv.getVideoFrameCount());
+        usleep(10*1000);
+        u32TimeOutCount++;
+    }
+}
 void CTv::onEnableVideoLater(int framecount)
 {
-    LOGD ( "[source_switch_time]: %fs, onEnableVideoLater start, wait %d video frame come out", getUptimeSeconds(), framecount);
     mAv.EnableVideoWhenVideoPlaying(framecount);
-    LOGD ( "[source_switch_time]: %fs, onEnableVideoLater end, show source on screen", getUptimeSeconds());
 }
 
 void CTv::onVideoAvailableLater(int framecount)
@@ -2235,7 +2193,7 @@ void CTv::onVideoAvailableLater(int framecount)
 
 void CTv::onSigToUnstable()
 {
-    LOGD ( "%s, signal to Unstable\n", __FUNCTION__);
+    LOGD ( "%s, signal to Unstable SwitchSourceTime = %fs\n", __FUNCTION__,getUptimeSeconds());
     if (SOURCE_TV != m_source_input) {
         mAv.DisableVideoWithBlackColor();
         mpTvin->Tvin_StopDecoder();
@@ -2344,7 +2302,7 @@ void CTv::InitCurrenSignalInfo ( void )
 tvin_info_t CTv::GetCurrentSignalInfo ( void )
 {
     tvin_trans_fmt det_fmt = TVIN_TFMT_2D;
-    tvin_sig_status_t signalState = TVIN_SIG_STATUS_NULL;
+    //tvin_sig_status_t signalState = TVIN_SIG_STATUS_NULL;
     //tvin_info_t signal_info = m_cur_sig_info;
 
     int feState = mFrontDev->getStatus();
@@ -2442,27 +2400,6 @@ int CTv::getBlackoutEnable()
     return enable;
 }
 
-int CTv::setAutoBackLightStatus(int status)
-{
-    if (mHdmiOutFbc) {
-        return mFactoryMode.fbcSetAutoBacklightOnOff(status);
-    }
-
-    return tvWriteSysfs(BL_LOCAL_DIMING_FUNC_ENABLE, status);
-}
-
-int CTv::getAutoBackLightStatus()
-{
-    if (mHdmiOutFbc) {
-        return mFactoryMode.fbcGetAutoBacklightOnOff();
-    }
-
-    char str_value[3] = {0};
-    tvReadSysfs(BL_LOCAL_DIMING_FUNC_ENABLE, str_value);
-    int value = atoi(str_value);
-    return (value < 0) ? -1 : value;
-}
-
 int CTv::getAverageLuma()
 {
     return mpTvin->VDIN_Get_avg_luma();
@@ -2516,14 +2453,7 @@ int CTv::getAutoBacklightData(int *data)
 
 int CTv::setLcdEnable(bool enable)
 {
-    int ret = -1;
-    if (mHdmiOutFbc) {
-        ret = fbcIns->fbcSetPanelStatus(COMM_DEV_SERIAL, enable ? 1 : 0);
-    } else {
-        ret = tvWriteSysfs(LCD_ENABLE, enable ? 1 : 0);
-    }
-
-    return ret;
+    return tvWriteSysfs(LCD_ENABLE, enable ? 1 : 0);
 }
 
 int CTv::Tv_GetIwattRegs()
@@ -2643,19 +2573,6 @@ bool CTv::hdmiOutWithFbc()
     return false;
 }
 
-void CTv::onUpgradeStatus(int state, int param)
-{
-    TvEvent::UpgradeFBCEvent ev;
-    ev.mState = state;
-    ev.param = param;
-    sendTvEvent(ev);
-}
-
-int CTv::StartUpgradeFBC(char *file_name, int mode, int upgrade_blk_size)
-{
-    return fbcIns->fbcStartUpgrade(file_name, mode, upgrade_blk_size);
-}
-
 int CTv::StartHeadSetDetect()
 {
     mHeadSet.startDetect();
@@ -2710,16 +2627,6 @@ void CTv::onThermalDetect(int state)
     } else {
         LOGD ( "%s, tvin thermal threshold disable\n", __FUNCTION__);
     }
-}
-
-int CTv::Tv_GetProjectInfo(project_info_t *ptrInfo)
-{
-    return GetProjectInfo(ptrInfo, fbcIns);
-}
-
-int CTv::Tv_GetPlatformType()
-{
-    return mHdmiOutFbc ? 1 : 0;
 }
 
 int CTv::Tv_HDMIEDIDFileSelect(tv_hdmi_port_id_t port, tv_hdmi_edid_version_t version)
@@ -2783,12 +2690,6 @@ int CTv::Tv_SetVdinForPQ (int gameStatus, int pcStatus, int autoSwitchFlag)
     LOGD("%s: game mode: %d, pc mode: %d, autoSwitchFlag: %d\n", __FUNCTION__, gameStatus, pcStatus, autoSwitchFlag);
 
     int ret = -1;
-    if (autoSwitchFlag) {
-        MnoNeedAutoSwitchToMonitorMode = false;
-    } else {
-        MnoNeedAutoSwitchToMonitorMode = true;
-    }
-
     if (pcStatus == MODE_ON) {
         CVpp::getInstance()->enableMonitorMode(true);
     } else if (pcStatus == MODE_OFF){
@@ -2797,30 +2698,24 @@ int CTv::Tv_SetVdinForPQ (int gameStatus, int pcStatus, int autoSwitchFlag)
         LOGD("%s: not about pc mode!\n", __FUNCTION__);
     }
 
-    return mpTvin->VDIN_UpdateForPQMode((pq_status_update_e)gameStatus, (pq_status_update_e)pcStatus);
+    if (gameStatus != MODE_STABLE) {
+        ret = mpTvin->VDIN_SetGameMode((pq_status_update_e)gameStatus);
+    }
+
+    if (autoSwitchFlag == PQ_MODE_SWITCH_TYPE_AUTO) {
+        MnoNeedAutoSwitchToMonitorMode = false;
+    } else if (autoSwitchFlag == PQ_MODE_SWITCH_TYPE_MANUAL) {
+        MnoNeedAutoSwitchToMonitorMode = true;
+        tvin_port_t cur_port = mpTvin->Tvin_GetSourcePortBySourceInput(m_source_input);
+        mpTvin->SwitchPort (cur_port);
+    }
+
+    return 0;
 }
 
 int CTv::Tv_SetWssStatus (int status)
 {
     return mpTvin->VDIN_SetWssStatus(status);
-}
-
-int CTv::Tv_SetBacklight_Switch ( int value )
-{
-    if (mHdmiOutFbc) {
-        return mFactoryMode.fbcBacklightOnOffSet(value);
-    } else {
-        return CVpp::getInstance()->VPP_SetBackLight_Switch(value);
-    }
-}
-
-int CTv::Tv_GetBacklight_Switch ( void )
-{
-    if (mHdmiOutFbc) {
-        return mFactoryMode.fbcBacklightOnOffGet();
-    } else {
-        return CVpp::getInstance()->VPP_GetBackLight_Switch();
-    }
 }
 
 int CTv::Tv_Easupdate()
@@ -2840,15 +2735,10 @@ int CTv::Tv_Easupdate()
 int CTv::Tv_SetDeviceIdForCec(int deviceId)
 {
     //send source switch event for cec while HDMI source
-    if (mpTvin->Tvin_SourceInputToSourceInputType((tv_source_input_t)deviceId) == SOURCE_TYPE_HDMI) {
-        TvEvent::SourceSwitchEvent ev;
-        ev.DestSourceInput = deviceId;
-        ev.DestSourcePortNum = (mpTvin->Tvin_GetSourcePortBySourceInput((tv_source_input_t)deviceId) & 0xf) + 1;
-        sendTvEvent(ev);
-        return 0;
-    }
-
-    return -1;
+    TvEvent::SourceSwitchEvent ev;
+    ev.DestSourceInput = deviceId;
+    sendTvEvent(ev);
+    return 0;
 }
 //audio
 
@@ -2860,9 +2750,9 @@ void CTv::updateSubtitle(int pic_width, int pic_height)
     sendTvEvent(ev);
 }
 
-int CTv::SendCmdToOffBoardFBCExternalDac(int cmd, int para)
+int CTv::SendCmdToOffBoardFBCExternalDac(int cmd __unused, int para __unused)
 {
-    int set_val = 0;
+    /*int set_val = 0;
     CFbcCommunication *pFBC = GetSingletonFBC();
     if (pFBC != NULL) {
         if (cmd == AUDIO_CMD_SET_MUTE) {
@@ -2885,7 +2775,7 @@ int CTv::SendCmdToOffBoardFBCExternalDac(int cmd, int para)
             LOGD("%s, send AUDIO_CMD_SET_SOURCE (para = %d) to fbc.\n", __FUNCTION__, para);
             return pFBC->cfbc_Set_FBC_Audio_Source(COMM_DEV_SERIAL, para);
         }
-    }
+    }*/
     return 0;
 }
 
@@ -3012,28 +2902,45 @@ int CTv::KillMediaServerClient()
 int CTv::autoSwitchToMonitorMode()
 {
     int ret = -1;
-    tvin_latency_t allmInfo;
-    memset(&allmInfo, 0x0, sizeof(tvin_latency_t));
-    mpTvin->VDIN_GetAllmInfo(&allmInfo);
-    LOGD("%s: allm_mode is %d, it_content is %d, cn_type is %d!\n", __FUNCTION__, allmInfo.allm_mode,
-                               allmInfo.it_content, allmInfo.cn_type);
+    if (!MnoNeedAutoSwitchToMonitorMode) {
+        LOGD("%s, PQ mode set by signal!\n", __FUNCTION__);
+        tvin_latency_t allmInfo;
+        memset(&allmInfo, 0x0, sizeof(tvin_latency_t));
+        mpTvin->VDIN_GetAllmInfo(&allmInfo);
+        LOGD("%s: allm_mode is %d, it_content is %d, cn_type is %d!\n", __FUNCTION__, allmInfo.allm_mode,
+                                   allmInfo.it_content, allmInfo.cn_type);
 
-    if (allmInfo.allm_mode) {
-        LOGD("%s autoswitch to game mode!\n", __FUNCTION__);
-        ret = CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_GAME, m_source_input, m_cur_sig_info.fmt,
-                                            m_cur_sig_info.trans_fmt, INDEX_2D, 1, 1);
-    } else if (allmInfo.it_content){
-        if (allmInfo.cn_type == GAME) {//GAME
+        int CurrentMode = CVpp::getInstance()->GetPQMode(m_source_input);
+        LOGD("%s, CurrentMode is %d!\n", __FUNCTION__, CurrentMode);
+        vpp_picture_mode_t NewMode = VPP_PICTURE_MODE_STANDARD;
+
+        if (allmInfo.allm_mode) {
             LOGD("%s autoswitch to game mode!\n", __FUNCTION__);
-            ret = CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_GAME, m_source_input, m_cur_sig_info.fmt,
-                                                m_cur_sig_info.trans_fmt, INDEX_2D, 1, 1);
-        } else {//Graphics/photo/cinema
-            LOGD("%s autoswitch to monitor mode!\n", __FUNCTION__);
-            ret = CVpp::getInstance()->SetPQMode(VPP_PICTURE_MODE_MONITOR, m_source_input, m_cur_sig_info.fmt,
-                                                m_cur_sig_info.trans_fmt, INDEX_2D, 1, 1);
+            NewMode = VPP_PICTURE_MODE_GAME;
+        } else if (allmInfo.it_content){
+            if (allmInfo.cn_type == GAME) {//GAME
+                LOGD("%s autoswitch to game mode!\n", __FUNCTION__);
+                NewMode = VPP_PICTURE_MODE_GAME;
+            } else {//Graphics/photo/cinema
+                LOGD("%s:vesa fmt, autoswitch to monitor mode!\n", __FUNCTION__);
+                NewMode = VPP_PICTURE_MODE_MONITOR;
+            }
+        } else if (m_cur_sig_info.is_dvi) {//dvi fmt
+            LOGD("%s: DVI fmt, autoswitch to monitor mode!\n", __FUNCTION__);
+            NewMode = VPP_PICTURE_MODE_MONITOR;
+        } else {
+            if ((CurrentMode == VPP_PICTURE_MODE_GAME) || (CurrentMode == VPP_PICTURE_MODE_MONITOR)) {
+                LOGD("%s, auto switch to standard mode!\n", __FUNCTION__);
+                NewMode = VPP_PICTURE_MODE_STANDARD;
+            } else {
+                LOGD("%s, Signal don't match autoswitch condition!\n", __FUNCTION__);
+                NewMode = (vpp_picture_mode_t)CurrentMode;
+            }
         }
-    } else {
-        LOGD("%d, Signal don't match autoswitch condition!\n", __LINE__);
+
+        ret = CVpp::getInstance()->SetPQMode(NewMode, m_source_input, m_cur_sig_info.fmt, m_cur_sig_info.trans_fmt, INDEX_2D, 1, 1);
+    }else {
+        LOGD("%s, PQ mode set by user!\n", __FUNCTION__);
     }
 
     return ret;
@@ -3042,6 +2949,7 @@ int CTv::autoSwitchToMonitorMode()
 void CTv::onVdinSignalChange()
 {
     AutoMutex _l( mLock );
+    LOGD("%s: mTvAction = 0x%x, m_source_input = %d\n", __FUNCTION__, mTvAction, m_source_input);
     if (!((mTvAction & TV_ACTION_IN_VDIN) || (mTvAction & TV_ACTION_SCANNING)) || (SOURCE_SPDIF == m_source_input)) {
         return;
     }
@@ -3052,8 +2960,8 @@ void CTv::onVdinSignalChange()
         m_cur_sig_info.status = TVIN_SIG_STATUS_NULL;
     }
 
-    LOGD("%s: trans_fmt is %d, sig_fmt is %d, status is %d, isDVI is %d\n", __FUNCTION__, m_cur_sig_info.trans_fmt,
-        m_cur_sig_info.fmt, m_cur_sig_info.status, m_cur_sig_info.is_dvi);
+    LOGD("%s: trans_fmt is %d, sig_fmt is %d, status is %d, isDVI is %d, hdr_info is 0x%x\n", __FUNCTION__,
+     m_cur_sig_info.trans_fmt, m_cur_sig_info.fmt, m_cur_sig_info.status, m_cur_sig_info.is_dvi, m_cur_sig_info.hdr_info);
     if ( m_cur_sig_info.status == TVIN_SIG_STATUS_STABLE ) {
         onSigToStable();
         onSigStillStable();
@@ -3326,8 +3234,7 @@ void CTv::dump(String8 &result)
     result.appendFormat("\naction = %x\n", mTvAction);
     result.appendFormat("status = %d\n", mTvStatus);
     result.appendFormat("current source input = %d\n", m_source_input);
-    result.appendFormat("last source input = %d\n", m_last_source_input);
-    result.appendFormat("hdmi out with fbc = %d\n\n", mHdmiOutFbc);
+    result.appendFormat("last source input = %d\n\n", m_last_source_input);
 
     result.appendFormat("tvserver git branch:%s\n", tvservice_get_git_branch_info());
     result.appendFormat("tvserver git version:%s\n", tvservice_get_git_version_info());
@@ -3404,4 +3311,10 @@ int CTv::SetSnowShowEnable(bool enable)
     }
 
     return mpTvin->SwitchSnow(enable);
+}
+
+int CTv::TV_SetSameSourceEnable(bool enable)
+{
+    mbSameSourceEnableStatus = enable;
+    return 0;
 }

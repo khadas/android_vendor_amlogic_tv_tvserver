@@ -152,7 +152,7 @@ public:
         virtual void onTvEvent ( const CTvEv &ev ) = 0;
     };
 
-    int setObserver(TvIObserver *ob)
+    int setObserver(TvIObserver *ob __unused)
     {
         //mpObserver = ob;
         return 0;

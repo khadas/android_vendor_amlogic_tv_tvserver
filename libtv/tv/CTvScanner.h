@@ -399,6 +399,8 @@ private:
     static const int TYPE_DTV_CC = 4;
     static const int TYPE_ATV_CC = 5;
     static const int TYPE_DTV_TELETEXT_IMG = 6;
+    static const int TYPE_ISDB = 7;
+    static const int TYPE_SCTE27 = 8;
 
     typedef struct {
         int nid;
@@ -427,10 +429,11 @@ private:
         AM_SI_SubtitleInfo_t sub_info;
         AM_SI_TeletextInfo_t ttx_info;
         AM_SI_CaptionInfo_t cap_info;
+        AM_SI_Scte27SubtitleInfo_t scte27_info;
     #endif
         int sdt_version;
         SCAN_TsInfo_t *tsinfo;
-	int programs_in_pat;
+        int programs_in_pat;
     } SCAN_ServiceInfo_t;
 
     typedef std::list<SCAN_ServiceInfo_t*> service_list_t;

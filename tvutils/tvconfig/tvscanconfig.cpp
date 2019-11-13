@@ -31,7 +31,7 @@ int tv_scan_config_load(const char *file_name)
 
     pIniFile = new CIniFile();
     pIniFile->LoadFromFile(file_name);
-    strcpy(mpFilePath, file_name);
+    strncpy(mpFilePath, file_name, sizeof(mpFilePath)-1);
 
     return 0;
 }

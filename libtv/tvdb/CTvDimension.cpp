@@ -170,7 +170,7 @@ void CTvDimension::selectByID(CTvDimension &dm, int id)
 {
     String8 cmd = String8("select * from dimension_table where evt_table.db_id = ") + String8::format("%d", id);
     CTvDatabase::Cursor c;
-    int ret = CTvDatabase::GetTvDb()->select(cmd, c);
+    CTvDatabase::GetTvDb()->select(cmd, c);
 
     if (c.moveToFirst()) {
         dm.createFromCursor(c);
@@ -188,7 +188,7 @@ void CTvDimension::selectByRatingRegion(CTvDimension &dm, int ratingRegionID)
 {
     String8 cmd = String8("select * from dimension_table where rating_region = ") + String8::format("%d", ratingRegionID);
     CTvDatabase::Cursor c;
-    int ret = CTvDatabase::GetTvDb()->select(cmd, c);
+    CTvDatabase::GetTvDb()->select(cmd, c);
 
     if (c.moveToFirst()) {
         dm.createFromCursor(c);
@@ -206,7 +206,7 @@ int CTvDimension::selectByIndex(CTvDimension &dm, int ratingRegionID, int index)
     String8 cmd = String8("select * from dimension_table where rating_region = ") + String8::format("%d", ratingRegionID);
     cmd += String8(" and index_j=") + String8::format("%d", index);
     CTvDatabase::Cursor c;
-    int ret = CTvDatabase::GetTvDb()->select(cmd, c);
+    CTvDatabase::GetTvDb()->select(cmd, c);
 
     if (c.moveToFirst()) {
         dm.createFromCursor(c);
@@ -316,7 +316,6 @@ int CTvDimension::getLockStatus(int valueIndex)
 
 void CTvDimension::getLockStatus(String8 abbrevs[], int lock[], int *array_len)
 {
-    int i = 0;
     int len = getDefinedValue();
 
     if (abbrevs != NULL && lock != NULL) {

@@ -50,7 +50,6 @@ void CTvEvent::InitFromCursor(CTvDatabase::Cursor &c)
     String8 rrtRatings = c.getString(col);
     char *tmp;
     Vector<String8> ratings;
-    int l = 0;
     char *pSave;
     tmp = strtok_r(rrtRatings.lockBuffer(rrtRatings.size()), ",", &pSave);
     LOGD("TV, %d, %s", __LINE__, tmp);
@@ -102,7 +101,7 @@ int CTvEvent::getProgPresentEvent(int progSrc, int progID, long nowTime, CTvEven
 
     cmd += String8(" and evt_table.start <= ") + String8::format("%ld", nowTime) + String8(" and evt_table.end > ") + String8::format("%ld", nowTime);
 
-    int ret = CTvDatabase::GetTvDb()->select(cmd, c);
+    CTvDatabase::GetTvDb()->select(cmd, c);
 
     if (c.moveToFirst()) {
         ev.InitFromCursor(c);
@@ -134,7 +133,7 @@ int CTvEvent::getProgScheduleEvents(int progSrc, int progID, long start, long du
     cmd += String8(" order by evt_table.start");
 
     CTvDatabase::Cursor c;
-    int ret = CTvDatabase::GetTvDb()->select(cmd, c);
+    CTvDatabase::GetTvDb()->select(cmd, c);
 
     if (c.moveToFirst()) {
         do {
@@ -166,7 +165,7 @@ int CTvEvent::getATVProgEvent(int progSrc, int progID, CTvEvent &ev)
 
     //cmd += String8(" and evt_table.start <= ") + String8::format("%ld", nowTime) + String8(" and evt_table.end > ") + String8::format("%ld", nowTime);
 
-    int ret = CTvDatabase::GetTvDb()->select(cmd, c);
+    CTvDatabase::GetTvDb()->select(cmd, c);
 
     if (c.moveToFirst()) {
         ev.InitFromCursor(c);

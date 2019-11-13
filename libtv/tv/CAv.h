@@ -31,6 +31,8 @@ static const char *PATH_MEPG_DTMB_LOOKUP_PTS_FLAG = "/sys/module/amvdec_mpeg12/p
 #define VIDEO_SCREEN_MODE   "/sys/class/video/screen_mode"
 #define VIDEO_AXIS          "/sys/class/video/axis"
 #define VIDEO_DEVICE_RESOLUTION "/sys/class/video/device_resolution"
+#define VIDEO_SYNC_ENABLE   "/sys/class/tsync/enable"
+#define VIDEO_SYNC_MODE     "/sys/class/tsync/mode"
 
 //must sync with am_aout.h
 enum
@@ -58,6 +60,12 @@ enum {
     VIDEO_LAYER_ENABLE                  = 0,
     VIDEO_LAYER_DISABLE_BLACK           = 1,
     VIDEO_LAYER_DISABLE_BLUE            = 2
+};
+
+enum {
+    ENABLE_VIDEO_LAYER,
+    DISABLE_VIDEO_LAYER,
+    ENABLE_AND_CLEAR_VIDEO_LAYER
 };
 
 typedef enum video_display_resolution_e {
@@ -162,7 +170,7 @@ public:
     int WaittingVideoPlaying(int minFrameCount = 8, int waitTime = 5000);
     int EnableVideoBlackout();
     int DisableVideoBlackout();
-    int SetVideoLayerDisable ( int value );
+    int SetVideoLayerStatus ( int value );
     int ClearVideoBuffer();
     bool videoIsPlaying(int minFrameCount = 8);
     int setVideoScreenMode ( int value );
@@ -174,13 +182,12 @@ public:
 
     int setLookupPtsForDtmb(int enable);
     tvin_sig_fmt_t getVideoResolutionToFmt();
-
+    int getVideoFrameCount();
 private:
     static void av_evt_callback ( long dev_no, int event_type, void *param, void *user_data );
 #ifdef SUPPORT_ADTV
     static void av_audio_callback(int event_type, AudioParms* param, void *user_data);
 #endif
-    int getVideoFrameCount();
     int mTvPlayDevId;
     IObserver *mpObserver;
     AVEvent mCurAvEvent;

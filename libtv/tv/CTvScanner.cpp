@@ -92,7 +92,7 @@ int CTvScanner::Scan(CFrontEnd::FEParas &fp, ScanParas &sp) {
     AM_SCAN_CreatePara_t para;
     AM_DMX_OpenPara_t dmx_para;
     AM_SCAN_Handle_t handle = 0;
-    int i;
+    //int i;
 
     LOGD("Scan fe[%s] scan[%s]", fp.toString().c_str(), sp.toString().c_str());
 
@@ -235,12 +235,13 @@ int CTvScanner::stopScan()
     if (mbScanStart) { //if start ok and not stop
         if (needVbiAssist())
             stopVBI();
-        int ret = AM_SCAN_Destroy(mScanHandle, true);
+        AM_SCAN_Destroy(mScanHandle, true);
         AM_EVT_Unsubscribe((long)mScanHandle, AM_SCAN_EVT_PROGRESS, evtCallback, NULL);
         AM_EVT_Unsubscribe((long)mScanHandle, AM_SCAN_EVT_SIGNAL, evtCallback, NULL);
         AM_SEC_Cache_Reset(0);
         //stop loop
         mbScanStart = false;//stop ok
+        mFEType = -1;
     }
  #endif
     return 0;
@@ -347,8 +348,9 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
             mCurEv.mMinorChannelNumber = srv->minor_chan_num;
             mCurEv.mVctType = srv->vct_type;
 
-            mCurEv.mScnt = srv->cap_info.caption_count;
-            for (int i = 0; i < srv->cap_info.caption_count; i++) {
+            //mCurEv.mScnt = srv->cap_info.caption_count;
+            int i, j;
+            for (i = 0; i < srv->cap_info.caption_count; i++) {
                 //all captions parsed from tables are treated as dtv cc.
                 mCurEv.mStype[i] = TYPE_DTV_CC; //srv->cap_info.captions[i].type ? TYPE_DTV_CC : TYPE_ATV_CC;
                 mCurEv.mSid[i] = srv->cap_info.captions[i].service_number
@@ -358,6 +360,17 @@ void CTvScanner::notifyService(SCAN_ServiceInfo_t *srv)
                 mCurEv.mSid2[i] = srv->cap_info.captions[i].flags;
                 strncpy(mCurEv.mSlang[i], srv->cap_info.captions[i].lang, 10);
             }
+
+            for (j = 0; j < srv->scte27_info.subtitle_count; j++) {
+                //all captions parsed from tables are treated as dtv cc.
+                mCurEv.mStype[i+j] = TYPE_SCTE27;
+                mCurEv.mSid[i+j] = srv->scte27_info.subtitles[j].pid;
+                mCurEv.mSstype[i+j] = TYPE_SCTE27;
+                mCurEv.mSid1[i+j] = 0;
+                mCurEv.mSid2[i+j] = 0;
+                strncpy(mCurEv.mSlang[i+j], "SCTE", 10);
+            }
+            mCurEv.mScnt = i+j;
 
         } else {
             mCurEv.mScnt = srv->sub_info.subtitle_count;
@@ -534,8 +547,8 @@ void CTvScanner::getLcnInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *sts, lcn_lis
 
 void CTvScanner::processTsInfo(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *ts_info)
 {
-    dvbpsi_nit_t *nit;
-    dvbpsi_descriptor_t *descr;
+    //dvbpsi_nit_t *nit;
+    //dvbpsi_descriptor_t *descr;
 
     ts_info->nid = -1;
     ts_info->tsid = -1;
@@ -817,7 +830,7 @@ void CTvScanner::updateServiceInfo(AM_SCAN_Result_t *result, SCAN_ServiceInfo_t 
 {
 #define str(i) (char*)(strings + i)
 
-    static char strings[14][256];
+    //static char strings[14][256];
 
     if (srv_info->src != TV_FE_ANALOG) {
         int standard = result->start_para->dtv_para.standard;
@@ -1227,9 +1240,44 @@ int CTvScanner::checkIsSkipProgram(SCAN_ServiceInfo_t *srv_info, int mode)
     ret = 0;
     return ret;
 }
+
+AM_ErrorCode_t AM_SI_ExtractScte27SubtitleFromES(dvbpsi_pmt_es_t *es, AM_SI_Scte27SubtitleInfo_t *sub_info)
+{
+        dvbpsi_descriptor_t *descr;
+        int i, found = 0;
+
+        if (es->i_type == 0x82)
+        {
+                for (i=0; i<sub_info->subtitle_count; i++)
+                {
+                        if (es->i_pid == sub_info->subtitles[i].pid)
+                        {
+                                found = 1;
+                                break;
+                        }
+                }
+
+                if (found != 1)
+                {
+                        sub_info->subtitles[sub_info->subtitle_count].pid = es->i_pid;
+                        sub_info->subtitle_count++;
+                }
+
+                LOGE("Scte27 stream found pid 0x%x count %d", es->i_pid, sub_info->subtitle_count);
+                AM_SI_LIST_BEGIN(es->p_first_descriptor, descr)
+                {
+                        if (descr->p_decoded)
+                        {
+                                AM_DEBUG(0, "scte27 i_tag table_id 0x%x", descr->i_tag);
+                        }
+                }
+                AM_SI_LIST_END()
+        }
+        return AM_SUCCESS;
+}
+
 void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_TsInfo_t *tsinfo, service_list_t &slist)
 {
-    LOGD("processAtscTs");
     #define VALID_PID(_pid_) ((_pid_)>0 && (_pid_)<0x1fff)
     if(ts->digital.vcts
         && ts->digital.pats
@@ -1245,7 +1293,7 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
     dvbpsi_pmt_es_t *es;
     int mode = result->start_para->dtv_para.mode;
     int src = result->start_para->dtv_para.source;
-    bool stream_found_in_vct = false;
+    //bool stream_found_in_vct = false;
     bool program_found_in_vct = false;
     SCAN_ServiceInfo_t *psrv_info;
     int cc_fixed = getParamOption("cc.fixed");
@@ -1283,8 +1331,10 @@ void CTvScanner::processAtscTs(AM_SCAN_Result_t *result, AM_SCAN_TS_t *ts, SCAN_
               extractCaScrambledFlag(pmt->p_first_descriptor, &psrv_info->scrambled_flag);
             }
         }
+
         AM_SI_LIST_BEGIN(pmt->p_first_es, es) {
             vpid = 0;
+            AM_SI_ExtractScte27SubtitleFromES(es, &psrv_info->scte27_info);
             AM_SI_ExtractAVFromES(es, &vpid, &psrv_info->vfmt, &psrv_info->aud_info);
             if (!VALID_PID(psrv_info->vid))
                 psrv_info->vid = vpid;
@@ -1633,9 +1683,10 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
     }
     atv_para.fe_cnt = 3;
     if (atv_para.mode == TV_SCAN_ATVMODE_AUTO) {
-        atv_para.afc_unlocked_step = 3000000;
+        atv_para.afc_unlocked_step = 4500000;
         atv_para.cvbs_unlocked_step = 1500000;
         atv_para.cvbs_locked_step = 6000000;
+        atv_para.afc_range = 1500000;
     } else {
         if (atv_para.fe_paras != NULL)
         {
@@ -1643,6 +1694,7 @@ int CTvScanner::createAtvParas(AM_SCAN_ATVCreatePara_t &atv_para, CFrontEnd::FEP
         }
         atv_para.cvbs_unlocked_step = 1000000;
         atv_para.cvbs_locked_step = 3000000;
+        atv_para.afc_range = 1000000;
     }
     return 0;
 }
@@ -1983,7 +2035,7 @@ int CTvScanner::getScanDtvStandard(ScanParas &scp) {
     return -1;
 }
 
-void CTvScanner::reconnectDmxToFend(int dmx_no, int fend_no)
+void CTvScanner::reconnectDmxToFend(int dmx_no, int fend_no __unused)
 {
 #ifdef SUPPORT_ADTV
     int isTV = config_get_int(CFG_SECTION_TV, FRONTEND_TS_SOURCE, 0);
@@ -2264,7 +2316,7 @@ int CTvScanner::FETypeHelperCB(int id, void *para, void *user) {
             }*/
             break;
         case AM_SCAN_PROGRESS_MGT_DONE: {
-            mgt_section_info_t *mgt = (mgt_section_info_t *)evt->data;
+            //mgt_section_info_t *mgt = (mgt_section_info_t *)evt->data;
 
             if (pT->mCurEv.mTotalChannelCount == 1) {
                 pT->mCurEv.mPercent += 10;

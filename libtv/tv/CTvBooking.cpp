@@ -75,7 +75,7 @@ int CTvBooking::getBookedEventList(Vector<sp<CTvBooking> > &vBv)
     cmd = String8("select * from booking_table  order by start");
 
     CTvDatabase::Cursor c;
-    int ret = CTvDatabase::GetTvDb()->select(cmd, c);
+    CTvDatabase::GetTvDb()->select(cmd, c);
 
     if (c.moveToFirst()) {
         do {

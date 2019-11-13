@@ -101,7 +101,7 @@ static int TransStringToHex(int data_cnt, char data_buf[],
 static int TransToHexString(int hex_cnt, char data_buf[],
                             unsigned char hex_buf[])
 {
-    int i = 0, j = 0;
+    int i = 0;
     char tmp_buf[17] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
     data_buf[0] = 0;
@@ -116,7 +116,6 @@ static int TransToHexString(int hex_cnt, char data_buf[],
 static int write_partiton_raw(const char *partition, const void *data, const int size)
 {
     int fd = 0;
-    int len = 0;
 
     fd = open(partition, O_WRONLY);
     if (fd < 0) {
@@ -302,28 +301,31 @@ int KeyData_ReadBarCode(unsigned char data_buf[])
     unsigned char rd_buf[CC_MAX_KEY_DATA_SIZE] = { 0 };
 
     tmp_len = KeyData_GetBarCodeDataLen();
-    rd_size = ReadKeyData(CS_BARCODE_KEY_NAME, rd_buf, tmp_len);
-    LOGD("%s, rd_size = %d\n", __FUNCTION__, rd_size);
+    if (tmp_len > 0) {
+        rd_size = ReadKeyData(CS_BARCODE_KEY_NAME, rd_buf, tmp_len);
+        LOGD("%s, rd_size = %d\n", __FUNCTION__, rd_size);
 
 #if ANDROID_PLATFORM_SDK_VERSION == 19
-    unsigned char tmp_buf[CC_MAX_KEY_DATA_SIZE] = { 0 };
+        unsigned char tmp_buf[CC_MAX_KEY_DATA_SIZE] = { 0 };
 
-    memcpy((void *)tmp_buf, (void *)rd_buf, CC_MAX_KEY_DATA_SIZE);
-    rd_size = TransStringToHex(rd_size, (char *)rd_buf, tmp_buf);
+        memcpy((void *)tmp_buf, (void *)rd_buf, CC_MAX_KEY_DATA_SIZE);
+        rd_size = TransStringToHex(rd_size, (char *)rd_buf, tmp_buf);
 
-    if (rd_size == tmp_len) {
-        memcpy(data_buf, tmp_buf, rd_size);
-        return rd_size;
-    }
+        if (rd_size == tmp_len) {
+            memcpy(data_buf, tmp_buf, rd_size);
+            return rd_size;
+        }
 #endif
 
 #if ANDROID_PLATFORM_SDK_VERSION >= 21
-    if (rd_size == tmp_len) {
-        memcpy(data_buf, rd_buf, rd_size);
-        return rd_size;
-    }
+        if (rd_size == tmp_len) {
+            memcpy(data_buf, rd_buf, rd_size);
+            return rd_size;
+        }
 #endif
-
+    } else {
+        LOGD("%s: KeyData_GetBarCodeDataLen failed!\n", __FUNCTION__);
+    }
     return 0;
 }
 
@@ -405,8 +407,6 @@ int SSMSaveHDCPKey(unsigned char hdcp_key_buf[])
 
 int SSMSetHDCPKey()
 {
-
-    int i = 0;
     unsigned char hdcp_key_buf[CC_HDCP_KEY_TOTAL_SIZE];
 
     if (GetSSMHandleHDCPKeyEnableCFG() == 1) {
@@ -439,7 +439,6 @@ int SSMGetHDCPKeyDataLen()
 //hdmi edid
 int SSMSetHDMIEdid(int port)
 {
-    int i = 0;
     unsigned char customer_hdmi_edid_buf[CC_CUSTOMER_HDMI_EDID_TOTAL_SIZE];
     unsigned char hdmi_edid_buf[SSM_HDMI_EDID_SIZE];
 
@@ -878,7 +877,7 @@ int SSMSetDefaultHDCPKey(unsigned char hdcp_key_buf[])
 
 int RealHandleHDCPKey(unsigned char hdcp_key_buf[])
 {
-    int i = 0, dev_fd = -1;
+    int dev_fd = -1;
 
     if (hdcp_key_buf == NULL) {
         return -1;
@@ -923,7 +922,7 @@ int GetSSMHandleHDMIEdidByCustomerEnableCFG()
 
 int RealHandleHDMIEdid(unsigned char customer_hdmi_edid_buf[])
 {
-    int i = 0, dev_fd = -1;
+    int dev_fd = -1;
 
     if (customer_hdmi_edid_buf == NULL) {
         return -1;
@@ -1086,7 +1085,7 @@ static int SaveDataToFile(char *file_name, int offset, int nsize,
                           unsigned char data_buf[])
 {
     int device_fd = -1;
-    int i = 0, tmp_ret = 0;
+    int tmp_ret = 0;
     char *tmp_ptr = NULL;
     char file_path[512] = { '\0' };
 
@@ -1131,7 +1130,7 @@ static int SaveDataToFile(char *file_name, int offset, int nsize,
 
 static int RealRWData(RWDataInfo *data_info)
 {
-    int i = 0, file_off = 0;
+    int file_off = 0;
     char file_name[256] = { '\0' };
 
     memset(file_name, '\0', 256);

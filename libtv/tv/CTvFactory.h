@@ -14,7 +14,6 @@
 #include "CAv.h"
 #include "../vpp/CVpp.h"
 #include "../tvin/CTvin.h"
-#include "fbcutils/CFbcCommunication.h"
 
 using namespace android;
 
@@ -126,7 +125,7 @@ private:
     int fbcGrayPatternClose();
 
     bool mHdmiOutFbc;
-    CFbcCommunication *mFbcObj;
+    //CFbcCommunication *mFbcObj;
     CAv mAv;
 };
 

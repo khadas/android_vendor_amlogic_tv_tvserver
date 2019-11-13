@@ -465,7 +465,7 @@ int CDTVTvPlayer::startLiveTryTimeShift(const char *param)
     return ret;
 }
 
-void CDTVTvPlayer::tfile_evt_callback ( long dev_no, int event_type, void *param, void *user_data )
+void CDTVTvPlayer::tfile_evt_callback ( long dev_no __unused, int event_type, void *param, void *user_data )
 {
 #ifdef SUPPORT_ADTV
     switch (event_type) {
@@ -532,7 +532,7 @@ void CDTVTvPlayer::onPlayUpdate(const CAv::AVEvent &ev)
     }
 }
 
-void CDTVTvPlayer::player_info_callback(long dev_no, int event_type, void *param, void *data)
+void CDTVTvPlayer::player_info_callback(long dev_no __unused, int event_type, void *param, void *data)
 {
 #ifdef SUPPORT_ADTV
     if (event_type == AM_AV_EVT_PLAYER_UPDATE_INFO)

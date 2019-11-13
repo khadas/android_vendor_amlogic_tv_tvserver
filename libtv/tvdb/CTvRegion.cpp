@@ -156,7 +156,7 @@ char* CTvRegion::getTvCountry()
 void CTvRegion::setTvCountry(const char* country)
 {
     if (NULL != country) {
-        strcpy(stCountry, country);
+        strncpy(stCountry, country, COUNTRY_NAME_LEN-1);
     }
 }
 

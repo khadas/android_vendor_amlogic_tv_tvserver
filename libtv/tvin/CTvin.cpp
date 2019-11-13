@@ -30,7 +30,6 @@
 #include "../tvsetting/CTvSetting.h"
 #include <tvutils.h>
 #include <tvconfig.h>
-#include "fbcutils/CFbcCommunication.h"
 
 #define AFE_DEV_PATH        "/dev/tvafe0"
 #define AMLVIDEO2_DEV_PATH  "/dev/video11"
@@ -90,6 +89,14 @@ int CTvin::OpenTvin()
     memset ( config_default_path, 0x0, 64 );
     config_value = config_get_str ( CFG_SECTION_TV, CFG_TVIN_TVPATH_SET_DEFAULT, "null" );
     strcpy ( config_default_path, config_value );
+
+    config_value = config_get_str(CFG_SECTION_TV, CFG_TVIN_DISPLAY_RESOLUTION_FIRST, "enable");
+    if (strcmp(config_value, "enable") == 0) {
+        mbResolutionPriority = true;
+    } else {
+        mbResolutionPriority = false;
+    }
+
     return 0;
 }
 
@@ -127,7 +134,7 @@ int CTvin::VDIN_AddVideoPath ( int selPath )
 {
     int ret = -1;
     std::string vdinPath;
-    std::string suffixVideoPath("ppmgr deinterlace amvideo");
+    std::string suffixVideoPath("deinterlace amvideo");
     bool amlvideo2Exist = isFileExist(AMLVIDEO2_DEV_PATH);
     switch ( selPath ) {
     case TV_PATH_VDIN_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:
@@ -139,9 +146,9 @@ int CTvin::VDIN_AddVideoPath ( int selPath )
 
     case TV_PATH_DECODER_AMLVIDEO2_PPMGR_DEINTERLACE_AMVIDEO:
         if (amlvideo2Exist)
-            vdinPath = "add default decoder amlvideo2.0 ";
+            vdinPath = "add default decoder amlvideo2.0 ppmgr ";
         else
-            vdinPath = "add default decoder ";
+            vdinPath = "add default decoder ppmgr ";
         break;
     default:
         break;
@@ -290,49 +297,92 @@ int CTvin::VDIN_GetVdinParam ( const struct tvin_parm_s *vdinParam )
     return rt;
 }
 
-int CTvin::VDIN_GetDisplayVFreq (int need_freq, int *iSswitch, char * display_mode)
+int CTvin::VDIN_GetDisplayVFreq (int need_freq, int *iSswitch, char *display_mode)
 {
-    int lastFreq = 50, ret = -1;
+    int ret = -1;
     char buf[32] = {0};
-    ret = tvReadSysfs(SYS_DISPLAY_MODE_PATH, buf);
-    if ((ret < 0) || (strlen(buf) == 0)) {
+    char CurrentDisplayMode[32] = {0};
+    ret = tvReadSysfs(SYS_DISPLAY_MODE_PATH, CurrentDisplayMode);
+    if ((ret < 0) || (strlen(CurrentDisplayMode) == 0)) {
         LOGW("Read /sys/class/display/mode failed!\n");
         *iSswitch = 0;
         return ret;
     }
 
     ret = 0;
-    LOGD( "%s: current display mode: %s\n", __FUNCTION__, buf);
-    if (strstr(buf, "480cvbs") || strstr(buf, "576cvbs")) {//hdmi plug out
+    LOGD( "%s: current display mode: %s\n", __FUNCTION__, CurrentDisplayMode);
+    if (strstr(CurrentDisplayMode, "480cvbs") || strstr(CurrentDisplayMode, "576cvbs")) {//hdmi plug out
         *iSswitch = 0;
         LOGD("%s, plug out, no set!\n", __FUNCTION__);
+    } else if (strstr(display_mode, "panel") != NULL) {//panel output
+        LOGD("%s, Now is panel mode!\n", __FUNCTION__);
+        *iSswitch = 1;
+        strcpy(display_mode, CurrentDisplayMode);
     } else {
-        if ((strstr(buf, "480") != NULL) && (50 == need_freq)) {
-            *iSswitch = 0;
-            LOGD("%s, can not support 480i&480p 50hz\n", __FUNCTION__);
-        } else if ((strstr(buf, "576") != NULL) && (60 == need_freq)) {
-            *iSswitch = 0;
-            LOGD("%s, can not support 576i&576p 60hz\n", __FUNCTION__);
-        } else {
-            std::string TempStr = std::string(buf);
-            std::string TimingStr = TempStr.substr(0, TempStr.length()-4);
-            std::string FreqStr = TempStr.substr(TempStr.length()-4,2);
-            lastFreq = atoi(FreqStr.c_str());
-            if (need_freq != lastFreq) {
-                sprintf(buf, "%s%dhz", TimingStr.c_str(), need_freq);
-                strcpy(display_mode, buf);
+        //get curentFreq
+        std::string TempStr = std::string(CurrentDisplayMode);
+        std::string TimingStr = TempStr.substr(0, TempStr.length()-4);
+        std::string FreqStr = TempStr.substr(TempStr.length()-4,2);
+        int CurrentFreq = atoi(FreqStr.c_str());
+
+        //check output mode
+        std::vector<std::string> SupportDisplayModes;
+        ret = VDIN_GetDisplayModeSupportList(&SupportDisplayModes);
+        if (ret == 1) {//lvds output
+            //calculate newFreq
+            int NewFreq = 50;
+            if ((30 == need_freq) || (60 == need_freq) || (24 == need_freq)) {
+                NewFreq = 60;
+            } else {
+                NewFreq = 50;
+            }
+
+            if (NewFreq != CurrentFreq) {
                 *iSswitch = 1;
+                memset(buf, 0, strlen(buf));
+                sprintf(buf, "%s%dhz", TimingStr.c_str(), NewFreq);
+                strcpy(display_mode, buf);
             } else {
                 *iSswitch = 0;
-                LOGD("%s: same fps!\n", __FUNCTION__);
             }
+        } else if (ret == 0) {//tx output
+            memset(buf, 0, strlen(buf));
+            sprintf(buf, "%s%dhz", TimingStr.c_str(), need_freq);
+            std::string DisplayModeStr = buf;
+            /*for (std::vector<std::string>::iterator it1 = SupportDisplayModes.begin(); it1 != SupportDisplayModes.end(); it1++) {
+                LOGD("%s: %s\n", __FUNCTION__, (*it1).c_str());
+            }*/
+            //check output device support or not
+            std::vector<std::string>::iterator result = find(SupportDisplayModes.begin( ), SupportDisplayModes.end( ), DisplayModeStr);
+            if (result != SupportDisplayModes.end()) {
+                LOGD("%s: Output device support %s!\n", __FUNCTION__, buf);
+            } else {
+                LOGD("%s: Output device don't support %s!\n", __FUNCTION__, buf);
+                memset(buf, 0, strlen(buf));
+                if (mbResolutionPriority) {//resolution first priority
+                    VDIN_GetBestDisplayMode(BEST_DISPLAYMODE_CONDITION_RESOLUTION, TimingStr, SupportDisplayModes, buf);
+                } else {//frame rate first priority
+                    std::string FrameRateStr = std::to_string(need_freq);
+                    VDIN_GetBestDisplayMode(BEST_DISPLAYMODE_CONDITION_FRAMERATE, FrameRateStr, SupportDisplayModes, buf);
+                }
+            }
+
+            if (strstr(CurrentDisplayMode, buf) != NULL) {//same displaymode
+                *iSswitch = 0;
+            } else {
+                *iSswitch = 1;
+                strcpy(display_mode, buf);
+            }
+        } else {
+            LOGD("%s: Get TxMode SupportList failed!\n", __FUNCTION__);
+            *iSswitch = 0;
         }
     }
 
     return ret;
 }
 
-int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
+int CTvin::VDIN_SetDisplayVFreq(int freq)
 {
     int iSswitch = 0;
     char display_mode[32] = {0};
@@ -343,18 +393,18 @@ int CTvin::VDIN_SetDisplayVFreq ( int freq, bool isFbc)
         return -1;
     } else {
         if (0 == iSswitch) {
-            LOGW("%s: same freq = %d, no need set!\n", __FUNCTION__, freq);
+            LOGW("%s: same display mode, no need set!\n", __FUNCTION__);
             return 0;
         } else {
-            LOGD("%s: set display mode to %s\n", __FUNCTION__, display_mode);
+            if (strstr(display_mode, "panel") != NULL) {//Panel
+                LOGD("%s, Now is panel mode!\n", __FUNCTION__);
+                tvWriteSysfs(SYS_PANEL_FRAME_RATE, freq, 10);
+            } else {
+                LOGD("%s: set display mode to %s\n", __FUNCTION__, display_mode);
+                tvWriteDisplayMode(display_mode);
+            }
         }
 
-        if ( isFbc ) {
-            GetSingletonFBC()->cfbc_Set_VMute (COMM_DEV_SERIAL, 2);
-            usleep ( 300000 );
-        }
-
-        tvWriteDisplayMode(display_mode);
         return 0;
     }
 }
@@ -537,11 +587,9 @@ int CTvin::VDIN_UpdateForPQMode(pq_status_update_e gameStatus, pq_status_update_
     memset(&signal_info, 0, sizeof(tvin_info_t));
     LOGD("%s: gameStatus= %d, pcStatus= %d\n", __FUNCTION__, gameStatus, pcStatus);
     if (gameStatus != MODE_STABLE) {
-        ret = VDIN_DeviceIOCtl(TVIN_IOC_GAME_MODE, &gameStatus);
-        if (ret < 0) {
-            LOGE("Vdin set game mode failed, error(%s)!", strerror(errno));
+        ret = VDIN_SetGameMode(gameStatus);
+        if (ret < 0)
             return -1;
-        }
     }
 
     if ((gameStatus != MODE_STABLE) || (pcStatus != MODE_STABLE)) {
@@ -586,6 +634,89 @@ int CTvin::VDIN_SetWssStatus ( int status )
     }
 
     return ret;
+}
+
+int CTvin::VDIN_GetDisplayModeSupportList(std::vector<std::string> *SupportDisplayModes)
+{
+    int ret = -1;
+    char buf[SYS_STR_LEN] = {0};
+    char TempBuf[32] = {0};
+
+    if (access(FRAME_RATE_SUPPORT_LIST_PATH, 0) != 0) {
+        LOGD("%s: don't support TX output!\n", __FUNCTION__);
+        ret = 1;
+    } else {
+        ret = tvReadSysfs(FRAME_RATE_SUPPORT_LIST_PATH, buf);
+        if (ret < 0) {
+            LOGE("%s failed!\n", __FUNCTION__);
+            ret = -1;
+        } else {
+            char *ptr = strtok(buf, "hz");
+            while (ptr != NULL) {
+                std::string TempStr = std::string(ptr);
+                if (TempStr[0] == '*') {
+                    TempStr = TempStr.substr(1);
+                }
+                memset(TempBuf, 0, sizeof(TempBuf));
+                sprintf(TempBuf, "%shz", TempStr.c_str());
+                std::string str = std::string(TempBuf);
+                (*SupportDisplayModes).push_back(str);
+                ptr = strtok(NULL, "hz");
+            }
+            ret = 0;
+        }
+    }
+
+    return ret;
+}
+
+int CTvin::VDIN_GetBestDisplayMode(best_displaymode_condition_t condition,
+                                            std::string ConditionParam,
+                                            std::vector<std::string> SupportDisplayModes,
+                                            char *BestDisplayMode)
+{
+    std::string TempStr;
+    std::vector<std::string> TempVector;
+    std::vector<std::string>::iterator i;
+    int BestResolution = 0, BestFrameRate = 0;
+    char buf[32] = {0};
+    for (i = SupportDisplayModes.begin(); i != SupportDisplayModes.end(); i++) {
+        if (strstr((*i).c_str(), ConditionParam.c_str()) != NULL) {
+            //LOGD("###%s\n", (*i).c_str());
+            TempVector.push_back(*i);
+        }
+    }
+
+    switch (condition) {
+    case BEST_DISPLAYMODE_CONDITION_FRAMERATE:
+        for (i = TempVector.begin(); i != TempVector.end(); i++) {
+            TempStr = *i;
+            int ResolutionVal = atoi(TempStr.substr(0, TempStr.length()-5).c_str());
+            if (BestResolution <= ResolutionVal) {
+                BestResolution = ResolutionVal;
+            }
+        }
+        sprintf(buf, "%dp%shz", BestResolution, ConditionParam.c_str());
+        break;
+    case BEST_DISPLAYMODE_CONDITION_RESOLUTION:
+        for (i = TempVector.begin(); i != TempVector.end(); i++) {
+            TempStr = *i;
+            int FrameRateVal = atoi(TempStr.substr(TempStr.length()-4,2).c_str());
+            if (BestFrameRate <= FrameRateVal) {
+                BestFrameRate = FrameRateVal;
+            }
+        }
+        sprintf(buf, "%s%dhz", ConditionParam.c_str(), BestFrameRate);
+        break;
+    default:
+        sprintf(buf, "1080p60hz");
+        break;
+    }
+
+    strcpy(BestDisplayMode, buf);
+    LOGD("%s: BestDisplayMode is %s\n", __FUNCTION__, BestDisplayMode);
+
+    return 0;
 }
 
 int CTvin::VDIN_GetFrameRateSupportList(std::vector<std::string> *supportFrameRates)
@@ -1153,7 +1284,6 @@ int CTvin::get_frame_average ( enum adc_cal_type_e calType, struct adc_cal_s *me
 {
     unsigned int y = 0, cb = 0, cr = 0;
     unsigned int r = 0, g = 0, b = 0;
-    unsigned long n;
     unsigned int i = 0, j = 0;
     char *dp = get_cap_addr ( calType );
 
@@ -1398,8 +1528,6 @@ struct adc_cal_s CTvin::get_n_frame_average ( enum adc_cal_type_e calType )
 
 int CTvin::AFE_GetMemData ( int typeSel, struct adc_cal_s *mem_data )
 {
-    int rt = -1;
-
     if ( mVdin0DevFd < 0 || mem_data == NULL ) {
         LOGW ( "AFE_GetMemData, didn't open vdin fd, return!\n" );
         return -1;
@@ -1595,7 +1723,6 @@ tv_source_input_type_t CTvin::Tvin_SourcePortToSourceInputType ( tvin_port_t sou
 
 tvin_port_t CTvin::Tvin_GetSourcePortBySourceType ( tv_source_input_type_t source_type )
 {
-    tvin_port_t source_port;
     tv_source_input_t source_input;
 
     switch (source_type) {
@@ -1838,7 +1965,7 @@ bool CTvin::Tvin_is50HzFrameRateFmt ( tvin_sig_fmt_t fmt )
             || fmt == TVIN_SIG_FMT_HDMI_720X576P_50HZ_FRAME_PACKING
             /** cvbs **/
             || fmt == TVIN_SIG_FMT_CVBS_PAL_I
-            || fmt == TVIN_SIG_FMT_CVBS_PAL_M
+            || fmt == TVIN_SIG_FMT_CVBS_NTSC_50
             || fmt == TVIN_SIG_FMT_CVBS_PAL_CN
             || fmt == TVIN_SIG_FMT_CVBS_SECAM ) {
         LOGD ( "%s, Frame rate == 50Hz.", CFG_SECTION_TV );
@@ -1904,6 +2031,19 @@ int CTvin::Tvin_StartDecoder ( tvin_info_t &info )
 
     LOGW ( "StartDecoder failed." );
     return -1;
+}
+
+int CTvin::AFE_EnableSnowByConfig ( bool enable )
+{
+    LOGD("%s: enable or not: %d\n", __FUNCTION__, enable);
+    unsigned int value = 0;
+    if (enable) {
+        value = 1;
+    } else {
+        value = 0;
+    }
+
+    return AFE_DeviceIOCtl(TVIN_IOC_S_AFE_SONWCFG, &value);
 }
 
 int CTvin::SwitchSnow(bool enable)
@@ -2044,7 +2184,7 @@ int CTvin::Tvin_RemovePath ( tv_path_type_t pathtype )
 int CTvin::Tvin_CheckPathActive ()
 {
     FILE *f = NULL;
-    char path[300] = {0};
+    char path[100] = {0};
 
     char *str_find = NULL;
     char active_str[4] = "(1)";
@@ -2056,11 +2196,12 @@ int CTvin::Tvin_CheckPathActive ()
         return TV_PATH_STATUS_NO_DEV;
     }
 
-    fgets ( path, sizeof(path)-1, f );
-    if ( strstr ( path, active_str) ) {
-        is_active = TV_PATH_STATUS_ACTIVE;
-    } else {
-        is_active = TV_PATH_STATUS_INACTIVE;
+    while ( fgets ( path, sizeof(path)-1, f ) ) {
+        str_find = strstr ( path, active_str );
+        if (str_find) {
+            is_active = TV_PATH_STATUS_ACTIVE;
+            break;
+        }
     }
 
     fclose ( f );
@@ -2172,6 +2313,18 @@ int CTvin::VDIN_GetAllmInfo(tvin_latency_s *AllmInfo)
         if (ret < 0) {
             LOGE("%s: ioctl failed!\n", __FUNCTION__);
         }
+    }
+
+    return ret;
+}
+
+int CTvin::VDIN_SetGameMode(pq_status_update_e mode)
+{
+    int ret = -1;
+    LOGD("%s: game mode: %d!\n", __FUNCTION__, mode);
+    ret = VDIN_DeviceIOCtl(TVIN_IOC_GAME_MODE, &mode);
+    if (ret < 0) {
+        LOGE("%s failed, error(%s)!", __FUNCTION__, strerror(errno));
     }
 
     return ret;

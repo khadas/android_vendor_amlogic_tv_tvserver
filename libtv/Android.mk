@@ -64,8 +64,6 @@ LOCAL_SRC_FILES := \
   tvsetting/CTvSetting.cpp  \
   tvsetting/TvKeyData.cpp \
   version/version.cpp \
-  fbcutils/CFbcCommunication.cpp \
-  fbcutils/fbcutils.cpp \
   gpio/CTvGpio.cpp
 
 LOCAL_SHARED_LIBRARIES := \
@@ -110,10 +108,7 @@ LOCAL_STATIC_LIBRARIES += \
   libjsoncpp
 
 LOCAL_C_INCLUDES += \
-  $(LOCAL_PATH)/../tvfbclinker/include \
   $(LIB_TV_UTILS)/include
-
-LOCAL_SHARED_LIBRARIES += libtv_linker
 
 LOCAL_CFLAGS += \
   -fPIC -fsigned-char -D_POSIX_SOURCE \

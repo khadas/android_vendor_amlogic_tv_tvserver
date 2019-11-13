@@ -35,6 +35,7 @@
 #define CFG_TVCHANNEL_VGA                       "ro.tv.tvinchannel.vga"
 
 #define CGF_TV_SUPPORT_COUNTRY                  "tv.support.country.name"
+#define CGF_TV_AUTOSWITCH_MONITOR_EN            "tv.autoswitch.monitor.en"
 #define CFG_SSM_HDMI_AV_DETECT                  "ssm.hdmi_av.hotplug.detect.en"
 #define CFG_SSM_HDMI_EDID_EN                    "ssm.handle.hdmi.edid.en"
 #define CFG_SSM_HDMI_EDID_VERSION               "ssm.handle.hdmi.edid.version"
@@ -63,7 +64,7 @@
 #define CFG_TVIN_USERPET_TIMEROUT               "tvin.userpet.timeout"
 #define CFG_TVIN_USERPET_RESET                  "tvin.userpet.reset"
 #define CFG_TVIN_DISPLAY_FREQ_AUTO              "tvin.autoset.displayfreq"
-#define CFG_TVIN_DISPLAY_PREVIEW_WINDOW         "tvin.display.previewwindow"
+#define CFG_TVIN_DISPLAY_RESOLUTION_FIRST       "tvin.autosetdisplay.resolution.first.en"
 #define CFG_TVIN_DB_REG                         "tvin.db.reg.en"
 #define CFG_TVIN_THERMAL_THRESHOLD_ENABLE       "tvin.thermal.threshold.enable"
 #define CFG_TVIN_THERMAL_THRESHOLD_VALUE        "tvin.thermal.threshold.value"

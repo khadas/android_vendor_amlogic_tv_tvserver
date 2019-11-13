@@ -42,8 +42,7 @@ CVpp *CVpp::getInstance()
 
 CVpp::CVpp()
 {
-    mHdmiOutFbc = false;
-    fbcIns = GetSingletonFBC();
+
 }
 
 CVpp::~CVpp()
@@ -51,21 +50,15 @@ CVpp::~CVpp()
 
 }
 
-int CVpp::Vpp_Init(bool hdmiOutFbc)
+int CVpp::Vpp_Init()
 {
-    int ret = -1;
-    int backlight = DEFAULT_BACKLIGHT_BRIGHTNESS;
-    int offset_r = 0, offset_g = 0, offset_b = 0, gain_r = 1024, gain_g = 1024, gain_b = 1024;
-
-    mHdmiOutFbc = hdmiOutFbc;
-
     if (SSMReadNonStandardValue() & 1) {
         Set_Fixed_NonStandard(0); //close
     } else {
         Set_Fixed_NonStandard(2); //open
     }
 
-    return ret;
+    return 0;
 }
 
 int CVpp::LoadVppSettings(tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt)
@@ -77,21 +70,20 @@ int CVpp::LoadVppSettings(tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_
     return tvLoadPQSettings(source_input_param);
 }
 
-int CVpp::SetPQMode(vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt,
-                        tvin_trans_fmt_t trans_fmt, is_3d_type_t is3d, int is_save, int is_autoswitch)
+int CVpp::SetPQMode(vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input __unused,
+                       tvin_sig_fmt_t sig_fmt __unused, tvin_trans_fmt_t trans_fmt __unused,
+                       is_3d_type_t is3d __unused, int is_save, int is_autoswitch)
 {
     return tvSetPQMode(pq_mode, is_save, is_autoswitch);
-
 }
 
-vpp_picture_mode_t CVpp::GetPQMode(tv_source_input_t tv_source_input)
+vpp_picture_mode_t CVpp::GetPQMode(tv_source_input_t tv_source_input __unused)
 {
     return tvGetPQMode();
 }
 
-int CVpp::SavePQMode(vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input)
+int CVpp::SavePQMode(vpp_picture_mode_t pq_mode, tv_source_input_t tv_source_input __unused)
 {
-
     return tvSavePQMode(pq_mode);
 }
 
@@ -100,15 +92,15 @@ void CVpp::enableMonitorMode(bool enable)
     if (enable) {
         tvWriteSysfs(DI_NR2_ENABLE, "0");
         tvWriteSysfs(AMVECM_PC_MODE, "0");
-        if (mHdmiOutFbc && fbcIns) {
+        /*if (mHdmiOutFbc && fbcIns) {
             fbcIns->cfbc_EnterPCMode(0);
-        }
+        }*/
     } else {
         tvWriteSysfs(DI_NR2_ENABLE, "1");
         tvWriteSysfs(AMVECM_PC_MODE, "1");
-        if (mHdmiOutFbc && fbcIns) {
+        /*if (mHdmiOutFbc && fbcIns) {
             fbcIns->cfbc_EnterPCMode(1);
-        }
+        }*/
     }
 }
 
@@ -201,90 +193,9 @@ int CVpp::VPP_SetScalerPathSel(const unsigned int value)
     return 0;
 }
 
-int CVpp::VPP_FBCSetColorTemperature(vpp_color_temperature_mode_t temp_mode)
-{
-    int ret = -1;
-    if (fbcIns != NULL) {
-        ret = fbcIns->fbcSetEyeProtection(COMM_DEV_SERIAL, 1/*GetEyeProtectionMode()*/);
-        ret |= fbcIns->cfbc_Set_ColorTemp_Mode(COMM_DEV_SERIAL, temp_mode);
-    }
-    return ret;
-}
-
-int CVpp::VPP_FBCColorTempBatchSet(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t params)
-{
-    unsigned char mode = 0, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset;
-    switch (Tempmode) {
-    case VPP_COLOR_TEMPERATURE_MODE_STANDARD:
-        mode = 1;   //COLOR_TEMP_STD
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_WARM:
-        mode = 2;   //COLOR_TEMP_WARM
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_COLD:
-        mode = 0;  //COLOR_TEMP_COLD
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_USER:
-        mode = 3;   //COLOR_TEMP_USER
-        break;
-    default:
-        break;
-    }
-    r_gain = (params.r_gain * 255) / 2047; // u1.10, range 0~2047, default is 1024 (1.0x)
-    g_gain = (params.g_gain * 255) / 2047;
-    b_gain = (params.b_gain * 255) / 2047;
-    r_offset = (params.r_post_offset + 1024) * 255 / 2047; // s11.0, range -1024~+1023, default is 0
-    g_offset = (params.g_post_offset + 1024) * 255 / 2047;
-    b_offset = (params.b_post_offset + 1024) * 255 / 2047;
-    LOGD ( "~colorTempBatchSet##%d,%d,%d,%d,%d,%d,##", r_gain, g_gain, b_gain, r_offset, g_offset, b_offset );
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Set_WB_Batch(COMM_DEV_SERIAL, mode, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset);
-        return 0;
-    }
-
-    return -1;
-}
-
-int CVpp::VPP_FBCColorTempBatchGet(vpp_color_temperature_mode_t Tempmode, tcon_rgb_ogo_t *params)
-{
-    unsigned char mode = 0, r_gain, g_gain, b_gain, r_offset, g_offset, b_offset;
-    switch (Tempmode) {
-    case VPP_COLOR_TEMPERATURE_MODE_STANDARD:
-        mode = 1;   //COLOR_TEMP_STD
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_WARM:
-        mode = 2;   //COLOR_TEMP_WARM
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_COLD:
-        mode = 0;  //COLOR_TEMP_COLD
-        break;
-    case VPP_COLOR_TEMPERATURE_MODE_USER:
-        mode = 3;   //COLOR_TEMP_USER
-        break;
-    default:
-        break;
-    }
-
-    if (fbcIns != NULL) {
-        fbcIns->cfbc_Get_WB_Batch(COMM_DEV_SERIAL, mode, &r_gain, &g_gain, &b_gain, &r_offset, &g_offset, &b_offset);
-        LOGD ( "~colorTempBatchGet##%d,%d,%d,%d,%d,%d,##", r_gain, g_gain, b_gain, r_offset, g_offset, b_offset );
-
-        params->r_gain = (r_gain * 2047) / 255;
-        params->g_gain = (g_gain * 2047) / 255;
-        params->b_gain = (b_gain * 2047) / 255;
-        params->r_post_offset = (r_offset * 2047) / 255 - 1024;
-        params->g_post_offset = (g_offset * 2047) / 255 - 1024;
-        params->b_post_offset = (b_offset * 2047) / 255 - 1024;
-        return 0;
-    }
-
-    return -1;
-}
-
 int CVpp::VPP_SSMRestorToDefault(int id, bool resetAll)
 {
-    int i = 0, tmp_val = 0;
+    int i = 0;
     int tmp_panorama_nor = 0, tmp_panorama_full = 0;
 
     if (resetAll || VPP_DATA_USER_NATURE_SWITCH_START == id)
@@ -342,7 +253,10 @@ int CVpp::VPP_SSMRestorToDefault(int id, bool resetAll)
     tmp_panorama_full = VPP_PANORAMA_MODE_FULL;
     for (i = 0; i < SOURCE_MAX; i++) {
         if (resetAll || VPP_DATA_POS_PANORAMA_START == id) {
-            if (i == SOURCE_TYPE_HDMI) {
+            if ((i == SOURCE_HDMI1) ||
+                (i == SOURCE_HDMI2) ||
+                (i == SOURCE_HDMI3) ||
+                (i == SOURCE_HDMI4)) {
                 SSMSavePanoramaStart(i, tmp_panorama_full);
             } else {
                 SSMSavePanoramaStart(i, tmp_panorama_nor);

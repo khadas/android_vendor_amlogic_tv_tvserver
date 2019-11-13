@@ -360,7 +360,7 @@ int CAv::EnableVideoNow(bool IsShowTestScreen)
     }
     mVideoLayerState = VIDEO_LAYER_ENABLE;
     if (IsShowTestScreen) {
-        LOGD("%s: eableVideoWithBlackColor", __FUNCTION__);
+        LOGD("%s: eableVideoWithBlackColor SwitchSourceTime = %fs", __FUNCTION__,getUptimeSeconds());
         SetVideoScreenColor ( 0, 16, 128, 128 );
     }
 
@@ -441,7 +441,9 @@ int CAv::setTimeShiftSpeed(int speed)
     LOGD ( "%s: [%d]", __FUNCTION__, speed);
     int ret = 0;
 #ifdef SUPPORT_ADTV
-    if (speed < 0)
+    if (speed == 0)
+        ret = AM_AV_ResumeTimeshift (mTvPlayDevId);
+    else if (speed < 0)
         ret = AM_AV_FastBackwardTimeshift(mTvPlayDevId, -speed);
     else
         ret = AM_AV_FastForwardTimeshift(mTvPlayDevId, speed);
@@ -451,7 +453,7 @@ int CAv::setTimeShiftSpeed(int speed)
 
 int CAv::switchTimeShiftAudio(int apid, int afmt)
 {
-    LOGD ( "%S: [pid:%d, fmt:%d]", __FUNCTION__, apid, afmt);
+    LOGD ( "%s: [pid:%d, fmt:%d]", __FUNCTION__, apid, afmt);
 #ifdef SUPPORT_ADTV
     return AM_AV_SwitchTimeshiftAudio (mTvPlayDevId, apid, afmt);
 #else
@@ -565,7 +567,7 @@ int CAv::SetVideoScreenColor ( int vdin_blending_mask, int y, int u, int v )
     return 0;
 }
 
-int CAv::SetVideoLayerDisable ( int value )
+int CAv::SetVideoLayerStatus ( int value )
 {
     LOGD("%s, value = %d" , __FUNCTION__, value);
 

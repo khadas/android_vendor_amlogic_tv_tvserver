@@ -1988,15 +1988,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         r->writeInt32(data[1]);
         break;
     }
-    case FACTORY_FBC_UPGRADE: {
-        String8 strName(p.readString16());
-        int mode = p.readInt32();
-        int blkSize = p.readInt32();
-        int ret = mpTv->StartUpgradeFBC((char *)strName.string(), mode, blkSize);
-        r->writeInt32(ret);
-        break;
-    }
-
     case FACTORY_FBC_SET_BRIGHTNESS: {
         int value = p.readInt32();
         int ret = mpTv->mFactoryMode.fbcSetBrightness(value);
@@ -2628,19 +2619,6 @@ status_t TvService::Client::processCmd(const Parcel &p, Parcel *r)
         CTvProgram prog;
         int progid = p.readInt32();
         prog.deleteProgram(progid);
-        break;
-    }
-    case START_AUTO_BACKLIGHT: {
-        mpTv->setAutoBackLightStatus(1);
-        break;
-    }
-    case STOP_AUTO_BACKLIGHT: {
-        mpTv->setAutoBackLightStatus(0);
-        break;
-    }
-    case IS_AUTO_BACKLIGHTING: {
-        int on = mpTv->getAutoBackLightStatus();
-        r->writeInt32(on);
         break;
     }
     case GET_AVERAGE_LUMA: {

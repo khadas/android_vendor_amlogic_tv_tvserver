@@ -21,6 +21,7 @@ int __tv_log_print(int prio, const char *tag, const char *tv_tag, const char *fm
     va_list ap;
     va_start(ap, fmt);
     vsnprintf(buf + tv_tag_len, DEFAULT_LOG_BUFFER_LEN - tv_tag_len, fmt, ap);
+    va_end(ap);
 
     return __android_log_write(prio, tag, buf);
 }

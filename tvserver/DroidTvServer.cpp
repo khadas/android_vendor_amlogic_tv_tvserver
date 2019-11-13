@@ -80,12 +80,19 @@ void DroidTvServer::onEvent(const TvHidlParcel &hidlParcel) {
     memcpy(data, p.data(), size);
     memory->commit();
 #endif
-    for (int i = 0; i < clientSize; i++) {
-        if (mClients[i] != nullptr) {
-            LOGI("%s, client cookie:%d notifyCallback", __FUNCTION__, i);
-            mClients[i]->notifyCallback(hidlParcel);
-        }
-    }
+    for (auto it = mClients.begin(); it != mClients.end();) {
+         if (it->second == nullptr) {
+             it = mClients.erase(it);
+             continue;
+         }
+         auto ret = (it->second)->notifyCallback(hidlParcel);
+         if (!ret.isOk() && ret.isDeadObject()) {
+             it = mClients.erase(it);
+         } else {
+             ++it;
+         }
+     }
+
 }
 
 Return<void> DroidTvServer::lock() {
@@ -318,16 +325,6 @@ Return<int32_t> DroidTvServer::SSMInitDevice() {
     return mTvServiceIntf->SSMInitDevice();
 }
 
-Return<void> DroidTvServer::startAutoBacklight() {
-    mTvServiceIntf->startAutoBacklight();
-    return Void();
-}
-
-Return<void> DroidTvServer::stopAutoBacklight() {
-    mTvServiceIntf->stopAutoBacklight();
-    return Void();
-}
-
 Return<int32_t> DroidTvServer::FactoryCleanAllTableForProgram() {
     return mTvServiceIntf->FactoryCleanAllTableForProgram();
 }
@@ -508,6 +505,26 @@ Return<int32_t> DroidTvServer::getIwattRegs() {
     return mTvServiceIntf->getIwattRegs();
 }
 
+Return<int32_t> DroidTvServer::setSameSourceEnable(int32_t isEnable) {
+    int ret = -1;
+    if (isEnable != 0) {
+        ret = mTvServiceIntf->setSameSourceEnable(true);
+    } else {
+        ret = mTvServiceIntf->setSameSourceEnable(false);
+    }
+
+    return ret;
+}
+
+Return<int32_t> DroidTvServer::setPreviewWindow(int32_t x1, int32_t y1, int32_t x2, int32_t y2) {
+    return mTvServiceIntf->setPreviewWindow(x1, y1, x2, y2);
+}
+
+Return<int32_t> DroidTvServer::setPreviewWindowMode(int32_t enable) {
+    return mTvServiceIntf->setPreviewWindowMode(enable == 1 ? true : false);
+}
+
+
 Return<void> DroidTvServer::setCallback(const sp<ITvServerCallback>& callback, ConnectType type) {
     AutoMutex _l(mLock);
     if ((int)type > (int)ConnectType::TYPE_TOTAL - 1) {
@@ -561,9 +578,11 @@ const char* DroidTvServer::getConnectTypeStr(ConnectType type) {
 void DroidTvServer::handleServiceDeath(uint32_t cookie) {
     LOGI("tvserver daemon client:%d died", cookie);
     AutoMutex _l(mLock);
-    mClients[cookie]->unlinkToDeath(mDeathRecipient);
-    mClients[cookie].clear();
-    mClients[cookie] = nullptr;
+    if (mClients[cookie] != nullptr) {
+        mClients[cookie]->unlinkToDeath(mDeathRecipient);
+        mClients[cookie].clear();
+        mClients[cookie] = nullptr;
+    }
     LOGI("%s, client size:%d", __FUNCTION__,(int)mClients.size());
 }
 

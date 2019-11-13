@@ -36,19 +36,23 @@ CFile::CFile(const char *path)
 
 int CFile::openFile(const char *path)
 {
-    LOGV("openFile = %s", path);
     if (mFd < 0) {
         const char *openPath = mPath;
-        if (path != NULL)
+        if (path != NULL) {
+            LOGV("openFile = %s", path);
             strcpy(mPath, path);
 
-        if (strlen(openPath) <= 0) {
-            LOGW("openFile openPath is NULL, path:%s", path);
-            return -1;
-        }
-        mFd = open(openPath, O_RDWR);
-        if (mFd < 0) {
-            LOGW("open file(%s) fail", openPath);
+            if (strlen(openPath) <= 0) {
+                LOGW("openFile openPath is NULL, path:%s", path);
+                return -1;
+            }
+            mFd = open(openPath, O_RDWR);
+            if (mFd < 0) {
+                LOGW("open file(%s) fail", openPath);
+                return -1;
+            }
+        } else {
+            LOGW("%s: path is NULL!\n", __FUNCTION__);
             return -1;
         }
     }
@@ -163,11 +167,13 @@ int  CFile::getFileAttrValue(const char *path)
     int fd = open(path, O_RDONLY);
     if (fd <= 0) {
         LOGE("open  (%s)ERROR!!error = -%s- \n", path, strerror ( errno ));
+        value = 0;
+    } else {
+        char s[8];
+        read(fd, s, sizeof(s));
+        close(fd);
+        value = atoi(s);
     }
-    char s[8];
-    read(fd, s, sizeof(s));
-    close(fd);
-    value = atoi(s);
     return value;
 }
 

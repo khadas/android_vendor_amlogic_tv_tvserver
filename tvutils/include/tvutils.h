@@ -27,7 +27,9 @@
 #endif
 
 #define SYS_STR_LEN                         1024
-#define PROPERTY_VALUE_MAX                  92
+#ifndef PROPERTY_VALUE_MAX
+#define PROPERTY_VALUE_MAX                  (92)
+#endif
 #define SYS_VIDEO_INUSE_PATH                "/sys/class/video/video_inuse"
 #define AUDIO_STD_PATH                      "/sys/kernel/debug/aml_atvdemod/aud_std"
 #define AUDIO_OUTMODE_PATH                  "/sys/kernel/debug/aml_atvdemod/aud_mode"
@@ -49,6 +51,7 @@ vpp_picture_mode_t tvGetPQMode ( void );
 int tvSavePQMode ( vpp_picture_mode_t mode);
 int tvSetCurrentSourceInfo(tv_source_input_t tv_source_input, tvin_sig_fmt_t sig_fmt, tvin_trans_fmt_t trans_fmt);
 int tvSetCVD2Values();
+int tvSetCurrentHdrInfo(unsigned int hdr_info);
 //PQ end
 
 extern int Tv_MiscRegs(const char *cmd);
